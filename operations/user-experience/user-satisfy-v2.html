@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>满意度分析 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tab-btn {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans">
+    <div class="p-6">
+        <!-- Page Header -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">满意度分析</h1>
+                    <p class="text-gray-600 mt-1">智能客服用户满意度综合评估与分析</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <select
+                            class="appearance-none bg-white border border-gray-300 rounded-lg py-2 px-4 pr-8 text-sm leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option>最近7天</option>
+                            <option>最近30天</option>
+                            <option>最近90天</option>
+                            <option>自定义时间</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <button class="dify-btn px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">
+                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        导出报告
+                    </button>
+                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700">
+                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        创建满意度调查
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <!-- Card 1: 总体满意度评分 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-medium text-gray-600">总体满意度评分</h2>
+                    <span class="dify-tag bg-green-50 text-green-600">+2.3%</span>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">4.6<span class="text-lg text-gray-500">/5</span></p>
+                        <p class="text-xs text-gray-500">较上周提升</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905a3.61 3.61 0 01-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: NPS净推荐值 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-medium text-gray-600">NPS净推荐值</h2>
+                    <span class="dify-tag bg-blue-50 text-blue-600">稳定</span>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">62<span class="text-lg text-gray-500">%</span></p>
+                        <p class="text-xs text-gray-500">行业平均: 48%</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: 问题解决率 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-medium text-gray-600">问题解决率</h2>
+                    <span class="dify-tag bg-green-50 text-green-600">+5.7%</span>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">87<span class="text-lg text-gray-500">%</span></p>
+                        <p class="text-xs text-gray-500">较上月提升</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: 平均响应时间 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-medium text-gray-600">平均响应时间</h2>
+                    <span class="dify-tag bg-green-50 text-green-600">-12%</span>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">1.4<span class="text-lg text-gray-500">秒</span></p>
+                        <p class="text-xs text-gray-500">较上月缩短</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area with Tabs -->
+        <div class="dify-card bg-white overflow-hidden">
+            <!-- Tabs Header -->
+            <div class="px-6 py-4 border-b border-gray-100">
+                <div class="flex items-center space-x-6">
+                    <div class="tab-btn active py-2 px-1" data-tab="satisfaction-trends">满意度趋势</div>
+                    <div class="tab-btn py-2 px-1" data-tab="category-analysis">分类别分析</div>
+                    <div class="tab-btn py-2 px-1" data-tab="impact-factors">影响因素</div>
+                    <div class="tab-btn py-2 px-1" data-tab="improvement-suggestions">改进建议</div>
+                </div>
+            </div>
+
+            <!-- Tab Content: 满意度趋势 -->
+            <div class="tab-content active p-6" id="satisfaction-trends">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 满意度趋势图 -->
+                    <div class="lg:col-span-2 dify-card p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-md font-medium text-gray-800">满意度趋势</h3>
+                            <div class="flex space-x-2 text-sm">
+                                <span class="cursor-pointer px-2 py-1 rounded bg-blue-50 text-blue-600">日</span>
+                                <span class="cursor-pointer px-2 py-1 rounded text-gray-500 hover:bg-gray-50">周</span>
+                                <span class="cursor-pointer px-2 py-1 rounded text-gray-500 hover:bg-gray-50">月</span>
+                            </div>
+                        </div>
+                        <!-- 趋势图占位符 -->
+                        <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="w-full h-64 rounded-lg overflow-hidden">
+                                    <!-- 这里用一个简单的SVG绘制趋势图 -->
+                                    <svg width="100%" height="100%" viewBox="0 0 800 300" preserveAspectRatio="none">
+                                        <path d="M0,240 C50,230 100,220 150,180 C200,140 250,100 300,120 C350,140 400,180 450,160 C500,140 550,100 600,80 C650,60 700,70 750,60 L800,60 L800,300 L0,300 Z" fill="#EBF5FF" stroke="none"></path>
+                                        <path d="M0,240 C50,230 100,220 150,180 C200,140 250,100 300,120 C350,140 400,180 450,160 C500,140 550,100 600,80 C650,60 700,70 750,60" fill="none" stroke="#2970FF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+                                        <!-- 添加数据点 -->
+                                        <circle cx="0" cy="240" r="4" fill="#2970FF" />
+                                        <circle cx="150" cy="180" r="4" fill="#2970FF" />
+                                        <circle cx="300" cy="120" r="4" fill="#2970FF" />
+                                        <circle cx="450" cy="160" r="4" fill="#2970FF" />
+                                        <circle cx="600" cy="80" r="4" fill="#2970FF" />
+                                        <circle cx="750" cy="60" r="4" fill="#2970FF" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 mt-2 px-2">
+                            <span>5月10日</span>
+                            <span>5月11日</span>
+                            <span>5月12日</span>
+                            <span>5月13日</span>
+                            <span>5月14日</span>
+                            <span>5月15日</span>
+                            <span>5月16日</span>
+                        </div>
+                    </div>
+
+                    <!-- 满意度分布 -->
+                    <div class="dify-card p-4">
+                        <h3 class="text-md font-medium text-gray-800 mb-4">满意度分布</h3>
+                        <!-- 饼图占位符 -->
+                        <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="w-full h-64 rounded-lg overflow-hidden relative">
+                                    <!-- 简单的SVG饼图 -->
+                                    <svg width="100%" height="100%" viewBox="0 0 200 200">
+                                        <circle cx="100" cy="100" r="80" fill="#ffffff" />
+                                        <!-- 饼图部分 -->
+                                        <path d="M100,100 L100,20 A80,80 0 0,1 160,120 Z" fill="#10B981" /> <!-- 非常满意 -->
+                                        <path d="M100,100 L160,120 A80,80 0 0,1 100,180 Z" fill="#3B82F6" /> <!-- 满意 -->
+                                        <path d="M100,100 L100,180 A80,80 0 0,1 35,150 Z" fill="#FBBF24" /> <!-- 一般 -->
+                                        <path d="M100,100 L35,150 A80,80 0 0,1 20,50 Z" fill="#F43F5E" /> <!-- 不满意 -->
+                                        <path d="M100,100 L20,50 A80,80 0 0,1 100,20 Z" fill="#6B7280" /> <!-- 非常不满意 -->
+                                        <!-- 中心圆形 -->
+                                        <circle cx="100" cy="100" r="40" fill="#ffffff" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 饼图图例 -->
+                        <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                <span>非常满意 (45%)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                                <span>满意 (32%)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
+                                <span>一般 (18%)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                <span>不满意 (5%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 满意度时段分析 -->
+                <div class="mt-6 dify-card p-4">
+                    <h3 class="text-md font-medium text-gray-800 mb-4">满意度时段分析</h3>
+                    <!-- 条形图占位符 -->
+                    <div class="h-48 bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-end justify-between h-32">
+                            <div class="flex flex-col items-center w-full max-w-16">
+                                <div class="bg-blue-500 w-12 rounded-t-md" style="height: 70%"></div>
+                                <span class="text-xs mt-1 text-gray-600">0-3点</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-16">
+                                <div class="bg-blue-500 w-12 rounded-t-md" style="height: 50%"></div>
+                                <span class="text-xs mt-1 text-gray-600">3-6点</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-16">
+                                <div class="bg-blue-500 w-12 rounded-t-md" style="height: 40%"></div>
+                                <span class="text-xs mt-1 text-gray-600">6-9点</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-16">
+                                <div class="bg-blue-500 w-12 rounded-t-md" style="height: 90%"></div>
+                                <span class="text-xs mt-1 text-gray-600">9-12点</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-16">
+                                <div class="bg-blue-500 w-12 rounded-t-md" style="height: 100%"></div>
+                                <span class="text-xs mt-1 text-gray-600">12-15点</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-16">
+                                <div class="bg-blue-500 w-12 rounded-t-md" style="height: 80%"></div>
+                                <span class="text-xs mt-1 text-gray-600">15-18点</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-16">
+                                <div class="bg-blue-500 w-12 rounded-t-md" style="height: 75%"></div>
+                                <span class="text-xs mt-1 text-gray-600">18-21点</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-16">
+                                <div class="bg-blue-500 w-12 rounded-t-md" style="height: 60%"></div>
+                                <span class="text-xs mt-1 text-gray-600">21-24点</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-500 text-center">
+                        高峰期12-15点满意度最高，低谷期6-9点满意度较低
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: 分类别分析 -->
+            <div class="tab-content p-6" id="category-analysis">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 业务类别满意度排名 -->
+                    <div class="dify-card p-4">
+                        <h3 class="text-md font-medium text-gray-800 mb-4">业务类别满意度排名</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">信用卡咨询</span>
+                                    <span>4.8/5</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-green-500 rounded-full" style="width: 96%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">理财产品</span>
+                                    <span>4.7/5</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-green-500 rounded-full" style="width: 94%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">账户管理</span>
+                                    <span>4.5/5</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-green-500 rounded-full" style="width: 90%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">转账汇款</span>
+                                    <span>4.4/5</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-green-500 rounded-full" style="width: 88%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">贷款咨询</span>
+                                    <span>4.1/5</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-blue-500 rounded-full" style="width: 82%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">投诉处理</span>
+                                    <span>3.8/5</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-yellow-400 rounded-full" style="width: 76%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 用户类型满意度对比 -->
+                    <div class="dify-card p-4">
+                        <h3 class="text-md font-medium text-gray-800 mb-4">用户类型满意度对比</h3>
+                        <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                            <!-- 雷达图占位符 -->
+                            <div class="w-full h-full flex items-center justify-center">
+                                <svg width="280" height="280" viewBox="0 0 280 280">
+                                    <!-- 背景网格 -->
+                                    <circle cx="140" cy="140" r="120" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,4" />
+                                    <circle cx="140" cy="140" r="90" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,4" />
+                                    <circle cx="140" cy="140" r="60" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,4" />
+                                    <circle cx="140" cy="140" r="30" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,4" />
+                                    
+                                    <!-- 轴线 -->
+                                    <line x1="140" y1="20" x2="140" y2="260" stroke="#E5E7EB" stroke-width="1" />
+                                    <line x1="20" y1="140" x2="260" y2="140" stroke="#E5E7EB" stroke-width="1" />
+                                    <line x1="60" y1="60" x2="220" y2="220" stroke="#E5E7EB" stroke-width="1" />
+                                    <line x1="60" y1="220" x2="220" y2="60" stroke="#E5E7EB" stroke-width="1" />
+                                    
+                                    <!-- 个人客户数据多边形 -->
+                                    <polygon points="140,40 230,120 190,220 90,220 50,120" fill="rgba(59, 130, 246, 0.2)" stroke="#3B82F6" stroke-width="2" />
+                                    
+                                    <!-- 企业客户数据多边形 -->
+                                    <polygon points="140,60 200,110 170,200 110,200 80,110" fill="rgba(245, 158, 11, 0.2)" stroke="#F59E0B" stroke-width="2" />
+                                    
+                                    <!-- 数据点 -->
+                                    <circle cx="140" cy="40" r="4" fill="#3B82F6" />
+                                    <circle cx="230" cy="120" r="4" fill="#3B82F6" />
+                                    <circle cx="190" cy="220" r="4" fill="#3B82F6" />
+                                    <circle cx="90" cy="220" r="4" fill="#3B82F6" />
+                                    <circle cx="50" cy="120" r="4" fill="#3B82F6" />
+                                    
+                                    <circle cx="140" cy="60" r="4" fill="#F59E0B" />
+                                    <circle cx="200" cy="110" r="4" fill="#F59E0B" />
+                                    <circle cx="170" cy="200" r="4" fill="#F59E0B" />
+                                    <circle cx="110" cy="200" r="4" fill="#F59E0B" />
+                                    <circle cx="80" cy="110" r="4" fill="#F59E0B" />
+                                    
+                                    <!-- 轴标签 -->
+                                    <text x="140" y="15" text-anchor="middle" font-size="10" fill="#6B7280">响应速度</text>
+                                    <text x="265" y="140" text-anchor="start" font-size="10" fill="#6B7280">问题解决</text>
+                                    <text x="215" y="225" text-anchor="middle" font-size="10" fill="#6B7280">专业程度</text>
+                                    <text x="65" y="225" text-anchor="middle" font-size="10" fill="#6B7280">服务态度</text>
+                                    <text x="15" y="140" text-anchor="end" font-size="10" fill="#6B7280">流程体验</text>
+                                </svg>
+                            </div>
+                        </div>
+                        <!-- 图例 -->
+                        <div class="flex justify-center mt-2 space-x-6 text-sm">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                                <span>个人客户</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                                <span>企业客户</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 渠道满意度对比 -->
+                <div class="mt-6 dify-card p-4">
+                    <h3 class="text-md font-medium text-gray-800 mb-4">渠道满意度对比</h3>
+                    <div class="h-48 bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-end justify-between h-32">
+                            <div class="flex flex-col items-center w-full max-w-20">
+                                <div class="bg-blue-500 w-16 rounded-t-md" style="height: 95%"></div>
+                                <span class="text-xs mt-1 text-gray-600 text-center">手机银行</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-20">
+                                <div class="bg-blue-500 w-16 rounded-t-md" style="height: 90%"></div>
+                                <span class="text-xs mt-1 text-gray-600 text-center">微信银行</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-20">
+                                <div class="bg-blue-500 w-16 rounded-t-md" style="height: 88%"></div>
+                                <span class="text-xs mt-1 text-gray-600 text-center">网上银行</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-20">
+                                <div class="bg-blue-500 w-16 rounded-t-md" style="height: 85%"></div>
+                                <span class="text-xs mt-1 text-gray-600 text-center">智能柜员机</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-20">
+                                <div class="bg-blue-500 w-16 rounded-t-md" style="height: 82%"></div>
+                                <span class="text-xs mt-1 text-gray-600 text-center">电话银行</span>
+                            </div>
+                            <div class="flex flex-col items-center w-full max-w-20">
+                                <div class="bg-blue-500 w-16 rounded-t-md" style="height: 75%"></div>
+                                <span class="text-xs mt-1 text-gray-600 text-center">网点柜台</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-500 text-center">
+                        手机银行渠道满意度最高，网点柜台满意度相对较低
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: 影响因素 -->
+            <div class="tab-content p-6" id="impact-factors">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 满意度关键影响因素 -->
+                    <div class="dify-card p-4">
+                        <h3 class="text-md font-medium text-gray-800 mb-4">满意度关键影响因素</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">回答准确性</span>
+                                    <span>影响度: 高</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-red-500 rounded-full" style="width: 95%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">响应速度</span>
+                                    <span>影响度: 高</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-red-500 rounded-full" style="width: 90%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">解决问题能力</span>
+                                    <span>影响度: 高</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-red-500 rounded-full" style="width: 88%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">语言表达清晰</span>
+                                    <span>影响度: 中</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-yellow-400 rounded-full" style="width: 75%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">内容个性化</span>
+                                    <span>影响度: 中</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-yellow-400 rounded-full" style="width: 65%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium">界面友好度</span>
+                                    <span>影响度: 低</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-green-500 rounded-full" style="width: 45%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 不满意原因分析 -->
+                    <div class="dify-card p-4">
+                        <h3 class="text-md font-medium text-gray-800 mb-4">不满意原因分布</h3>
+                        <!-- 饼图占位符 -->
+                        <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="w-full h-64 rounded-lg overflow-hidden relative">
+                                    <!-- 简单的SVG饼图 -->
+                                    <svg width="100%" height="100%" viewBox="0 0 200 200">
+                                        <circle cx="100" cy="100" r="80" fill="#ffffff" />
+                                        <!-- 饼图部分 -->
+                                        <path d="M100,100 L100,20 A80,80 0 0,1 175,75 Z" fill="#F87171" /> <!-- 回答不准确 -->
+                                        <path d="M100,100 L175,75 A80,80 0 0,1 150,165 Z" fill="#FBBF24" /> <!-- 未解决问题 -->
+                                        <path d="M100,100 L150,165 A80,80 0 0,1 40,130 Z" fill="#60A5FA" /> <!-- 响应太慢 -->
+                                        <path d="M100,100 L40,130 A80,80 0 0,1 65,30 Z" fill="#34D399" /> <!-- 表达不清晰 -->
+                                        <path d="M100,100 L65,30 A80,80 0 0,1 100,20 Z" fill="#A78BFA" /> <!-- 其他原因 -->
+                                        <!-- 中心圆形 -->
+                                        <circle cx="100" cy="100" r="40" fill="#ffffff" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 饼图图例 -->
+                        <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-red-400 rounded-full mr-2"></div>
+                                <span>回答不准确 (38%)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
+                                <span>未解决问题 (27%)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-blue-400 rounded-full mr-2"></div>
+                                <span>响应太慢 (18%)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-400 rounded-full mr-2"></div>
+                                <span>表达不清晰 (12%)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-purple-400 rounded-full mr-2"></div>
+                                <span>其他原因 (5%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 相关性分析 -->
+                <div class="mt-6 dify-card p-4">
+                    <h3 class="text-md font-medium text-gray-800 mb-4">满意度与业务指标相关性</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">业务指标</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">相关系数</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">相关强度</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">影响方向</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">用户留存率</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.85</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">强相关</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="text-green-600">正向</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">交易完成率</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.78</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">强相关</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="text-green-600">正向</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">活跃用户数</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.72</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">强相关</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="text-green-600">正向</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">客户投诉率</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-0.81</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">强相关</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="text-red-600">负向</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">人工转接率</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-0.65</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">中等相关</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="text-red-600">负向</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: 改进建议 -->
+            <div class="tab-content p-6" id="improvement-suggestions">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 优先改进项 -->
+                    <div class="dify-card p-4 col-span-1 md:col-span-2 lg:col-span-1">
+                        <h3 class="text-md font-medium text-gray-800 mb-4">优先改进项</h3>
+                        <div class="space-y-4">
+                            <div class="p-3 bg-red-50 border border-red-100 rounded-lg">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h4 class="text-sm font-medium text-red-800">投诉处理流程优化</h4>
+                                        <p class="mt-1 text-xs text-red-700">当前满意度: 3.8/5，建议优化投诉响应时间与解决方案质量</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-yellow-50 border border-yellow-100 rounded-lg">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h4 class="text-sm font-medium text-yellow-800">贷款咨询回答准确性</h4>
+                                        <p class="mt-1 text-xs text-yellow-700">当前满意度: 4.1/5，建议提升模型在金融政策与产品细节方面的准确性</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-yellow-50 border border-yellow-100 rounded-lg">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h4 class="text-sm font-medium text-yellow-800">早晨时段响应速度</h4>
+                                        <p class="mt-1 text-xs text-yellow-700">6-9点时段满意度低，建议优化该时段的系统负载与响应机制</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 智能建议 -->
+                    <div class="dify-card p-4 col-span-1 md:col-span-2 lg:col-span-2 flex flex-col">
+                        <h3 class="text-md font-medium text-gray-800 mb-4">AI生成改进建议</h3>
+                        <div class="bg-blue-50 p-4 rounded-lg flex-grow">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-medium text-blue-800">满意度提升策略分析</h4>
+                                    <div class="mt-2 text-sm text-blue-700 space-y-2">
+                                        <p>基于近90天数据分析，建议从以下几个方面提升满意度：</p>
+                                        <ol class="list-decimal pl-5 space-y-1">
+                                            <li>
+                                                <span class="font-medium">模型响应质量提升</span>：针对投诉处理和贷款咨询两个低满意度场景，建议通过增加相关训练数据和优化提示词模板来提高回答准确性。数据显示准确性是影响满意度的首要因素(影响度95%)。
+                                            </li>
+                                            <li>
+                                                <span class="font-medium">峰谷资源调配优化</span>：早晨6-9点满意度低谷期与中午12-15点满意度高峰期形成鲜明对比，建议调整计算资源分配，确保早晨时段有足够响应能力。
+                                            </li>
+                                            <li>
+                                                <span class="font-medium">知识库更新机制</span>：建立银行产品和政策变动的快速响应机制，确保AI系统在政策变化后24小时内更新知识库。当前数据显示政策变动后满意度会出现2-3天的明显下滑。
+                                            </li>
+                                            <li>
+                                                <span class="font-medium">企业客户服务增强</span>：雷达图显示企业客户在专业程度和流程体验两项评分较低，建议针对企业客户开发专属服务流程和知识库。
+                                            </li>
+                                            <li>
+                                                <span class="font-medium">反馈闭环流程优化</span>：用户反馈后平均需要7天才能看到系统改进，建议建立48小时快速响应机制，让用户感知到反馈的价值。
+                                            </li>
+                                        </ol>
+                                        <p class="mt-3">预计实施上述措施后，总体满意度有望从当前的4.6提升至4.8，NPS提升8-10个百分点。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 历史趋势对比 -->
+                <div class="mt-6 dify-card p-4">
+                    <h3 class="text-md font-medium text-gray-800 mb-4">满意度提升效果跟踪</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">改进措施</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">实施日期</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">前满意度</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">后满意度</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提升幅度</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">信用卡知识库更新</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-04-10</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">4.5</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">4.8</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="text-green-600">+0.3</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已完成</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">用户留存率</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已完成</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">投诉处理流程优化</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-05</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3.8</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">4.2</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="text-green-600">+0.4</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">进行中</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">企业客户专属服务流程</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">计划中</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">4.1</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="text-gray-500">待评估</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">计划中</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab切换逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            // 标签切换功能
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除所有active类
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // 为当前点击的标签和对应内容添加active类
+                    button.classList.add('active');
+                    const tabId = button.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+
+            // 数据导出功能模拟
+            const exportButton = document.querySelector('button:contains("导出报告")');
+            if (exportButton) {
+                exportButton.addEventListener('click', function() {
+                    alert('报告导出功能已触发，正在准备数据...');
+                });
+            }
+
+            // 创建满意度调查按钮模拟
+            const createSurveyButton = document.querySelector('button:contains("创建满意度调查")');
+            if (createSurveyButton) {
+                createSurveyButton.addEventListener('click', function() {
+                    alert('正在创建新的满意度调查...');
+                });
+            }
+
+            // 日期选择器逻辑
+            const dateSelector = document.querySelector('select');
+            if (dateSelector) {
+                dateSelector.addEventListener('change', function() {
+                    const selectedValue = this.value;
+                    console.log('选择的时间范围:', selectedValue);
+                    // 这里可以添加根据选择的时间范围刷新数据的逻辑
+                });
+            }
+
+            // 为趋势图的时间粒度选择添加交互
+            const timeGranularityButtons = document.querySelectorAll('.flex.space-x-2.text-sm span');
+            if (timeGranularityButtons.length > 0) {
+                timeGranularityButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        timeGranularityButtons.forEach(btn => {
+                            btn.classList.remove('bg-blue-50', 'text-blue-600');
+                            btn.classList.add('text-gray-500', 'hover:bg-gray-50');
+                        });
+                        
+                        this.classList.remove('text-gray-500', 'hover:bg-gray-50');
+                        this.classList.add('bg-blue-50', 'text-blue-600');
+                        
+                        const granularity = this.innerText;
+                        console.log('选择的时间粒度:', granularity);
+                        // 这里可以添加根据时间粒度刷新图表的逻辑
+                    });
+                });
+            }
+        });
+
+        // Polyfill for :contains selector (since it's non-standard)
+        if (!Element.prototype.matches) {
+            Element.prototype.matches = Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
+        }
+        
+        if (!NodeList.prototype.forEach) {
+            NodeList.prototype.forEach = Array.prototype.forEach;
+        }
+        
+        if (!Element.prototype.contains) {
+            Element.prototype.contains = function(text) {
+                return this.textContent.includes(text);
+            };
+        }
+
+        // Custom querySelector to find elements containing specific text
+        Document.prototype.querySelector = (function(querySelector) {
+            return function(selector) {
+                if (selector.includes(':contains(')) {
+                    const parts = selector.match(/([^:]+):contains\(["']?([^)"']+)["']?\)/);
+                    if (parts) {
+                        const [_, elementSelector, text] = parts;
+                        const elements = this.querySelectorAll(elementSelector);
+                        return Array.from(elements).find(el => el.textContent.includes(text)) || null;
+                    }
+                }
+                return querySelector.call(this, selector);
+            };
+        })(Document.prototype.querySelector);
+    </script>
+</body>
+
+</html>

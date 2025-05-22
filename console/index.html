@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="overflow: hidden;">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .menu-item {
+            border-radius: 8px;
+            margin: 2px 8px;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover {
+            background-color: var(--dify-hover);
+        }
+
+        .menu-item.active {
+            background-color: var(--dify-active);
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+
+        .menu-subitem {
+            padding-left: 10px;
+            border-radius: 6px;
+        }
+
+        .menu-subitem:hover {
+            background-color: var(--dify-hover);
+        }
+
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .submenu.open {
+            max-height: 500px;
+        }
+
+        .top-nav-item {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .top-nav-item:hover {
+            color: var(--dify-primary);
+        }
+
+        .top-nav-item.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+
+        .top-nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+
+        .menu-container {
+            display: none;
+        }
+
+        .menu-container.active {
+            display: block;
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .dify-sidebar {
+            background-color: var(--dify-sidebar-bg);
+            /* border-right: 1px solid var(--dify-border); */
+        }
+    </style>
+</head>
+
+<body class="bg-white font-sans" style="overflow: hidden;">
+    <div class="flex flex-col h-screen overflow-hidden">
+        <!-- Top Navigation Bar -->
+        <div class="bg-white shadow-sm border-b border-gray-100">
+            <div> <!-- <div class="container mx-auto"> -->
+                <div class="flex items-center justify-between h-16 px-4">
+                    <!-- Left: Logo and Title -->
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 mr-4">
+                            <img src="/console/img/agreeLogo.png" alt="赞同科技" class="h-8" />
+                            <!-- <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="32" height="32" rx="8" fill="#2970FF"/>
+                                <path d="M22 10H10V22H22V10Z" stroke="white" stroke-width="2"/>
+                                <path d="M16 10V22" stroke="white" stroke-width="2"/>
+                                <path d="M10 16H22" stroke="white" stroke-width="2"/>
+                            </svg> -->
+                        </div>
+                        <div class="hidden md:block">
+                            <h1 class="text-lg font-medium text-gray-800">智言银行后台管理端</h1>
+                        </div>
+                    </div>
+
+                    <!-- Middle: Main Navigation -->
+                    <div class="hidden md:flex items-center space-x-10">
+                        <div class="top-nav-item active px-3 py-5 text-gray-800 font-medium" data-target="development">
+                            开发
+                        </div>
+                        <div class="top-nav-item px-3 py-5 text-gray-600 font-medium" data-target="maintenance">
+                            运维
+                        </div>
+                        <div class="top-nav-item px-3 py-5 text-gray-600 font-medium" data-target="operations">
+                            运营
+                        </div>
+                    </div>
+
+                    <!-- Right: Search and User -->
+                    <div class="flex items-center">
+                        <div class="px-4 py-2 mr-4 flex items-center text-gray-600 hover:text-gray-900">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Left Sidebar - Changes based on top navigation selection -->
+            <div class="dify-sidebar w-72 flex-shrink-0 mt-4 ml-4 mb-4 rounded-xl">
+                <!-- Development Menu -->
+                <div class="menu-container active h-full overflow-y-auto" id="development-menu">
+                    <nav class="mt-4">
+                        <div class="menu-header px-4 py-3 text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                            开发侧
+                        </div>
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="model-center">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>模型中心 Models</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="model-center-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="model-management">模型管理 LLM</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="model-evaluation">模型评估</div>
+                        </div>
+
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="model-optimization">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <!-- 更换为齿轮/设置图标，更适合优化功能 -->
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                                    </path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </span>
+                            <span>模型优化</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="model-optimization-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="model-distillation">模型蒸馏 Distillation</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="model-training">模型微调 Fine-tuning</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="inference-optimization">推理优化 Inference</div>
+                        </div>
+
+
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="external-services">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>外部服务</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="external-services-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="mcp-client">MCP Client</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="api-connection">API 连接</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="service-registry">服务注册</div>
+                        </div>
+
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="ability-center">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </span>
+                            <span>智能体中心 Agents</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="ability-center-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="agent-management">智能体管理</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="agent-testing">智能体评测</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="prompt-template">提示词工程 Prompting</div>
+                        </div>
+
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer active"
+                            data-menu="dynamic-orchestration">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>流程编排 Orchestration</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10 open" id="dynamic-orchestration-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="dynamic-management">流程设计</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="dynamic-mapping">节点配置</div>
+                        </div>
+
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="component-dev">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>LUI 交互组件</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="component-dev-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="card-dev">组件开发</div>
+                        </div>
+
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="data-process">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>知识库管理 RAG</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="data-process-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="knowledge">内容管理</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="embedding-models">向量模型（Embedding/Rerank）</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="qa-generation">问答对生成</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="qa-feedback">问答对反馈</div>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Maintenance Menu -->
+                <div class="menu-container h-full overflow-y-auto" id="maintenance-menu">
+                    <nav class="mt-4">
+                        <div class="menu-header px-4 py-3 text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                            运维侧
+                        </div>
+
+
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="security-management">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>安全护盾</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="security-management-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="security-overview">安全日志</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="security-private">提示词护盾</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="security-prompt">敏感词</div>
+                        </div>
+
+
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="operation-monitoring">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>监控中心</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="operation-monitoring-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="service-monitor">服务监控</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="resource-monitor">资源监控</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="alert-management">告警管理</div>
+                        </div>
+
+
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="service-management">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>资源管理</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="service-management-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="service-deploy">部署管理</div>
+                        </div>
+
+
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="user-management">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>权限管理</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="user-management-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer">用户管理
+                            </div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer">权限配置
+                            </div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer">角色管理
+                            </div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer">租户管理
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Operations Menu -->
+                <div class="menu-container h-full overflow-y-auto" id="operations-menu">
+                    <nav class="mt-4">
+                        <div class="menu-header px-4 py-3 text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                            运营侧
+                        </div>
+
+                        <!-- 用户价值 -->
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="user-experience">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>用户价值</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="user-experience-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="qa-analysis">问答分析</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="user-feedback">用户反馈</div>
+                            <!-- <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="user-profile">用户画像</div> -->
+
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="user-satisfy">满意度分析</div>
+                        </div>
+
+                        <!-- 业务运营 -->
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="business-operations">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>业务运营</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="business-operations-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="usage-metrics">使用指标</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="qa-performance">问答效能</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="operation-logs">操作记录</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="ai-performance">AI表现</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="roi-analysis">ROI分析</div>
+                        </div>
+
+                        <!-- 风险合规 -->
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="risk-compliance">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>风险合规</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="risk-compliance-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="attack-defense">攻击防护</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="compliance-audit">合规审计</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="transaction-control">交易风控</div>
+                        </div>
+
+                        <!-- 决策洞察 -->
+                        <div class="menu-item flex items-center px-4 py-2 text-gray-700 cursor-pointer"
+                            data-menu="decision-insights">
+                            <span class="mr-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span>决策洞察</span>
+                            <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="submenu pl-10" id="decision-insights-submenu">
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="trend-analysis">趋势分析</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="market-insight">市场洞察</div>
+                            <div class="menu-subitem py-2 text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+                                data-id="prediction-model">预测模型</div>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <!-- Content Area -->
+                <div class="flex-1 overflow-auto bg-white p-4">
+                    <!-- IFRAME Content Container -->
+                    <div id="iframe-container" class="w-full h-full hidden">
+                        <iframe id="content-iframe" src="" class="w-full h-full border-0 rounded-xl"
+                            frameborder="0"></iframe>
+                    </div>
+
+                    <!-- Default Dashboard Content -->
+                    <div id="default-content">
+                        <div class="mb-6">
+                            <h1 class="text-2xl font-semibold text-gray-800">AI动态业务编排</h1>
+                            <p class="text-gray-600 mt-1">基于LUI（大语言模型用户界面）的动态流程管理系统</p>
+                        </div>
+
+                        <!-- Dashboard Preview -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Card 1 -->
+                            <div class="dify-card p-6 bg-white">
+                                <div class="flex items-center justify-between">
+                                    <h2 class="text-lg font-medium text-gray-800">业务流程</h2>
+                                    <span class="dify-tag bg-blue-50 text-blue-600">5 新增</span>
+                                </div>
+                                <div class="mt-4 flex items-end justify-between">
+                                    <div>
+                                        <p class="text-3xl font-semibold text-gray-800">24</p>
+                                        <p class="text-sm text-gray-500">已配置流程</p>
+                                    </div>
+                                    <div
+                                        class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 2 -->
+                            <div class="dify-card p-6 bg-white">
+                                <div class="flex items-center justify-between">
+                                    <h2 class="text-lg font-medium text-gray-800">AI模型</h2>
+                                    <span class="dify-tag bg-green-50 text-green-600">正常</span>
+                                </div>
+                                <div class="mt-4 flex items-end justify-between">
+                                    <div>
+                                        <p class="text-3xl font-semibold text-gray-800">8</p>
+                                        <p class="text-sm text-gray-500">运行中模型</p>
+                                    </div>
+                                    <div
+                                        class="flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-600">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 3 -->
+                            <div class="dify-card p-6 bg-white">
+                                <div class="flex items-center justify-between">
+                                    <h2 class="text-lg font-medium text-gray-800">用户会话</h2>
+                                    <span class="dify-tag bg-yellow-50 text-yellow-600">+12%</span>
+                                </div>
+                                <div class="mt-4 flex items-end justify-between">
+                                    <div>
+                                        <p class="text-3xl font-semibold text-gray-800">1,254</p>
+                                        <p class="text-sm text-gray-500">今日会话数</p>
+                                    </div>
+                                    <div
+                                        class="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-50 text-yellow-600">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content Panel -->
+                        <div class="mt-8 dify-card bg-white overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-100">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-medium text-gray-800">动态业务流程列表</h3>
+                                    <button
+                                        class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                                        新建流程
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full">
+                                        <thead>
+                                            <tr class="border-b border-gray-200">
+                                                <th
+                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    流程名称</th>
+                                                <th
+                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    类型</th>
+                                                <th
+                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    状态</th>
+                                                <th
+                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    版本</th>
+                                                <th
+                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    更新时间</th>
+                                                <th
+                                                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200">
+                                            <tr>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">转账流程</div>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-500">转账汇款</div>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已上线</span>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">v2.1</td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">2025-04-20
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                                    <a href="#" class="text-blue-600 hover:text-blue-900">复制</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">企业转账流程</div>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-500">转账汇款</div>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已上线</span>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">v1.5</td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">2025-03-15
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                                    <a href="#" class="text-blue-600 hover:text-blue-900">复制</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">跨境转账流程</div>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-500">转账汇款</div>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">测试中</span>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">v0.9</td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-01
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                                    <a href="#" class="text-blue-600 hover:text-blue-900">复制</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">理财投资流程</div>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-500">理财投资</div>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已上线</span>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">v1.2</td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">2025-04-10
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                                    <a href="#" class="text-blue-600 hover:text-blue-900">复制</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">信用卡还款流程</div>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-500">信用卡</div>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已上线</span>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">v2.0</td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">2025-04-25
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                                    <a href="#" class="text-blue-600 hover:text-blue-900">复制</a>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // URL Mapping for menu items
+            const menuURLMapping = {
+                // Development section
+                "model-center": "/development/model-center/model-management",
+
+                "model-optimization": "/development/model-optimization/model-distillation",
+
+                "ability-center": "/development/ability-center/agent-management",
+
+                "component-dev": "/development/component-dev/card-dev",
+                "data-process": "/development/data-process/knowledge",
+
+                "dynamic-orchestration": "/development/dynamic-orchestration/dynamic-orchestration-management",
+
+
+                //external-services
+                "external-services": "/development/external-services/mcp-client",
+
+
+
+                // Maintenance section
+                "operation-monitoring": "/maintenance/operation-monitoring/service-monitor",
+                "security-management": "/maintenance/security-management/index",
+                "service-management": "/maintenance/service-management/service-deploy",
+
+
+
+
+
+                // Operations section
+                "data-analysis": "/operations/data-analysis/data-analysis-usage",
+                "user-management": "/operations/user-management",
+                "business-management": "/operations/business-management",
+
+                "user-experience": "/operations/user-experience/qa-analysis"
+            };
+
+            // Submenu URL Mapping
+            const submenuURLMapping = {
+                // Development submenu items
+                "model-management": "/development/model-center/model-management",
+                "model-training": "/development/model-center/model-training",
+                "model-deployment": "/development/model-center/model-deployment",
+                "model-evaluation": "/development/model-center/model-evaluation",
+
+
+                "model-distillation": "/development/model-optimization/model-distillation",
+                "inference-optimization": "/development/model-optimization/inference-optimization",
+                "service-registry": "/development/model-optimization/service-registry",
+
+
+                "agent-management": "/development/ability-center/agent-management",
+                "agent-testing": "/development/ability-center/agent-testing",
+                "prompt-template": "/development/ability-center/prompt-template",
+
+
+                "mcp-client": "/development/external-services/mcp-client",
+                "api-connection": "/development/external-services/api-connection",
+
+                "dynamic-management": "/development/dynamic-orchestration/dynamic-orchestration-management",
+                "dynamic-mapping": "/development/dynamic-orchestration/dynamic-orchestration-mapping",
+
+
+                "knowledge": "/development/data-process/knowledge",
+                "qa-generation": "/development/data-process/qa-generation",
+                "qa-feedback": "/development/data-process/qa-feedback",
+                "embedding-models": "/development/data-process/embedding-models",
+
+
+                "security-overview": "/maintenance/security-management/index",
+                "security-private": "/maintenance/security-management/private",
+                "security-input": "/maintenance/security-management/input",
+                "security-output": "/maintenance/security-management/output",
+                "security-prompt": "/maintenance/security-management/prompt",
+
+                "service-monitor": "/maintenance/operation-monitoring/service-monitor",
+                "resource-monitor": "/maintenance/operation-monitoring/resource-monitor",
+                "alert-management": "/maintenance/operation-monitoring/alert-management",
+
+                "service-deploy": "/maintenance/service-management/service-deploy",
+                "service-config": "/maintenance/service-management/service-config",
+
+                "flow-configuration": "/development/dynamic-orchestration/flow-configuration",
+                "node-configuration": "/development/dynamic-orchestration/node-configuration",
+                "flow-visualization": "/development/dynamic-orchestration/flow-visualization",
+                "rule-engine": "/development/dynamic-orchestration/rule-engine",
+
+                // More submenu mappings can be added here
+                "card-dev": "/development/component-dev/card-dev",
+
+
+
+                "qa-analysis": "/operations/user-experience/qa-analysis",
+                "user-feedback": "/operations/user-experience/user-feedback-v2",
+                // "user-experience":"/operations/user-experience/user-experience",
+                "user-satisfy": "/operations/user-experience/user-satisfy-v2",
+
+
+                "data-analysis-usage": "/operations/data-analysis/data-analysis-usage",
+                "data-analysis-sense": "/operations/user-experience/user-satisfy",
+
+                "usage-metrics":"/operations/business-operations/usage-metrics",
+                "qa-performance":"/operations/business-operations/qa-performance",
+                "operation-logs":"/operations/business-operations/operation-logs",
+
+
+                "performance": "/operations/data-analysis/performance",
+                "hotspot": "/operations/data-analysis/hotspot",
+                "trend": "/operations/data-analysis/trend",
+                "hit-quantity-analysis": "/operations/data-analysis/trend",
+
+                "ai-performance":"/operations/business-operations/ai-performance"
+            };
+
+            // Toggle submenu within each menu section and load iframe
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    const menuId = this.getAttribute('data-menu');
+                    const submenu = document.getElementById(`${menuId}-submenu`);
+
+                    // Toggle active class
+                    document.querySelectorAll('.menu-item').forEach(i => {
+                        if (i !== this) {
+                            i.classList.remove('active');
+                        }
+                    });
+                    this.classList.toggle('active');
+
+                    // Toggle submenu
+                    if (submenu) {
+                        if (submenu.classList.contains('open')) {
+                            submenu.classList.remove('open');
+                        } else {
+                            // Close all other submenus in the same menu container
+                            const parentContainer = this.closest('.menu-container');
+                            parentContainer.querySelectorAll('.submenu').forEach(sub => {
+                                if (sub !== submenu) {
+                                    sub.classList.remove('open');
+                                }
+                            });
+                            submenu.classList.add('open');
+                        }
+                    }
+
+                    // Load iframe if we have a URL mapping for this menu
+                    if (menuURLMapping[menuId]) {
+                        loadIframe(menuURLMapping[menuId]);
+                    }
+
+                    // Only stop propagation if we clicked directly on the item
+                    // and not on a child element
+                    if (e.target === this || e.target.classList.contains('menu-item') ||
+                        e.target.parentElement === this || e.target.parentElement.parentElement === this) {
+                        e.stopPropagation();
+                    }
+                });
+            });
+
+            // Add click event for submenu items
+            document.querySelectorAll('.menu-subitem').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.stopPropagation(); // Prevent triggering parent menu item click
+
+                    // Get submenu item id (we'll need to add data attributes for these)
+                    const itemId = this.getAttribute('data-id');
+
+                    // Highlight this submenu item
+                    document.querySelectorAll('.menu-subitem').forEach(subitem => {
+                        subitem.classList.remove('active-subitem');
+                    });
+                    this.classList.add('active-subitem');
+
+                    // Load iframe if we have a URL mapping
+                    if (itemId && submenuURLMapping[itemId]) {
+                        loadIframe(submenuURLMapping[itemId]);
+                    } else {
+                        // If no specific mapping, use the content of the submenu item
+                        const submenuContent = this.innerText.trim().toLowerCase().replace(/\s+/g, '-');
+                        loadIframe(`/pages/${submenuContent}`);
+                    }
+                });
+            });
+
+            // Function to load content in iframe
+            function loadIframe(url) {
+                // Hide default content and show iframe
+                document.getElementById('default-content').style.display = 'none';
+                document.getElementById('iframe-container').style.display = 'block';
+
+                // Set iframe src
+                const iframe = document.getElementById('content-iframe');
+
+                // Add a loading indicator if needed
+                // iframe.classList.add('loading');
+
+                // Set the src attribute to load the URL
+                iframe.src = url + '.html';
+
+                // You could also add an event listener for when loading is complete
+                iframe.onload = function () {
+                    // iframe.classList.remove('loading');
+                };
+            }
+
+            // Top navigation switching
+            document.querySelectorAll('.top-nav-item').forEach(item => {
+                item.addEventListener('click', function () {
+                    const target = this.getAttribute('data-target');
+
+                    // Update active state for top nav items
+                    document.querySelectorAll('.top-nav-item').forEach(navItem => {
+                        navItem.classList.remove('active');
+                    });
+                    this.classList.add('active');
+
+                    // Show appropriate menu container
+                    document.querySelectorAll('.menu-container').forEach(container => {
+                        container.classList.remove('active');
+                    });
+                    document.getElementById(`${target}-menu`).classList.add('active');
+
+                    // Reset to default dashboard content when switching tabs
+                    // document.getElementById('default-content').style.display = 'block';
+                    // document.getElementById('iframe-container').style.display = 'none';
+
+                    document.getElementById(`${target}-menu`).querySelector('[data-menu]').click();
+                });
+            });
+
+            // Initialize page with dynamic-orchestration item active
+            // document.querySelector('[data-menu="dynamic-orchestration"]').classList.add('active');
+            // document.getElementById('dynamic-orchestration-submenu').classList.add('open');
+            document.querySelector('[data-menu="model-center"]').click();
+        </script>
+</body>
+
+</html>

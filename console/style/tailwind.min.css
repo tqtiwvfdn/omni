@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>赞同研究院一号通</title>
+    <script src="./script/iconfont.js"></script>
+    <link rel="stylesheet" type="text/css" href="./style/tailwind.min.css" />
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-light: #5e9ed6;
+            --primary-dark: #004080;
+            --background: #ffffff;
+            --surface: #ffffff;
+            --text: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --border: #d2d2d7;
+            --error: #ff3b30;
+            --success: #34c759;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            color: var(--text);
+            background-color: var(--background);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Only prevent horizontal scrolling, allow vertical scrolling */
+        html {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .page {
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+        }
+
+        .header {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 1.5rem 2rem;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 380px;
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        .qr-section {
+            margin-bottom: 2rem;
+        }
+
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+            background: #f5f5f7;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .qr-text {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: var(--border);
+        }
+
+        .divider-text {
+            padding: 0 0.75rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .form-group {
+            /* margin-bottom: 1rem; */
+        }
+
+        .input {
+            width: 100%;
+            height: 48px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 0 1rem;
+            font-size: 1rem;
+            color: var(--text);
+            background-color: var(--surface);
+            transition: all 0.2s ease;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
+        }
+
+        .error-text {
+            color: var(--error);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            min-height: 1rem;
+        }
+
+        .button {
+            width: 100%;
+            height: 48px;
+            border-radius: 8px;
+            background-color: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .unlock-button {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            background-color: #f5f5f7;
+            color: var(--text);
+            font-size: 0.875rem;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .unlock-button:hover {
+            background-color: #e8e8ed;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Loading spinner */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s ease-in-out infinite;
+            margin-right: 0.5rem;
+            vertical-align: text-bottom;
+        }
+
+        /* Desktop styles */
+        @media (min-width: 768px) {
+            .page {
+                flex-direction: row;
+                padding: 2rem;
+                min-height: 100vh;
+            }
+
+            .header {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                width: 50%;
+                text-align: left;
+                padding: 3rem;
+            }
+
+            .logo {
+                font-size: 2.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .subtitle {
+                font-size: 1.25rem;
+                max-width: 80%;
+            }
+
+            .content {
+                width: 50%;
+                padding: 2rem;
+            }
+
+            .card {
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            }
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: #000000;
+                --surface: #1c1c1e;
+                --text: #ffffff;
+                --text-secondary: #98989d;
+                --border: #38383c;
+            }
+
+            .qr-container {
+                background: #2c2c2e;
+            }
+
+            .unlock-button {
+                background-color: #2c2c2e;
+            }
+
+            .unlock-button:hover {
+                background-color: #3a3a3c;
+            }
+
+            .card {
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <!-- Header section -->
+        <header class="header">
+            <h1 class="logo">研究院"一号通"</h1>
+            <p class="subtitle">统一安全认证服务</p>
+        </header>
+
+        <!-- Content section -->
+        <main class="content">
+            <div class="card">
+                <!-- QR Section -->
+                <div class="qr-section">
+                    <div class="qr-container">
+                        <div id="wx_reg"></div>
+                    </div>
+                    <p class="qr-text">使用企业微信扫码快速登录</p>
+                </div>
+
+                <!-- Divider -->
+                <div class="divider">
+                    <span class="divider-text">或使用账号密码登录</span>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" onsubmit="return loginAction()">
+                    <div class="form-group">
+                        <input id="account" name="account" type="text" 
+                               class="input" 
+                               placeholder="OA账号、邮箱或认证中心账号">
+                        <div id="accountError" class="error-text"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <input id="password" name="password" type="password" 
+                               class="input" 
+                               placeholder="密码">
+                        <div id="passwordError" class="error-text"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <div id="loginErrorMsg" class="error-text"></div>
+                        <div id="unlockBtnContainer" class="hidden text-center mt-2 mb-2">
+                            <a href="unlock.html" class="unlock-button">
+                                自助重置认证中心密码
+                            </a>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="loginBtn" class="button">
+                        登录
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Claude 生成声明 -->
+    <div style="position: fixed; bottom: 12px; right: 12px; font-size: 12px; color: var(--text-secondary); opacity: 0.7; text-align: right;">
+        本页面由 Anthropic Claude 3.7 Sonnet 生成
+    </div>
+
+    <script src="./script/wwLogin-1.0.0.js"></script>
+    <script src="./script/jssm4.js"></script>
+    <script src="./script/util.js"></script>
+    <script>
+        (function (global) {
+            const LOGIN_API = './auth/sm4/login';
+            const $loginUsername = document.getElementById('account');
+            const $loginPassword = document.getElementById('password');
+            const $loginMsgBox = document.getElementById('loginErrorMsg');
+            const $loginBtn = document.getElementById('loginBtn');
+            const $unlockBtnContainer = document.getElementById('unlockBtnContainer');
+            const $accountError = document.getElementById('accountError');
+            const $passwordError = document.getElementById('passwordError');
+            
+            const sKey = util.getSM4Key() || Math.pow(2, Math.floor(Math.random() * 1024)).toString(36);
+            const sm4 = new JSSM4(sKey);
+            
+            // Store SM4 key for future use
+            util.setSM4Key(sKey);
+
+            let redirect_uri = document.location.search.replace(/^.*redirect=/, '') + document.location.hash;
+            const agentid = document.location.host.indexOf('awebide.com') !== -1 ? '1000042' : '1000043';
+            const WwLogin = global.WwLogin;
+            const appid = 'wx50a971aeb3afe59e';
+
+            // Show error message and unlock button for A/a accounts
+            const showError = (message) => {
+                $loginMsgBox.innerHTML = message || '登录失败，请稍后重试';
+                
+                // Show unlock button when login fails for A/a* accounts
+                const account = $loginUsername.value.trim();
+                if (account && (account.startsWith('A') || account.startsWith('a'))) {
+                    // Update unlock button href to include account parameter
+                    const unlockLink = document.querySelector('#unlockBtnContainer a');
+
+                    let redirect_uri = document.location.search.replace(/^.*redirect=/, '') + document.location.hash;
+                    let redirectParam = '';
+                    if (redirect_uri) {
+                        redirectParam = `&redirect=${encodeURIComponent(redirect_uri)}`;
+                    }
+
+                    unlockLink.href = `/auth/unlock.html?null&${encodeURIComponent(account)}&${redirectParam}`;
+                    $unlockBtnContainer.classList.remove('hidden');
+                } else {
+                    $unlockBtnContainer.classList.add('hidden');
+                }
+            };
+
+            // Auto login for WeChat Work environment
+            const workchatLogin = function () {
+                if (navigator.userAgent.indexOf('wxwork') !== -1) {
+                    const url = `https://${document.location.host}/workchat?redirect=${redirect_uri}&domain=${document.location.origin}`;
+                    document.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appid}&redirect_uri=${encodeURIComponent(url)}&response_type=code&scope=snsapi_base&agentid=${agentid}#wechat_redirect`;
+                }
+            };
+            
+            // Try auto-redirect if user is already logged in
+            const autoRedirect = function () {
+                fetch('/aweb-api/auth/user/get?' + new Date().getTime())
+                    .then(r => r.json())
+                    .then(resp => {
+                        if (resp && resp.status === true) {
+                            if (redirect_uri) {
+                                if (redirect_uri.indexOf('http') === -1) {
+                                    redirect_uri = 'https://' + redirect_uri;
+                                }
+                                const urlParms = new URL(redirect_uri);
+                                const token = resp.obj.token;
+                                const key = resp.obj.key;
+                                const redirect = `${urlParms.protocol}//${urlParms.hostname}/auth/set-token?key=${encodeURIComponent(key)}&token=${encodeURIComponent(token)}&redirect=${redirect_uri}`;
+                                document.location.href = redirect;
+                            }
+                        } else {
+                            workchatLogin();
+                            if (resp && resp.msg) {
+                                showError(resp.msg);
+                            }
+                        }
+                    }).catch(e => {
+                        console.log('Auto login check failed:', e);
+                        workchatLogin();
+                    });
+            };
+
+            // Initialize WeChat QR login
+            if (WwLogin) {
+                WwLogin({
+                    "id": "wx_reg",
+                    "appid": appid,
+                    "agentid": agentid,
+                    "redirect_uri": `https://${document.location.host}/workchat?redirect=${redirect_uri}`,
+                    "state": "",
+                    "href": "",
+                });
+            }
+
+            // Validate form fields
+            const validateForm = () => {
+                let isValid = true;
+                
+                // Reset errors
+                $accountError.textContent = '';
+                $passwordError.textContent = '';
+                
+                // Validate account
+                if (!$loginUsername.value.trim()) {
+                    $accountError.textContent = '请输入账号';
+                    isValid = false;
+                }
+                
+                // Validate password
+                if (!$loginPassword.value.trim()) {
+                    $passwordError.textContent = '请输入密码';
+                    isValid = false;
+                }
+                
+                return isValid;
+            };
+            
+            // Handle form submission
+            global.loginAction = () => {
+                // Reset error states
+                $loginMsgBox.innerHTML = '';
+                $unlockBtnContainer.classList.add('hidden');
+                
+                // Validate form
+                if (!validateForm()) {
+                    return false;
+                }
+                
+                // Show loading state
+                const originalText = $loginBtn.innerHTML;
+                $loginBtn.innerHTML = '<span class="spinner"></span>登录中...';
+                $loginBtn.disabled = true;
+                
+                // Disable form elements
+                const form = document.getElementById('loginForm');
+                const formElements = form.elements;
+                for (let i = 0; i < formElements.length; i++) {
+                    formElements[i].disabled = true;
+                }
+
+                // Make API request
+                global.fetch(LOGIN_API, {
+                    body: sm4.encryptData_ECB(JSON.stringify({ 
+                        user: $loginUsername.value, 
+                        pass: $loginPassword.value 
+                    })),
+                    cache: 'no-cache',
+                    headers: {
+                        'Access-Control-Allow-Origin': "*",
+                        'aweb-authorization': sKey,
+                        'aweb-token': ''
+                    },
+                    method: 'POST'
+                })
+                .then(resp => resp.json())
+                .then(resp => {
+                    // Reset button and form state
+                    $loginBtn.innerHTML = originalText;
+                    $loginBtn.disabled = false;
+                    
+                    // Re-enable form elements
+                    for (let i = 0; i < formElements.length; i++) {
+                        formElements[i].disabled = false;
+                    }
+
+                    if (resp && resp.status === true) {
+                        autoRedirect();
+                    } else {
+                        showError(resp && resp.msg);
+                    }
+                })
+                .catch(error => {
+                    console.error('Login error:', error);
+                    
+                    // Reset button and form state
+                    $loginBtn.innerHTML = originalText;
+                    $loginBtn.disabled = false;
+                    
+                    // Re-enable form elements
+                    for (let i = 0; i < formElements.length; i++) {
+                        formElements[i].disabled = false;
+                    }
+                    
+                    showError('网络错误，请检查连接后重试');
+                });
+
+                return false;
+            };
+            
+            // Try auto-redirect on page load
+            autoRedirect();
+        })(window);
+    </script>
+</body>
+</html>

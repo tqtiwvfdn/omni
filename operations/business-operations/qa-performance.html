@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问答效能 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tab-btn {
+            position: relative;
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            color: var(--dify-primary);
+            border-bottom-color: var(--dify-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="container mx-auto py-6 px-4">
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">问答效能</h1>
+                    <p class="text-gray-600 mt-1">评估AI问答系统的效率和性能指标</p>
+                </div>
+                <div class="flex space-x-3">
+                    <div class="relative">
+                        <select
+                            class="appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                            <option>最近7天</option>
+                            <option>最近30天</option>
+                            <option>最近90天</option>
+                            <option>自定义时间</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <button
+                        class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                        导出报告
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <!-- 平均响应时间 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex flex-col">
+                    <span class="text-gray-500 text-sm">平均响应时间</span>
+                    <div class="flex items-end justify-between mt-2">
+                        <div class="flex items-baseline">
+                            <span class="text-2xl font-semibold text-gray-800">1.8</span>
+                            <span class="ml-1 text-sm text-gray-500">秒</span>
+                        </div>
+                        <div class="flex items-center text-green-600 text-sm">
+                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span>12% 较上周</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 问题解决率 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex flex-col">
+                    <span class="text-gray-500 text-sm">问题解决率</span>
+                    <div class="flex items-end justify-between mt-2">
+                        <div class="flex items-baseline">
+                            <span class="text-2xl font-semibold text-gray-800">87.6</span>
+                            <span class="ml-1 text-sm text-gray-500">%</span>
+                        </div>
+                        <div class="flex items-center text-green-600 text-sm">
+                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span>3.2% 较上周</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 准确率 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex flex-col">
+                    <span class="text-gray-500 text-sm">准确率</span>
+                    <div class="flex items-end justify-between mt-2">
+                        <div class="flex items-baseline">
+                            <span class="text-2xl font-semibold text-gray-800">92.3</span>
+                            <span class="ml-1 text-sm text-gray-500">%</span>
+                        </div>
+                        <div class="flex items-center text-green-600 text-sm">
+                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span>1.5% 较上周</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 工单转人工率 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex flex-col">
+                    <span class="text-gray-500 text-sm">工单转人工率</span>
+                    <div class="flex items-end justify-between mt-2">
+                        <div class="flex items-baseline">
+                            <span class="text-2xl font-semibold text-gray-800">14.2</span>
+                            <span class="ml-1 text-sm text-gray-500">%</span>
+                        </div>
+                        <div class="flex items-center text-red-600 text-sm">
+                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M12 13a1 1 0 100 2h5a1 1 0 001-1v-5a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586l-4.293-4.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span>2.1% 较上周</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="flex -mb-px space-x-8" aria-label="Tabs">
+                <button class="tab-btn active" data-tab="performance">性能分析</button>
+                <button class="tab-btn" data-tab="response-time">响应时间</button>
+                <button class="tab-btn" data-tab="resolution-rate">解决率分析</button>
+                <button class="tab-btn" data-tab="human-transfer">人工转接</button>
+            </nav>
+        </div>
+
+        <!-- Tab Content Sections -->
+        <div>
+            <!-- 性能分析 Tab -->
+            <div class="tab-content active" id="performance-tab">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- 性能趋势图 -->
+                    <div class="dify-card bg-white p-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">性能趋势</h3>
+                        <div class="h-80 bg-gray-50 rounded-lg flex items-center justify-center">
+                            <!-- 此处应有折线图，用占位符表示 -->
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">响应时间与解决率趋势图</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 按场景性能分布 -->
+                    <div class="dify-card bg-white p-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">按业务场景性能分布</h3>
+                        <div class="h-80 bg-gray-50 rounded-lg flex items-center justify-center">
+                            <!-- 此处应有柱状图，用占位符表示 -->
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">各业务场景问答性能对比</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统负载监控 -->
+                <div class="dify-card bg-white p-6 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">系统负载监控</h3>
+                        <div class="flex space-x-2">
+                            <button
+                                class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none">
+                                时段
+                            </button>
+                            <button
+                                class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none">
+                                日期
+                            </button>
+                            <button
+                                class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none">
+                                渠道
+                            </button>
+                        </div>
+                    </div>
+                    <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                        <!-- 此处应有面积图，用占位符表示 -->
+                        <div class="text-center">
+                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z">
+                                </path>
+                            </svg>
+                            <p class="text-gray-500">系统负载与性能关系图</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 效能评分表格 -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">效能评分详情</h3>
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <select
+                                    class="appearance-none bg-white border border-gray-300 text-gray-700 py-1 px-3 pr-8 rounded-md leading-tight focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                    <option>全部场景</option>
+                                    <option>储蓄账户</option>
+                                    <option>信用卡</option>
+                                    <option>贷款</option>
+                                    <option>投资理财</option>
+                                </select>
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 20 20">
+                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <input type="text" placeholder="搜索场景或指标"
+                                class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        业务场景
+                                    </th>
+                                    <th
+                                        class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        平均响应时间
+                                    </th>
+                                    <th
+                                        class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        问题解决率
+                                    </th>
+                                    <th
+                                        class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        准确率
+                                    </th>
+                                    <th
+                                        class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        转人工率
+                                    </th>
+                                    <th
+                                        class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        综合评分
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">储蓄账户查询</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.2秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">94.2%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">95.7%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">8.3%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                            优秀
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">信用卡账单查询</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.5秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">90.1%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">93.4%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">12.6%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                            优秀
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">贷款申请咨询</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.3秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">82.4%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">89.7%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">19.8%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                                            良好
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">投资理财产品</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.9秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">85.6%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">91.2%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15.3%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                            优秀
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">外汇兑换</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.7秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">78.9%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">87.3%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">21.5%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                                            良好
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="text-sm text-gray-500">
+                            显示 1 - 5 / 24 条记录
+                        </div>
+                        <div class="flex space-x-2">
+                            <button
+                                class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none">
+                                上一页
+                            </button>
+                            <button
+                                class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none">
+                                1
+                            </button>
+                            <button
+                                class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none">
+                                2
+                            </button>
+                            <button
+                                class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none">
+                                3
+                            </button>
+                            <button
+                                class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none">
+                                下一页
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 响应时间 Tab (隐藏状态) -->
+            <div class="tab-content" id="response-time-tab">
+                <div class="dify-card bg-white p-6 mb-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">响应时间分析</h3>
+                    <p class="text-gray-500 mb-6">按不同维度分析系统响应时间表现</p>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- 响应时间趋势图 -->
+                        <div class="bg-gray-50 rounded-lg p-4 h-72 flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">响应时间趋势图</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 响应时间分布图 -->
+                        <div class="bg-gray-50 rounded-lg p-4 h-72 flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">响应时间分布图</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 响应时间详细数据 -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        时间段
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        平均响应时间
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        最短响应时间
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        最长响应时间
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        95%响应时间
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!-- 响应时间数据行 -->
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">00:00 - 06:00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.2秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.8秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.5秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.9秒</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">06:00 - 12:00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.8秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.9秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3.2秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.7秒</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">12:00 - 18:00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.1秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.0秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3.8秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3.2秒</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">18:00 - 00:00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.9秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.9秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3.5秒</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.9秒</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 解决率分析 Tab (隐藏状态) -->
+            <div class="tab-content" id="resolution-rate-tab">
+                <div class="dify-card bg-white p-6 mb-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">解决率分析</h3>
+                    <p class="text-gray-500 mb-6">评估系统解决用户问题的能力</p>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- 解决率趋势 -->
+                        <div class="bg-gray-50 rounded-lg p-4 h-72 flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">问题解决率趋势</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 未解决问题分类 -->
+                        <div class="bg-gray-50 rounded-lg p-4 h-72 flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                                </svg>
+                                <p class="text-gray-500">未解决问题分类</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 业务场景解决率 -->
+                    <h4 class="text-md font-medium text-gray-800 mb-4">业务场景解决率</h4>
+                    <div class="overflow-x-auto mb-6">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        业务场景
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        问题总数
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        解决问题数
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        解决率
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        环比变化
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">账户查询</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2,458</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2,315</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">94.2%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+2.1%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">转账汇款</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1,876</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1,689</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">90.0%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+1.5%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">信用卡</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3,124</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2,562</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">82.0%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">-1.2%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">贷款</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1,235</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">987</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">79.9%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+3.4%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">理财投资</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">968</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">786</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">81.2%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+0.8%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 改进建议 -->
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-blue-800">问题解决率改进建议</h3>
+                                <div class="mt-2 text-sm text-blue-700">
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        <li>针对信用卡类问题，建议扩充知识库中的常见问题与解答</li>
+                                        <li>转账汇款类问题可通过优化流程图示提高用户理解度</li>
+                                        <li>考虑为复杂贷款咨询开发专项智能助手模型</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人工转接 Tab (隐藏状态) -->
+            <div class="tab-content" id="human-transfer-tab">
+                <div class="dify-card bg-white p-6 mb-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">人工转接分析</h3>
+                    <p class="text-gray-500 mb-6">分析AI系统转接到人工客服的情况</p>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- 转人工趋势 -->
+                        <div class="bg-gray-50 rounded-lg p-4 h-72 flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">转人工率趋势图</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 转人工原因分布 -->
+                        <div class="bg-gray-50 rounded-lg p-4 h-72 flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                                </svg>
+                                <p class="text-gray-500">转人工原因分布</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 转人工情况详情 -->
+                    <h4 class="text-md font-medium text-gray-800 mb-4">转人工详情</h4>
+                    <div class="overflow-x-auto mb-6">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        业务类型
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        总会话数
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        转人工数
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        转人工率
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        主要原因
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">个人网银</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3,254</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">358</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">11.0%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">密码重置流程</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">信用卡服务</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">4,128</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">742</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">18.0%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">账单纠纷处理</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">贷款咨询</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1,876</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">469</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">25.0%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">需要定制方案</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">投资理财</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2,314</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">301</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">13.0%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">风险评估需求</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">储蓄账户</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2,987</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">149</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5.0%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">特殊账户操作</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 优化建议 -->
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-blue-800">优化建议</h3>
+                                <div class="mt-2 text-sm text-blue-700">
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        <li>针对贷款咨询转人工率较高的情况，建议提供更多定制化贷款预审模型</li>
+                                        <li>信用卡账单纠纷处理流程需要改进，可增加图像识别功能</li>
+                                        <li>对常见的转人工原因进行分类，开发专项处理流程</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 与其他系统联动 -->
+                    <div class="mt-6">
+                        <h4 class="text-md font-medium text-gray-800 mb-2">系统联动</h4>
+                        <div class="flex flex-wrap gap-3">
+                            <button class="px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 text-sm">
+                                <span class="mr-1">👥</span> 查看人工客服数据
+                            </button>
+                            <button class="px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 text-sm">
+                                <span class="mr-1">📊</span> 关联满意度分析
+                            </button>
+                            <button class="px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 text-sm">
+                                <span class="mr-1">🔄</span> 流程优化建议
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and content
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+
+                // Add active class to clicked button
+                button.classList.add('active');
+
+                // Show corresponding content
+                const tabName = button.getAttribute('data-tab');
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            });
+        });
+    </script>
+</body>
+
+</html>

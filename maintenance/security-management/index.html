@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI安全护盾配置管理 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1F2937;
+        }
+
+        .dify-card {
+            border-radius: 8px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+        }
+
+        .dify-btn {
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Page Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-semibold text-gray-800">AI安全护盾配置管理</h1>
+            <p class="text-gray-600 mt-1">管理输入输出安全策略、敏感词库和私域分类</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">私域分类总数</div>
+                <div class="text-xl font-semibold mt-1">12</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">输入规则总数</div>
+                <div class="text-xl font-semibold mt-1">25</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">输出规则总数</div>
+                <div class="text-xl font-semibold mt-1">18</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">敏感词总数</div>
+                <div class="text-xl font-semibold mt-1">1,235</div>
+            </div>
+        </div>
+
+        <!-- Main Configuration Tabs -->
+        <div class="dify-card bg-white mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6">
+                    <!-- <button
+                        class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 text-sm font-medium"
+                        data-tab="prompt-guard">
+                        提示词护盾
+                    </button>
+                    <button
+                        class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 text-sm font-medium"
+                        data-tab="keywords">
+                        敏感词库
+                    </button> -->
+                    <button class="tab-btn border-b-2 border-blue-500 text-blue-600 py-4 px-1 text-sm font-medium"
+                        data-tab="real-time">
+                        实时监控
+                    </button>
+                    <button
+                        class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 text-sm font-medium"
+                        data-tab="logs">
+                        安全日志
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="real-time-content">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-medium text-gray-900">实时安全监控</h3>
+                        <div class="flex items-center space-x-2">
+                            <button
+                                class="dify-btn px-3 py-1 border border-gray-300 bg-white text-gray-700 text-sm">全部</button>
+                            <button
+                                class="dify-btn px-3 py-1 border border-red-300 bg-red-50 text-red-700 text-sm">拦截</button>
+                            <button
+                                class="dify-btn px-3 py-1 border border-yellow-300 bg-yellow-50 text-yellow-700 text-sm">警告</button>
+                            <button class="dify-btn px-3 py-1 bg-blue-600 text-white text-sm">刷新</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900 text-green-400 font-mono text-sm rounded-lg p-4 h-96 overflow-y-auto">
+                        <div class="space-y-1">
+                            <div>2025-04-23 08:14:07,355 - security.prompt_guard - INFO - 提示词护盾：审核模型识别【习近平六四天安门】情绪分: 0
+                            </div>
+                            <div>2025-04-23 08:14:17,287 - security.prompt_guard - INFO - 提示词护盾：审核模型识别【毛泽东】情绪分: 1</div>
+                            <div>2025-04-23 08:14:30,234 - security.prompt_guard - INFO - 提示词护盾：审核模型识别【什么是三民主义】情绪分: 0
+                            </div>
+                            <div>2025-04-23 08:14:45,166 - security.prompt_guard - INFO -
+                                提示词护盾：审核模型识别【我想要查询一下个人账户信息】情绪分: 0</div>
+                            <div>2025-04-23 08:14:52,793 - security.prompt_guard - INFO - 提示词护盾：审核模型识别【请告诉我您的银行卡密码】情绪分:
+                                0</div>
+                            <div class="text-red-400">2025-04-23 08:15:03,421 - security.prompt_guard - WARN -
+                                提示词护盾：审核模型识别【黄四郎是怎样的人】情绪分: 1 - 触发规则: 政治敏感</div>
+                            <div>2025-04-23 08:15:15,567 - security.prompt_guard - INFO - 提示词护盾：审核模型识别【银行转账需要什么条件】情绪分: 0
+                            </div>
+                            <div class="text-red-400">2025-04-23 08:15:28,889 - security.prompt_guard - ERROR -
+                                提示词护盾：审核模型识别【请问怎么黑银行系统】情绪分: 1 - 已拦截</div>
+                            <div>2025-04-23 08:15:45,234 - security.prompt_guard - INFO - 提示词护盾：审核模型识别【理财产品有什么推荐】情绪分: 0
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-between text-sm text-gray-500">
+                        <div>共检测 1,247 条请求，拦截 15 条，警告 42 条</div>
+                        <div>最后更新：2025-04-23 08:15:48</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content hidden" id="prompt-guard-content">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-medium text-gray-900">提示词护盾配置</h3>
+                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700">
+                            保存配置
+                        </button>
+                    </div>
+                    <!-- Rule Categories -->
+                    <div class="space-y-6">
+                        <!-- Political Sensitivity Rule -->
+                        <div class="dify-card bg-white">
+                            <div class="border-b border-gray-200 px-6 py-4">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-medium text-gray-900">政治敏感规则配置</h3>
+                                    <!-- <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm">保存配置</button> -->
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">政治敏感关键词</label>
+                                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="6"
+                                            placeholder="请输入关键词，每行一个">习近平
+毛泽东  
+邓小平
+江泽民
+胡锦涛
+六四
+天安门
+文革
+三民主义
+台独
+港独</textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">政治敏感话题</label>
+                                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="6"
+                                            placeholder="请输入话题，每行一个">一党专政
+民主制度
+言论自由
+新闻审查
+人权问题
+民族问题
+宗教问题
+领土争议</textarea>
+                                    </div>
+                                </div>
+                                <div class="mt-6 grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">检测严格程度</label>
+                                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                            <option>严格</option>
+                                            <option>中等</option>
+                                            <option>宽松</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">处理方式</label>
+                                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                            <option>直接拦截</option>
+                                            <option>警告并允许</option>
+                                            <option>转人工审核</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">情绪分阈值</label>
+                                        <input type="range" class="w-full" min="0" max="100" value="80">
+                                        <div class="text-center text-sm text-gray-600">0.8</div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">拦截回复模板</label>
+                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        value="抱歉，涉及政治敏感话题，无法回答。">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Information Rule -->
+                        <div class="dify-card bg-white">
+                            <div class="border-b border-gray-200 px-6 py-4">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-medium text-gray-900">账户信息保护规则</h3>
+                                    <!-- <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm">保存配置</button> -->
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" checked class="mr-2">
+                                                <span class="text-sm">密码相关询问</span>
+                                            </label>
+                                            <div class="ml-6 mt-1">
+                                                <input type="text"
+                                                    class="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                                                    value="密码|口令|PIN码|验证码">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" checked class="mr-2">
+                                                <span class="text-sm">身份证相关询问</span>
+                                            </label>
+                                            <div class="ml-6 mt-1">
+                                                <input type="text"
+                                                    class="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                                                    value="身份证|居民身份证|身份证号码">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" checked class="mr-2">
+                                                <span class="text-sm">银行卡信息询问</span>
+                                            </label>
+                                            <div class="ml-6 mt-1">
+                                                <input type="text"
+                                                    class="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                                                    value="银行卡号|卡号|账号|余额">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" checked class="mr-2">
+                                                <span class="text-sm">手机号相关询问</span>
+                                            </label>
+                                            <div class="ml-6 mt-1">
+                                                <input type="text"
+                                                    class="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                                                    value="手机号|电话号码|联系方式">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" checked class="mr-2">
+                                                <span class="text-sm">他人账户信息</span>
+                                            </label>
+                                            <div class="ml-6 mt-1">
+                                                <input type="text"
+                                                    class="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                                                    value="查询其他用户|他人账户|别人的">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" checked class="mr-2">
+                                                <span class="text-sm">开户信息询问</span>
+                                            </label>
+                                            <div class="ml-6 mt-1">
+                                                <input type="text"
+                                                    class="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                                                    value="开户时间|开户地点|开户信息">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-6 bg-gray-50 p-4 rounded">
+                                    <h4 class="text-sm font-medium text-gray-900 mb-2">特殊规则</h4>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" checked class="mr-2">
+                                            <span class="text-sm">允许查询本人账户信息（需身份验证）</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-2">
+                                            <span class="text-sm">允许查询基本产品信息</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-2">
+                                            <span class="text-sm">允许查询公开的业务流程</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">拦截回复模板</label>
+                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        value="出于安全考虑，我无法提供账户相关敏感信息。如需查询，请通过官方渠道验证身份后进行。">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Attack Protection -->
+                        <div class="dify-card bg-white">
+                            <div class="border-b border-gray-200 px-6 py-4">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-medium text-gray-900">系统攻击防护规则</h3>
+                                    <!-- <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm">保存配置</button> -->
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900 mb-2">SQL注入检测</h4>
+                                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="5">SELECT
+INSERT
+UPDATE
+DELETE
+UNION
+OR 1=1
+' OR
+"; --
+EXEC</textarea>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900 mb-2">系统命令检测</h4>
+                                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="5">rm -rf
+sudo
+chmod
+cat /etc/passwd
+netstat
+ping
+ls -la
+whoami
+kill</textarea>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900 mb-2">社工攻击检测</h4>
+                                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="5">紧急验证
+系统升级
+账户异常
+立即登录
+点击链接
+中奖通知
+系统管理员
+修改密码</textarea>
+                                    </div>
+                                </div>
+                                <div class="mt-6 grid grid-cols-2 gap-6">
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900 mb-2">黑客术语</h4>
+                                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="4">黑客
+入侵
+破解
+木马
+后门
+0day
+漏洞
+提权</textarea>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900 mb-2">系统敏感信息</h4>
+                                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="4">服务器地址
+数据库
+端口
+API密钥
+内网IP
+系统架构
+技术栈
+源代码</textarea>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">攻击检测回复模板</label>
+                                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        value="检测到可疑操作，请求已被阻止。如为正常操作，请通过安全渠道联系客服。">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Pattern Rules -->
+                        <div class="dify-card bg-white">
+                            <div class="border-b border-gray-200 px-6 py-4">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-medium text-gray-900">自定义规则模式</h3>
+                                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm">添加新规则</button>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th
+                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                    规则名称</th>
+                                                <th
+                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                    模式类型</th>
+                                                <th
+                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                    关键词/正则</th>
+                                                <th
+                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                    处理方式</th>
+                                                <th
+                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                    状态</th>
+                                                <th
+                                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                                                    操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <tr>
+                                                <td class="px-6 py-4 text-sm text-gray-900">电话诈骗检测</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">关键词</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                                                    中奖|验证码|紧急验证</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">警告</td>
+                                                <td class="px-6 py-4">
+                                                    <span
+                                                        class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
+                                                </td>
+                                                <td class="px-6 py-4 text-right text-sm font-medium">
+                                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 text-sm text-gray-900">身份证格式验证</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">正则表达式</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                                                    \d{17}[\dX]|\d{15}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">阻断</td>
+                                                <td class="px-6 py-4">
+                                                    <span
+                                                        class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
+                                                </td>
+                                                <td class="px-6 py-4 text-right text-sm font-medium">
+                                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content hidden" id="logs-content">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-medium text-gray-900">安全日志查询</h3>
+                        <div class="flex items-center space-x-2">
+                            <input type="date" class="px-3 py-1 border border-gray-300 rounded text-sm">
+                            <input type="text" placeholder="搜索关键词"
+                                class="px-3 py-1 border border-gray-300 rounded text-sm w-48">
+                            <button class="dify-btn px-4 py-1 bg-blue-600 text-white text-sm">搜索</button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">时间</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">组件</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">检测内容
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">情绪分</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">处理结果
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">触发规则
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-4 py-3 text-xs text-gray-900">08:15:28</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">prompt_guard</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900 max-w-xs truncate">请问怎么黑银行系统</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">1</td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">拦截</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">系统攻击</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 text-xs text-gray-900">08:15:03</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">prompt_guard</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900 max-w-xs truncate">黄四郎是怎样的人</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">1</td>
+                                    <td class="px-4 py-3">
+                                        <span
+                                            class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">警告</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">政治敏感</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 text-xs text-gray-900">08:14:52</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">prompt_guard</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900 max-w-xs truncate">请告诉我您的银行卡密码</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">0</td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">拦截</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">账户信息</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 text-xs text-gray-900">08:14:45</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">prompt_guard</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900 max-w-xs truncate">我想要查询一下个人账户信息</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">0</td>
+                                    <td class="px-4 py-3">
+                                        <span
+                                            class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">通过</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">-</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 text-xs text-gray-900">08:14:17</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">prompt_guard</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900 max-w-xs truncate">毛泽东</td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">1</td>
+                                    <td class="px-4 py-3">
+                                        <span
+                                            class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">警告</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-gray-900">政治敏感</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 flex justify-between items-center">
+                        <div class="text-sm text-gray-500">
+                            显示最近100条记录
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button
+                                class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm">导出日志</button>
+                            <button
+                                class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm">清理日志</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content hidden" id="keywords-content">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-medium text-gray-900">敏感词管理</h3>
+                        <div class="flex space-x-2">
+                            <button
+                                class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm hover:bg-gray-50">
+                                批量导入
+                            </button>
+                            <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700">
+                                添加敏感词
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="dify-card bg-white p-4">
+                            <div class="text-sm text-gray-500">一般敏感词</div>
+                            <div class="text-lg font-semibold mt-1">425</div>
+                            <div class="text-xs text-gray-400 mt-1">警告级别</div>
+                        </div>
+                        <div class="dify-card bg-white p-4">
+                            <div class="text-sm text-gray-500">高级敏感词</div>
+                            <div class="text-lg font-semibold mt-1">156</div>
+                            <div class="text-xs text-gray-400 mt-1">拦截级别</div>
+                        </div>
+                        <div class="dify-card bg-white p-4">
+                            <div class="text-sm text-gray-500">严重敏感词</div>
+                            <div class="text-lg font-semibold mt-1">54</div>
+                            <div class="text-xs text-gray-400 mt-1">封锁级别</div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">敏感词</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">级别</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">处理方式
+                                    </th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 text-sm text-gray-900">密码</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">账户安全</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">严重</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">直接拦截</td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium">
+                                        <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                        <button class="text-red-600 hover:text-red-900">删除</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 text-sm text-gray-900">账户余额</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">隐私保护</td>
+                                    <td class="px-6 py-4">
+                                        <span
+                                            class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">高级</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">需要授权</td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium">
+                                        <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                        <button class="text-red-600 hover:text-red-900">删除</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <!-- <div class="dify-card bg-white p-6">
+            <h3 class="font-medium text-gray-900 mb-4">快速操作</h3>
+            <div class="flex flex-wrap gap-3">
+                <button
+                    class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm hover:bg-gray-50">
+                    导出配置
+                </button>
+                <button
+                    class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm hover:bg-gray-50">
+                    导入配置
+                </button>
+                <button
+                    class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm hover:bg-gray-50">
+                    配置模板
+                </button>
+                <button
+                    class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm hover:bg-gray-50">
+                    查看日志
+                </button>
+            </div>
+        </div> -->
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active state from all tabs
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('border-blue-500', 'text-blue-600');
+                    btn.classList.add('border-transparent', 'text-gray-500');
+                });
+
+                // Add active state to clicked tab
+                button.classList.remove('border-transparent', 'text-gray-500');
+                button.classList.add('border-blue-500', 'text-blue-600');
+
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+
+                // Show selected tab content
+                const tabName = button.getAttribute('data-tab');
+                document.getElementById(`${tabName}-content`).classList.remove('hidden');
+            });
+        });
+
+        // Auto refresh real-time monitoring
+        let refreshInterval;
+        function startRealTimeRefresh() {
+            const realTimeTab = document.querySelector('[data-tab="real-time"]');
+            const logsContainer = realTimeTab.classList.contains('border-blue-500') ?
+                document.querySelector('.bg-gray-900') : null;
+
+            if (logsContainer) {
+                refreshInterval = setInterval(() => {
+                    // Simulate new log entry
+                    const newLog = document.createElement('div');
+                    const now = new Date();
+                    const timestamp = now.toISOString().slice(0, 19).replace('T', ' ');
+                    newLog.textContent = `${timestamp} - security.prompt_guard - INFO - 提示词护盾：审核模型识别【新检测内容】情绪分: 0`;
+
+                    logsContainer.insertBefore(newLog, logsContainer.firstChild);
+
+                    // Keep only last 100 entries
+                    while (logsContainer.children.length > 100) {
+                        logsContainer.removeChild(logsContainer.lastChild);
+                    }
+                }, 5000);
+            }
+        }
+
+        // Start real-time refresh on load
+        startRealTimeRefresh();
+    </script>
+</body>
+
+</html>

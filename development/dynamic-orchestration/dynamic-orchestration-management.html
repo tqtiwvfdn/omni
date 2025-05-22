@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>业务流程规则管理 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+        }
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-online {
+            background-color: #DCFCE7;
+            color: #16A34A;
+        }
+        .status-testing {
+            background-color: #FEF3C7;
+            color: #D97706;
+        }
+        .status-offline {
+            background-color: #FEF2F2;
+            color: #DC2626;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto p-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-800">业务流程规则管理</h1>
+                <p class="text-sm text-gray-500 mt-1">管理和配置银行业务流程</p>
+            </div>
+            <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                新建业务流程
+            </button>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="dify-card bg-white p-4 mb-6">
+            <div class="flex items-center space-x-4">
+                <div class="flex-1">
+                    <input type="text" placeholder="搜索流程名称..." 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+                <div class="w-48">
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm bg-white">
+                        <option>所有业务领域</option>
+                        <option>转账汇款</option>
+                        <option>理财投资</option>
+                        <option>信用卡</option>
+                        <option>客服支持</option>
+                    </select>
+                </div>
+                <div class="w-48">
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm bg-white">
+                        <option>所有状态</option>
+                        <option>已上线</option>
+                        <option>测试中</option>
+                        <option>已下线</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flow List Table -->
+        <div class="dify-card bg-white overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">流程名称</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">业务领域</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">版本</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最后修改</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Individual Transfer Flow -->
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">个人转账流程</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">转账汇款</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-badge status-online">已上线</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">v2.1</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-04-20</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">复制</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900">发布</a>
+                            </td>
+                        </tr>
+
+                        <!-- Corporate Transfer Flow -->
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">企业转账流程</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">转账汇款</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-badge status-online">已上线</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">v1.5</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-03-15</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">复制</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900">发布</a>
+                            </td>
+                        </tr>
+
+                        <!-- Cross-border Transfer Flow -->
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m0 0a9 9 0 01-9-9m9 9v-9m9-9a9 9 0 00-9 9m9 0a9 9 0 01-9 9m0 0a9 9 0 01-9-9"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">跨境转账流程</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">转账汇款</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-badge status-testing">测试中</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">v0.9</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-01</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">复制</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900">发布</a>
+                            </td>
+                        </tr>
+
+                        <!-- Investment Product Flow -->
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m-4-8h8"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">理财产品购买流程</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">理财投资</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-badge status-online">已上线</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">v1.2</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-04-10</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">复制</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900">发布</a>
+                            </td>
+                        </tr>
+
+                        <!-- Credit Card Payment Flow -->
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">信用卡还款流程</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">信用卡</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-badge status-online">已上线</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">v2.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-04-25</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">复制</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900">发布</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                <div class="text-sm text-gray-500">
+                    显示 <span class="font-medium">1</span> 到 <span class="font-medium">5</span> 共 <span class="font-medium">8</span> 条
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50 disabled:opacity-50" disabled>
+                        上一页
+                    </button>
+                    <button class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">
+                        1
+                    </button>
+                    <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                        2
+                    </button>
+                    <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                        下一页
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <dialog id="editDialog">
+        <!-- Modal Header -->
+        <div class="border-b border-gray-200 flex justify-between items-center">
+            <div class="flex items-center">
+                <h3 class="text-lg font-medium text-gray-900">流程开发</h3>
+            </div>
+            <button class="text-gray-400 hover:text-gray-500" onclick="hideEditDialog()">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+        <iframe src="/development/dynamic-orchestration/dynamic-orchestration-dialog.html"
+            style="height: 800px;width: 1000px;border:none;outline: 0;"></iframe>
+        <!-- Modal Footer -->
+        <div class="border-t border-gray-200 flex justify-end">
+            <button onclick="hideEditDialog()"
+                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                关闭
+            </button>
+        </div>
+    </dialog>
+
+    <script>
+        // Add click handlers for edit buttons
+        document.querySelectorAll('a[href="#"]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const action = this.textContent.trim();
+                const flowName = this.closest('tr').querySelector('.text-sm.font-medium').textContent;
+                
+                if (action === '编辑') {
+                    showEditDialog();
+                    console.log(`编辑流程: ${flowName}`);
+                    // 这里可以跳转到流程编辑界面
+                } else if (action === '复制') {
+                    console.log(`复制流程: ${flowName}`);
+                } else if (action === '发布') {
+                    console.log(`发布流程: ${flowName}`);
+                }
+            });
+        });
+
+        // Add handler for new flow button
+        document.querySelector('.dify-btn').addEventListener('click', function() {
+            showEditDialog();
+            console.log('新建业务流程');
+            // 这里可以跳转到流程创建界面
+        });
+
+
+        window.showEditDialog=function(){
+            document.getElementById('editDialog').showModal();
+        }
+        window.hideEditDialog=function(){
+            document.getElementById('editDialog').close();
+        }
+    </script>
+</body>
+</html>

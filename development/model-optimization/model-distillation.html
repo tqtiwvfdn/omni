@@ -1,0 +1,2065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型蒸馏 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .model-card {
+            transition: all 0.3s ease;
+        }
+
+        .model-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .status-badge-online {
+            background-color: #DCFCE7;
+            color: #16A34A;
+        }
+
+        .status-badge-offline {
+            background-color: #FEF2F2;
+            color: #DC2626;
+        }
+
+        .status-badge-progress {
+            background-color: #FEF3C7;
+            color: #D97706;
+        }
+
+        .status-badge-completed {
+            background-color: #EBF2FF;
+            color: #2970FF;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e5e7eb;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-value {
+            height: 100%;
+            border-radius: 4px;
+            background-color: var(--dify-primary);
+            transition: width 0.3s ease;
+        }
+
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--dify-text-primary);
+            margin-bottom: 1rem;
+        }
+
+        /* 模型结构与参数可视化 */
+        .model-structure {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .model-block {
+            background-color: #EBF2FF;
+            border: 1px solid #2970FF;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            width: 120px;
+            position: relative;
+        }
+
+        .teacher-model {
+            background-color: #EBF2FF;
+            border-color: #2970FF;
+        }
+
+        .student-model {
+            background-color: #F0FDF4;
+            border-color: #16A34A;
+        }
+
+        .model-connection {
+            flex: 1;
+            height: 2px;
+            background-color: #9CA3AF;
+            margin: 0 10px;
+            position: relative;
+        }
+
+        .model-connection::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-top: 5px solid transparent;
+            border-left: 10px solid #9CA3AF;
+            border-bottom: 5px solid transparent;
+        }
+
+        /* 调参布局样式 */
+        .param-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .param-label {
+            width: 120px;
+            font-size: 0.875rem;
+            color: var(--dify-text-secondary);
+        }
+
+        .param-value {
+            width: 60px;
+            text-align: right;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--dify-text-primary);
+        }
+
+        .param-slider {
+            flex: 1;
+            margin: 0 12px;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            outline: none;
+        }
+
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--dify-primary);
+            cursor: pointer;
+        }
+
+        .param-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--dify-primary);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* 性能比较样式 */
+        .performance-comparison {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .performance-metric {
+            width: 120px;
+            font-size: 0.875rem;
+            color: var(--dify-text-secondary);
+        }
+
+        .performance-bars {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bar-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bar-label {
+            width: 80px;
+            font-size: 0.75rem;
+            color: var(--dify-text-secondary);
+        }
+
+        .metric-bar {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e5e7eb;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .teacher-bar {
+            height: 100%;
+            background-color: #2970FF;
+            border-radius: 4px;
+        }
+
+        .student-bar {
+            height: 100%;
+            background-color: #16A34A;
+            border-radius: 4px;
+        }
+
+        .performance-value {
+            width: 60px;
+            text-align: right;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .teacher-value {
+            color: #2970FF;
+        }
+
+        .student-value {
+            color: #16A34A;
+        }
+
+        /* 任务管理相关样式 */
+        .tab-item {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-item:hover {
+            color: var(--dify-primary);
+        }
+
+        .tab-item.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Page Header -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">模型蒸馏</h1>
+                    <p class="text-gray-600 mt-1">精简大模型参数降低推理成本</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <!-- <button id="modelLibraryBtn"
+                        class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z">
+                            </path>
+                        </svg>
+                        模型库
+                    </button> -->
+                    <button id="newDistillationBtn"
+                        class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        新建蒸馏任务
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="bg-white rounded-t-lg border-b border-gray-200">
+            <div class="flex">
+                <div class="tab-item active px-6 py-4 text-gray-800 font-medium" data-tab="create-tab">
+                    蒸馏配置
+                </div>
+                <div class="tab-item px-6 py-4 text-gray-600 font-medium" data-tab="tasks-tab">
+                    任务管理
+                </div>
+                <div class="tab-item px-6 py-4 text-gray-600 font-medium" data-tab="results-tab">
+                    蒸馏结果
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="bg-white rounded-b-lg shadow-sm overflow-hidden mb-6">
+            <!-- 蒸馏配置 Tab -->
+            <div id="create-tab" class="tab-content active p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 左侧 - 蒸馏参数配置 -->
+                    <div class="lg:col-span-1">
+                        <div class="dify-card bg-white p-6 mb-6">
+                            <h2 class="section-title">基础配置</h2>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">教师模型</label>
+                                <select
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    id="teacher-model">
+                                    <option value="intent" selected>意图识别模型 (32B)</option>
+                                    <option value="workflow">工作流模型 (32B)</option>
+                                    <option value="rewrite">改写模型 (7B)</option>
+                                    <option value="security">Security模型 (7B)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">目标模型规模</label>
+                                <select
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    id="target-size">
+                                    <option value="0.25">压缩到25% (8B)</option>
+                                    <option value="0.20" selected>压缩到20% (6.4B)</option>
+                                    <option value="0.10">压缩到10% (3.2B)</option>
+                                    <option value="0.05">压缩到5% (1.6B)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">蒸馏方法</label>
+                                <select
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    id="distillation-method">
+                                    <option value="kd" selected>标准知识蒸馏 (KD)</option>
+                                    <option value="pkt">参数转移知识 (PKT)</option>
+                                    <option value="minilm">MiniLM</option>
+                                    <option value="tinybert">TinyBERT</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">训练数据集</label>
+                                <select
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    id="training-dataset">
+                                    <option value="bank-corpus" selected>银行业务语料库</option>
+                                    <option value="user-queries">用户查询记录</option>
+                                    <option value="financial-qa">金融问答集</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">任务优先级</label>
+                                <select
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    id="task-priority">
+                                    <option value="high">高</option>
+                                    <option value="medium" selected>中</option>
+                                    <option value="low">低</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">蒸馏完成后操作</label>
+                                <select
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    id="post-distillation">
+                                    <option value="add-to-library" selected>添加到模型库</option>
+                                    <option value="replace-current">替换当前模型</option>
+                                    <option value="none">仅保存结果</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="dify-card bg-white p-6">
+                            <h2 class="section-title">高级参数调优</h2>
+
+                            <div class="param-row">
+                                <div class="param-label">温度系数</div>
+                                <input type="range" min="0.1" max="5.0" step="0.1" value="2.0" class="param-slider"
+                                    id="temperature-slider">
+                                <div class="param-value" id="temperature-value">2.0</div>
+                            </div>
+
+                            <div class="param-row">
+                                <div class="param-label">蒸馏混合比例</div>
+                                <input type="range" min="0" max="1" step="0.1" value="0.5" class="param-slider"
+                                    id="alpha-slider">
+                                <div class="param-value" id="alpha-value">0.5</div>
+                            </div>
+
+                            <div class="param-row">
+                                <div class="param-label">软标签权重</div>
+                                <input type="range" min="0" max="1" step="0.1" value="0.7" class="param-slider"
+                                    id="soft-weight-slider">
+                                <div class="param-value" id="soft-weight-value">0.7</div>
+                            </div>
+
+                            <div class="param-row">
+                                <div class="param-label">中间层匹配</div>
+                                <input type="range" min="1" max="6" step="1" value="3" class="param-slider"
+                                    id="layers-slider">
+                                <div class="param-value" id="layers-value">3</div>
+                            </div>
+
+                            <div class="param-row">
+                                <div class="param-label">批次大小</div>
+                                <input type="range" min="8" max="64" step="8" value="32" class="param-slider"
+                                    id="batch-size-slider">
+                                <div class="param-value" id="batch-size-value">32</div>
+                            </div>
+
+                            <div class="mt-6">
+                                <button id="start-distillation"
+                                    class="dify-btn w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                                    开始蒸馏模型
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧 - 蒸馏结果预览 -->
+                    <div class="lg:col-span-2">
+                        <!-- 模型结构对比 -->
+                        <div class="dify-card bg-white p-6 mb-6">
+                            <h2 class="section-title">模型结构对比</h2>
+
+                            <div class="model-structure">
+                                <div class="model-block teacher-model">
+                                    <div class="text-sm font-medium text-gray-800">教师模型</div>
+                                    <div class="text-xl font-semibold text-blue-600 mt-1">32B</div>
+                                    <div class="text-xs text-gray-500 mt-1">100%</div>
+                                </div>
+                                <div class="model-connection"></div>
+                                <div class="model-block student-model">
+                                    <div class="text-sm font-medium text-gray-800">学生模型</div>
+                                    <div class="text-xl font-semibold text-green-600 mt-1">6.4B</div>
+                                    <div class="text-xs text-gray-500 mt-1">20%</div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mt-4">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-700">教师模型</div>
+                                    <div class="text-sm text-gray-600 mt-1">
+                                        <div class="flex justify-between mb-1">
+                                            <span>层数:</span>
+                                            <span>32</span>
+                                        </div>
+                                        <div class="flex justify-between mb-1">
+                                            <span>隐藏维度:</span>
+                                            <span>4096</span>
+                                        </div>
+                                        <div class="flex justify-between mb-1">
+                                            <span>注意力头:</span>
+                                            <span>32</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>参数量:</span>
+                                            <span class="font-medium text-blue-600">32B</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-700">学生模型</div>
+                                    <div class="text-sm text-gray-600 mt-1">
+                                        <div class="flex justify-between mb-1">
+                                            <span>层数:</span>
+                                            <span>12</span>
+                                        </div>
+                                        <div class="flex justify-between mb-1">
+                                            <span>隐藏维度:</span>
+                                            <span>2048</span>
+                                        </div>
+                                        <div class="flex justify-between mb-1">
+                                            <span>注意力头:</span>
+                                            <span>16</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>参数量:</span>
+                                            <span class="font-medium text-green-600">6.4B</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 性能对比预测 -->
+                        <div class="dify-card bg-white p-6 mb-6">
+                            <h2 class="section-title">性能对比预测</h2>
+
+                            <div class="performance-comparison">
+                                <div class="performance-metric">准确率</div>
+                                <div class="performance-bars">
+                                    <div class="bar-container">
+                                        <div class="bar-label">教师模型</div>
+                                        <div class="metric-bar">
+                                            <div class="teacher-bar" style="width: 100%"></div>
+                                        </div>
+                                        <div class="performance-value teacher-value">100%</div>
+                                    </div>
+                                    <div class="bar-container">
+                                        <div class="bar-label">学生模型</div>
+                                        <div class="metric-bar">
+                                            <div class="student-bar" style="width: 95%"></div>
+                                        </div>
+                                        <div class="performance-value student-value">95%</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="performance-comparison">
+                                <div class="performance-metric">推理速度</div>
+                                <div class="performance-bars">
+                                    <div class="bar-container">
+                                        <div class="bar-label">教师模型</div>
+                                        <div class="metric-bar">
+                                            <div class="teacher-bar" style="width: 30%"></div>
+                                        </div>
+                                        <div class="performance-value teacher-value">230ms</div>
+                                    </div>
+                                    <div class="bar-container">
+                                        <div class="bar-label">学生模型</div>
+                                        <div class="metric-bar">
+                                            <div class="student-bar" style="width: 80%"></div>
+                                        </div>
+                                        <div class="performance-value student-value">60ms</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="performance-comparison">
+                                <div class="performance-metric">内存占用</div>
+                                <div class="performance-bars">
+                                    <div class="bar-container">
+                                        <div class="bar-label">教师模型</div>
+                                        <div class="metric-bar">
+                                            <div class="teacher-bar" style="width: 100%"></div>
+                                        </div>
+                                        <div class="performance-value teacher-value">64GB</div>
+                                    </div>
+                                    <div class="bar-container">
+                                        <div class="bar-label">学生模型</div>
+                                        <div class="metric-bar">
+                                            <div class="student-bar" style="width: 24%"></div>
+                                        </div>
+                                        <div class="performance-value student-value">13GB</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="performance-comparison">
+                                <div class="performance-metric">吞吐量</div>
+                                <div class="performance-bars">
+                                    <div class="bar-container">
+                                        <div class="bar-label">教师模型</div>
+                                        <div class="metric-bar">
+                                            <div class="teacher-bar" style="width: 25%"></div>
+                                        </div>
+                                        <div class="performance-value teacher-value">4/秒</div>
+                                    </div>
+                                    <div class="bar-container">
+                                        <div class="bar-label">学生模型</div>
+                                        <div class="metric-bar">
+                                            <div class="student-bar" style="width: 85%"></div>
+                                        </div>
+                                        <div class="performance-value student-value">16/秒</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 银行业务特定性能分析 -->
+                        <div class="dify-card bg-white p-6">
+                            <h2 class="section-title">银行业务特定性能分析</h2>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-700 mb-3">整体性能保留率</div>
+                                    <div class="relative pt-1">
+                                        <div class="flex mb-2 items-center justify-between">
+                                            <div>
+                                                <span
+                                                    class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                                                    预期效果
+                                                </span>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="text-xs font-semibold inline-block text-blue-600">
+                                                    95%
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-100">
+                                            <div style="width: 95%"
+                                                class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-3 mt-4">
+                                        <div>
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-gray-600">金融术语准确率</span>
+                                                <span class="font-medium text-gray-800">94.2%</span>
+                                            </div>
+                                            <div class="mt-1 progress-bar">
+                                                <div class="progress-value" style="width: 94.2%"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-gray-600">意图识别准确率</span>
+                                                <span class="font-medium text-gray-800">96.8%</span>
+                                            </div>
+                                            <div class="mt-1 progress-bar">
+                                                <div class="progress-value" style="width: 96.8%"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-gray-600">业务流程正确率</span>
+                                                <span class="font-medium text-gray-800">93.5%</span>
+                                            </div>
+                                            <div class="mt-1 progress-bar">
+                                                <div class="progress-value" style="width: 93.5%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="text-sm font-medium text-gray-700 mb-3">银行业务场景表现</div>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center">
+                                            <div class="flex-1">
+                                                <div class="text-sm font-medium text-gray-800">转账汇款场景</div>
+                                                <div class="flex items-center mt-1">
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-green-600 h-2 rounded-full" style="width: 96%">
+                                                        </div>
+                                                    </div>
+                                                    <span class="ml-2 text-sm text-gray-600">96%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center">
+                                            <div class="flex-1">
+                                                <div class="text-sm font-medium text-gray-800">理财咨询场景</div>
+                                                <div class="flex items-center mt-1">
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-green-600 h-2 rounded-full" style="width: 93%">
+                                                        </div>
+                                                    </div>
+                                                    <span class="ml-2 text-sm text-gray-600">93%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center">
+                                            <div class="flex-1">
+                                                <div class="text-sm font-medium text-gray-800">贷款申请场景</div>
+                                                <div class="flex items-center mt-1">
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-green-600 h-2 rounded-full" style="width: 95%">
+                                                        </div>
+                                                    </div>
+                                                    <span class="ml-2 text-sm text-gray-600">95%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center">
+                                            <div class="flex-1">
+                                                <div class="text-sm font-medium text-gray-800">信用卡服务场景</div>
+                                                <div class="flex items-center mt-1">
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-green-600 h-2 rounded-full" style="width: 97%">
+                                                        </div>
+                                                    </div>
+                                                    <span class="ml-2 text-sm text-gray-600">97%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                                <div class="flex">
+                                    <svg class="h-5 w-5 text-blue-500 mr-2" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm text-blue-700">
+                                            蒸馏后的模型在保留95%性能的同时，推理速度提升3.8倍，内存占用减少80%，可同时部署4台设备服务8个并发流程。
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务管理 Tab -->
+            <div id="tasks-tab" class="tab-content p-6">
+                <div class="flex justify-between mb-6">
+                    <div>
+                        <h2 class="section-title">蒸馏任务列表</h2>
+                        <p class="text-sm text-gray-600">查看和管理当前正在执行和历史蒸馏任务</p>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="relative">
+                            <input type="text" placeholder="搜索任务"
+                                class="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 block w-64">
+                            <svg class="w-5 h-5 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <select
+                                class="px-3 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="all">所有状态</option>
+                                <option value="queued">队列中</option>
+                                <option value="running">执行中</option>
+                                <option value="completed">已完成</option>
+                                <option value="failed">失败</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    任务ID</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    任务名称</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    教师模型</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    学生模型</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    蒸馏方法</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    创建时间</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    状态</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    进度</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <!-- 进行中的任务 -->
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">DT-2505</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">工作流模型-蒸馏-20%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">工作流模型(32B)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">工作流模型-小型(6.4B)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">标准知识蒸馏</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-15 14:30</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        执行中
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: 65%"></div>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">65% (预计剩余4小时)</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-2">查看</button>
+                                    <button class="text-red-600 hover:text-red-900">取消</button>
+                                </td>
+                            </tr>
+
+                            <!-- 队列中的任务 -->
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">DT-2504</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">Security模型-蒸馏-10%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Security模型(7B)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Security模型-迷你(0.7B)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">MiniLM</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-15 10:15</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        队列中
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                        <div class="bg-gray-400 h-2.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">排队等待中</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-2">查看</button>
+                                    <button class="text-red-600 hover:text-red-900">取消</button>
+                                </td>
+                            </tr>
+
+                            <!-- 已完成的任务 -->
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">DT-2503</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">意图识别模型-蒸馏-20%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">意图识别模型(32B)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">意图识别模型-小型(6.4B)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">标准知识蒸馏</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-14 09:20</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        已完成
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                        <div class="bg-green-600 h-2.5 rounded-full" style="width: 100%"></div>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">100% (用时28小时)</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-2">查看</button>
+                                    <button class="text-green-600 hover:text-green-900">部署</button>
+                                </td>
+                            </tr>
+
+                            <!-- 失败的任务 -->
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">DT-2502</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">改写模型-蒸馏-5%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">改写模型(7B)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">改写模型-迷你(0.35B)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">参数转移知识</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-13 16:45</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        失败
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                        <div class="bg-red-600 h-2.5 rounded-full" style="width: 43%"></div>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">43% (GPU内存不足)</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-2">查看</button>
+                                    <button class="text-purple-600 hover:text-purple-900">重试</button>
+                                </td>
+                            </tr>
+
+                            <!-- 已完成的任务2 -->
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">DT-2501</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">改写模型-蒸馏-10%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">改写模型(7B)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">改写模型-小型(0.7B)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">标准知识蒸馏</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-12 11:30</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        已完成
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                        <div class="bg-green-600 h-2.5 rounded-full" style="width: 100%"></div>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">100% (用时14小时)</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-2">查看</button>
+                                    <button class="text-green-600 hover:text-green-900">部署</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="px-6 py-4 flex items-center justify-between border-t border-gray-200 mt-4">
+                    <div class="text-sm text-gray-500">
+                        显示 <span class="font-medium">1</span> 到 <span class="font-medium">5</span> 共 <span
+                            class="font-medium">12</span> 条
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button
+                            class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50 disabled:opacity-50"
+                            disabled>
+                            上一页
+                        </button>
+                        <button class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">
+                            1
+                        </button>
+                        <button
+                            class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                            2
+                        </button>
+                        <button
+                            class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                            3
+                        </button>
+                        <button
+                            class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                            下一页
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 蒸馏结果 Tab -->
+            <div id="results-tab" class="tab-content p-6">
+                <div class="flex justify-between mb-6">
+                    <div>
+                        <h2 class="section-title">蒸馏结果与模型库集成</h2>
+                        <p class="text-sm text-gray-600">查看并管理已完成蒸馏的模型，支持一键部署到生产环境</p>
+                    </div>
+                    <div class="flex items-center">
+                        <button
+                            class="dify-btn px-4 py-2 bg-green-600 text-white text-sm font-medium hover:bg-green-700 focus:outline-none flex items-center mr-3">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            将选中模型部署到生产
+                        </button>
+                        <button
+                            class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
+                            </svg>
+                            导出模型评估报告
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+                    <!-- 蒸馏模型卡片1 -->
+                    <div class="dify-card bg-white p-6 model-card">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">意图识别模型-小型</h3>
+                                <p class="text-sm text-gray-500 mt-1">蒸馏自: 意图识别模型(32B)</p>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox"
+                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                    就绪
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">参数量</span>
+                                <span class="font-medium text-gray-900">6.4B</span>
+                            </div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">压缩比例</span>
+                                <span class="font-medium text-gray-900">20%</span>
+                            </div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">蒸馏方法</span>
+                                <span class="font-medium text-gray-900">标准知识蒸馏</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">完成时间</span>
+                                <span class="font-medium text-gray-900">2025-05-14</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">准确率保留</span>
+                                <span class="font-medium text-green-600">95.3%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-green-600 h-1.5 rounded-full" style="width: 95.3%"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">银行业务评分</span>
+                                <span class="font-medium text-green-600">94.2</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-green-600 h-1.5 rounded-full" style="width: 94.2%"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                            <div class="flex space-x-2">
+                                <button class="text-sm text-blue-600 hover:text-blue-800">详情</button>
+                                <button class="text-sm text-blue-600 hover:text-blue-800">评估</button>
+                            </div>
+                            <button
+                                class="dify-btn px-3 py-1 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                                部署模型
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 蒸馏模型卡片2 -->
+                    <div class="dify-card bg-white p-6 model-card">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">改写模型-小型</h3>
+                                <p class="text-sm text-gray-500 mt-1">蒸馏自: 改写模型(7B)</p>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox"
+                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                    已部署
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">参数量</span>
+                                <span class="font-medium text-gray-900">0.7B</span>
+                            </div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">压缩比例</span>
+                                <span class="font-medium text-gray-900">10%</span>
+                            </div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">蒸馏方法</span>
+                                <span class="font-medium text-gray-900">标准知识蒸馏</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">完成时间</span>
+                                <span class="font-medium text-gray-900">2025-05-12</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">准确率保留</span>
+                                <span class="font-medium text-green-600">91.8%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-green-600 h-1.5 rounded-full" style="width: 91.8%"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">银行业务评分</span>
+                                <span class="font-medium text-yellow-600">88.5</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-yellow-600 h-1.5 rounded-full" style="width: 88.5%"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                            <div class="flex space-x-2">
+                                <button class="text-sm text-blue-600 hover:text-blue-800">详情</button>
+                                <button class="text-sm text-blue-600 hover:text-blue-800">评估</button>
+                            </div>
+                            <button
+                                class="dify-btn px-3 py-1 bg-gray-600 text-white text-sm font-medium hover:bg-gray-700 focus:outline-none"
+                                disabled>
+                                已部署
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 蒸馏模型卡片3 -->
+                    <div class="dify-card bg-white p-6 model-card">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">工作流模型-小型</h3>
+                                <p class="text-sm text-gray-500 mt-1">蒸馏自: 工作流模型(32B)</p>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox"
+                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2"
+                                    checked>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                                    测试中
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">参数量</span>
+                                <span class="font-medium text-gray-900">6.4B</span>
+                            </div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">压缩比例</span>
+                                <span class="font-medium text-gray-900">20%</span>
+                            </div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">蒸馏方法</span>
+                                <span class="font-medium text-gray-900">PKT</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">完成时间</span>
+                                <span class="font-medium text-gray-900">2025-05-10</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">准确率保留</span>
+                                <span class="font-medium text-green-600">93.7%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-green-600 h-1.5 rounded-full" style="width: 93.7%"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">银行业务评分</span>
+                                <span class="font-medium text-green-600">92.8</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-green-600 h-1.5 rounded-full" style="width: 92.8%"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                            <div class="flex space-x-2">
+                                <button class="text-sm text-blue-600 hover:text-blue-800">详情</button>
+                                <button class="text-sm text-blue-600 hover:text-blue-800">评估</button>
+                            </div>
+                            <button
+                                class="dify-btn px-3 py-1 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                                部署模型
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模型评估详情 -->
+                <div class="dify-card bg-white p-6 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="section-title">模型性能对比分析</h2>
+                        <div class="flex space-x-3">
+                            <select
+                                class="px-3 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="意图识别模型-小型">意图识别模型-小型 (6.4B)</option>
+                                <option value="改写模型-小型">改写模型-小型 (0.7B)</option>
+                                <option value="工作流模型-小型">工作流模型-小型 (6.4B)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- 准确率与性能对比 -->
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-700 mb-3">准确率与性能对比</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">总体准确率</span>
+                                        <div>
+                                            <span class="font-medium text-blue-600">100%</span>
+                                            <span class="text-gray-400 mx-1">vs</span>
+                                            <span class="font-medium text-green-600">95.3%</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 100%"></div>
+                                        </div>
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-green-600 h-1.5 rounded-full" style="width: 95.3%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                        <span>原始模型</span>
+                                        <span>蒸馏模型</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">推理延迟</span>
+                                        <div>
+                                            <span class="font-medium text-blue-600">230ms</span>
+                                            <span class="text-gray-400 mx-1">vs</span>
+                                            <span class="font-medium text-green-600">60ms</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 30%"></div>
+                                        </div>
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-green-600 h-1.5 rounded-full" style="width: 80%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">内存占用</span>
+                                        <div>
+                                            <span class="font-medium text-blue-600">64GB</span>
+                                            <span class="text-gray-400 mx-1">vs</span>
+                                            <span class="font-medium text-green-600">13GB</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 100%"></div>
+                                        </div>
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-green-600 h-1.5 rounded-full" style="width: 20%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">处理吞吐量</span>
+                                        <div>
+                                            <span class="font-medium text-blue-600">4/秒</span>
+                                            <span class="text-gray-400 mx-1">vs</span>
+                                            <span class="font-medium text-green-600">16/秒</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 25%"></div>
+                                        </div>
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-green-600 h-1.5 rounded-full" style="width: 85%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">成本效率</span>
+                                        <div>
+                                            <span class="font-medium text-blue-600">1x</span>
+                                            <span class="text-gray-400 mx-1">vs</span>
+                                            <span class="font-medium text-green-600">4.8x</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 20%"></div>
+                                        </div>
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-green-600 h-1.5 rounded-full" style="width: 95%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 银行业务场景表现 -->
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-700 mb-3">银行业务场景表现</h3>
+                            <div class="space-y-5">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">金融术语处理</span>
+                                        <div>
+                                            <span class="font-medium text-blue-600">100%</span>
+                                            <span class="text-gray-400 mx-1">vs</span>
+                                            <span class="font-medium text-green-600">94.2%</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 100%"></div>
+                                        </div>
+                                        <div class="w-1/2 bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-green-600 h-1.5 rounded-full" style="width: 94.2%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-xs font-medium text-gray-700 mb-2">各业务场景表现</h4>
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-gray-600">转账汇款</span>
+                                            <div>
+                                                <span
+                                                    class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">原始
+                                                    98.2%</span>
+                                                <span
+                                                    class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 ml-1">蒸馏
+                                                    96.0%</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-gray-600">理财咨询</span>
+                                            <div>
+                                                <span
+                                                    class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">原始
+                                                    96.5%</span>
+                                                <span
+                                                    class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 ml-1">蒸馏
+                                                    93.0%</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-gray-600">贷款申请</span>
+                                            <div>
+                                                <span
+                                                    class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">原始
+                                                    97.8%</span>
+                                                <span
+                                                    class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 ml-1">蒸馏
+                                                    95.0%</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-gray-600">信用卡服务</span>
+                                            <div>
+                                                <span
+                                                    class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">原始
+                                                    99.0%</span>
+                                                <span
+                                                    class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 ml-1">蒸馏
+                                                    97.0%</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-gray-600">外汇业务</span>
+                                            <div>
+                                                <span
+                                                    class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">原始
+                                                    95.3%</span>
+                                                <span
+                                                    class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 ml-1">蒸馏
+                                                    92.5%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 部署建议 -->
+                    <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                        <div class="flex">
+                            <svg class="h-5 w-5 text-blue-500 mr-2 mt-0.5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <h4 class="text-sm font-medium text-blue-800 mb-1">部署建议</h4>
+                                <p class="text-sm text-blue-700">
+                                    意图识别模型-小型在保留了95.3%准确率的同时，性能提升显著，推荐部署到生产环境。由于内存占用减少80%，建议部署4个实例以提高并发处理能力。在信用卡和转账场景中表现尤其出色，优先考虑在这些场景中使用。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 蒸馏模型在产可视化 -->
+                <div class="dify-card bg-white p-6">
+                    <h2 class="section-title mb-4">模型部署状态监控</h2>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        模型名称</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        模型大小</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        部署资源</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        实例数量</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        当前请求量</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        平均响应时间</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        状态</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!-- 已部署蒸馏模型1 -->
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">改写模型-小型</div>
+                                        <div class="text-xs text-gray-500">蒸馏自: 改写模型(7B)</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.7B</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1卡910B3</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">4</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">136/分钟</div>
+                                        <div class="text-xs text-green-600">↑12%</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">55ms</div>
+                                        <div class="text-xs text-green-600">↓75%</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            运行中
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex justify-end space-x-2">
+                                            <button class="text-blue-600 hover:text-blue-900">监控</button>
+                                            <button class="text-red-600 hover:text-red-900">回滚</button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- 已部署蒸馏模型2 -->
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">Security模型-小型</div>
+                                        <div class="text-xs text-gray-500">蒸馏自: Security模型(7B)</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.4B</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1卡910B3</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">95/分钟</div>
+                                        <div class="text-xs text-green-600">↑8%</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">62ms</div>
+                                        <div class="text-xs text-green-600">↓68%</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            运行中
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex justify-end space-x-2">
+                                            <button class="text-blue-600 hover:text-blue-900">监控</button>
+                                            <button class="text-red-600 hover:text-red-900">回滚</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 蒸馏任务确认模态框 -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">确认蒸馏任务</h3>
+                <button id="closeConfirmModal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="mb-6">
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div class="text-base font-medium text-gray-800 mb-2">蒸馏任务配置</div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">教师模型:</span>
+                            <span class="font-medium text-gray-800">意图识别模型 (32B)</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">学生模型大小:</span>
+                            <span class="font-medium text-gray-800">6.4B (20%)</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">蒸馏方法:</span>
+                            <span class="font-medium text-gray-800">标准知识蒸馏 (KD)</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">训练数据集:</span>
+                            <span class="font-medium text-gray-800">银行业务语料库</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">任务优先级:</span>
+                            <span class="font-medium text-gray-800">中</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">完成后操作:</span>
+                            <span class="font-medium text-gray-800">添加到模型库</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                </path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                蒸馏任务预计耗时约30小时，请确保有足够的GPU资源支持该任务。完成后将自动添加到模型库。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">任务名称</label>
+                    <input type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="例如：意图识别模型-蒸馏-20%" value="意图识别模型-蒸馏-20%">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">任务描述 (可选)</label>
+                    <textarea rows="2"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="描述任务目标或其他信息"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button id="cancelConfirmBtn"
+                    class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                    取消
+                </button>
+                <button id="startTaskBtn"
+                    class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    开始蒸馏
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模型部署确认模态框 -->
+    <div id="deployModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">确认部署蒸馏模型</h3>
+                <button id="closeDeployModal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="mb-6">
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div class="text-base font-medium text-gray-800 mb-2">部署信息</div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">蒸馏模型:</span>
+                            <span class="font-medium text-gray-800">意图识别模型-小型 (6.4B)</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">原始模型:</span>
+                            <span class="font-medium text-gray-800">意图识别模型 (32B)</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">性能保留率:</span>
+                            <span class="font-medium text-green-600">95.3%</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">银行业务评分:</span>
+                            <span class="font-medium text-green-600">94.2</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">部署方式</label>
+                    <select
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="new">新增部署</option>
+                        <option value="replace">替换原有模型</option>
+                        <option value="ab-test">A/B测试部署(流量分配)</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">资源配置</label>
+                    <select
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="2-instances">2个实例 (2卡910B3)</option>
+                        <option value="4-instances" selected>4个实例 (2卡910B3)</option>
+                        <option value="8-instances">8个实例 (4卡910B3)</option>
+                    </select>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                建议配置4个实例，可满足约240/分钟的请求量，相比原模型能够节省约65%的运营成本。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button id="cancelDeployBtn"
+                    class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                    取消
+                </button>
+                <button id="confirmDeployBtn"
+                    class="dify-btn px-4 py-2 bg-green-600 text-white text-sm font-medium hover:bg-green-700 focus:outline-none flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    确认部署
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 部署成功提示框 -->
+    <div id="successModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="mb-4 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">部署成功</h3>
+                <p class="text-sm text-gray-500">
+                    蒸馏模型已成功部署，系统将在5-10分钟内完成服务启动。您可以在模型管理中查看部署状态。
+                </p>
+            </div>
+            <div class="mt-5 sm:mt-6">
+                <button id="closeSuccessModal"
+                    class="dify-btn w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                    确认
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab切换功能
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.addEventListener('click', function () {
+                // 移除所有tab的active状态
+                document.querySelectorAll('.tab-item').forEach(t => {
+                    t.classList.remove('active');
+                });
+                // 添加当前tab的active状态
+                this.classList.add('active');
+
+                // 隐藏所有tab内容
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+
+                // 显示对应tab内容
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // 获取滑块和值显示元素
+        const tempSlider = document.getElementById('temperature-slider');
+        const tempValue = document.getElementById('temperature-value');
+
+        const alphaSlider = document.getElementById('alpha-slider');
+        const alphaValue = document.getElementById('alpha-value');
+
+        const softWeightSlider = document.getElementById('soft-weight-slider');
+        const softWeightValue = document.getElementById('soft-weight-value');
+
+        const layersSlider = document.getElementById('layers-slider');
+        const layersValue = document.getElementById('layers-value');
+
+        const batchSizeSlider = document.getElementById('batch-size-slider');
+        const batchSizeValue = document.getElementById('batch-size-value');
+
+        // 添加滑块事件监听
+        tempSlider.addEventListener('input', function () {
+            tempValue.textContent = this.value;
+            updatePerformancePrediction();
+        });
+
+        alphaSlider.addEventListener('input', function () {
+            alphaValue.textContent = this.value;
+            updatePerformancePrediction();
+        });
+
+        softWeightSlider.addEventListener('input', function () {
+            softWeightValue.textContent = this.value;
+            updatePerformancePrediction();
+        });
+
+        layersSlider.addEventListener('input', function () {
+            layersValue.textContent = this.value;
+            updatePerformancePrediction();
+        });
+
+        batchSizeSlider.addEventListener('input', function () {
+            batchSizeValue.textContent = this.value;
+        });
+
+        // 模型选择变更监听
+        document.getElementById('teacher-model').addEventListener('change', updateModelStructure);
+        document.getElementById('target-size').addEventListener('change', updateModelStructure);
+
+        // 更新模型结构与参数
+        function updateModelStructure() {
+            const teacherModel = document.getElementById('teacher-model').value;
+            const targetSize = document.getElementById('target-size').value;
+
+            let teacherSize, teacherLayers, teacherHidden, teacherHeads;
+            let studentSize, studentLayers, studentHidden, studentHeads;
+
+            // 根据选择的教师模型设置参数
+            if (teacherModel === 'intent' || teacherModel === 'workflow') {
+                teacherSize = '32B';
+                teacherLayers = '32';
+                teacherHidden = '4096';
+                teacherHeads = '32';
+            } else {
+                teacherSize = '7B';
+                teacherLayers = '24';
+                teacherHidden = '3072';
+                teacherHeads = '24';
+            }
+
+            // 计算学生模型参数
+            if (teacherModel === 'intent' || teacherModel === 'workflow') {
+                studentSize = (32 * parseFloat(targetSize)).toFixed(1) + 'B';
+                studentLayers = Math.round(32 * Math.sqrt(parseFloat(targetSize)));
+                studentHidden = Math.round(4096 * Math.sqrt(parseFloat(targetSize)));
+                studentHeads = Math.round(32 * Math.sqrt(parseFloat(targetSize)));
+            } else {
+                studentSize = (7 * parseFloat(targetSize)).toFixed(1) + 'B';
+                studentLayers = Math.round(24 * Math.sqrt(parseFloat(targetSize)));
+                studentHidden = Math.round(3072 * Math.sqrt(parseFloat(targetSize)));
+                studentHeads = Math.round(24 * Math.sqrt(parseFloat(targetSize)));
+            }
+
+            // 更新UI
+            document.querySelector('.teacher-model .text-xl').textContent = teacherSize;
+            document.querySelector('.student-model .text-xl').textContent = studentSize;
+            document.querySelector('.student-model .text-xs').textContent = (parseFloat(targetSize) * 100) + '%';
+
+            // 更新结构参数
+            const teacherParams = document.querySelectorAll('.grid-cols-2 > div:first-child .flex.justify-between span:last-child');
+            teacherParams[0].textContent = teacherLayers;
+            teacherParams[1].textContent = teacherHidden;
+            teacherParams[2].textContent = teacherHeads;
+            teacherParams[3].textContent = teacherSize;
+
+            const studentParams = document.querySelectorAll('.grid-cols-2 > div:last-child .flex.justify-between span:last-child');
+            studentParams[0].textContent = studentLayers;
+            studentParams[1].textContent = studentHidden;
+            studentParams[2].textContent = studentHeads;
+            studentParams[3].textContent = studentSize;
+
+            // 更新性能预测
+            updatePerformancePrediction();
+        }
+
+        // 更新性能预测
+        function updatePerformancePrediction() {
+            const teacherModel = document.getElementById('teacher-model').value;
+            const targetSize = parseFloat(document.getElementById('target-size').value);
+            const temperature = parseFloat(document.getElementById('temperature-slider').value);
+            const alpha = parseFloat(document.getElementById('alpha-slider').value);
+            const softWeight = parseFloat(document.getElementById('soft-weight-slider').value);
+
+            // 计算预期的性能保留率
+            let accuracyRetention = 0.90 + (targetSize * 0.3) - (temperature * 0.01) + (alpha * 0.05) + (softWeight * 0.03);
+            accuracyRetention = Math.min(0.99, Math.max(0.85, accuracyRetention));
+
+            let speedImprovement = 1 / targetSize * 0.8;
+            speedImprovement = Math.min(10, Math.max(1.5, speedImprovement));
+
+            let memoryReduction = 1 - targetSize * 1.1;
+            memoryReduction = Math.min(0.95, Math.max(0.6, memoryReduction));
+
+            // 更新UI
+            // 准确率条形图
+            document.querySelector('.performance-bars:nth-child(2) .student-bar').style.width = (accuracyRetention * 100) + '%';
+            document.querySelector('.performance-bars:nth-child(2) .student-value').textContent = (accuracyRetention * 100).toFixed(0) + '%';
+
+            // 推理速度
+            const teacherSpeed = (teacherModel === 'intent' || teacherModel === 'workflow') ? 230 : 120;
+            const studentSpeed = teacherSpeed / speedImprovement;
+
+            document.querySelector('.performance-bars:nth-child(2) .teacher-value').textContent = teacherSpeed + 'ms';
+            document.querySelector('.performance-bars:nth-child(2) .student-value').textContent = studentSpeed.toFixed(0) + 'ms';
+
+            // 更新内存占用
+            const teacherMemory = (teacherModel === 'intent' || teacherModel === 'workflow') ? 64 : 15;
+            const studentMemory = teacherMemory * targetSize;
+
+            document.querySelector('.performance-bars:nth-child(3) .teacher-value').textContent = teacherMemory + 'GB';
+            document.querySelector('.performance-bars:nth-child(3) .student-value').textContent = studentMemory.toFixed(1) + 'GB';
+
+            // 更新吞吐量
+            const teacherThroughput = (teacherModel === 'intent' || teacherModel === 'workflow') ? 4 : 8;
+            const studentThroughput = teacherThroughput * speedImprovement;
+
+            document.querySelector('.performance-bars:nth-child(4) .teacher-value').textContent = teacherThroughput + '/秒';
+            document.querySelector('.performance-bars:nth-child(4) .student-value').textContent = studentThroughput.toFixed(0) + '/秒';
+
+            // 更新整体性能保留率
+            const overallRetention = (accuracyRetention * 100).toFixed(0);
+            document.querySelector('.text-right .text-xs.font-semibold').textContent = overallRetention + '%';
+            document.querySelector('.overflow-hidden.h-2.mb-4 div').style.width = overallRetention + '%';
+
+            // 更新总结文本
+            document.querySelector('.text-sm.text-blue-700').textContent =
+                `蒸馏后的模型在保留${overallRetention}%性能的同时，推理速度提升${speedImprovement.toFixed(1)}倍，内存占用减少${(memoryReduction * 100).toFixed(0)}%，可同时部署${Math.floor(1 / targetSize)}台设备服务${Math.floor(studentThroughput)}个并发流程。`;
+        }
+
+        // 模态框控制
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // 开始蒸馏按钮
+        document.getElementById('start-distillation').addEventListener('click', function () {
+            openModal('confirmModal');
+        });
+
+        // 关闭确认框
+        document.getElementById('closeConfirmModal').addEventListener('click', function () {
+            closeModal('confirmModal');
+        });
+
+        document.getElementById('cancelConfirmBtn').addEventListener('click', function () {
+            closeModal('confirmModal');
+        });
+
+        // 开始任务按钮
+        document.getElementById('startTaskBtn').addEventListener('click', function () {
+            closeModal('confirmModal');
+            // 切换到任务管理标签
+            document.querySelector('[data-tab="tasks-tab"]').click();
+            alert('蒸馏任务已创建并加入队列，您可以在"任务管理"中查看任务进度。');
+        });
+
+        // 模型库按钮
+        document.getElementById('modelLibraryBtn').addEventListener('click', function () {
+            window.parent.location.href = "/development/model-center/model-management.html";
+        });
+
+        // 新建蒸馏任务按钮
+        document.getElementById('newDistillationBtn').addEventListener('click', function () {
+            document.querySelector('[data-tab="create-tab"]').click();
+        });
+
+        // 部署模型按钮事件
+        document.querySelectorAll('.dify-card .dify-btn').forEach(btn => {
+            if (btn.textContent.trim() === '部署模型') {
+                btn.addEventListener('click', function () {
+                    openModal('deployModal');
+                });
+            }
+        });
+
+        // 关闭部署模态框
+        document.getElementById('closeDeployModal').addEventListener('click', function () {
+            closeModal('deployModal');
+        });
+
+        document.getElementById('cancelDeployBtn').addEventListener('click', function () {
+            closeModal('deployModal');
+        });
+
+        // 确认部署
+        document.getElementById('confirmDeployBtn').addEventListener('click', function () {
+            closeModal('deployModal');
+            openModal('successModal');
+        });
+
+        // 关闭成功提示
+        document.getElementById('closeSuccessModal').addEventListener('click', function () {
+            closeModal('successModal');
+        });
+
+        // 初始化页面
+        updateModelStructure();
+    </script>
+</body>
+
+</html>

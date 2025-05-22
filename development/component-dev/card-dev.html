@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUI卡片信息管理（卡片管理与开发）</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+        
+        .tab-item {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 8px 12px;
+            color: #666;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-item:hover {
+            color: #333;
+        }
+        .tab-item.active {
+            color: #00A3A3;
+            border-bottom-color: #00A3A3;
+        }
+        
+        .card-component {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #fafafa;
+        }
+        .card-component:hover {
+            border-color: #00A3A3;
+            background: #f5f5f5;
+        }
+        
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 20px;
+        }
+        
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 1200px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        .modal-sidebar {
+            width: 300px;
+            border-right: 1px solid #e5e7eb;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+        
+        .modal-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .component-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .component-item:hover {
+            border-color: #00A3A3;
+            background: #f9f9f9;
+        }
+        
+        .component-icon {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 6px;
+        }
+        
+        .toggle-switch {
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+            width: 36px;
+            height: 20px;
+            background-color: #e5e7eb;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .toggle-switch.active {
+            background-color: #10B981;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(16px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Main Container -->
+    <div><!-- <div class="container mx-auto p-6"> -->
+        
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="flex">
+                    <button class="tab-item">默认分类</button>
+                    <button class="tab-item">网点相关组件</button>
+                    <button class="tab-item">cpt_1</button>
+                    <button class="tab-item">信用卡</button>
+                    <button class="tab-item">电票缴费</button>
+                    <button class="tab-item">fund</button>
+                    <button class="tab-item">首页相关组件</button>
+                    <button class="tab-item">生活缴费</button>
+                    <button class="tab-item">payManage</button>
+                    <button class="tab-item">paymentDetails</button>
+                    <button class="tab-item">扫码支付</button>
+                    <button class="tab-item">限额设置</button>
+                    <button class="tab-item active">转账相关组件</button>
+                </nav>
+            </div>
+            
+            <div class="p-4 flex justify-between items-center">
+                <div>
+                    <button class="bg-teal-600 text-white px-4 py-2 rounded text-sm flex items-center hover:bg-teal-700">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        新建业务组件
+                    </button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="text" placeholder="搜索" class="px-3 py-2 border border-gray-300 rounded text-sm w-64">
+                    <button class="p-2 text-gray-500 hover:text-gray-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cards Grid -->
+        <div class="card-grid">
+            <!-- Card 1 -->
+            <div class="card-component bg-white">
+                <div class="flex justify-end mb-2">
+                    <button class="text-gray-400 hover:text-gray-600">•••</button>
+                </div>
+                <div class="flex justify-center mb-3">
+                    <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                        <div class="w-12 h-12 bg-gray-300 rounded"></div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-medium text-center">bankCardRadioList [银行卡选列表]</h3>
+            </div>
+            
+            <!-- Card 2 -->
+            <div class="card-component bg-white">
+                <div class="flex justify-end mb-2">
+                    <button class="text-gray-400 hover:text-gray-600">•••</button>
+                </div>
+                <div class="flex justify-center mb-3">
+                    <div class="w-16 h-16 bg-red-50 rounded flex items-center justify-center">
+                        <div class="w-12 h-12 bg-red-100 rounded"></div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-medium text-center">choose_payment_card [选择付款卡]</h3>
+            </div>
+            
+            <!-- Card 3 -->
+            <div class="card-component bg-white">
+                <div class="flex justify-end mb-2">
+                    <button class="text-gray-400 hover:text-gray-600">•••</button>
+                </div>
+                <div class="flex justify-center mb-3">
+                    <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                        <div class="w-8 h-8 bg-gray-300 rounded"></div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-medium text-center">img_cell_list [图片单元格]</h3>
+            </div>
+            
+            <!-- Card 4 -->
+            <div class="card-component bg-white">
+                <div class="flex justify-end mb-2">
+                    <button class="text-gray-400 hover:text-gray-600">•••</button>
+                </div>
+                <div class="flex justify-center mb-3">
+                    <div class="w-16 h-16 bg-red-50 rounded flex items-center justify-center">
+                        <div class="w-12 h-12 bg-red-100 rounded"></div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-medium text-center">letter_cell_list [字母列表]</h3>
+            </div>
+            
+            <!-- Card 5 -->
+            <div class="card-component bg-white">
+                <div class="flex justify-end mb-2">
+                    <button class="text-gray-400 hover:text-gray-600">•••</button>
+                </div>
+                <div class="flex justify-center mb-3">
+                    <div class="w-16 h-16 bg-blue-50 rounded flex items-center justify-center">
+                        <div class="w-12 h-4 bg-blue-200 rounded"></div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-medium text-center">selectDate [选择年月日]</h3>
+            </div>
+            
+            <!-- Card 6 -->
+            <div class="card-component bg-white">
+                <div class="flex justify-end mb-2">
+                    <button class="text-gray-400 hover:text-gray-600">•••</button>
+                </div>
+                <div class="flex justify-center mb-3">
+                    <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                        <div class="text-lg">•••</div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-medium text-center">transfer_amount [转账金额]</h3>
+            </div>
+            
+            <!-- Card 7 -->
+            <div class="card-component bg-white">
+                <div class="flex justify-end mb-2">
+                    <button class="text-gray-400 hover:text-gray-600">•••</button>
+                </div>
+                <div class="flex justify-center mb-3">
+                    <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                        <div class="w-8 h-8 bg-gray-300 rounded"></div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-medium text-center">transfer_collapse_list [转账折叠面板]</h3>
+            </div>
+            
+            <!-- Card 8 -->
+            <div class="card-component bg-white">
+                <div class="flex justify-end mb-2">
+                    <button class="text-gray-400 hover:text-gray-600">•••</button>
+                </div>
+                <div class="flex justify-center mb-3">
+                    <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                        <div class="w-8 h-8 bg-gray-300 rounded"></div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-medium text-center">transfer_postscript [转账附言]</h3>
+            </div>
+            
+            <!-- Card 9 -->
+            <div class="card-component bg-white">
+                <div class="flex justify-end mb-2">
+                    <button class="text-gray-400 hover:text-gray-600">•••</button>
+                </div>
+                <div class="flex justify-center mb-3">
+                    <div class="w-16 h-16 bg-green-50 rounded flex items-center justify-center">
+                        <div class="w-8 h-1 bg-green-300 rounded"></div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-medium text-center">withdrawalPassword [取款密码组件]</h3>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div class="modal-backdrop hidden" id="cardModal">
+        <div class="modal-content">
+            <!-- Left Sidebar -->
+            <div class="modal-sidebar">
+                <div class="p-4 border-b border-gray-200">
+                    <h3 class="font-medium text-gray-700">基础部件</h3>
+                </div>
+                
+                <div class="p-3">
+                    <div class="relative mb-3">
+                        <input type="text" placeholder="请输入关键字" class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                        <svg class="w-4 h-4 absolute right-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <div class="component-item">
+                            <div class="component-icon bg-blue-100 rounded flex items-center justify-center">
+                                📅
+                            </div>
+                            <span class="text-xs text-center">日历</span>
+                        </div>
+                        <div class="component-item">
+                            <div class="component-icon bg-blue-100 rounded flex items-center justify-center">
+                                🔘
+                            </div>
+                            <span class="text-xs text-center">时间选择器</span>
+                        </div>
+                        <div class="component-item">
+                            <div class="component-icon bg-blue-100 rounded flex items-center justify-center">
+                                💬
+                            </div>
+                            <span class="text-xs text-center">输入框</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <div class="text-xs text-gray-500 px-2">表单组件</div>
+                        <div class="space-y-1">
+                            <div class="px-2 py-1 text-sm hover:bg-gray-100 rounded cursor-pointer">单选框</div>
+                            <div class="px-2 py-1 text-sm hover:bg-gray-100 rounded cursor-pointer">多选框</div>
+                            <div class="px-2 py-1 text-sm hover:bg-gray-100 rounded cursor-pointer">文件上传</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="modal-main">
+                <!-- Tab Bar -->
+                <div class="flex border-b border-gray-200">
+                    <button class="px-4 py-3 text-sm text-gray-600 hover:text-gray-900 border-b-2 border-transparent">属性</button>
+                    <button class="px-4 py-3 text-sm text-gray-600 hover:text-gray-900 border-b-2 border-transparent">样式</button>
+                    <button class="px-4 py-3 text-sm text-gray-600 hover:text-gray-900 border-b-2 border-transparent">数据</button>
+                    <button class="px-4 py-3 text-sm text-blue-600 border-b-2 border-blue-600">绑定</button>
+                    <!-- <button class="px-4 py-3 text-sm text-gray-600 hover:text-gray-900 border-b-2 border-transparent">流程</button>
+                    <button class="px-4 py-3 text-sm text-gray-600 hover:text-gray-900 border-b-2 border-transparent">协议</button> -->
+                </div>
+                
+                <!-- Content -->
+                <div class="flex-1 p-4">
+                    <div class="grid grid-cols-2 gap-4 max-w-2xl">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">全部</label>
+                            <div class="relative">
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded text-sm pr-8 appearance-none">
+                                    <option>${issue.name}</option>
+                                </select>
+                                <svg class="w-4 h-4 absolute right-3 top-2.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="flex items-end">
+                            <button class="px-4 py-2 bg-blue-600 text-white rounded text-sm">新建</button>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                            <div class="px-3 py-2 border border-gray-300 rounded text-sm bg-gray-50">${issue.id}</div>
+                        </div>
+                        <div></div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">标题</label>
+                            <div class="px-3 py-2 border border-gray-300 rounded text-sm bg-gray-50">${issue.name}</div>
+                        </div>
+                        <div></div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">分类</label>
+                            <div class="px-3 py-2 border border-gray-300 rounded text-sm bg-gray-50">${issue.categoryName}</div>
+                        </div>
+                        <div></div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">市场名称</label>
+                            <div class="px-3 py-2 border border-gray-300 rounded text-sm bg-gray-50">${issue.marketProject}</div>
+                        </div>
+                        <div></div>
+                    </div>
+                </div>
+                
+                <!-- Form Preview -->
+                <div class="border-t border-gray-200 p-4">
+                    <div class="bg-gray-50 rounded p-6">
+                        <h3 class="text-lg font-medium mb-4">空循环</h3>
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-3 gap-4 text-sm">
+                                <label class="text-gray-600">创建者</label>
+                                <div class="col-span-2">${issue.creator}</div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 text-sm">
+                                <label class="text-gray-600">处理人</label>
+                                <div class="col-span-2">${issue.handler}</div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 text-sm">
+                                <label class="text-gray-600">抄送人</label>
+                                <div class="col-span-2">${issue.caosong}</div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 text-sm">
+                                <label class="text-gray-600">预计开始</label>
+                                <div class="col-span-2">${issue.start}</div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 text-sm">
+                                <label class="text-gray-600">预计结束</label>
+                                <div class="col-span-2">${issue.end}</div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 text-sm">
+                                <label class="text-gray-600">状态</label>
+                                <div class="col-span-2">${issue.status}</div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 text-sm">
+                                <label class="text-gray-600">内容</label>
+                                <div class="col-span-2">${issue.desc}</div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 text-sm">
+                                <label class="text-gray-600">附件</label>
+                                <div class="col-span-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Panel -->
+            <div class="w-80 border-l border-gray-200 bg-gray-50">
+                <div class="p-4">
+                    <h3 class="font-medium text-gray-700 mb-4">创建者</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">当前输入字段</span>
+                            <select class="px-2 py-1 text-sm border border-gray-300 rounded">
+                                <option>营业_creator</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">创建者</span>
+                            <span class="text-sm text-gray-600">输入框</span>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">名称</label>
+                            <input type="text" value="输入框" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">输入框长度</span>
+                            <select class="px-2 py-1 text-sm border border-gray-300 rounded">
+                                <option>文字</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">大小</label>
+                            <select class="w-full px-2 py-1 text-sm border border-gray-300 rounded">
+                                <option>默认</option>
+                            </select>
+                        </div>
+                        
+                        <div class="pt-3 border-t border-gray-200">
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示显示文字</span>
+                                    <div class="toggle-switch active"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示键盘内容控制键</span>
+                                    <div class="toggle-switch"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示多行内容</span>
+                                    <div class="toggle-switch active"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示字符串（计算）</span>
+                                    <div class="toggle-switch"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示当前线程</span>
+                                    <div class="toggle-switch active"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示已使用流程控制</span>
+                                    <div class="toggle-switch active"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">最多有格式化反应</span>
+                                    <div class="toggle-switch"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示右侧信息描述</span>
+                                    <div class="toggle-switch"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示密码内容限制功能</span>
+                                    <div class="toggle-switch"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示显示字体设计</span>
+                                    <div class="toggle-switch"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示样基本输入组标识组</span>
+                                    <div class="toggle-switch"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示面板解锁示文字</span>
+                                    <div class="toggle-switch"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">输入内容格式设计</span>
+                                    <div class="toggle-switch"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">显示大方向</span>
+                                    <div class="toggle-switch"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex space-x-2">
+                                <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm">右</button>
+                                <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm">左</button>
+                                <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm">上</button>
+                                <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm">下</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Show modal when clicking the new card button
+        document.querySelector('.bg-teal-600').addEventListener('click', function() {
+            document.getElementById('cardModal').classList.remove('hidden');
+        });
+        
+        // Close modal when clicking backdrop
+        document.getElementById('cardModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+            }
+        });
+        
+        // Card click simulation
+        document.querySelectorAll('.card-component').forEach(card => {
+            card.addEventListener('click', function() {
+                document.getElementById('cardModal').classList.remove('hidden');
+            });
+        });
+        
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+    </script>
+</body>
+</html>

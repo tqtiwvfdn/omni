@@ -1,0 +1,2583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能体管理/开发 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .node-component {
+            border: 1px solid var(--dify-border);
+            border-radius: 8px;
+            background: white;
+            box-shadow: var(--dify-shadow);
+            cursor: move;
+            transition: all 0.2s ease;
+            position: absolute;
+            min-width: 160px;
+        }
+
+        .node-component:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .node-component.selected {
+            border-color: var(--dify-primary);
+            box-shadow: 0 0 0 3px var(--dify-primary-light);
+        }
+
+        .node-component.executing {
+            border-color: #10B981;
+            box-shadow: 0 0 0 3px #D1FAE5;
+        }
+
+        .node-component.error {
+            border-color: #EF4444;
+            box-shadow: 0 0 0 3px #FEE2E2;
+        }
+
+        .node-header {
+            padding: 8px 12px;
+            background: var(--dify-hover);
+            border-bottom: 1px solid var(--dify-border);
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .node-content {
+            padding: 8px;
+            min-height: 60px;
+        }
+
+        .node-port {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid var(--dify-primary);
+            position: absolute;
+            cursor: crosshair;
+        }
+
+        .node-port.input {
+            left: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .node-port.output {
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .canvas {
+            background-image: radial-gradient(circle, #E5E7EB 1px, transparent 1px);
+            background-size: 20px 20px;
+            min-height: 600px;
+            position: relative;
+            overflow: auto;
+        }
+
+        .sidebar-component {
+            transition: all 0.2s ease;
+            cursor: grab;
+        }
+
+        .sidebar-component:hover {
+            background: var(--dify-hover);
+        }
+
+        .sidebar-component:active {
+            cursor: grabbing;
+        }
+
+        .agent-status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-published {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status-draft {
+            background-color: #F3F4F6;
+            color: #374151;
+        }
+
+        .status-testing {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status-archived {
+            background-color: #F9FAFB;
+            color: #6B7280;
+        }
+
+        .tab-button {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button:hover {
+            color: var(--dify-primary);
+        }
+
+        .tab-button.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Debug Panel Styles */
+        .debug-panel {
+            transition: width 0.3s ease;
+            border-left: 1px solid var(--dify-border);
+        }
+
+        .debug-panel.collapsed {
+            width: 40px;
+        }
+
+        .debug-panel.collapsed .debug-content {
+            display: none;
+        }
+
+        .debug-console {
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .console-entry {
+            margin-bottom: 4px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .console-entry.info {
+            color: #93c5fd;
+        }
+
+        .console-entry.error {
+            color: #fca5a5;
+        }
+
+        .console-entry.success {
+            color: #86efac;
+        }
+
+        .console-entry.warning {
+            color: #fed7aa;
+        }
+
+        .console-entry.highlight {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .test-input-bar {
+            border-top: 1px solid var(--dify-border);
+            background: white;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background: #F9FAFB;
+        }
+
+        .chat-message {
+            padding: 8px 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            max-width: 70%;
+            position: relative;
+        }
+
+        .chat-message.user {
+            background: #EBF2FF;
+            color: #1e40af;
+            margin-left: auto;
+        }
+
+        .chat-message.agent {
+            background: #F3F4F6;
+            color: #374151;
+        }
+
+        .chat-message.system {
+            background: #FEF3C7;
+            color: #92400E;
+            text-align: center;
+            margin: 12px auto;
+            font-size: 12px;
+            padding: 4px 8px;
+            max-width: 50%;
+        }
+
+        .message-timestamp {
+            font-size: 10px;
+            color: #9CA3AF;
+            position: absolute;
+            bottom: -16px;
+            right: 8px;
+        }
+
+        .message-metadata {
+            font-size: 11px;
+            color: #6B7280;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .state-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        .state-idle {
+            background: #9CA3AF;
+        }
+
+        .state-running {
+            background: #10B981;
+            animation: pulse 2s infinite;
+        }
+
+        .state-error {
+            background: #EF4444;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .connection-line {
+            position: absolute;
+            stroke: #94a3b8;
+            stroke-width: 2;
+            fill: none;
+            pointer-events: none;
+        }
+
+        .connection-line.active {
+            stroke: #10B981;
+            stroke-dasharray: 5;
+            animation: flow 2s linear infinite;
+        }
+
+        @keyframes flow {
+            0% {
+                stroke-dashoffset: 0;
+            }
+            100% {
+                stroke-dashoffset: -10;
+            }
+        }
+
+        .debug-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .variable-inspector {
+            font-size: 12px;
+            border: 1px solid var(--dify-border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .variable-header {
+            background: var(--dify-hover);
+            padding: 8px 12px;
+            font-weight: 500;
+        }
+
+        .variable-item {
+            padding: 6px 12px;
+            border-top: 1px solid var(--dify-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .variable-item:hover {
+            background: var(--dify-hover);
+        }
+
+        .variable-name {
+            color: #6366f1;
+            font-weight: 500;
+        }
+
+        .variable-value {
+            color: #059669;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .variable-value.changed {
+            color: #dc2626;
+            animation: highlight 0.5s ease;
+        }
+
+        @keyframes highlight {
+            0% { background: rgba(220, 38, 38, 0.2); }
+            100% { background: transparent; }
+        }
+
+        .input-with-actions {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            border-top: 1px solid var(--dify-border);
+            background: white;
+        }
+
+        .test-scenarios {
+            padding: 8px;
+            background: #F9FAFB;
+            border-bottom: 1px solid var(--dify-border);
+        }
+
+        .scenario-button {
+            margin-right: 8px;
+            margin-bottom: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: 1px solid #D1D5DB;
+            background: white;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scenario-button:hover {
+            background: #F3F4F6;
+            border-color: #2970FF;
+        }
+
+        .scenario-button.active {
+            background: #2970FF;
+            color: white;
+            border-color: #2970FF;
+        }
+
+        .execution-trace {
+            font-size: 12px;
+            background: #F3F4F6;
+            border-radius: 6px;
+            padding: 8px;
+            margin-top: 8px;
+        }
+
+        .trace-step {
+            padding: 4px 0;
+            border-left: 2px solid #E5E7EB;
+            padding-left: 8px;
+            margin-left: 4px;
+        }
+
+        .trace-step.active {
+            border-left-color: #10B981;
+        }
+
+        .node-metrics {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border: 1px solid var(--dify-border);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 10px;
+            color: #6B7280;
+            white-space: nowrap;
+        }
+
+        .response-preview {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 1px solid var(--dify-border);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .response-preview.active {
+            display: block;
+        }
+
+        .response-header {
+            padding: 12px 16px;
+            background: var(--dify-hover);
+            border-bottom: 1px solid var(--dify-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .response-content {
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+
+        .chat-message {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 12px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #9CA3AF;
+            border-radius: 50%;
+            animation: typingDot 1s infinite;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.1s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.2s; }
+
+        @keyframes typingDot {
+            0%, 80%, 100% { opacity: 0.3; }
+            40% { opacity: 1; }
+        }
+
+        .file-upload {
+            display: none;
+        }
+
+        .image-preview {
+            max-width: 200px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        .audio-player {
+            width: 100%;
+            max-width: 300px;
+            margin-top: 8px;
+        }
+
+        .attachment-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .attachment-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .message-metadata {
+            font-size: 11px;
+            color: #6B7280;
+            margin-top: 4px;
+        }
+
+        .execution-info {
+            margin-top: 4px;
+            padding: 4px 8px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+            font-size: 11px;
+            color: #4B5563;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans">
+    <div class="h-screen flex flex-col">
+        <!-- Page Header -->
+        <div class="border-b border-gray-200 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-semibold text-gray-800">智能体管理/开发</h1>
+                    <p class="text-sm text-gray-600 mt-1">创建和编排银行业务场景的智能对话助手</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="debug-controls hidden" id="debug-controls">
+                        <span class="text-sm text-gray-600 flex items-center">
+                            <span class="state-indicator state-idle" id="debug-state"></span>
+                            <span id="debug-status">待命中</span>
+                        </span>
+                        <button onclick="runDebug()"
+                            class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            id="run-debug-btn">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            运行调试
+                        </button>
+                        <button onclick="stopDebug()"
+                            class="px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed hidden"
+                            id="stop-debug-btn">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                <rect x="9" y="9" width="6" height="6" stroke-width="2" rx="1"></rect>
+                            </svg>
+                            停止调试
+                        </button>
+                        <button onclick="toggleChatPreview(true)"
+                            class="px-3 py-1.5 border border-gray-300 bg-white text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50"
+                            id="toggle-chat-preview">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                            对话预览
+                        </button>
+                        <button onclick="toggleDebugPanel()"
+                            class="px-3 py-1.5 border border-gray-300 bg-white text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50"
+                            id="toggle-debug-panel">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                            调试面板
+                        </button>
+                    </div>
+                    <button onclick="showEditor()"
+                        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        创建智能体
+                    </button>
+                    <button onclick="showTemplate()"
+                        class="px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 focus:outline-none">
+                        导入模板
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="border-b border-gray-200">
+            <div id="mainTabs" class="flex -mb-px px-6">
+                <div class="tab-button active px-3 py-3 text-sm font-medium text-gray-600" data-tab="list">智能体列表</div>
+                <div class="tab-button px-3 py-3 text-sm font-medium text-gray-600" data-tab="editor">流程编辑器</div>
+                <div class="tab-button px-3 py-3 text-sm font-medium text-gray-600" data-tab="templates">模板库</div>
+            </div>
+        </div>
+
+        <!-- Tab Content: 智能体列表 -->
+        <div class="tab-content active flex-1 overflow-hidden" id="list-content">
+            <div class="h-full overflow-auto p-6">
+                <!-- Agent Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Agent Card 1 -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="p-4">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-base font-medium text-gray-900">转账助手</h3>
+                                        <p class="text-sm text-gray-500">智能引导用户完成转账操作</p>
+                                    </div>
+                                </div>
+                                <span class="agent-status-badge status-published">已发布</span>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                                <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                    <span>调用次数: 1,234</span>
+                                    <span>成功率: 98.5%</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="editAgent('transfer')"
+                                        class="text-blue-600 hover:text-blue-800 text-sm">编辑</button>
+                                    <button onclick="debugAgent('transfer')"
+                                        class="text-green-600 hover:text-green-800 text-sm">调试</button>
+                                    <button onclick="showEditor()"
+                                        class="text-gray-600 hover:text-gray-800 text-sm">查看</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Agent Card 2 -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="p-4">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-base font-medium text-gray-900">理财顾问</h3>
+                                        <p class="text-sm text-gray-500">智能分析客户需求推荐理财产品</p>
+                                    </div>
+                                </div>
+                                <span class="agent-status-badge status-published">已发布</span>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                                <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                    <span>调用次数: 856</span>
+                                    <span>成功率: 96.2%</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="editAgent('finance')"
+                                        class="text-blue-600 hover:text-blue-800 text-sm">编辑</button>
+                                    <button onclick="debugAgent('finance')"
+                                        class="text-green-600 hover:text-green-800 text-sm">调试</button>
+                                    <button onclick="showEditor()"
+                                        class="text-gray-600 hover:text-gray-800 text-sm">查看</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Create New Agent Card -->
+                    <div onclick="showEditor()"
+                        class="bg-white rounded-lg shadow-sm border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer">
+                        <div class="p-8 text-center">
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-base font-medium text-gray-900 mb-1">创建新智能体</h3>
+                            <p class="text-sm text-gray-500">从空白开始或选择模板</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: 流程编辑器 -->
+        <div class="tab-content flex-1 overflow-hidden" id="editor-content">
+            <div class="h-full flex">
+                <!-- Left Sidebar - Components -->
+                <div class="w-64 bg-white border-r border-gray-200 overflow-y-auto">
+                    <div class="p-4">
+                        <h3 class="text-sm font-medium text-gray-700 mb-3">组件库</h3>
+
+                        <!-- Basic Components -->
+                        <div class="mb-4">
+                            <h4 class="text-xs font-medium text-gray-500 uppercase mb-2">基础组件</h4>
+                            <div class="space-y-2">
+                                <div class="sidebar-component p-2 rounded-md border border-gray-200 bg-white">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center mr-2">
+                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium">用户输入</div>
+                                            <div class="text-xs text-gray-500">接收用户消息</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sidebar-component p-2 rounded-md border border-gray-200 bg-white">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-green-100 rounded flex items-center justify-center mr-2">
+                                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium">AI响应</div>
+                                            <div class="text-xs text-gray-500">生成回复内容</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sidebar-component p-2 rounded-md border border-gray-200 bg-white">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="w-8 h-8 bg-purple-100 rounded flex items-center justify-center mr-2">
+                                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium">条件判断</div>
+                                            <div class="text-xs text-gray-500">根据条件分支</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bank Components -->
+                        <div class="mb-4">
+                            <h4 class="text-xs font-medium text-gray-500 uppercase mb-2">银行组件</h4>
+                            <div class="space-y-2">
+                                <div class="sidebar-component p-2 rounded-md border border-gray-200 bg-white">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="w-8 h-8 bg-indigo-100 rounded flex items-center justify-center mr-2">
+                                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium">身份验证</div>
+                                            <div class="text-xs text-gray-500">验证用户身份</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sidebar-component p-2 rounded-md border border-gray-200 bg-white">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="w-8 h-8 bg-yellow-100 rounded flex items-center justify-center mr-2">
+                                            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium">账户查询</div>
+                                            <div class="text-xs text-gray-500">查询账户信息</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sidebar-component p-2 rounded-md border border-gray-200 bg-white">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-red-100 rounded flex items-center justify-center mr-2">
+                                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium">风险检查</div>
+                                            <div class="text-xs text-gray-500">风险控制验证</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sidebar-component p-2 rounded-md border border-gray-200 bg-white">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="w-8 h-8 bg-emerald-100 rounded flex items-center justify-center mr-2">
+                                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium">交易执行</div>
+                                            <div class="text-xs text-gray-500">执行转账操作</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Canvas -->
+                <div class="flex-1 canvas relative">
+                    <!-- SVG for connection lines -->
+                    <svg class="absolute inset-0 w-full h-full" id="canvas-svg" style="pointer-events: none;">
+                        <!-- Connection lines will be drawn here -->
+                    </svg>
+
+                    <!-- Welcome Display -->
+                    <div class="h-full flex items-center justify-center" id="canvas-welcome">
+                        <div class="text-center max-w-md">
+                            <div
+                                class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                            </div>
+                            <h2 class="text-xl font-medium text-gray-900 mb-2">开始构建智能体</h2>
+                            <p class="text-gray-500 mb-6">从左侧组件库拖拽组件到此处，开始设计您的智能体对话流程</p>
+                            <button  onclick="showTemplate()" 
+                                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z">
+                                    </path>
+                                </svg>
+                                从模板开始
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sample Flow (hidden initially) -->
+                    <div id="sample-flow" class="hidden">
+                        <!-- User Input Node -->
+                        <div class="node-component" style="left: 100px; top: 100px;" data-node-id="user-input">
+                            <div class="node-header">
+                                <span>用户输入</span>
+                                <div class="flex items-center">
+                                    <span class="state-indicator state-idle"></span>
+                                </div>
+                            </div>
+                            <div class="node-content text-sm text-gray-600">
+                                接收用户消息
+                            </div>
+                            <div class="node-port input"></div>
+                            <div class="node-port output"></div>
+                            <div class="node-metrics" style="display: none;">0.01s</div>
+                        </div>
+
+                        <!-- Condition Node -->
+                        <div class="node-component" style="left: 350px; top: 100px;" data-node-id="condition">
+                            <div class="node-header">
+                                <span>条件判断</span>
+                                <div class="flex items-center">
+                                    <span class="state-indicator state-idle"></span>
+                                </div>
+                            </div>
+                            <div class="node-content text-sm text-gray-600">
+                                判断转账类型
+                            </div>
+                            <div class="node-port input"></div>
+                            <div class="node-port output"></div>
+                            <div class="node-metrics" style="display: none;">0.05s</div>
+                        </div>
+
+                        <!-- Bank Account Check -->
+                        <div class="node-component" style="left: 600px; top: 50px;" data-node-id="account-check">
+                            <div class="node-header">
+                                <span>账户查询</span>
+                                <div class="flex items-center">
+                                    <span class="state-indicator state-idle"></span>
+                                </div>
+                            </div>
+                            <div class="node-content text-sm text-gray-600">
+                                验证账户信息
+                            </div>
+                            <div class="node-port input"></div>
+                            <div class="node-port output"></div>
+                            <div class="node-metrics" style="display: none;">0.12s</div>
+                        </div>
+
+                        <!-- Risk Check -->
+                        <div class="node-component" style="left: 600px; top: 150px;" data-node-id="risk-check">
+                            <div class="node-header">
+                                <span>风险检查</span>
+                                <div class="flex items-center">
+                                    <span class="state-indicator state-idle"></span>
+                                </div>
+                            </div>
+                            <div class="node-content text-sm text-gray-600">
+                                执行风险评估
+                            </div>
+                            <div class="node-port input"></div>
+                            <div class="node-port output"></div>
+                            <div class="node-metrics" style="display: none;">0.23s</div>
+                        </div>
+
+                        <!-- Execute Transfer -->
+                        <div class="node-component" style="left: 850px; top: 100px;" data-node-id="execute-transfer">
+                            <div class="node-header">
+                                <span>交易执行</span>
+                                <div class="flex items-center">
+                                    <span class="state-indicator state-idle"></span>
+                                </div>
+                            </div>
+                            <div class="node-content text-sm text-gray-600">
+                                执行转账操作
+                            </div>
+                            <div class="node-port input"></div>
+                            <div class="node-port output"></div>
+                            <div class="node-metrics" style="display: none;">0.35s</div>
+                        </div>
+
+                        <!-- AI Response -->
+                        <div class="node-component" style="left: 1100px; top: 100px;" data-node-id="ai-response">
+                            <div class="node-header">
+                                <span>AI响应</span>
+                                <div class="flex items-center">
+                                    <span class="state-indicator state-idle"></span>
+                                </div>
+                            </div>
+                            <div class="node-content text-sm text-gray-600">
+                                生成确认消息
+                            </div>
+                            <div class="node-port input"></div>
+                            <div class="node-port output"></div>
+                            <div class="node-metrics" style="display: none;">0.18s</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar - Properties and Debug -->
+                <div class="w-80 bg-white border-l border-gray-200 overflow-y-auto debug-panel" id="debug-panel">
+                    <div class="debug-content">
+                        <!-- Tab Controls -->
+                        <div class="border-b border-gray-200">
+                            <div class="flex -mb-px">
+                                <button id="properties-tab" class="tab-button active px-4 py-3 text-sm font-medium" data-tab="properties">
+                                    属性配置
+                                </button>
+                                <button id="debug-tab" class="tab-button px-4 py-3 text-sm font-medium" data-tab="debug">
+                                    调试信息
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Properties Panel -->
+                        <div id="properties-panel" class="tab-content active p-4">
+                            <h3 class="text-sm font-medium text-gray-700 mb-4">节点属性</h3>
+                            <div class="text-sm text-gray-500 text-center py-8">
+                                选择一个节点以查看其属性
+                            </div>
+                        </div>
+
+                        <!-- Debug Panel -->
+                        <div id="debug-panel-content" class="tab-content p-4">
+                            <h3 class="text-sm font-medium text-gray-700 mb-4">调试控制台</h3>
+                            
+                            <!-- Debug Console -->
+                            <div class="debug-console mb-4">
+                                <div class="console-entry info">[INFO] 调试会话启动</div>
+                                <div class="console-entry">[13:45:30] 等待用户输入...</div>
+                            </div>
+                            
+                            <!-- Variable Inspector -->
+                            <div class="variable-inspector mb-4">
+                                <div class="variable-header">执行变量</div>
+                                <div class="variable-item">
+                                    <span class="variable-name">userInput</span>
+                                    <span class="variable-value">""</span>
+                                </div>
+                                <div class="variable-item">
+                                    <span class="variable-name">transferAmount</span>
+                                    <span class="variable-value">null</span>
+                                </div>
+                                <div class="variable-item">
+                                    <span class="variable-name">targetAccount</span>
+                                    <span class="variable-value">null</span>
+                                </div>
+                                <div class="variable-item">
+                                    <span class="variable-name">riskScore</span>
+                                    <span class="variable-value">0</span>
+                                </div>
+                            </div>
+
+                            <!-- Execution Trace -->
+                            <div class="execution-trace mb-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">执行跟踪</h4>
+                                <div class="trace-step">→ 用户输入 (待处理)</div>
+                                <div class="trace-step">→ 条件判断 (待处理)</div>
+                                <div class="trace-step">→ 账户查询 (待处理)</div>
+                                <div class="trace-step">→ 风险检查 (待处理)</div>
+                                <div class="trace-step">→ 交易执行 (待处理)</div>
+                                <div class="trace-step">→ AI响应 (待处理)</div>
+                            </div>
+
+                            <!-- Step-by-Step Controls -->
+                            <div class="border-t pt-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">步进控制</h4>
+                                <div class="flex gap-2">
+                                    <button onclick="stepForward()" class="flex-1 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50">
+                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                        单步执行
+                                    </button>
+                                    <button onclick="addBreakpoint()" class="flex-1 px-3 py-1.5 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">
+                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" fill="currentColor"></path>
+                                        </svg>
+                                        断点
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Breakpoints List -->
+                            <div class="mt-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">断点列表</h4>
+                                <div class="text-sm text-gray-500">
+                                    <div class="flex items-center justify-between py-1">
+                                        <span>条件判断</span>
+                                        <button class="text-red-600 hover:text-red-800">×</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Collapse Button -->
+                    <button onclick="toggleDebugPanel()" 
+                        class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 z-10">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bottom Chat Preview -->
+            <div class="test-input-bar hidden" id="test-input-bar">
+                <!-- Test Scenarios -->
+                <div class="test-scenarios">
+                    <h4 class="text-xs font-medium text-gray-700 mb-2">测试场景：</h4>
+                    <button class="scenario-button active" data-scenario="normal">普通转账</button>
+                    <button class="scenario-button" data-scenario="cross-bank">跨行转账</button>
+                    <button class="scenario-button" data-scenario="large-amount">大额转账</button>
+                    <button class="scenario-button" data-scenario="error">异常场景</button>
+                </div>
+                
+                <!-- Chat Container -->
+                <div class="chat-container" id="chat-container">
+                    <div class="chat-message system">开始调试对话 - 当前场景：普通转账</div>
+                </div>
+                
+                <!-- Input Area -->
+                <div class="input-with-actions">
+                    <input type="text" id="test-input" 
+                        placeholder="输入测试消息..." 
+                        class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    <button onclick="sendTestMessage()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </button>
+                    <button onclick="clearChat()"
+                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                        清空
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: 模板库 -->
+        <div class="tab-content flex-1 overflow-hidden" id="templates-content">
+            <div class="h-full overflow-auto p-6">
+                <!-- Template Categories -->
+                <div class="flex space-x-4 mb-6 border-b border-gray-200">
+                    <button class="pb-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">全部模板</button>
+                    <button class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700">客户服务</button>
+                    <button class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700">业务办理</button>
+                    <button class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700">咨询解答</button>
+                </div>
+
+                <!-- Template Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Template Card 1 -->
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="h-48 bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-xs bg-white/20 px-2 py-1 rounded">智能转账</span>
+                            </div>
+                            <h3 class="text-lg font-medium">转账助手模板</h3>
+                            <p class="text-sm text-blue-100 mt-1">引导用户完成各类转账操作</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                    <span>256 次使用</span>
+                                </div>
+                                <span class="text-xs text-gray-400">更新于 2025-05-01</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">
+                                    使用模板
+                                </button>
+                                <button class="px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">
+                                    预览
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Template Card 2 -->
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="h-48 bg-gradient-to-br from-green-500 to-green-600 p-6 text-white">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-xs bg-white/20 px-2 py-1 rounded">智能理财</span>
+                            </div>
+                            <h3 class="text-lg font-medium">理财顾问模板</h3>
+                            <p class="text-sm text-green-100 mt-1">个性化理财产品推荐</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                    <span>189 次使用</span>
+                                </div>
+                                <span class="text-xs text-gray-400">更新于 2025-04-28</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
+                                    使用模板
+                                </button>
+                                <button class="px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">
+                                    预览
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Template Card 3 -->
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="h-48 bg-gradient-to-br from-orange-500 to-orange-600 p-6 text-white">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-xs bg-white/20 px-2 py-1 rounded">信用卡服务</span>
+                            </div>
+                            <h3 class="text-lg font-medium">信用卡助手模板</h3>
+                            <p class="text-sm text-orange-100 mt-1">信用卡申请及服务指引</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                    <span>312 次使用</span>
+                                </div>
+                                <span class="text-xs text-gray-400">更新于 2025-05-03</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 px-3 py-2 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700">
+                                    使用模板
+                                </button>
+                                <button class="px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">
+                                    预览
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Template Card 4 -->
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="h-48 bg-gradient-to-br from-purple-500 to-purple-600 p-6 text-white">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-xs bg-white/20 px-2 py-1 rounded">贷款服务</span>
+                            </div>
+                            <h3 class="text-lg font-medium">贷款申请模板</h3>
+                            <p class="text-sm text-purple-100 mt-1">引导用户完成贷款申请</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                    <span>145 次使用</span>
+                                </div>
+                                <span class="text-xs text-gray-400">更新于 2025-04-25</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 px-3 py-2 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700">
+                                    使用模板
+                                </button>
+                                <button class="px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">
+                                    预览
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Template Card 5 -->
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="h-48 bg-gradient-to-br from-indigo-500 to-indigo-600 p-6 text-white">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m0 0a9 9 0 01-9-9m9 9v-9m0 0a9 9 0 019-9m-9 9H3"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-xs bg-white/20 px-2 py-1 rounded">外汇服务</span>
+                            </div>
+                            <h3 class="text-lg font-medium">外汇交易助手</h3>
+                            <p class="text-sm text-indigo-100 mt-1">外汇汇率查询及交易办理</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                    <span>78 次使用</span>
+                                </div>
+                                <span class="text-xs text-gray-400">更新于 2025-05-05</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 px-3 py-2 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700">
+                                    使用模板
+                                </button>
+                                <button class="px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">
+                                    预览
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Create Custom Template -->
+                    <div class="bg-white rounded-lg border-2 border-dashed border-gray-300 overflow-hidden hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer">
+                        <div class="h-48 p-6 flex flex-col items-center justify-center">
+                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-base font-medium text-gray-900">创建自定义模板</h3>
+                            <p class="text-sm text-gray-500 mt-1">基于您的需求定制</p>
+                        </div>
+                        <div class="p-4 bg-gray-50">
+                            <button class="w-full px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">
+                                开始创建
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Response Preview Modal -->
+    <dialog id="response-preview" style="height: 1200px;width: 800px;border:none;outline: 0;">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-200">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900">对话预览</h2>
+                <p class="text-sm text-gray-500">实时查看智能体的输入输出</p>
+            </div>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            <!-- System message -->
+            <div class="flex justify-center">
+                <div class="bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-xs">
+                    🚀 开始调试对话 - 支持文本、图片、语音、文件等多种输入
+                </div>
+            </div>
+
+            <!-- Example: Text input and output -->
+            <div class="flex justify-end">
+                <div class="bg-blue-600 text-white px-4 py-2 rounded-lg max-w-md">
+                    <div>我想转账1000元给张三</div>
+                    <div class="message-metadata text-blue-100">
+                        14:32:15 | 文本输入
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="bg-white border border-gray-200 px-4 py-2 rounded-lg max-w-md">
+                    <div>好的，我来帮您处理转账。请提供收款人账号。</div>
+                    <div class="execution-info">
+                        <span>节点: ai-response</span> | <span>耗时: 0.18s</span> | <span>Token: 36</span>
+                    </div>
+                    <div class="message-metadata">
+                        14:32:15 | 文本输出
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example: Image input -->
+            <div class="flex justify-end">
+                <div class="bg-blue-600 text-white px-4 py-2 rounded-lg max-w-md">
+                    <div>请查看这个身份证照片</div>
+                    <img src="/api/placeholder/200/120" alt="身份证照片" class="image-preview">
+                    <div class="message-metadata text-blue-100">
+                        14:32:20 | 图片输入 (JPG, 256KB)
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="bg-white border border-gray-200 px-4 py-2 rounded-lg max-w-md">
+                    <div>我看到了您的身份证信息。检测到的信息如下：</div>
+                    <div class="mt-2 p-3 bg-gray-50 rounded text-sm">
+                        <div>姓名：张三</div>
+                        <div>身份证号：110***********1234</div>
+                        <div>地址：北京市朝阳区...</div>
+                    </div>
+                    <div class="execution-info">
+                        <span>节点: image-ocr</span> | <span>耗时: 1.2s</span>
+                    </div>
+                    <div class="message-metadata">
+                        14:32:21 | 文本输出 + 结构化数据
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example: File upload -->
+            <div class="flex justify-end">
+                <div class="bg-blue-600 text-white px-4 py-2 rounded-lg max-w-md">
+                    <div>上传了收入证明文件</div>
+                    <div class="attachment-list">
+                        <div class="attachment-item bg-white/20 text-white">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            <span>收入证明.pdf</span>
+                            <span>(2.1MB)</span>
+                        </div>
+                    </div>
+                    <div class="message-metadata text-blue-100">
+                        14:32:25 | 文件上传
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="bg-white border border-gray-200 px-4 py-2 rounded-lg max-w-md">
+                    <div>文件已成功上传并分析完成。根据您的收入证明，申请贷款额度为：</div>
+                    <div class="mt-2 p-3 bg-green-50 rounded text-sm">
+                        <div class="text-green-800 font-semibold">最高可申请：50万元</div>
+                        <div class="text-xs text-gray-600 mt-1">基于您的月收入和银行流水分析</div>
+                    </div>
+                    <div class="execution-info">
+                        <span>节点: file-analyzer</span> | <span>耗时: 2.5s</span> | <span>分析: 收入证明识别</span>
+                    </div>
+                    <div class="message-metadata">
+                        14:32:27 | 结构化输出
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voice input example -->
+            <div class="flex justify-end">
+                <div class="bg-blue-600 text-white px-4 py-2 rounded-lg max-w-md">
+                    <div>🎙️ 语音消息</div>
+                    <audio controls class="audio-player">
+                        <source src="/api/placeholder/audio.mp3" type="audio/mp3">
+                    </audio>
+                    <div class="message-metadata text-blue-100">
+                        14:32:30 | 语音输入 (3秒)
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="bg-white border border-gray-200 px-4 py-2 rounded-lg max-w-md">
+                    <div>您说："确认申请贷款，我同意所有条款"</div>
+                    <div class="mt-2 p-3 bg-blue-50 rounded text-sm">
+                        <div class="font-medium text-blue-800">已启动贷款申请流程</div>
+                        <div class="text-xs text-gray-600 mt-1">语音识别准确率: 98%</div>
+                    </div>
+                    <div class="execution-info">
+                        <span>节点: voice-recognition</span> | <span>耗时: 0.8s</span> | <span>语种: 中文</span>
+                    </div>
+                    <div class="message-metadata">
+                        14:32:31 | 语音识别 + 文本输出
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="border-t border-gray-200 p-4 bg-white">
+            <div class="flex items-center gap-2">
+                <div class="flex gap-1">
+                    <button id="text-input-btn" class="p-2 hover:bg-gray-100 rounded transition-colors" title="文本输入">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                        </svg>
+                    </button>
+                    
+                    <button id="image-input-btn" class="p-2 hover:bg-gray-100 rounded transition-colors" title="上传图片">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a1 1 0 011.828 0L16 17m-5-5l1.586-1.586a1 1 0 011.828 0L20 16m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </button>
+                    
+                    <button id="file-input-btn" class="p-2 hover:bg-gray-100 rounded transition-colors" title="上传文件">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </button>
+                    
+                    <button id="voice-input-btn" class="p-2 hover:bg-gray-100 rounded transition-colors" title="语音输入">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-14 0m0 0V4a7 7 0 1114 0v6M12 19.5v3M12 19.5c-3.866 0-7-3.366-7-7.5"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="flex-1 relative">
+                    <input 
+                        type="text" 
+                        id="message-input" 
+                        placeholder="输入消息或选择其他输入方式..."
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                    >
+                    <input type="file" id="file-upload" class="file-upload" accept="*/*">
+                    <input type="file" id="image-upload" class="file-upload" accept="image/*">
+                </div>
+                
+                <button 
+                    id="send-btn"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                    发送
+                </button>
+            </div>
+            
+            <div class="flex justify-between items-center mt-2 text-xs text-gray-500">
+                <div>支持：文本、图片(图片、截图)、文件(PDF、Word、Excel)、语音</div>
+                <div>按 Enter 发送 | Shift+Enter 换行</div>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Script for tab functionality and debug features -->
+    <script>
+        // Tab switching
+        document.getElementById('mainTabs').querySelectorAll('.tab-button').forEach(tab => {
+            tab.addEventListener('click', function () {
+                const tabId = this.getAttribute('data-tab');
+
+                // Update active tab
+                document.querySelectorAll('.tab-button').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                // Show corresponding content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${tabId}-content`).classList.add('active');
+            });
+        });
+
+        document.getElementById('debug-panel').querySelectorAll('.tab-button').forEach(tab => {
+            tab.addEventListener('click', function () {
+                const tabContainer = this.closest('.border-b');
+                const tabId = this.getAttribute('data-tab');
+                
+                // Update active tab
+                tabContainer.querySelectorAll('.tab-button').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                // Show corresponding content
+                const parentContent = tabContainer.closest('.flex-1') || tabContainer.closest('.debug-panel');
+                parentContent.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                const targetContent = document.getElementById(tabId + '-panel-content') || document.getElementById(tabId + '-panel');
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
+            });
+        });
+
+        // Main tab switching for the page
+        document.querySelectorAll('[data-tab="list"], [data-tab="editor"], [data-tab="templates"]').forEach(tab => {
+            tab.addEventListener('click', function () {
+                const tabId = this.getAttribute('data-tab');
+
+                // Update active tab
+                document.querySelectorAll('[data-tab="list"], [data-tab="editor"], [data-tab="templates"]').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                // Show corresponding content
+                document.querySelectorAll('.tab-content[id$="-content"]').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${tabId}-content`).classList.add('active');
+
+                // Show debug controls only in editor mode
+                const debugControls = document.getElementById('debug-controls');
+                if (tabId === 'editor') {
+                    debugControls.classList.remove('hidden');
+                } else {
+                    debugControls.classList.add('hidden');
+                }
+            });
+        });
+
+        // Debug Functions
+        let debugActive = false;
+        let currentNode = null;
+        let currentScenario = 'normal';
+        let executionHistory = [];
+
+        function showEditor() {
+            document.querySelector('[data-tab="editor"]').click();
+            // Show sample flow
+            document.getElementById('canvas-welcome').style.display = 'none';
+            document.getElementById('sample-flow').classList.remove('hidden');
+            drawConnections();
+        }
+
+        function debugAgent(agentType) {
+            showEditor();
+            setTimeout(() => {
+                if (!document.getElementById('debug-panel').classList.contains('collapsed')) {
+                    toggleDebugPanel();
+                }
+                runDebug();
+            }, 300);
+        }
+
+        function editAgent(agentType) {
+            showEditor();
+        }
+
+        function showTemplate() {
+            document.querySelector('[data-tab="templates"]').click();
+        }
+
+        function runDebug() {
+            debugActive = true;
+            
+            // Update UI
+            document.getElementById('run-debug-btn').classList.add('hidden');
+            document.getElementById('stop-debug-btn').classList.remove('hidden');
+            document.getElementById('test-input-bar').classList.remove('hidden');
+            document.getElementById('debug-status').textContent = '调试运行中';
+            document.getElementById('debug-state').className = 'state-indicator state-running';
+            
+            // Clear chat
+            clearChat();
+            
+            // Add welcome message
+            const chatContainer = document.getElementById('chat-container');
+            const systemMsg = document.createElement('div');
+            systemMsg.className = 'chat-message system';
+            systemMsg.textContent = '开始调试对话 - 当前场景：' + getScenarioName();
+            chatContainer.appendChild(systemMsg);
+            
+            // Add example message to console
+            addConsoleMessage('[INFO] 开始调试转账助手...', 'info');
+            addConsoleMessage('[DEBUG] 等待用户输入...', 'info');
+            
+            // Reset execution trace
+            resetExecutionTrace();
+            
+            // Highlight first node
+            highlightNode('user-input');
+        }
+
+        function stopDebug() {
+            debugActive = false;
+            
+            // Update UI
+            document.getElementById('run-debug-btn').classList.remove('hidden');
+            document.getElementById('stop-debug-btn').classList.add('hidden');
+            document.getElementById('test-input-bar').classList.add('hidden');
+            document.getElementById('debug-status').textContent = '待命中';
+            document.getElementById('debug-state').className = 'state-indicator state-idle';
+            
+            // Hide node metrics
+            document.querySelectorAll('.node-metrics').forEach(metric => {
+                metric.style.display = 'none';
+            });
+            
+            // Clear highlights
+            document.querySelectorAll('.node-component').forEach(node => {
+                node.classList.remove('executing', 'error');
+                node.querySelector('.state-indicator').className = 'state-indicator state-idle';
+            });
+            
+            // Clear connection animations
+            document.querySelectorAll('.connection-line').forEach(line => {
+                line.classList.remove('active');
+            });
+            
+            addConsoleMessage('[INFO] 调试会话结束', 'warning');
+            addConsoleMessage('[SUMMARY] 总执行时间: 0.94s', 'info');
+            addConsoleMessage('[SUMMARY] 成功执行的节点: ' + executionHistory.length, 'info');
+        }
+
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debug-panel');
+            const toggleBtn = document.getElementById('toggle-debug-panel');
+            
+            if (panel.classList.contains('collapsed')) {
+                panel.classList.remove('collapsed');
+                panel.style.width = '320px';
+                toggleBtn.innerHTML = `
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    隐藏调试面板`;
+            } else {
+                panel.classList.add('collapsed');
+                panel.style.width = '40px';
+                toggleBtn.innerHTML = `
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    显示调试面板`;
+            }
+        }
+
+        function toggleChatPreview(flag) {
+            const preview = document.getElementById('response-preview');
+
+            if(flag){
+                preview.showModal();
+            }else{
+                preview.close();
+            }
+        }
+
+        function addConsoleMessage(message, type = 'info') {
+            const console = document.querySelector('.debug-console');
+            const entry = document.createElement('div');
+            entry.className = `console-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            
+            if (type === 'highlight') {
+                entry.innerHTML = `[${timestamp}] <span class="highlight">${message}</span>`;
+            } else {
+                entry.textContent = `[${timestamp}] ${message}`;
+            }
+            
+            console.appendChild(entry);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function highlightNode(nodeId) {
+            // Clear previous highlights
+            document.querySelectorAll('.node-component').forEach(node => {
+                node.classList.remove('executing', 'error');
+                node.querySelector('.state-indicator').className = 'state-indicator state-idle';
+            });
+            
+            // Clear connection animations
+            document.querySelectorAll('.connection-line').forEach(line => {
+                line.classList.remove('active');
+            });
+            
+            // Highlight current node
+            const node = document.querySelector(`[data-node-id="${nodeId}"]`);
+            if (node) {
+                node.classList.add('executing');
+                node.querySelector('.state-indicator').className = 'state-indicator state-running';
+                currentNode = nodeId;
+                
+                // Show node metrics
+                const metrics = node.querySelector('.node-metrics');
+                metrics.style.display = 'block';
+                
+                // Update console
+                addConsoleMessage(`正在执行: ${node.querySelector('.node-header span').textContent}`, 'info');
+                
+                // Update execution trace
+                updateExecutionTrace(nodeId);
+                
+                // Animate connection lines leading to this node
+                animateConnectionsTo(nodeId);
+                
+                // Add to execution history
+                executionHistory.push({
+                    nodeId: nodeId,
+                    timestamp: new Date().toISOString(),
+                    duration: parseFloat(metrics.textContent),
+                    status: 'success'
+                });
+            }
+        }
+
+        function stepForward() {
+            if (!debugActive) return;
+            
+            const sequence = ['user-input', 'condition', 'account-check', 'risk-check', 'execute-transfer', 'ai-response'];
+            const currentIndex = sequence.indexOf(currentNode);
+            
+            if (currentIndex === -1) {
+                highlightNode(sequence[0]);
+            } else if (currentIndex < sequence.length - 1) {
+                // Simulate processing time based on node
+                const delays = {
+                    'user-input': 10,
+                    'condition': 50,
+                    'account-check': 120,
+                    'risk-check': 230,
+                    'execute-transfer': 350,
+                    'ai-response': 180
+                };
+                
+                setTimeout(() => {
+                    highlightNode(sequence[currentIndex + 1]);
+                }, delays[currentNode]);
+            } else {
+                // Execution complete
+                addConsoleMessage('✓ 流程执行完毕', 'success');
+                setTimeout(() => {
+                    stopDebug();
+                }, 1000);
+            }
+        }
+
+        function addBreakpoint() {
+            if (currentNode) {
+                addConsoleMessage(`设置断点: ${currentNode}`, 'warning');
+                // Add visual indicator for breakpoint
+                const node = document.querySelector(`[data-node-id="${currentNode}"]`);
+                if (node) {
+                    // Add red dot to indicate breakpoint
+                    const dot = document.createElement('div');
+                    dot.className = 'absolute w-3 h-3 bg-red-500 rounded-full right-1 top-1';
+                    node.style.position = 'relative';
+                    node.appendChild(dot);
+                }
+            }
+        }
+
+        function sendTestMessage() {
+            const input = document.getElementById('test-input');
+            const message = input.value;
+            if (!message) return;
+            
+            // Add user message
+            const chatContainer = document.getElementById('chat-container');
+            const userMsg = document.createElement('div');
+            userMsg.className = 'chat-message user';
+            userMsg.innerHTML = `
+                ${message}
+                <div class="message-timestamp">${new Date().toLocaleTimeString()}</div>
+            `;
+            chatContainer.appendChild(userMsg);
+            
+            // Clear input
+            input.value = '';
+            
+            // Simulate AI processing
+            addConsoleMessage(`用户输入: ${message}`, 'info');
+            
+            // Process based on scenario
+            const scenario = currentScenario;
+            let responseText = '';
+            let shouldError = false;
+            
+            switch(scenario) {
+                case 'normal':
+                    responseText = '好的，我来帮您处理转账。请提供收款人账号。';
+                    break;
+                case 'cross-bank':
+                    responseText = '跨行转账需要手续费2元，是否继续？请输入是或否。';
+                    break;
+                case 'large-amount':
+                    responseText = '您申请的是大额转账，需要额外的身份验证。请输入您的密码。';
+                    break;
+                case 'error':
+                    responseText = '抱歉，系统遇到错误，请稍后重试。';
+                    shouldError = true;
+                    break;
+            }
+            
+            // Show typing indicator
+            const typingMsg = document.createElement('div');
+            typingMsg.className = 'chat-message agent';
+            typingMsg.innerHTML = '智能体正在输入...';
+            chatContainer.appendChild(typingMsg);
+            
+            // Simulate processing delay
+            setTimeout(() => {
+                // Remove typing indicator
+                typingMsg.remove();
+                
+                // Add agent response
+                const agentMsg = document.createElement('div');
+                agentMsg.className = 'chat-message agent';
+                agentMsg.innerHTML = `
+                    ${responseText}
+                    <div class="message-timestamp">${new Date().toLocaleTimeString()}</div>
+                    <div class="message-metadata">
+                        <span>节点: ${currentNode || 'ai-response'}</span> | 
+                        <span>耗时: 0.${Math.floor(Math.random() * 900 + 100)}s</span> |
+                        <span>场景: ${getScenarioName()}</span>
+                    </div>
+                `;
+                chatContainer.appendChild(agentMsg);
+                
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                addConsoleMessage('AI响应已生成', 'success');
+                
+                // Update variables
+                updateVariable('userInput', message);
+                
+                // Parse amount if exists
+                const amountMatch = message.match(/\d+/);
+                if (amountMatch) {
+                    updateVariable('transferAmount', amountMatch[0]);
+                }
+                
+                // Parse account if exists
+                const accountMatch = message.match(/账[号户][:：]?\s*(\S+)/);
+                if (accountMatch) {
+                    updateVariable('targetAccount', accountMatch[1]);
+                }
+                
+                // Show error state if needed
+                if (shouldError) {
+                    const node = document.querySelector(`[data-node-id="${currentNode}"]`);
+                    if (node) {
+                        node.classList.add('error');
+                        node.querySelector('.state-indicator').className = 'state-indicator state-error';
+                    }
+                    addConsoleMessage('节点执行失败', 'error');
+                } else {
+                    // Step through nodes if debugging
+                    if (debugActive) {
+                        stepForward();
+                    }
+                }
+                
+                // Show response preview
+                showResponseDetails(responseText, {
+                    node: currentNode || 'ai-response',
+                    duration: Math.random() * 0.5 + 0.1,
+                    variables: {
+                        userInput: message,
+                        transferAmount: document.querySelector('.variable-name').nextElementSibling.textContent,
+                        targetAccount: 'pending'
+                    }
+                });
+            }, 1000 + Math.random() * 1000);
+        }
+
+        function clearChat() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = '';
+            
+            // Reset variables
+            document.querySelectorAll('.variable-item').forEach(item => {
+                const name = item.querySelector('.variable-name').textContent;
+                const value = item.querySelector('.variable-value');
+                
+                switch(name) {
+                    case 'userInput':
+                        value.textContent = '""';
+                        break;
+                    case 'transferAmount':
+                        value.textContent = 'null';
+                        break;
+                    case 'targetAccount':
+                        value.textContent = 'null';
+                        break;
+                    case 'riskScore':
+                        value.textContent = '0';
+                        break;
+                }
+            });
+            
+            // Add system message
+            const systemMsg = document.createElement('div');
+            systemMsg.className = 'chat-message system';
+            systemMsg.textContent = '对话已清空 - 当前场景：' + getScenarioName();
+            chatContainer.appendChild(systemMsg);
+        }
+
+        function updateVariable(name, value) {
+            const variables = document.querySelectorAll('.variable-item');
+            variables.forEach(item => {
+                const nameSpan = item.querySelector('.variable-name');
+                if (nameSpan.textContent === name) {
+                    const valueSpan = item.querySelector('.variable-value');
+                    const oldValue = valueSpan.textContent;
+                    const newValue = JSON.stringify(value);
+                    
+                    if (oldValue !== newValue) {
+                        valueSpan.textContent = newValue;
+                        valueSpan.classList.add('changed');
+                        setTimeout(() => {
+                            valueSpan.classList.remove('changed');
+                        }, 500);
+                    }
+                }
+            });
+        }
+
+        function drawConnections() {
+            const svg = document.getElementById('canvas-svg');
+            svg.innerHTML = '';
+            
+            const connections = [
+                ['user-input', 'condition'],
+                ['condition', 'account-check'],
+                ['condition', 'risk-check'],
+                ['account-check', 'execute-transfer'],
+                ['risk-check', 'execute-transfer'],
+                ['execute-transfer', 'ai-response']
+            ];
+            
+            connections.forEach(([from, to]) => {
+                const fromNode = document.querySelector(`[data-node-id="${from}"]`);
+                const toNode = document.querySelector(`[data-node-id="${to}"]`);
+                
+                if (fromNode && toNode) {
+                    const fromRect = fromNode.getBoundingClientRect();
+                    const toRect = toNode.getBoundingClientRect();
+                    const canvas = document.querySelector('.canvas');
+                    const canvasRect = canvas.getBoundingClientRect();
+                    
+                    const x1 = fromRect.right - canvasRect.left - canvas.scrollLeft;
+                    const y1 = fromRect.top + fromRect.height/2 - canvasRect.top - canvas.scrollTop;
+                    const x2 = toRect.left - canvasRect.left - canvas.scrollLeft;
+                    const y2 = toRect.top + toRect.height/2 - canvasRect.top - canvas.scrollTop;
+                    
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
+                    path.classList.add('connection-line');
+                    path.setAttribute('data-from', from);
+                    path.setAttribute('data-to', to);
+                    svg.appendChild(path);
+                }
+            });
+        }
+
+// Enable enter key for test input
+document.getElementById('test-input')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendTestMessage();
+            }
+        });
+
+        // Drag and drop functionality for components
+        let draggedNode = null;
+        let dragOffset = { x: 0, y: 0 };
+
+        document.querySelectorAll('.sidebar-component').forEach(component => {
+            component.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', this.innerHTML);
+                e.dataTransfer.effectAllowed = 'copy';
+            });
+        });
+
+        const canvas = document.querySelector('.canvas');
+        
+        canvas.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+
+        canvas.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const data = e.dataTransfer.getData('text/plain');
+            
+            // Create new node
+            const newNode = document.createElement('div');
+            newNode.className = 'node-component';
+            newNode.style.left = (e.clientX - canvas.getBoundingClientRect().left) + 'px';
+            newNode.style.top = (e.clientY - canvas.getBoundingClientRect().top) + 'px';
+            newNode.innerHTML = `
+                <div class="node-header">
+                    <span>新节点</span>
+                    <div class="flex items-center">
+                        <span class="state-indicator state-idle"></span>
+                    </div>
+                </div>
+                <div class="node-content text-sm text-gray-600">
+                    描述...
+                </div>
+                <div class="node-port input"></div>
+                <div class="node-port output"></div>
+            `;
+            
+            this.appendChild(newNode);
+            
+            // Make node draggable
+            makeNodeDraggable(newNode);
+        });
+
+        function makeNodeDraggable(node) {
+            node.addEventListener('mousedown', function(e) {
+                if (e.target.closest('.node-port')) return;
+                
+                draggedNode = this;
+                const rect = this.getBoundingClientRect();
+                const canvas = document.querySelector('.canvas');
+                const canvasRect = canvas.getBoundingClientRect();
+                
+                dragOffset.x = e.clientX - (rect.left - canvasRect.left);
+                dragOffset.y = e.clientY - (rect.top - canvasRect.top);
+                
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+                
+                e.preventDefault();
+            });
+        }
+
+        function handleMouseMove(e) {
+            if (!draggedNode) return;
+            
+            const canvas = document.querySelector('.canvas');
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            const x = e.clientX - canvasRect.left - dragOffset.x + canvas.scrollLeft;
+            const y = e.clientY - canvasRect.top - dragOffset.y + canvas.scrollTop;
+            
+            draggedNode.style.left = x + 'px';
+            draggedNode.style.top = y + 'px';
+            
+            drawConnections();
+        }
+
+        function handleMouseUp() {
+            draggedNode = null;
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
+
+        // Make existing nodes draggable
+        document.querySelectorAll('.node-component').forEach(makeNodeDraggable);
+
+        // Node selection
+        document.addEventListener('click', function(e) {
+            const node = e.target.closest('.node-component');
+            if (node) {
+                // Remove selection from all nodes
+                document.querySelectorAll('.node-component').forEach(n => {
+                    n.classList.remove('selected');
+                });
+                
+                // Select current node
+                node.classList.add('selected');
+
+                document.getElementById('properties-tab').click();
+                
+                // Show properties panel
+                const propertiesPanel = document.getElementById('properties-panel');
+                propertiesPanel.innerHTML = `
+                    <h3 class="text-sm font-medium text-gray-700 mb-4">节点属性</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">节点名称</label>
+                            <input type="text" value="${node.querySelector('.node-header span').textContent}" 
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                            <textarea class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" rows="3">${node.querySelector('.node-content').textContent.trim()}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">超时设置</label>
+                            <input type="number" value="30" 
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <span class="ml-2 text-sm text-gray-700">记录执行日志</span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+
+
+        function getScenarioName() {
+            const scenarioNames = {
+                'normal': '普通转账',
+                'cross-bank': '跨行转账',
+                'large-amount': '大额转账',
+                'error': '异常场景'
+            };
+            return scenarioNames[currentScenario] || '未知场景';
+        }
+
+        function updateExecutionTrace(nodeId) {
+            const trace = document.querySelector('.execution-trace');
+            const steps = trace.querySelectorAll('.trace-step');
+            
+            steps.forEach(step => {
+                step.classList.remove('active');
+                
+                // Check if this step matches the current node
+                const stepText = step.textContent.toLowerCase();
+                if (stepText.includes(nodeId.replace('-', ''))) {
+                    step.classList.add('active');
+                    step.textContent = step.textContent.replace('(待处理)', '(执行中)');
+                    
+                    // Mark previous steps as completed
+                    let prevStep = step.previousElementSibling;
+                    while (prevStep) {
+                        if (!prevStep.textContent.includes('(已完成)')) {
+                            prevStep.textContent = prevStep.textContent.replace('(待处理)', '(已完成)').replace('(执行中)', '(已完成)');
+                        }
+                        prevStep = prevStep.previousElementSibling;
+                    }
+                }
+            });
+        }
+
+        function resetExecutionTrace() {
+            const trace = document.querySelector('.execution-trace');
+            const steps = trace.querySelectorAll('.trace-step');
+            
+            steps.forEach(step => {
+                step.classList.remove('active');
+                step.textContent = step.textContent.replace('(已完成)', '(待处理)').replace('(执行中)', '(待处理)');
+            });
+        }
+
+        function animateConnectionsTo(nodeId) {
+            // Find all connections that lead to this node
+            const connections = document.querySelectorAll('.connection-line');
+            connections.forEach(connection => {
+                if (connection.getAttribute('data-to') === nodeId) {
+                    connection.classList.add('active');
+                    
+                    // Remove animation after 2 seconds
+                    setTimeout(() => {
+                        connection.classList.remove('active');
+                    }, 2000);
+                }
+            });
+        }
+
+        function showResponseDetails(responseText, metadata) {
+            const preview = document.getElementById('response-preview');
+            const details = document.getElementById('response-details');
+            
+            details.innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">生成的回复</h4>
+                        <div class="p-3 bg-gray-50 rounded-md text-sm">${responseText}</div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">执行信息</h4>
+                        <div class="text-sm space-y-1">
+                            <p><span class="text-gray-600">节点:</span> ${metadata.node}</p>
+                            <p><span class="text-gray-600">耗时:</span> ${metadata.duration.toFixed(3)}s</p>
+                            <p><span class="text-gray-600">模型:</span> gpt-3.5-turbo</p>
+                            <p><span class="text-gray-600">Token数:</span> ${Math.floor(responseText.length * 1.5)}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">上下文变量</h4>
+                        <pre class="text-xs bg-gray-50 p-3 rounded-md overflow-x-auto">${JSON.stringify(metadata.variables, null, 2)}</pre>
+                    </div>
+                </div>
+            `;
+            
+            // Auto-show preview for 3 seconds
+            preview.classList.add('active');
+            setTimeout(() => {
+                if (preview.classList.contains('active')) {
+                    preview.classList.remove('active');
+                }
+            }, 3000);
+        }
+
+        // Scenario button handlers
+        document.querySelectorAll('.scenario-button').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.scenario-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+                currentScenario = this.getAttribute('data-scenario');
+                
+                // Update chat container message
+                const chatContainer = document.getElementById('chat-container');
+                const lastSystemMsg = chatContainer.querySelector('.chat-message.system:last-child');
+                if (lastSystemMsg) {
+                    lastSystemMsg.textContent = `当前场景切换为：${getScenarioName()}`;
+                }
+                
+                addConsoleMessage(`切换测试场景: ${getScenarioName()}`, 'warning');
+            });
+        });
+
+        // Enable enter key for test input
+        document.getElementById('test-input')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendTestMessage();
+            }
+        });
+
+        // Initialize drag and drop
+        window.onload = function() {
+            // Make canvas droppable
+            drawConnections();
+        };
+    </script>
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const fileUpload = document.getElementById('file-upload');
+        const imageUpload = document.getElementById('image-upload');
+
+        // Send message function
+        function sendMessage(content, type = 'text', meta = {}) {
+            // Add user message
+            const userMsg = createMessage(content, 'user', type, meta);
+            chatContainer.appendChild(userMsg);
+            
+            // Show typing indicator
+            const typingIndicator = createTypingIndicator();
+            chatContainer.appendChild(typingIndicator);
+            
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Simulate AI response
+            setTimeout(() => {
+                // Remove typing indicator
+                typingIndicator.remove();
+                
+                // Add AI response
+                const responseContent = generateResponse(content, type);
+                const aiMsg = createMessage(responseContent.text, 'ai', 'text', responseContent.meta);
+                chatContainer.appendChild(aiMsg);
+                
+                // Scroll to bottom
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 1000 + Math.random() * 1000);
+        }
+
+        // Create message element
+        function createMessage(content, sender, type, meta = {}) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${sender === 'user' ? 'justify-end' : ''} chat-message`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `px-4 py-2 rounded-lg max-w-md ${
+                sender === 'user' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-white border border-gray-200'
+            }`;
+            
+            // Add content based on type
+            if (type === 'image') {
+                const img = document.createElement('img');
+                img.src = content;
+                img.className = 'image-preview';
+                bubble.appendChild(img);
+            } else if (type === 'file') {
+                bubble.innerHTML = `
+                    <div>上传了文件</div>
+                    <div class="attachment-list">
+                        <div class="attachment-item ${sender === 'user' ? 'bg-white/20 text-white' : 'bg-gray-100'}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            <span>${meta.fileName}</span>
+                            <span>(${meta.fileSize})</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                bubble.innerHTML = `<div>${content}</div>`;
+            }
+            
+            // Add metadata
+            if (meta.execution) {
+                const execInfo = document.createElement('div');
+                execInfo.className = 'execution-info';
+                execInfo.innerHTML = `
+                    <span>节点: ${meta.execution.node}</span> | 
+                    <span>耗时: ${meta.execution.time}</span>
+                    ${meta.execution.extra ? ' | ' + meta.execution.extra : ''}
+                `;
+                bubble.appendChild(execInfo);
+            }
+            
+            // Add timestamp
+            const timestamp = document.createElement('div');
+            timestamp.className = `message-metadata ${sender === 'user' ? 'text-blue-100' : ''}`;
+            timestamp.textContent = `${new Date().toLocaleTimeString()} | ${meta.inputType || type}输入`;
+            bubble.appendChild(timestamp);
+            
+            messageDiv.appendChild(bubble);
+            return messageDiv;
+        }
+
+        // Create typing indicator
+        function createTypingIndicator() {
+            const indicatorDiv = document.createElement('div');
+            indicatorDiv.className = 'flex';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'bg-white border border-gray-200 px-4 py-2 rounded-lg max-w-md';
+            bubble.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            
+            indicatorDiv.appendChild(bubble);
+            return indicatorDiv;
+        }
+
+        // Generate AI response
+        function generateResponse(userContent, type) {
+            // Simulate different responses based on input type
+            const responses = {
+                text: {
+                    text: "我理解您的需求。让我帮您处理这个请求。",
+                    meta: {
+                        execution: {
+                            node: 'ai-response',
+                            time: Math.random() * 0.5 + 0.1 + 's',
+                            extra: `Token: ${Math.floor(Math.random() * 50 + 30)}`
+                        }
+                    }
+                },
+                image: {
+                    text: "我已经分析了您提供的图片。图片中包含以下信息...",
+                    meta: {
+                        execution: {
+                            node: 'image-ocr',
+                            time: Math.random() * 1.5 + 0.5 + 's',
+                            extra: '图像识别'
+                        }
+                    }
+                },
+                file: {
+                    text: "文件已成功上传并分析完成。我发现了以下重要信息...",
+                    meta: {
+                        execution: {
+                            node: 'file-analyzer',
+                            time: Math.random() * 3 + 1 + 's',
+                            extra: '文档解析'
+                        }
+                    }
+                }
+            };
+            
+            return responses[type] || responses.text;
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', () => {
+            const message = messageInput.value.trim();
+            if (message) {
+                sendMessage(message, 'text', { inputType: '文本' });
+                messageInput.value = '';
+            }
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendBtn.click();
+            }
+        });
+
+        // File upload handlers
+        document.getElementById('file-input-btn').addEventListener('click', () => {
+            fileUpload.click();
+        });
+
+        document.getElementById('image-input-btn').addEventListener('click', () => {
+            imageUpload.click();
+        });
+
+        fileUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const fileName = file.name;
+                const fileSize = (file.size / 1024).toFixed(1) + 'KB';
+                sendMessage(fileName, 'file', { 
+                    fileName, 
+                    fileSize,
+                    inputType: '文件'
+                });
+                e.target.value = '';
+            }
+        });
+
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    sendMessage(e.target.result, 'image', { inputType: '图片' });
+                };
+                reader.readAsDataURL(file);
+                e.target.value = '';
+            }
+        });
+
+        // Voice input (simulation)
+        document.getElementById('voice-input-btn').addEventListener('click', () => {
+            // Simulate voice recording
+            alert('语音功能开发中...');
+        });
+
+        // Close modal
+        function closeModal() {
+            // In actual implementation, this would close/hide the modal
+            window.toggleChatPreview(false);
+        }
+
+        // Auto-scroll to bottom on new message
+        const observer = new MutationObserver(() => {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+
+        observer.observe(chatContainer, { childList: true });
+    </script>
+</body>
+
+</html>

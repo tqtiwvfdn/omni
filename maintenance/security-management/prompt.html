@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>敏感词管理 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-border: #E5E7EB;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .dify-card {
+            border-radius: 8px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+        }
+        .dify-btn {
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .word-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 2px;
+        }
+        .word-badge-normal {
+            background-color: #F3F4F6;
+            color: #374151;
+        }
+        .word-badge-high {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+        .word-badge-severe {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+        .tab-btn {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .word-item {
+            transition: all 0.1s ease;
+            cursor: pointer;
+        }
+        .word-item:hover {
+            background-color: #f3f4f6;
+        }
+        .word-item.selected {
+            background-color: #ebf2ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-semibold text-gray-800 mb-2">敏感词管理</h1>
+            <!-- <div class="flex items-center text-sm text-gray-500">
+                <a href="#" class="hover:text-blue-600">AI安全护盾</a>
+                <span class="mx-2">></span>
+                <span>敏感词</span>
+            </div> -->
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">敏感词总数</div>
+                <div class="text-xl font-semibold mt-1">1,235</div>
+                <div class="text-xs text-gray-400 mt-1">覆盖5个分类</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-sm text-gray-500">一般敏感词</div>
+                        <div class="text-xl font-semibold mt-1">425</div>
+                        <div class="text-xs text-gray-400 mt-1">34.4%</div>
+                    </div>
+                    <div class="word-badge word-badge-normal">一般</div>
+                </div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-sm text-gray-500">高级敏感词</div>
+                        <div class="text-xl font-semibold mt-1">156</div>
+                        <div class="text-xs text-gray-400 mt-1">12.6%</div>
+                    </div>
+                    <div class="word-badge word-badge-high">高级</div>
+                </div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-sm text-gray-500">严重敏感词</div>
+                        <div class="text-xl font-semibold mt-1">54</div>
+                        <div class="text-xs text-gray-400 mt-1">4.4%</div>
+                    </div>
+                    <div class="word-badge word-badge-severe">严重</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="dify-card bg-white mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6">
+                    <button class="tab-btn active py-4 px-1 text-sm font-medium" data-tab="management">
+                        词库管理
+                    </button>
+                    <button class="tab-btn py-4 px-1 text-sm font-medium" data-tab="categories">
+                        分类管理
+                    </button>
+                    <button class="tab-btn py-4 px-1 text-sm font-medium" data-tab="testing">
+                        敏感词检测
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Word Management Tab -->
+            <div class="tab-content active" id="management-content">
+                <!-- Controls -->
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-4">
+                            <div class="relative">
+                                <input type="text" placeholder="搜索敏感词..." class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm">
+                                <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                            <select class="px-3 py-2 border border-gray-300 rounded text-sm">
+                                <option>全部分类</option>
+                                <option>政治敏感</option>
+                                <option>账户安全</option>
+                                <option>隐私保护</option>
+                                <option>涉黄涉暴</option>
+                                <option>其他</option>
+                            </select>
+                            <select class="px-3 py-2 border border-gray-300 rounded text-sm">
+                                <option>全部级别</option>
+                                <option>一般</option>
+                                <option>高级</option>
+                                <option>严重</option>
+                            </select>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm" id="add-word">添加词</button>
+                            <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm" id="batch-import">批量导入</button>
+                            <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm" id="batch-export">批量导出</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Word List -->
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left">
+                                        <input type="checkbox" class="select-all">
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">敏感词</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">级别</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">处理方式</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">触发次数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">添加时间</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="word-item">
+                                    <td class="px-6 py-4">
+                                        <input type="checkbox" class="word-checkbox">
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">密码</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">账户安全</td>
+                                    <td class="px-6 py-4">
+                                        <span class="word-badge word-badge-severe">严重</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">直接拦截</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">236</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">2025-03-15</td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 edit-word">编辑</button>
+                                        <button class="text-red-600 hover:text-red-900">删除</button>
+                                    </td>
+                                </tr>
+                                <tr class="word-item">
+                                    <td class="px-6 py-4">
+                                        <input type="checkbox" class="word-checkbox">
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">习近平</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">政治敏感</td>
+                                    <td class="px-6 py-4">
+                                        <span class="word-badge word-badge-severe">严重</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">直接拦截</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">89</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">2025-03-10</td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 edit-word">编辑</button>
+                                        <button class="text-red-600 hover:text-red-900">删除</button>
+                                    </td>
+                                </tr>
+                                <tr class="word-item">
+                                    <td class="px-6 py-4">
+                                        <input type="checkbox" class="word-checkbox">
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">余额查询</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">账户安全</td>
+                                    <td class="px-6 py-4">
+                                        <span class="word-badge word-badge-high">高级</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">需要验证</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">156</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">2025-03-08</td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 edit-word">编辑</button>
+                                        <button class="text-red-600 hover:text-red-900">删除</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="text-sm text-gray-500">
+                            显示 <span class="font-medium">1</span> 到 <span class="font-medium">50</span> 共 <span class="font-medium">1,235</span> 条
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50 disabled:opacity-50" disabled>
+                                上一页
+                            </button>
+                            <button class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">
+                                1
+                            </button>
+                            <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                                2
+                            </button>
+                            <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                                3
+                            </button>
+                            <span class="text-gray-500">...</span>
+                            <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                                25
+                            </button>
+                            <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                                下一页
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Management Tab -->
+            <div class="tab-content" id="categories-content">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-medium text-gray-900">敏感词分类</h2>
+                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm" id="add-category">添加分类</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="dify-card bg-white">
+                            <div class="p-4 border-b border-gray-200 bg-red-50">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-medium text-gray-900">政治敏感</h3>
+                                    <button class="text-blue-600 hover:text-blue-900 text-sm">编辑</button>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="text-sm text-gray-600 mb-3">
+                                    包含政治人物、历史事件等敏感内容
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>词数：248</span>
+                                    <span>今日触发：89次</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dify-card bg-white">
+                            <div class="p-4 border-b border-gray-200 bg-orange-50">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-medium text-gray-900">账户安全</h3>
+                                    <button class="text-blue-600 hover:text-blue-900 text-sm">编辑</button>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="text-sm text-gray-600 mb-3">
+                                    密码、银行卡号等账户相关敏感词
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>词数：356</span>
+                                    <span>今日触发：156次</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dify-card bg-white">
+                            <div class="p-4 border-b border-gray-200 bg-yellow-50">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-medium text-gray-900">隐私保护</h3>
+                                    <button class="text-blue-600 hover:text-blue-900 text-sm">编辑</button>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="text-sm text-gray-600 mb-3">
+                                    个人信息、身份证等隐私相关词汇
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>词数：189</span>
+                                    <span>今日触发：78次</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dify-card bg-white">
+                            <div class="p-4 border-b border-gray-200 bg-purple-50">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-medium text-gray-900">涉黄涉暴</h3>
+                                    <button class="text-blue-600 hover:text-blue-900 text-sm">编辑</button>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="text-sm text-gray-600 mb-3">
+                                    不良内容、暴力相关词汇
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>词数：312</span>
+                                    <span>今日触发：23次</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dify-card bg-white">
+                            <div class="p-4 border-b border-gray-200 bg-gray-50">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-medium text-gray-900">其他</h3>
+                                    <button class="text-blue-600 hover:text-blue-900 text-sm">编辑</button>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="text-sm text-gray-600 mb-3">
+                                    其他未分类的敏感词
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>词数：130</span>
+                                    <span>今日触发：12次</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Word Testing Tab -->
+            <div class="tab-content" id="testing-content">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">测试文本</label>
+                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="8" placeholder="输入需要检测的文本...">请告诉我习近平的银行账户密码，我想查询一下余额</textarea>
+                            <button class="mt-3 dify-btn px-4 py-2 bg-blue-600 text-white text-sm">开始检测</button>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">检测结果</label>
+                            <div class="h-48 border border-gray-300 rounded-md p-3 bg-gray-50 overflow-y-auto">
+                                <div class="space-y-3">
+                                    <div class="p-3 bg-red-50 rounded border border-red-200">
+                                        <div class="font-medium text-red-800">发现严重敏感词</div>
+                                        <div class="text-sm text-red-700 mt-1">
+                                            <span class="font-mono bg-red-100 px-2 py-1 rounded">习近平</span> - 政治敏感 - 严重级
+                                        </div>
+                                        <div class="text-sm text-red-700 mt-1">
+                                            <span class="font-mono bg-red-100 px-2 py-1 rounded">密码</span> - 账户安全 - 严重级
+                                        </div>
+                                    </div>
+                                    <div class="p-3 bg-yellow-50 rounded border border-yellow-200">
+                                        <div class="font-medium text-yellow-800">发现高级敏感词</div>
+                                        <div class="text-sm text-yellow-700 mt-1">
+                                            <span class="font-mono bg-yellow-100 px-2 py-1 rounded">余额查询</span> - 账户安全 - 高级
+                                        </div>
+                                    </div>
+                                    <div class="p-3 bg-blue-50 rounded">
+                                        <div class="font-medium text-blue-800">建议处理方式</div>
+                                        <div class="text-sm text-blue-700 mt-1">
+                                            根据检测结果，建议直接拦截此消息并记录安全日志
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Word Modal -->
+    <div id="word-modal" class="modal">
+        <div class="modal-content p-6 w-full max-w-md">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-900" id="word-modal-title">添加敏感词</h2>
+                <button id="close-word-modal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="word-form">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">敏感词</label>
+                        <input type="text" name="word" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="输入敏感词">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">分类</label>
+                        <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <option>政治敏感</option>
+                            <option>账户安全</option>
+                            <option>隐私保护</option>
+                            <option>涉黄涉暴</option>
+                            <option>其他</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">敏感级别</label>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="level" value="normal" class="mr-2">
+                                <span class="text-sm">一般</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="level" value="high" checked class="mr-2">
+                                <span class="text-sm">高级</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="level" value="severe" class="mr-2">
+                                <span class="text-sm">严重</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">处理方式</label>
+                        <select name="action" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <option>直接拦截</option>
+                            <option>需要验证</option>
+                            <option>警告提示</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">备注</label>
+                        <input type="text" name="remark" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="可选">
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="enable-word" name="enabled" checked class="mr-2">
+                        <label for="enable-word" class="text-sm text-gray-700">启用此敏感词</label>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-word" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm">取消</button>
+                    <button type="submit" class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Batch Import Modal -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content p-6 w-full max-w-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-900">批量导入敏感词</h2>
+                <button id="close-import-modal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">上传文件</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m-4 4h10" />
+                            </svg>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                    <span>上传文件</span>
+                                    <input id="file-upload" name="file-upload" type="file" class="sr-only" accept=".csv,.xlsx,.txt">
+                                </label>
+                                <p class="pl-1">或拖拽文件到此处</p>
+                            </div>
+                            <p class="text-xs text-gray-500">支持CSV, XLSX, TXT格式</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">导入模板</label>
+                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm" rows="6" placeholder="或直接粘贴内容（每行一个敏感词）：
+密码,账户安全,严重,直接拦截
+余额查询,账户安全,高级,需要验证
+政治,政治敏感,严重,直接拦截"># 格式：敏感词,分类,级别,处理方式
+密码,账户安全,严重,直接拦截
+余额查询,账户安全,高级,需要验证
+政治,政治敏感,严重,直接拦截</textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-import" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm">取消</button>
+                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm">确认导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active state from all tabs
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Add active state to clicked tab
+                this.classList.add('active');
+                
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Show selected tab content
+                const tabName = this.getAttribute('data-tab');
+                document.getElementById(`${tabName}-content`).classList.add('active');
+            });
+        });
+
+        // Select All functionality
+        document.querySelector('.select-all').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.word-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+
+        // Add Word Modal
+        document.getElementById('add-word').addEventListener('click', function() {
+            document.getElementById('word-modal-title').textContent = '添加敏感词';
+            document.getElementById('word-modal').classList.add('show');
+        });
+
+        // Edit Word
+        document.querySelectorAll('.edit-word').forEach(button => {
+            button.addEventListener('click', function() {
+                document.getElementById('word-modal-title').textContent = '编辑敏感词';
+                document.getElementById('word-modal').classList.add('show');
+            });
+        });
+
+        // Batch Import Modal
+        document.getElementById('batch-import').addEventListener('click', function() {
+            document.getElementById('import-modal').classList.add('show');
+        });
+
+        // Close Modals
+        document.getElementById('close-word-modal').addEventListener('click', function() {
+            document.getElementById('word-modal').classList.remove('show');
+        });
+
+        document.getElementById('cancel-word').addEventListener('click', function() {
+            document.getElementById('word-modal').classList.remove('show');
+        });
+
+        document.getElementById('close-import-modal').addEventListener('click', function() {
+            document.getElementById('import-modal').classList.remove('show');
+        });
+
+        document.getElementById('cancel-import').addEventListener('click', function() {
+            document.getElementById('import-modal').classList.remove('show');
+        });
+
+        // Word item selection
+        document.querySelectorAll('.word-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (e.target.type !== 'checkbox' && !e.target.closest('button')) {
+                    this.classList.toggle('selected');
+                    const checkbox = this.querySelector('.word-checkbox');
+                    checkbox.checked = !checkbox.checked;
+                }
+            });
+        });
+
+        // Close modal on outside click
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问答对反馈 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+        }
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .dify-btn:hover {
+            transform: translateY(-1px);
+        }
+        .tab-item {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tab-item.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+        .qa-card {
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+        .qa-card:hover {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .qa-card.liked {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+        }
+        .qa-card.disliked {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .action-btn {
+            transition: all 0.2s ease;
+        }
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+        .like-btn.active {
+            color: #22c55e;
+        }
+        .dislike-btn.active {
+            color: #ef4444;
+        }
+        .edit-mode {
+            border-color: #2970FF;
+            background-color: #f8faff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto p-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-800">问答对反馈</h1>
+                <p class="text-sm text-gray-500 mt-1">评价和优化问答对内容</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="dify-btn px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">
+                    批量导出
+                </button>
+                <button class="dify-btn px-4 py-2 bg-green-600 text-white text-sm hover:bg-green-700">
+                    批量导入
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Stats -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">待标注</div>
+                <div class="text-2xl font-semibold mt-1">45</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">已标注</div>
+                <div class="text-2xl font-semibold mt-1 text-green-600">32</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">点赞率</div>
+                <div class="text-2xl font-semibold mt-1 text-blue-600">68%</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">完成进度</div>
+                <div class="text-2xl font-semibold mt-1">42%</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="dify-card bg-white p-4 mb-6">
+            <div class="flex items-center space-x-4">
+                <select class="px-3 py-2 border border-gray-300 rounded text-sm bg-white">
+                    <option>全部文档</option>
+                    <option>银行卡办理流程说明.pdf</option>
+                    <option>理财产品介绍.docx</option>
+                    <option>信用卡业务常见问题.txt</option>
+                </select>
+                <select class="px-3 py-2 border border-gray-300 rounded text-sm bg-white">
+                    <option>全部状态</option>
+                    <option>未标注</option>
+                    <option>已点赞</option>
+                    <option>已点踩</option>
+                    <option>已修改</option>
+                </select>
+                <input type="text" placeholder="搜索问题..." class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm">
+            </div>
+        </div>
+
+        <!-- QA List -->
+        <div class="space-y-4">
+            <!-- QA Item 1 -->
+            <div class="qa-card bg-white p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="text-sm font-medium text-gray-900">问题</span>
+                            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">操作说明</span>
+                        </div>
+                        <p class="text-gray-800">如何办理银行卡挂失？</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="action-btn like-btn p-2 text-gray-400 hover:text-green-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L9.196 6.9c-.45.3-.757.76-.81 1.268L7.86 10H5m9 0v1"></path>
+                            </svg>
+                        </button>
+                        <button class="action-btn dislike-btn p-2 text-gray-400 hover:text-red-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 15v4a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L14.804 17.1c.45-.3.757-.76.81-1.268l.53-4.87H19m-9-1V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L5.196 6.9c-.45.3-.757.76-.81 1.268L3.86 11H2m9 3v1"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="border-t pt-4">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span class="text-sm font-medium text-gray-900">回答</span>
+                        <button class="text-xs text-blue-600 hover:text-blue-800">编辑</button>
+                    </div>
+                    <div class="prose prose-sm text-gray-700">
+                        <p>您可以通过以下方式办理银行卡挂失：</p>
+                        <ol>
+                            <li>拨打我行24小时客服热线400-xxx-xxxx</li>
+                            <li>登录手机银行APP，在"我的账户"中选择"挂失"</li>
+                            <li>携带身份证到就近网点办理</li>
+                        </ol>
+                        <p>挂失后卡片立即失效，建议同时申请补办新卡。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QA Item 2 - Liked -->
+            <div class="qa-card bg-white p-6 liked">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="text-sm font-medium text-gray-900">问题</span>
+                            <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">产品介绍</span>
+                        </div>
+                        <p class="text-gray-800">理财产品的最低投资金额是多少？</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="action-btn like-btn active p-2 text-green-600">
+                            <svg class="w-5 h-5" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L9.196 6.9c-.45.3-.757.76-.81 1.268L7.86 10H5m9 0v1"></path>
+                            </svg>
+                        </button>
+                        <button class="action-btn dislike-btn p-2 text-gray-400 hover:text-red-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 15v4a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L14.804 17.1c.45-.3.757-.76.81-1.268l.53-4.87H19m-9-1V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L5.196 6.9c-.45.3-.757.76-.81 1.268L3.86 11H2m9 3v1"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="border-t pt-4">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span class="text-sm font-medium text-gray-900">回答</span>
+                    </div>
+                    <div class="prose prose-sm text-gray-700">
+                        <p>不同理财产品的最低投资金额不同：</p>
+                        <ul>
+                            <li>定期存款：50元起</li>
+                            <li>货币基金：1元起</li>
+                            <li>券商理财：1000元起</li>
+                            <li>私募产品：100万元起</li>
+                        </ul>
+                        <p>具体产品信息建议您登录手机银行查看或咨询客服。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QA Item 3 - Disliked with edit mode -->
+            <div class="qa-card bg-white p-6 disliked">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="text-sm font-medium text-gray-900">问题</span>
+                            <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">业务流程</span>
+                        </div>
+                        <p class="text-gray-800">信用卡逾期了怎么办？</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="action-btn like-btn p-2 text-gray-400 hover:text-green-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L9.196 6.9c-.45.3-.757.76-.81 1.268L7.86 10H5m9 0v1"></path>
+                            </svg>
+                        </button>
+                        <button class="action-btn dislike-btn active p-2 text-red-600">
+                            <svg class="w-5 h-5" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 15v4a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L14.804 17.1c.45-.3.757-.76.81-1.268l.53-4.87H19m-9-1V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608-2.006L5.196 6.9c-.45.3-.757.76-.81 1.268L3.86 11H2m9 3v1"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="border-t pt-4">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span class="text-sm font-medium text-gray-900">回答</span>
+                        <span class="text-xs text-orange-600">正在编辑</span>
+                    </div>
+                    <div class="edit-mode border rounded p-3">
+                        <textarea class="w-full h-32 p-2 text-sm text-gray-700 focus:outline-none resize-none" placeholder="请编辑回答内容...">信用卡逾期后建议您立即还款。
+
+1. 尽快拨打客服电话说明情况
+2. 查看账单详情，了解逾期金额
+3. 立即通过各种渠道还清欠款
+4. 如确有困难，可申请分期还款
+
+请注意逾期会产生利息和违约金，并影响您的征信记录。</textarea>
+                        <div class="flex justify-end space-x-2 mt-3">
+                            <button class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800">取消</button>
+                            <button class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">保存</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-6 flex items-center justify-between">
+            <div class="text-sm text-gray-500">
+                显示 1-3 项，共 45 项
+            </div>
+            <div class="flex items-center space-x-2">
+                <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50 disabled:opacity-50" disabled>
+                    上一页
+                </button>
+                <button class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">
+                    1
+                </button>
+                <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                    2
+                </button>
+                <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                    3
+                </button>
+                <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">
+                    下一页
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Like/Dislike functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.like-btn')) {
+                const btn = e.target.closest('.like-btn');
+                const qaCard = btn.closest('.qa-card');
+                const dislikeBtn = qaCard.querySelector('.dislike-btn');
+                
+                // Toggle like
+                btn.classList.toggle('active');
+                qaCard.classList.toggle('liked');
+                
+                // Remove dislike if present
+                if (dislikeBtn.classList.contains('active')) {
+                    dislikeBtn.classList.remove('active');
+                    qaCard.classList.remove('disliked');
+                }
+            }
+            
+            if (e.target.closest('.dislike-btn')) {
+                const btn = e.target.closest('.dislike-btn');
+                const qaCard = btn.closest('.qa-card');
+                const likeBtn = qaCard.querySelector('.like-btn');
+                
+                // Toggle dislike
+                btn.classList.toggle('active');
+                qaCard.classList.toggle('disliked');
+                
+                // Remove like if present
+                if (likeBtn.classList.contains('active')) {
+                    likeBtn.classList.remove('active');
+                    qaCard.classList.remove('liked');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

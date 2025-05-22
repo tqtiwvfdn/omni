@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型评估 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .tab-item {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tab-item:hover {
+            color: var(--dify-primary);
+        }
+        .tab-item.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-badge-green {
+            background-color: #ECFDF5;
+            color: #059669;
+        }
+        .status-badge-yellow {
+            background-color: #FFFBEB;
+            color: #D97706;
+        }
+        .status-badge-blue {
+            background-color: #EFF6FF;
+            color: #3B82F6;
+        }
+        .status-badge-red {
+            background-color: #FEF2F2;
+            color: #DC2626;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #E5E7EB;
+            border-radius: 9999px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+        .metric-card {
+            border: 1px solid var(--dify-border);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .metric-card:hover {
+            border-color: var(--dify-primary);
+            background-color: var(--dify-primary-light);
+        }
+        .chart-container {
+            height: 200px;
+            position: relative;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Page Header -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">模型评估</h1>
+                    <p class="text-gray-600 mt-1">全面评估和比较模型在银行业务场景下的表现</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        导出报告
+                    </button>
+                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        创建评估任务
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evaluation Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <!-- Overall Performance Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-medium text-gray-800">总体表现</h2>
+                </div>
+                <div>
+                    <div class="flex items-center">
+                        <div class="text-3xl font-semibold text-gray-800">85.2</div>
+                        <div class="text-sm text-gray-500 ml-2">/100</div>
+                    </div>
+                    <div class="text-sm text-gray-500">所有模型的平均评分</div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <div class="text-sm text-gray-600 flex items-center justify-between">
+                        <span>最高评分模型</span>
+                        <span class="font-medium text-gray-800">信贷风险评估-v1.2</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Tasks Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-medium text-gray-800">进行中评估</h2>
+                    <div class="status-badge status-badge-blue">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>2</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-3xl font-semibold text-gray-800">2</div>
+                    <div class="text-sm text-gray-500">当前正在进行的评估任务</div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <div class="text-sm text-gray-600 flex items-center justify-between">
+                        <span>已完成评估</span>
+                        <span class="font-medium text-gray-800">12</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Datasets Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-medium text-gray-800">评估数据集</h2>
+                </div>
+                <div>
+                    <div class="text-3xl font-semibold text-gray-800">5</div>
+                    <div class="text-sm text-gray-500">可用于评估的银行场景数据集</div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <div class="text-sm text-gray-600 flex items-center justify-between">
+                        <span>总样本数</span>
+                        <span class="font-medium text-gray-800">3.5K</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluated Models Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-medium text-gray-800">已评估模型</h2>
+                </div>
+                <div>
+                    <div class="text-3xl font-semibold text-gray-800">8</div>
+                    <div class="text-sm text-gray-500">已完成评估的模型</div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <div class="text-sm text-gray-600 flex items-center justify-between">
+                        <span>待评估模型</span>
+                        <span class="font-medium text-gray-800">2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Tab Container -->
+        <div class="bg-white rounded-lg shadow-sm mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex space-x-8">
+                        <div class="tab-item active px-2 py-3 text-gray-800 font-medium" data-tab="tasks">评估任务</div>
+                        <div class="tab-item px-2 py-3 text-gray-600 font-medium" data-tab="reports">评估报告</div>
+                        <div class="tab-item px-2 py-3 text-gray-600 font-medium" data-tab="compare">模型比较</div>
+                        <div class="tab-item px-2 py-3 text-gray-600 font-medium" data-tab="datasets">评估数据集</div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="relative">
+                            <input type="text" placeholder="搜索评估任务" class="appearance-none bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:ring-blue-500 focus:border-blue-500 w-64">
+                            <svg class="w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Tasks Tab Content -->
+            <div id="tasks-tab" class="tab-content">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">评估名称</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">评估模型</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">评估数据集</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">评估维度</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <!-- Evaluation Task Item 1 -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">客服场景评估</div>
+                                    <div class="text-xs text-gray-500">评估客户服务能力和质量</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">客服助手-v2.3</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">客服质量测试集</div>
+                                    <div class="text-xs text-gray-500">500 样本</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md">回答准确性</span>
+                                        <span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-md">语言质量</span>
+                                        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-md">服务态度</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div>
+                                        <div class="status-badge status-badge-blue mb-1">评估中</div>
+                                        <div class="progress-bar">
+                                            <div class="progress-bar-fill bg-blue-500" style="width: 45%"></div>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">45% - 预计剩余 35 分钟</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2025-05-12 14:20</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-yellow-600 hover:text-yellow-900 mr-3">取消</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+
+                            <!-- Evaluation Task Item 2 -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">理财顾问能力评估</div>
+                                    <div class="text-xs text-gray-500">测试投资建议和理财知识</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">理财顾问-v1.8</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">投资咨询测试集</div>
+                                    <div class="text-xs text-gray-500">350 样本</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md">金融知识</span>
+                                        <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-md">风险提示</span>
+                                        <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-md">推荐合理性</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div>
+                                        <div class="status-badge status-badge-blue mb-1">评估中</div>
+                                        <div class="progress-bar">
+                                            <div class="progress-bar-fill bg-blue-500" style="width: 68%"></div>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">68% - 预计剩余 20 分钟</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2025-05-12 15:05</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-yellow-600 hover:text-yellow-900 mr-3">取消</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+
+                            <!-- Evaluation Task Item 3 -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">信贷风险评估能力</div>
+                                    <div class="text-xs text-gray-500">评估贷款风险判断准确性</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">信贷风险评估-v1.2</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">信贷风险测试集</div>
+                                    <div class="text-xs text-gray-500">450 样本</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md">风险识别</span>
+                                        <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-md">欺诈检测</span>
+                                        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-md">信用评分</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="status-badge status-badge-green">已完成</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2025-05-11 10:30</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">查看报告</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+
+                            <!-- Evaluation Task Item 4 -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">反欺诈系统评估</div>
+                                    <div class="text-xs text-gray-500">评估欺诈交易检测效果</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">反欺诈检测-v1.0</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">欺诈检测测试集</div>
+                                    <div class="text-xs text-gray-500">600 样本</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-md">欺诈识别</span>
+                                        <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-md">误报率</span>
+                                        <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md">recall</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="status-badge status-badge-green">已完成</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2025-05-10 16:45</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">查看报告</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+
+                            <!-- Evaluation Task Item 5 -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">产品推荐精准度评估</div>
+                                    <div class="text-xs text-gray-500">评估产品推荐匹配度</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">产品推荐-v1.5</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">产品推荐测试集</div>
+                                    <div class="text-xs text-gray-500">420 样本</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-md">匹配度</span>
+                                        <span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-md">个性化</span>
+                                        <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md">准确性</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="status-badge status-badge-red">失败</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2025-05-09 13:20</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-green-600 hover:text-green-900 mr-3">重试</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                    <div class="text-sm text-gray-500">
+                        显示 <span class="font-medium">1-5</span> 项，共 <span class="font-medium">14</span> 项
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <span class="text-sm text-gray-700">1 / 3</span>
+                        <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Reports Tab Content (Hidden by default) -->
+            <div id="reports-tab" class="tab-content hidden">
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Report Card 1 -->
+                    <div class="dify-card bg-white overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="mr-3">
+                                    <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">信贷风险评估能力</h3>
+                                    <div class="text-sm text-gray-500">评估日期: 2025-05-11</div>
+                                </div>
+                            </div>
+                            <div class="text-2xl font-bold text-blue-600">92.7</div>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">准确率</div>
+                                    <div class="text-xl font-semibold text-gray-900">92.7%</div>
+                                    <div class="text-xs text-green-600">+12.5% vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">F1分数</div>
+                                    <div class="text-xl font-semibold text-gray-900">0.88</div>
+                                    <div class="text-xs text-green-600">+0.15 vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">平均推理时间</div>
+                                    <div class="text-xl font-semibold text-gray-900">220ms</div>
+                                    <div class="text-xs text-green-600">-80ms vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">人工评分</div>
+                                    <div class="text-xl font-semibold text-gray-900">4.5/5</div>
+                                    <div class="text-xs text-green-600">+0.8 vs 基础模型</div>
+                                </div>
+                            </div>
+
+                            <!-- Radar Chart Placeholder -->
+                            <div class="chart-container mb-4">
+                                <div class="text-center text-sm text-gray-500 absolute inset-0 flex items-center justify-center">
+                                    雷达图: 风险识别能力分析
+                                </div>
+                            </div>
+
+                            <div class="text-right">
+                                <button class="dify-btn px-4 py-2 border border-blue-500 text-blue-600 bg-white text-sm font-medium hover:bg-blue-50 focus:outline-none">查看完整报告</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Card 2 -->
+                    <div class="dify-card bg-white overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="mr-3">
+                                    <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">反欺诈系统评估</h3>
+                                    <div class="text-sm text-gray-500">评估日期: 2025-05-10</div>
+                                </div>
+                            </div>
+                            <div class="text-2xl font-bold text-blue-600">89.3</div>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">欺诈检测率</div>
+                                    <div class="text-xl font-semibold text-gray-900">94.2%</div>
+                                    <div class="text-xs text-green-600">+15.3% vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">误报率</div>
+                                    <div class="text-xl font-semibold text-gray-900">3.5%</div>
+                                    <div class="text-xs text-green-600">-2.1% vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">响应时间</div>
+                                    <div class="text-xl font-semibold text-gray-900">180ms</div>
+                                    <div class="text-xs text-green-600">-120ms vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">总体评分</div>
+                                    <div class="text-xl font-semibold text-gray-900">89.3/100</div>
+                                    <div class="text-xs text-green-600">+12.6 vs 基础模型</div>
+                                </div>
+                            </div>
+
+                            <!-- Bar Chart Placeholder -->
+                            <div class="chart-container mb-4">
+                                <div class="text-center text-sm text-gray-500 absolute inset-0 flex items-center justify-center">
+                                    柱状图: 不同类型欺诈检测准确率
+                                </div>
+                            </div>
+
+                            <div class="text-right">
+                                <button class="dify-btn px-4 py-2 border border-blue-500 text-blue-600 bg-white text-sm font-medium hover:bg-blue-50 focus:outline-none">查看完整报告</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Card 3 -->
+                    <div class="dify-card bg-white overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="mr-3">
+                                    <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">理财顾问能力评估</h3>
+                                    <div class="text-sm text-gray-500">评估日期: 2025-05-08</div>
+                                </div>
+                            </div>
+                            <div class="text-2xl font-bold text-blue-600">87.1</div>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">金融知识准确率</div>
+                                    <div class="text-xl font-semibold text-gray-900">91.5%</div>
+                                    <div class="text-xs text-green-600">+9.8% vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">建议合理性</div>
+                                    <div class="text-xl font-semibold text-gray-900">85.2%</div>
+                                    <div class="text-xs text-green-600">+12.4% vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">风险提示合规性</div>
+                                    <div class="text-xl font-semibold text-gray-900">94.8%</div>
+                                    <div class="text-xs text-green-600">+11.2% vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">总体评分</div>
+                                    <div class="text-xl font-semibold text-gray-900">87.1/100</div>
+                                    <div class="text-xs text-green-600">+14.3 vs 基础模型</div>
+                                </div>
+                            </div>
+
+                            <!-- Line Chart Placeholder -->
+                            <div class="chart-container mb-4">
+                                <div class="text-center text-sm text-gray-500 absolute inset-0 flex items-center justify-center">
+                                    线图: 不同产品类型推荐准确率
+                                </div>
+                            </div>
+
+                            <div class="text-right">
+                                <button class="dify-btn px-4 py-2 border border-blue-500 text-blue-600 bg-white text-sm font-medium hover:bg-blue-50 focus:outline-none">查看完整报告</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Card 4 -->
+                    <div class="dify-card bg-white overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="mr-3">
+                                    <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">客服场景评估</h3>
+                                    <div class="text-sm text-gray-500">评估日期: 2025-05-07</div>
+                                </div>
+                            </div>
+                            <div class="text-2xl font-bold text-blue-600">83.5</div>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">回答准确率</div>
+                                    <div class="text-xl font-semibold text-gray-900">87.3%</div>
+                                    <div class="text-xs text-green-600">+8.5% vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">语言质量</div>
+                                    <div class="text-xl font-semibold text-gray-900">4.2/5</div>
+                                    <div class="text-xs text-green-600">+0.7 vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">响应时间</div>
+                                    <div class="text-xl font-semibold text-gray-900">240ms</div>
+                                    <div class="text-xs text-green-600">-60ms vs 基础模型</div>
+                                </div>
+                                <div class="metric-card p-3">
+                                    <div class="text-sm text-gray-600 mb-1">总体评分</div>
+                                    <div class="text-xl font-semibold text-gray-900">83.5/100</div>
+                                    <div class="text-xs text-green-600">+10.2 vs 基础模型</div>
+                                </div>
+                            </div>
+
+                            <!-- Donut Chart Placeholder -->
+                            <div class="chart-container mb-4">
+                                <div class="text-center text-sm text-gray-500 absolute inset-0 flex items-center justify-center">
+                                    环形图: 不同类型客户问题回答质量
+                                </div>
+                            </div>
+
+                            <div class="text-right">
+                                <button class="dify-btn px-4 py-2 border border-blue-500 text-blue-600 bg-white text-sm font-medium hover:bg-blue-50 focus:outline-none">查看完整报告</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Comparison Tab Content (Hidden by default) -->
+            <div id="compare-tab" class="tab-content hidden">
+                <div class="p-6">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">模型比较</h3>
+                        <div class="dify-card bg-white p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">选择要比较的模型</label>
+                                    <div class="flex items-center space-x-4">
+                                        <select class="mt-1 block w-64 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            <option>信贷风险评估-v1.2</option>
+                                            <option>信贷风险评估-v1.0</option>
+                                            <option>反欺诈检测-v1.0</option>
+                                            <option>客服助手-v2.3</option>
+                                            <option>理财顾问-v1.8</option>
+                                        </select>
+                                        <select class="mt-1 block w-64 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            <option>反欺诈检测-v1.0</option>
+                                            <option>信贷风险评估-v1.2</option>
+                                            <option>信贷风险评估-v1.0</option>
+                                            <option>客服助手-v2.3</option>
+                                            <option>理财顾问-v1.8</option>
+                                        </select>
+                                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                                            比较
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">评估维度</label>
+                                    <select class="mt-1 block w-48 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        <option>全部维度</option>
+                                        <option>准确率</option>
+                                        <option>响应速度</option>
+                                        <option>合规性</option>
+                                        <option>定制化评估</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Comparison Charts -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <!-- Radar Chart for Overall Comparison -->
+                                <div class="dify-card p-4">
+                                    <div class="text-base font-medium text-gray-800 mb-2">综合能力对比</div>
+                                    <div class="chart-container">
+                                        <div class="text-center text-sm text-gray-500 absolute inset-0 flex items-center justify-center">
+                                            雷达图: 模型能力多维度对比
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bar Chart for Key Metrics -->
+                                <div class="dify-card p-4">
+                                    <div class="text-base font-medium text-gray-800 mb-2">关键指标对比</div>
+                                    <div class="chart-container">
+                                        <div class="text-center text-sm text-gray-500 absolute inset-0 flex items-center justify-center">
+                                            柱状图: 关键性能指标对比
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Comparison Table -->
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">评估指标</th>
+                                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">信贷风险评估-v1.2</th>
+                                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">反欺诈检测-v1.0</th>
+                                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">差异</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">总体评分</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900 font-medium">92.7</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900 font-medium">89.3</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-green-600 font-medium">+3.4</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">准确率</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">92.7%</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">94.2%</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-red-600">-1.5%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">F1 分数</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">0.88</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">0.85</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-green-600">+0.03</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">平均响应时间</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">220ms</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">180ms</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-red-600">+40ms</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">误报率</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">2.8%</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">3.5%</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-green-600">-0.7%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">人工评分</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">4.5/5</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">4.2/5</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-green-600">+0.3</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-6 text-right">
+                                <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none mr-3">
+                                    导出对比报告
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">版本对比</h3>
+                        <div class="dify-card bg-white p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">选择模型</label>
+                                    <div class="flex items-center space-x-4">
+                                        <select class="mt-1 block w-64 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            <option>信贷风险评估</option>
+                                            <option>反欺诈检测</option>
+                                            <option>客服助手</option>
+                                            <option>理财顾问</option>
+                                            <option>产品推荐</option>
+                                        </select>
+                                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                                            显示版本对比
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Version Comparison Chart -->
+                            <div class="chart-container mb-6">
+                                <div class="text-center text-sm text-gray-500 absolute inset-0 flex items-center justify-center">
+                                    折线图: 模型性能随版本变化趋势
+                                </div>
+                            </div>
+
+                            <!-- Version Table -->
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">版本</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">发布日期</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">总体评分</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">准确率</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">响应时间</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">v1.2</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">2025-05-05</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">92.7</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">92.7%</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">220ms</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                                                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-md">已部署</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">v1.1</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">2025-04-20</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">88.5</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">89.2%</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">245ms</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                                                <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-md">已存档</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">v1.0</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">2025-04-01</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">80.2</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">83.5%</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">300ms</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                                                <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-md">已存档</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Datasets Tab Content (Hidden by default) -->
+            <div id="datasets-tab" class="tab-content hidden">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">可用评估数据集</h3>
+                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            上传数据集
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">客服质量测试集</div>
+                                <div class="text-sm text-gray-500">500 样本</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">包含客户服务对话场景的评估数据集，用于测试模型回答准确性、语言质量和服务态度</div>
+                            <div class="flex items-center text-xs text-gray-500 mb-3">
+                                <span>格式: JSON</span>
+                                <span class="mx-2">|</span>
+                                <span>更新时间: 2025-05-01</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md">回答准确性</span>
+                                <span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-md">语言质量</span>
+                                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-md">服务态度</span>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">投资咨询测试集</div>
+                                <div class="text-sm text-gray-500">350 样本</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">理财顾问场景评估数据集，测试金融知识、风险提示和推荐合理性</div>
+                            <div class="flex items-center text-xs text-gray-500 mb-3">
+                                <span>格式: JSON</span>
+                                <span class="mx-2">|</span>
+                                <span>更新时间: 2025-04-15</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md">金融知识</span>
+                                <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-md">风险提示</span>
+                                <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-md">推荐合理性</span>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">信贷风险测试集</div>
+                                <div class="text-sm text-gray-500">450 样本</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">贷款申请评估对话数据，测试风险识别能力、欺诈检测和信用评分准确性</div>
+                            <div class="flex items-center text-xs text-gray-500 mb-3">
+                                <span>格式: JSON</span>
+                                <span class="mx-2">|</span>
+                                <span>更新时间: 2025-04-20</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md">风险识别</span>
+                                <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-md">欺诈检测</span>
+                                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-md">信用评分</span>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">欺诈检测测试集</div>
+                                <div class="text-sm text-gray-500">600 样本</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">包含多种欺诈场景的测试集，用于评估欺诈识别能力和误报率</div>
+                            <div class="flex items-center text-xs text-gray-500 mb-3">
+                                <span>格式: CSV</span>
+                                <span class="mx-2">|</span>
+                                <span>更新时间: 2025-03-28</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-md">欺诈识别</span>
+                                <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-md">误报率</span>
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md">recall</span>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">产品推荐测试集</div>
+                                <div class="text-sm text-gray-500">420 样本</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">银行产品推荐测试集，评估产品匹配度、个性化和推荐准确性</div>
+                            <div class="flex items-center text-xs text-gray-500 mb-3">
+                                <span>格式: JSON</span>
+                                <span class="mx-2">|</span>
+                                <span>更新时间: 2025-04-10</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-md">匹配度</span>
+                                <span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-md">个性化</span>
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md">准确性</span>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500 border-dashed border-2 flex items-center justify-center cursor-pointer">
+                            <div class="text-gray-500 text-center">
+                                <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                <div class="text-sm">添加新数据集</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">银行场景评估基准</h3>
+                        <div class="dify-card p-4 bg-white">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="text-center p-3 border border-gray-200 rounded-lg">
+                                    <div class="font-medium text-gray-800 mb-1">银行知识基准</div>
+                                    <div class="text-sm text-gray-600 mb-2">评估模型在银行专业知识方面的准确性</div>
+                                    <div class="text-xs text-gray-500 mb-3">3,000 问题 | 多选题格式</div>
+                                    <button class="dify-btn px-4 py-2 border border-blue-500 text-blue-600 bg-white text-sm font-medium hover:bg-blue-50 focus:outline-none w-full">使用此基准</button>
+                                </div>
+                                <div class="text-center p-3 border border-gray-200 rounded-lg">
+                                    <div class="font-medium text-gray-800 mb-1">合规性基准</div>
+                                    <div class="text-sm text-gray-600 mb-2">评估模型在银行合规要求方面的表现</div>
+                                    <div class="text-xs text-gray-500 mb-3">1,500 场景 | 问答格式</div>
+                                    <button class="dify-btn px-4 py-2 border border-blue-500 text-blue-600 bg-white text-sm font-medium hover:bg-blue-50 focus:outline-none w-full">使用此基准</button>
+                                </div>
+                                <div class="text-center p-3 border border-gray-200 rounded-lg">
+                                    <div class="font-medium text-gray-800 mb-1">用户体验基准</div>
+                                    <div class="text-sm text-gray-600 mb-2">评估模型在用户交互和对话流畅度方面的表现</div>
+                                    <div class="text-xs text-gray-500 mb-3">2,000 对话 | 多轮对话格式</div>
+                                    <button class="dify-btn px-4 py-2 border border-blue-500 text-blue-600 bg-white text-sm font-medium hover:bg-blue-50 focus:outline-none w-full">使用此基准</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Evaluation Task Modal -->
+    <div id="create-task-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
+                                创建评估任务
+                            </h3>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">评估任务名称</label>
+                                <input type="text" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">任务描述</label>
+                                <textarea rows="2" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">评估模型</label>
+                                <select class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                    <option>客服助手-v2.3</option>
+                                    <option>理财顾问-v1.8</option>
+                                    <option>信贷风险评估-v1.2</option>
+                                    <option>反欺诈检测-v1.0</option>
+                                    <option>产品推荐-v1.5</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">评估数据集</label>
+                                <select class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                    <option>客服质量测试集 (500 样本)</option>
+                                    <option>投资咨询测试集 (350 样本)</option>
+                                    <option>信贷风险测试集 (450 样本)</option>
+                                    <option>欺诈检测测试集 (600 样本)</option>
+                                    <option>产品推荐测试集 (420 样本)</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">评估维度</label>
+                                <div class="mt-2 space-y-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked>
+                                        <label class="ml-2 block text-sm text-gray-900">准确性</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked>
+                                        <label class="ml-2 block text-sm text-gray-900">语言质量</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked>
+                                        <label class="ml-2 block text-sm text-gray-900">服务态度</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 block text-sm text-gray-900">响应时间</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 block text-sm text-gray-900">合规性</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">高级选项</label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label class="ml-2 block text-sm text-gray-900">与基础模型进行对比评估</label>
+                                </div>
+                                <div class="flex items-center mt-2">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label class="ml-2 block text-sm text-gray-900">评估完成后自动生成报告</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        开始评估
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" id="cancel-task">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Deactivate all tabs
+                document.querySelectorAll('.tab-item').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Hide all tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Show the active tab content
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId + '-tab').classList.remove('hidden');
+            });
+        });
+
+        // Show create task modal
+        document.querySelector('.dify-btn.bg-blue-600').addEventListener('click', function() {
+            document.getElementById('create-task-modal').classList.remove('hidden');
+        });
+        
+        // Close create task modal
+        document.getElementById('cancel-task').addEventListener('click', function() {
+            document.getElementById('create-task-modal').classList.add('hidden');
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('create-task-modal');
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+
+        // Progress bar animation
+        document.querySelectorAll('.progress-bar-fill').forEach(bar => {
+            const originalWidth = bar.style.width;
+            bar.style.width = '0';
+            setTimeout(() => {
+                bar.style.width = originalWidth;
+            }, 300);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Viewer</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --bg-color: #ffffff;
+            --text-color: #1f2937;
+            --code-bg: #f3f4f6;
+            --blockquote-bg: #f9fafb;
+            --blockquote-border: #e5e7eb;
+            --link-color: #2563eb;
+            --table-border: #e5e7eb;
+            --header-bg: #f9fafb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .dark-mode {
+            --bg-color: #1f2937;
+            --text-color: #f9fafb;
+            --code-bg: #374151;
+            --blockquote-bg: #111827;
+            --blockquote-border: #4b5563;
+            --link-color: #3b82f6;
+            --table-border: #4b5563;
+            --header-bg: #111827;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .header {
+            background-color: var(--header-bg);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--table-border);
+        }
+
+        .content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+            box-sizing: border-box;
+            flex: 1;
+        }
+
+        .url-input {
+            flex: 1;
+            margin-right: 1rem;
+            padding: 0.5rem;
+            border: 1px solid var(--table-border);
+            border-radius: 4px;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        .load-btn {
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .dark-mode-toggle {
+            margin-left: 1rem;
+            padding: 0.5rem;
+            background: none;
+            border: 1px solid var(--table-border);
+            border-radius: 4px;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        /* Markdown Styles */
+        #markdown-content {
+            overflow-wrap: break-word;
+        }
+
+        #markdown-content h1,
+        #markdown-content h2,
+        #markdown-content h3,
+        #markdown-content h4,
+        #markdown-content h5,
+        #markdown-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        #markdown-content h1 {
+            font-size: 2em;
+            border-bottom: 1px solid var(--table-border);
+            padding-bottom: 0.3em;
+        }
+
+        #markdown-content h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid var(--table-border);
+            padding-bottom: 0.3em;
+        }
+
+        #markdown-content h3 {
+            font-size: 1.25em;
+        }
+
+        #markdown-content h4 {
+            font-size: 1em;
+        }
+
+        #markdown-content h5 {
+            font-size: 0.875em;
+        }
+
+        #markdown-content h6 {
+            font-size: 0.85em;
+            color: #6b7280;
+        }
+
+        #markdown-content p {
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+
+        #markdown-content a {
+            color: var(--link-color);
+            text-decoration: none;
+        }
+
+        #markdown-content a:hover {
+            text-decoration: underline;
+        }
+
+        #markdown-content img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        #markdown-content code {
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: var(--code-bg);
+            border-radius: 3px;
+        }
+
+        #markdown-content pre {
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            padding: 1rem;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: var(--code-bg);
+            border-radius: 3px;
+            margin: 1rem 0;
+        }
+
+        #markdown-content pre code {
+            background-color: transparent;
+            padding: 0;
+            margin: 0;
+            font-size: 100%;
+            word-break: normal;
+            white-space: pre;
+        }
+
+        #markdown-content blockquote {
+            margin: 1rem 0;
+            padding: 0 1rem;
+            color: var(--text-color);
+            background-color: var(--blockquote-bg);
+            border-left: 0.25rem solid var(--blockquote-border);
+        }
+
+        #markdown-content ul,
+        #markdown-content ol {
+            padding-left: 2rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+
+        #markdown-content table {
+            border-collapse: collapse;
+            margin: 1rem 0;
+            width: 100%;
+            overflow: auto;
+            display: block;
+        }
+
+        #markdown-content table th,
+        #markdown-content table td {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--table-border);
+        }
+
+        #markdown-content table th {
+            font-weight: 600;
+            background-color: var(--header-bg);
+        }
+
+        #markdown-content hr {
+            height: 0.25rem;
+            padding: 0;
+            margin: 1.5rem 0;
+            background-color: var(--table-border);
+            border: 0;
+        }
+
+        .loading {
+            text-align: center;
+            margin: 2rem;
+            font-size: 1.2rem;
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Markdown Viewer</h1>
+            <div style="display: flex; align-items: center;">
+                <input type="text" id="markdown-url" class="url-input" placeholder="Enter Markdown URL...">
+                <button id="load-btn" class="load-btn">Load</button>
+                <button id="dark-mode-toggle" class="dark-mode-toggle">🌙</button>
+            </div>
+        </div>
+        <div class="content">
+            <div id="markdown-content"></div>
+        </div>
+    </div>
+
+    <script src="./script/marked.min.js"></script>
+    <script src="./script/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const markdownContent = document.getElementById('markdown-content');
+            const markdownUrl = document.getElementById('markdown-url');
+            const loadBtn = document.getElementById('load-btn');
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            
+            // Setup marked with highlight.js
+            marked.setOptions({
+                highlight: function(code, lang) {
+                    if (lang && hljs.getLanguage(lang)) {
+                        try {
+                            return hljs.highlight(code, { language: lang }).value;
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }
+                    return hljs.highlightAuto(code).value;
+                },
+                breaks: true,
+                gfm: true
+            });
+
+            // Parse URL parameters
+            function getUrlParameter(name) {
+                name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+                const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+                const results = regex.exec(location.search);
+                return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+            }
+
+            // Load markdown content
+            async function loadMarkdown(url) {
+                if (!url) return;
+                
+                markdownContent.innerHTML = '<div class="loading">Loading...</div>';
+                
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`Failed to load: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    const text = await response.text();
+                    markdownContent.innerHTML = marked.parse(text);
+                    
+                    // Apply syntax highlighting to code blocks
+                    document.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                } catch (error) {
+                    markdownContent.innerHTML = `<div class="error">Error loading markdown: ${error.message}</div>`;
+                    console.error('Error loading markdown:', error);
+                }
+            }
+
+            // Handle file parameter from URL
+            const fileUrl = getUrlParameter('file');
+            if (fileUrl) {
+                markdownUrl.value = fileUrl;
+                loadMarkdown(fileUrl);
+            }
+
+            // Handle load button click
+            loadBtn.addEventListener('click', function() {
+                const url = markdownUrl.value.trim();
+                if (url) {
+                    // Update URL parameter without reloading the page
+                    const newUrl = new URL(window.location.href);
+                    newUrl.searchParams.set('file', url);
+                    window.history.pushState({}, '', newUrl);
+                    
+                    loadMarkdown(url);
+                }
+            });
+
+            // Handle dark mode toggle
+            darkModeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                darkModeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+            });
+
+            // Handle Enter key in the URL input
+            markdownUrl.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    loadBtn.click();
+                }
+            });
+        });
+    </script>
+    
+    <!-- Add highlight.js CSS -->
+    <link rel="stylesheet" href="./style/github.min.css" id="highlight-theme">
+</body>
+</html>

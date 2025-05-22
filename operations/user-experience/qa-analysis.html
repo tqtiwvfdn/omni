@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问答分析 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tab-item {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-item:hover {
+            color: var(--dify-primary);
+        }
+
+        .tab-item.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="container mx-auto px-6 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">问答分析</h1>
+                    <p class="text-gray-600 mt-1">分析用户提问和系统回答的质量与效果</p>
+                </div>
+                <div class="flex space-x-4">
+                    <!-- Date Range Selector -->
+                    <div class="relative">
+                        <select class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="7d">近7天</option>
+                            <option value="30d" selected>近30天</option>
+                            <option value="90d">近90天</option>
+                            <option value="custom">自定义时间</option>
+                        </select>
+                    </div>
+                    <!-- Export Button -->
+                    <button class="dify-btn px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            导出报告
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Card 1: 总问答量 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-medium text-gray-500">总问答量</h2>
+                    <span class="dify-tag bg-green-50 text-green-600">+15%</span>
+                </div>
+                <div class="mt-4">
+                    <p class="text-3xl font-semibold text-gray-800">185,429</p>
+                    <p class="text-sm text-gray-500 mt-1">较上月增长15%</p>
+                </div>
+            </div>
+
+            <!-- Card 2: 平均解决率 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-medium text-gray-500">平均解决率</h2>
+                    <span class="dify-tag bg-blue-50 text-blue-600">+3.2%</span>
+                </div>
+                <div class="mt-4">
+                    <p class="text-3xl font-semibold text-gray-800">87.4%</p>
+                    <p class="text-sm text-gray-500 mt-1">较上月增长3.2%</p>
+                </div>
+            </div>
+
+            <!-- Card 3: 平均交互轮次 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-medium text-gray-500">平均交互轮次</h2>
+                    <span class="dify-tag bg-green-50 text-green-600">-0.8</span>
+                </div>
+                <div class="mt-4">
+                    <p class="text-3xl font-semibold text-gray-800">2.3</p>
+                    <p class="text-sm text-gray-500 mt-1">较上月减少0.8轮</p>
+                </div>
+            </div>
+
+            <!-- Card 4: 回答满意度 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-medium text-gray-500">回答满意度</h2>
+                    <span class="dify-tag bg-blue-50 text-blue-600">+2.1%</span>
+                </div>
+                <div class="mt-4">
+                    <p class="text-3xl font-semibold text-gray-800">92.8%</p>
+                    <p class="text-sm text-gray-500 mt-1">较上月增长2.1%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="border-b border-gray-200 mb-6">
+            <div class="flex space-x-8">
+                <div class="tab-item px-4 py-3 active" data-tab="category-analysis">问题分类统计</div>
+                <div class="tab-item px-4 py-3" data-tab="hot-questions">热门问题分析</div>
+                <div class="tab-item px-4 py-3" data-tab="answer-quality">回答质量评估</div>
+                <div class="tab-item px-4 py-3" data-tab="interaction-rounds">交互轮次分析</div>
+            </div>
+        </div>
+
+        <!-- Tab Content: 问题分类统计 -->
+        <div class="tab-content active" id="category-analysis">
+            <!-- 业务类别分布 -->
+            <div class="dify-card bg-white overflow-hidden mb-8">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-800">业务类别分布</h3>
+                        <div>
+                            <select class="bg-white border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="percentage">百分比</option>
+                                <option value="absolute">绝对数量</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- 环形图 -->
+                        <div class="h-80 flex items-center justify-center">
+                            <!-- 这里应该是一个环形图，但我们用一个占位图 -->
+                            <div class="w-64 h-64 bg-gray-100 rounded-full flex items-center justify-center relative">
+                                <div class="w-48 h-48 bg-white rounded-full absolute"></div>
+                                <span class="text-lg font-medium z-10">业务类别分布图</span>
+                            </div>
+                        </div>
+                        <!-- 列表 -->
+                        <div>
+                            <ul class="space-y-4">
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full bg-blue-500 mr-3"></div>
+                                        <span class="text-gray-700">信用卡业务</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-gray-900 font-medium mr-2">32.6%</span>
+                                        <span class="text-green-600 text-xs">+2.4%</span>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full bg-indigo-500 mr-3"></div>
+                                        <span class="text-gray-700">转账汇款</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-gray-900 font-medium mr-2">24.8%</span>
+                                        <span class="text-green-600 text-xs">+1.2%</span>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full bg-purple-500 mr-3"></div>
+                                        <span class="text-gray-700">理财产品</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-gray-900 font-medium mr-2">18.5%</span>
+                                        <span class="text-red-600 text-xs">-0.8%</span>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full bg-green-500 mr-3"></div>
+                                        <span class="text-gray-700">贷款服务</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-gray-900 font-medium mr-2">12.4%</span>
+                                        <span class="text-green-600 text-xs">+3.6%</span>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full bg-yellow-500 mr-3"></div>
+                                        <span class="text-gray-700">账户服务</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-gray-900 font-medium mr-2">11.7%</span>
+                                        <span class="text-red-600 text-xs">-1.2%</span>
+                                    </div>
+                                </li>
+                            </ul>
+                            <div class="mt-4 pt-4 border-t border-gray-100">
+                                <a href="#" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
+                                    查看全部分类
+                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 问题解决率统计 -->
+            <div class="dify-card bg-white overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-800">问题解决率统计</h3>
+                        <div>
+                            <select class="bg-white border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="week">按周</option>
+                                <option value="month" selected>按月</option>
+                                <option value="quarter">按季度</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <!-- 线形图 -->
+                    <div class="h-80 w-full bg-gray-50 rounded-lg flex items-center justify-center">
+                        <span class="text-lg text-gray-500">解决率趋势图</span>
+                    </div>
+
+                    <!-- 类别解决率表格 -->
+                    <div class="mt-6 overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">业务类别</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">解决率</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">环比变化</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">问题总量</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">平均交互轮次</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">信用卡业务</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">92.1%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+2.3%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">60,452</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2.1</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">转账汇款</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">89.3%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+1.7%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">45,984</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2.4</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">理财产品</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">83.6%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">-0.9%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">34,276</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2.8</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">贷款服务</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">85.2%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+4.1%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">22,987</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2.6</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">账户服务</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">90.5%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">-0.4%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">21,730</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1.9</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: 热门问题分析 -->
+        <div class="tab-content" id="hot-questions">
+            <div class="dify-card bg-white overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-800">热门问题趋势</h3>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-sm rounded-md bg-blue-50 text-blue-600">日视图</button>
+                            <button class="px-3 py-1 text-sm rounded-md text-gray-600">周视图</button>
+                            <button class="px-3 py-1 text-sm rounded-md text-gray-600">月视图</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <!-- 热门问题趋势图 -->
+                    <div class="h-80 w-full bg-gray-50 rounded-lg flex items-center justify-center mb-6">
+                        <span class="text-lg text-gray-500">热门问题趋势图</span>
+                    </div>
+
+                    <!-- 热门问题列表 -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">排名</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">问题</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类别</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">问询次数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">解决率</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">趋势</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">1</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">如何查询信用卡账单明细？</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">信用卡</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8,542</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">96.8%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center text-green-600">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                            </svg>
+                                            <span>24%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">如何开通手机银行？</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">账户服务</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">7,896</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">92.5%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center text-red-600">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                            </svg>
+                                            <span>6%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">3</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">如何转账到其他银行账户？</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">转账汇款</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">6,754</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">94.1%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center text-green-600">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                            </svg>
+                                            <span>12%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">4</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">大额存单和普通定期存款有什么区别？</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">理财产品</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">5,621</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">88.3%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center text-green-600">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                            </svg>
+                                            <span>32%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">5</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">信用卡逾期有什么后果？</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">信用卡</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4,987</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">90.2%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center text-green-600">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                            </svg>
+                                            <span>8%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <button class="text-blue-600 hover:text-blue-800 text-sm">
+                            查看全部热门问题
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: 回答质量评估 -->
+        <div class="tab-content" id="answer-quality">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- 回答质量评分 -->
+                <div class="dify-card bg-white p-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">回答质量评分</h3>
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <p class="text-4xl font-semibold text-gray-800">85.6</p>
+                            <p class="text-sm text-gray-500">总体评分 (满分100)</p>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="text-green-600 text-sm font-medium">+2.3分</span>
+                            <span class="text-gray-500 text-sm ml-1">较上月</span>
+                        </div>
+                    </div>
+                    <!-- 各维度评分 -->
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm text-gray-600">准确性</span>
+                                <span class="text-sm font-medium text-gray-700">91.2</span>
+                            </div>
+                            <div class="bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 91.2%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm text-gray-600">完整性</span>
+                                <span class="text-sm font-medium text-gray-700">87.5</span>
+                            </div>
+                            <div class="bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 87.5%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm text-gray-600">清晰度</span>
+                                <span class="text-sm font-medium text-gray-700">83.9</span>
+                            </div>
+                            <div class="bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 83.9%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm text-gray-600">有用性</span>
+                                <span class="text-sm font-medium text-gray-700">79.8</span>
+                            </div>
+                            <div class="bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 79.8%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 质量分布 -->
+                <div class="dify-card bg-white p-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">回答质量分布</h3>
+                    <div class="h-64 flex items-center justify-center mb-4 bg-gray-50 rounded-lg">
+                        <span class="text-lg text-gray-500">回答质量分布图</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-green-50 p-3 rounded-lg text-center">
+                            <p class="text-xl font-semibold text-green-600">74.3%</p>
+                            <p class="text-xs text-gray-600">优质回答</p>
+                        </div>
+                        <div class="bg-yellow-50 p-3 rounded-lg text-center">
+                            <p class="text-xl font-semibold text-yellow-600">21.8%</p>
+                            <p class="text-xs text-gray-600">一般回答</p>
+                        </div>
+                        <div class="bg-red-50 p-3 rounded-lg text-center">
+                            <p class="text-xl font-semibold text-red-600">3.9%</p>
+                            <p class="text-xs text-gray-600">待改进</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 回答质量明细表 -->
+            <div class="dify-card bg-white overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-800">回答质量明细</h3>
+                        <div class="flex space-x-2">
+                            <select class="bg-white border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="all">全部类别</option>
+                                <option value="credit">信用卡</option>
+                                <option value="transfer">转账汇款</option>
+                                <option value="wealth">理财产品</option>
+                                <option value="loan">贷款服务</option>
+                            </select>
+                            <button class="dify-btn px-3 py-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                                    </svg>
+                                    筛选
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">问题类别</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">准确性</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">完整性</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">清晰度</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">有用性</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">总评分</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">环比</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">信用卡</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">93.5</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">89.2</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">85.7</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">82.1</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">87.6</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+2.1</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">转账汇款</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">92.1</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">88.5</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">84.9</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">80.4</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">86.5</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+1.7</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">理财产品</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">87.3</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">84.6</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">80.2</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">77.3</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">82.4</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+3.4</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">贷款服务</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">89.4</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">85.1</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">82.5</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">78.9</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">84.0</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">-0.2</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">账户服务</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">94.7</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">90.2</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">86.4</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">84.3</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">88.9</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+1.3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: 交互轮次分析 -->
+        <div class="tab-content" id="interaction-rounds">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- 交互轮次分布 -->
+                <div class="lg:col-span-2 dify-card bg-white p-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">交互轮次分布趋势</h3>
+                    <div class="h-80 flex items-center justify-center bg-gray-50 rounded-lg">
+                        <span class="text-lg text-gray-500">交互轮次趋势图</span>
+                    </div>
+                </div>
+                <!-- 轮次统计 -->
+                <div class="dify-card bg-white p-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">交互轮次统计</h3>
+                    <div class="space-y-4">
+                        <div class="bg-green-50 p-4 rounded-lg flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">单轮解决</p>
+                                <p class="text-xl font-semibold text-green-600">42.3%</p>
+                            </div>
+                            <span class="text-green-600 text-xs">+2.1%</span>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">2-3轮解决</p>
+                                <p class="text-xl font-semibold text-blue-600">36.8%</p>
+                            </div>
+                            <span class="text-green-600 text-xs">+1.5%</span>
+                        </div>
+                        <div class="bg-yellow-50 p-4 rounded-lg flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">4-5轮解决</p>
+                                <p class="text-xl font-semibold text-yellow-600">16.4%</p>
+                            </div>
+                            <span class="text-red-600 text-xs">-2.3%</span>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">5轮以上</p>
+                                <p class="text-xl font-semibold text-red-600">4.5%</p>
+                            </div>
+                            <span class="text-red-600 text-xs">-1.3%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 业务类别轮次分析 -->
+            <div class="dify-card bg-white overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-800">业务类别轮次分析</h3>
+                        <button class="dify-btn px-3 py-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                导出数据
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">业务类别</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">平均轮次</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">单轮解决率</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">2-3轮解决率</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">4-5轮解决率</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">5轮以上</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">环比变化</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">信用卡</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2.1</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">48.3%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">37.5%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">11.8%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2.4%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">-0.3轮</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">转账汇款</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2.4</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">41.2%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">38.4%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">16.9%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">3.5%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">-0.2轮</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">理财产品</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2.8</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">33.5%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">35.7%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">22.1%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.7%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">+0.1轮</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">贷款服务</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2.6</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">37.2%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">36.8%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">19.6%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">6.4%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">-0.4轮</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">账户服务</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">1.9</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">52.4%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">35.2%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">10.3%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2.1%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">-0.2轮</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab-item').forEach(t => {
+                    t.classList.remove('active');
+                });
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Show the corresponding tab content
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+    </script>
+</body>
+
+</html>

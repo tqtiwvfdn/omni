@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>意图信息维护 - 业务流程配置/流程可视化</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+        }
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .dify-btn:hover {
+            transform: translateY(-1px);
+        }
+        .flow-node {
+            border-radius: 8px;
+            padding: 12px;
+            min-width: 120px;
+            text-align: center;
+            cursor: move;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .flow-node.start {
+            background-color: #DBEAFE;
+            border: 2px solid #3B82F6;
+        }
+        .flow-node.decision {
+            background-color: #FEF3C7;
+            border: 2px solid #F59E0B;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            min-width: 100px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .flow-node.process {
+            background-color: #F0FDF4;
+            border: 2px solid #22C55E;
+        }
+        .flow-node.end {
+            background-color: #FAE8FF;
+            border: 2px solid #A855F7;
+        }
+        .flow-connector {
+            position: absolute;
+            width: 2px;
+            background-color: #9CA3AF;
+            pointer-events: none;
+        }
+        .flow-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #9CA3AF;
+        }
+        .flow-canvas {
+            min-height: 600px;
+            background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .node-connection-point {
+            width: 12px;
+            height: 12px;
+            background-color: #3B82F6;
+            border-radius: 50%;
+            position: absolute;
+            cursor: crosshair;
+        }
+        .node-connection-point.top {
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .node-connection-point.bottom {
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .node-connection-point.left {
+            left: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .node-connection-point.right {
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .side-panel {
+            width: 300px;
+            border-left: 1px solid var(--dify-border);
+            background-color: white;
+        }
+        .node-toolbox {
+            width: 200px;
+            border-right: 1px solid var(--dify-border);
+            background-color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Left Toolbox -->
+        <div class="node-toolbox">
+            <div class="p-4">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">流程组件</h2>
+                <div class="space-y-2">
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded cursor-move" draggable="true" data-node-type="start">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-full bg-blue-600"></div>
+                            <span class="text-sm font-medium">开始节点</span>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-yellow-50 border border-yellow-200 rounded cursor-move" draggable="true" data-node-type="decision">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 transform rotate-45 bg-yellow-600"></div>
+                            <span class="text-sm font-medium">判断节点</span>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-green-50 border border-green-200 rounded cursor-move" draggable="true" data-node-type="process">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 bg-green-600"></div>
+                            <span class="text-sm font-medium">处理节点</span>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-purple-50 border border-purple-200 rounded cursor-move" draggable="true" data-node-type="end">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-full bg-purple-600"></div>
+                            <span class="text-sm font-medium">结束节点</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-600 mb-2">银行业务组件</h3>
+                    <div class="space-y-1">
+                        <div class="text-xs text-gray-500 p-2 hover:bg-gray-50 rounded cursor-pointer">账户服务</div>
+                        <div class="text-xs text-gray-500 p-2 hover:bg-gray-50 rounded cursor-pointer">交易处理</div>
+                        <div class="text-xs text-gray-500 p-2 hover:bg-gray-50 rounded cursor-pointer">风控服务</div>
+                        <div class="text-xs text-gray-500 p-2 hover:bg-gray-50 rounded cursor-pointer">客户信息</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Canvas Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Header -->
+            <div class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+                <div>
+                    <h1 class="text-lg font-semibold text-gray-800">转账流程配置</h1>
+                    <p class="text-sm text-gray-500">可视化配置银行转账业务流程</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button class="dify-btn px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
+                        预览
+                    </button>
+                    <button class="dify-btn px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
+                        测试
+                    </button>
+                    <button class="dify-btn px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700">
+                        保存流程
+                    </button>
+                </div>
+            </div>
+
+            <!-- Flow Canvas -->
+            <div class="flex-1 overflow-auto bg-gray-50 p-6">
+                <div class="flow-canvas bg-white rounded-lg shadow-sm">
+                    <!-- Start Node -->
+                    <div class="flow-node start absolute" style="top: 50px; left: 100px;">
+                        转账
+                        <div class="node-connection-point bottom"></div>
+                    </div>
+                    
+                    <!-- Decision Node: 余额不足 -->
+                    <div class="flow-node decision absolute" style="top: 150px; left: 80px;">
+                        <div>余额不足?</div>
+                        <div class="node-connection-point top"></div>
+                        <div class="node-connection-point bottom"></div>
+                        <div class="node-connection-point right"></div>
+                    </div>
+                    
+                    <!-- Process Nodes -->
+                    <div class="flow-node process absolute" style="top: 250px; left: 50px;">
+                        余额检查
+                        <div class="node-connection-point top"></div>
+                        <div class="node-connection-point bottom"></div>
+                    </div>
+                    
+                    <div class="flow-node process absolute" style="top: 250px; left: 300px;">
+                        收款人检查
+                        <div class="node-connection-point top"></div>
+                        <div class="node-connection-point bottom"></div>
+                    </div>
+                    
+                    <div class="flow-node process absolute" style="top: 350px; left: 300px;">
+                        反欺诈检查
+                        <div class="node-connection-point top"></div>
+                        <div class="node-connection-point bottom"></div>
+                    </div>
+                    
+                    <div class="flow-node process absolute" style="top: 450px; left: 300px;">
+                        执行转账
+                        <div class="node-connection-point top"></div>
+                        <div class="node-connection-point bottom"></div>
+                    </div>
+                    
+                    <!-- End Node -->
+                    <div class="flow-node end absolute" style="top: 550px; left: 300px;">
+                        完成
+                        <div class="node-connection-point top"></div>
+                    </div>
+
+                    <!-- Connectors (SVG) -->
+                    <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                        <!-- Start to Decision -->
+                        <line x1="150" y1="95" x2="130" y2="150" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        
+                        <!-- Decision branches -->
+                        <line x1="130" y1="250" x2="110" y2="250" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <line x1="180" y1="200" x2="350" y2="250" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        
+                        <!-- Process flow -->
+                        <line x1="350" y1="295" x2="350" y2="350" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <line x1="350" y1="395" x2="350" y2="450" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <line x1="350" y1="495" x2="350" y2="550" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        
+                        <!-- Arrow marker definition -->
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#9CA3AF"/>
+                            </marker>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side Panel -->
+        <div class="side-panel">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">节点属性</h2>
+            </div>
+            <div class="p-4 space-y-4">
+                <div class="bg-blue-50 p-3 rounded">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <div class="w-3 h-3 rounded-full bg-blue-600"></div>
+                        <span class="font-medium text-sm">余额检查节点</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs text-gray-600">节点类型</label>
+                            <select class="w-full text-sm border border-gray-300 rounded px-2 py-1">
+                                <option>账户服务</option>
+                                <option>交易处理</option>
+                                <option>风控服务</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600">API调用</label>
+                            <input type="text" value="getBalance" class="w-full text-sm border border-gray-300 rounded px-2 py-1">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600">参数配置</label>
+                            <textarea class="w-full text-sm border border-gray-300 rounded px-2 py-1" rows="2">{"accountId": "{{customer_id}}"}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">流程规则</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">触发条件</span>
+                            <button class="text-xs text-blue-600 hover:text-blue-800">编辑</button>
+                        </div>
+                        <div class="text-xs bg-gray-50 p-2 rounded">
+                            balance >= amount
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">输出映射</h3>
+                    <div class="space-y-1">
+                        <div class="text-xs">
+                            <span class="text-gray-600">成功:</span>
+                            <span class="text-green-600 ml-1">继续流程</span>
+                        </div>
+                        <div class="text-xs">
+                            <span class="text-gray-600">失败:</span>
+                            <span class="text-red-600 ml-1">余额不足提示</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Basic drag and drop functionality
+        const flowCanvas = document.querySelector('.flow-canvas');
+        
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+        
+        flowCanvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const nodeType = e.dataTransfer.getData('text/plain');
+            
+            // Create new node at drop position
+            const newNode = document.createElement('div');
+            newNode.className = `flow-node ${nodeType} absolute`;
+            newNode.style.left = e.offsetX + 'px';
+            newNode.style.top = e.offsetY + 'px';
+            
+            // Add node content based on type
+            switch(nodeType) {
+                case 'start':
+                    newNode.textContent = '开始';
+                    break;
+                case 'decision':
+                    newNode.innerHTML = '<div>判断条件?</div>';
+                    break;
+                case 'process':
+                    newNode.textContent = '处理';
+                    break;
+                case 'end':
+                    newNode.textContent = '结束';
+                    break;
+            }
+            
+            // Add connection points
+            ['top', 'bottom', 'left', 'right'].forEach(pos => {
+                const point = document.createElement('div');
+                point.className = `node-connection-point ${pos}`;
+                newNode.appendChild(point);
+            });
+            
+            flowCanvas.appendChild(newNode);
+        });
+        
+        // Handle drag start
+        document.querySelectorAll('[draggable="true"]').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', item.dataset.nodeType);
+            });
+        });
+    </script>
+</body>
+</html>

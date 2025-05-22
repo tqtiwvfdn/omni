@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型微调 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .tab-item {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tab-item:hover {
+            color: var(--dify-primary);
+        }
+        .tab-item.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-badge-green {
+            background-color: #ECFDF5;
+            color: #059669;
+        }
+        .status-badge-yellow {
+            background-color: #FFFBEB;
+            color: #D97706;
+        }
+        .status-badge-blue {
+            background-color: #EFF6FF;
+            color: #3B82F6;
+        }
+        .status-badge-red {
+            background-color: #FEF2F2;
+            color: #DC2626;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #E5E7EB;
+            border-radius: 9999px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+        .metric-card {
+            border: 1px solid var(--dify-border);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .metric-card:hover {
+            border-color: var(--dify-primary);
+            background-color: var(--dify-primary-light);
+        }
+        .example-card {
+            border-radius: 8px;
+            border: 1px solid var(--dify-border);
+            transition: all 0.3s ease;
+        }
+        .example-card:hover {
+            border-color: var(--dify-primary);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        /* 高亮样式 */
+        .highlight-text {
+            background-color: rgba(254, 202, 87, 0.2);
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+        /* 预训练数据集标签样式 */
+        .dataset-tag {
+            display: inline-flex;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        /* AI生成文本标记样式 */
+        .ai-generated {
+            border-left: 3px solid #10B981;
+            padding-left: 8px;
+        }
+        /* 数据实例收起展开切换 */
+        .example-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+        .example-content.expanded {
+            max-height: 800px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Page Header -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">模型微调</h1>
+                    <p class="text-gray-600 mt-1">针对银行业务场景微调和优化大语言模型</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none flex items-center" id="generate-training-data">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        AI生成微调数据
+                    </button>
+                    <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        导入训练数据
+                    </button>
+                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        创建微调任务
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <!-- Active Tasks Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-medium text-gray-800">进行中任务</h2>
+                    <div class="status-badge status-badge-blue">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>2</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-3xl font-semibold text-gray-800">2</div>
+                    <div class="text-sm text-gray-500">当前正在训练中的微调任务</div>
+                </div>
+            </div>
+
+            <!-- Completed Tasks Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-medium text-gray-800">已完成任务</h2>
+                    <div class="status-badge status-badge-green">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>8</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-3xl font-semibold text-gray-800">8</div>
+                    <div class="text-sm text-gray-500">成功完成的微调任务</div>
+                </div>
+            </div>
+
+            <!-- Training Data Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-medium text-gray-800">训练数据集</h2>
+                    <div class="status-badge status-badge-green">
+                        <span>15</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-3xl font-semibold text-gray-800">25.6K</div>
+                    <div class="text-sm text-gray-500">可用于微调的训练样本数量</div>
+                </div>
+            </div>
+
+            <!-- Available Resources Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-medium text-gray-800">GPU资源</h2>
+                    <div class="status-badge status-badge-yellow">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <span>占用中</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-3xl font-semibold text-gray-800">75%</div>
+                    <div class="text-sm text-gray-500">当前GPU资源利用率</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Tab Container -->
+        <div class="bg-white rounded-lg shadow-sm mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex space-x-8">
+                        <div class="tab-item active px-2 py-3 text-gray-800 font-medium" data-tab="tasks">微调任务</div>
+                        <div class="tab-item px-2 py-3 text-gray-600 font-medium" data-tab="datasets">训练数据集</div>
+                        <div class="tab-item px-2 py-3 text-gray-600 font-medium" data-tab="models">模型库</div>
+                        <div class="tab-item px-2 py-3 text-gray-600 font-medium" data-tab="evaluation">模型评估</div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="relative">
+                            <input type="text" placeholder="搜索微调任务" class="appearance-none bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:ring-blue-500 focus:border-blue-500 w-64">
+                            <svg class="w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <select class="appearance-none bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option>所有状态</option>
+                                <option>训练中</option>
+                                <option>已完成</option>
+                                <option>失败</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fine-tuning Tasks Tab Content -->
+            <div id="tasks-tab" class="tab-content">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">任务名称</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">基础模型</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">微调方法</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数据集</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <!-- Task Item 1 -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">客服对话优化</div>
+                                    <div class="text-xs text-gray-500">银行客服问答模型微调</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">Qwen2-7B</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">LoRA</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">客服对话数据集</div>
+                                    <div class="text-xs text-gray-500">5.2K 样本</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div>
+                                        <div class="status-badge status-badge-blue mb-1">训练中</div>
+                                        <div class="progress-bar">
+                                            <div class="progress-bar-fill bg-blue-500" style="width: 65%"></div>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">65% - 预计剩余 1.2 小时</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2025-05-12 09:30</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-yellow-600 hover:text-yellow-900 mr-3">停止</button>
+                                    <button class="text-gray-600 hover:text-gray-900 view-details" data-model-id="1">详情</button>
+                                </td>
+                            </tr>
+
+                            <!-- Task Item 2 -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">理财顾问增强</div>
+                                    <div class="text-xs text-gray-500">投资建议模型微调</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">GLM-4</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">QLoRA</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">理财咨询数据集</div>
+                                    <div class="text-xs text-gray-500">3.8K 样本</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div>
+                                        <div class="status-badge status-badge-blue mb-1">训练中</div>
+                                        <div class="progress-bar">
+                                            <div class="progress-bar-fill bg-blue-500" style="width: 32%"></div>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">32% - 预计剩余 2.5 小时</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2025-05-12 10:15</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-yellow-600 hover:text-yellow-900 mr-3">停止</button>
+                                    <button class="text-gray-600 hover:text-gray-900 view-details" data-model-id="2">详情</button>
+                                </td>
+                            </tr>
+
+                            <!-- Task Item 3 -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">信贷风险评估</div>
+                                    <div class="text-xs text-gray-500">贷款评估模型微调</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">ERNIE 4.0</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">全参数微调</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">信贷风险数据集</div>
+                                    <div class="text-xs text-gray-500">7.5K 样本</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="status-badge status-badge-green">已完成</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2025-05-10 15:45</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">部署</button>
+                                    <button class="text-gray-600 hover:text-gray-900 view-details" data-model-id="3">详情</button>
+                                </td>
+                            </tr>
+
+                            <!-- Task Item 4 -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">反欺诈检测</div>
+                                    <div class="text-xs text-gray-500">交易欺诈检测模型微调</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">GPT-3.5</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">RLHF</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">欺诈交易数据集</div>
+                                    <div class="text-xs text-gray-500">4.2K 样本</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="status-badge status-badge-red">失败</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2025-05-09 11:20</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-green-600 hover:text-green-900 mr-3">重试</button>
+                                    <button class="text-gray-600 hover:text-gray-900 view-details" data-model-id="4">详情</button>
+                                </td>
+                            </tr>
+
+                            <!-- Task Item 5 -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">产品推荐优化</div>
+                                    <div class="text-xs text-gray-500">金融产品推荐模型微调</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">Qwen2-7B</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">LoRA</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">产品推荐数据集</div>
+                                    <div class="text-xs text-gray-500">6.3K 样本</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="status-badge status-badge-green">已完成</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2025-05-08 14:10</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">部署</button>
+                                    <button class="text-gray-600 hover:text-gray-900 view-details" data-model-id="5">详情</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                    <div class="text-sm text-gray-500">
+                        显示 <span class="font-medium">1-5</span> 项，共 <span class="font-medium">10</span> 项
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <span class="text-sm text-gray-700">1 / 2</span>
+                        <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Datasets Tab Content (Hidden by default) -->
+            <div id="datasets-tab" class="tab-content hidden">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">可用数据集</h3>
+                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            新建数据集
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="dify-card p-4 hover:border-blue-500 cursor-pointer">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">客服对话数据集</div>
+                                <div class="flex">
+                                    <span class="dataset-tag bg-blue-100 text-blue-800">真实数据</span>
+                                    <span class="dataset-tag bg-green-100 text-green-800">已审核</span>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">包含客户服务对话的问答数据集，已进行人工标注和质量筛选</div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <div>
+                                    <span>格式: JSON</span>
+                                    <span class="mx-2">|</span>
+                                    <span>5.2K 样本</span>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-900 view-dataset" data-dataset-id="1">查看样本</button>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500 cursor-pointer">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">理财咨询数据集</div>
+                                <div class="flex">
+                                    <span class="dataset-tag bg-blue-100 text-blue-800">真实数据</span>
+                                    <span class="dataset-tag bg-green-100 text-green-800">已审核</span>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">投资理财咨询对话数据，包含专业金融建议和解释</div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <div>
+                                    <span>格式: JSON</span>
+                                    <span class="mx-2">|</span>
+                                    <span>3.8K 样本</span>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-900 view-dataset" data-dataset-id="2">查看样本</button>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500 cursor-pointer">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">信贷风险数据集</div>
+                                <div class="flex">
+                                    <span class="dataset-tag bg-blue-100 text-blue-800">真实数据</span>
+                                    <span class="dataset-tag bg-green-100 text-green-800">已审核</span>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">贷款申请评估对话数据，包含风险评估和决策解释</div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <div>
+                                    <span>格式: JSON</span>
+                                    <span class="mx-2">|</span>
+                                    <span>7.5K 样本</span>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-900 view-dataset" data-dataset-id="3">查看样本</button>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500 cursor-pointer">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">欺诈交易数据集</div>
+                                <div class="flex">
+                                    <span class="dataset-tag bg-blue-100 text-blue-800">真实数据</span>
+                                    <span class="dataset-tag bg-green-100 text-green-800">已审核</span>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">包含欺诈交易识别和分析的对话数据，着重于欺诈特征和检测</div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <div>
+                                    <span>格式: CSV</span>
+                                    <span class="mx-2">|</span>
+                                    <span>4.2K 样本</span>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-900 view-dataset" data-dataset-id="4">查看样本</button>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500 cursor-pointer">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">产品推荐数据集</div>
+                                <div class="flex">
+                                    <span class="dataset-tag bg-blue-100 text-blue-800">真实数据</span>
+                                    <span class="dataset-tag bg-green-100 text-green-800">已审核</span>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">银行产品推荐对话数据，包含个性化需求和产品匹配</div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <div>
+                                    <span>格式: JSON</span>
+                                    <span class="mx-2">|</span>
+                                    <span>6.3K 样本</span>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-900 view-dataset" data-dataset-id="5">查看样本</button>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500 cursor-pointer">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">非法集资防范数据集</div>
+                                <div class="flex">
+                                    <span class="dataset-tag bg-purple-100 text-purple-800">AI生成</span>
+                                    <span class="dataset-tag bg-yellow-100 text-yellow-800">审核中</span>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">非法集资防范教育问答数据，基于政府文档自动生成</div>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <div>
+                                    <span>格式: JSON</span>
+                                    <span class="mx-2">|</span>
+                                    <span>1.2K 样本</span>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-900 view-dataset" data-dataset-id="6">查看样本</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 数据集实例预览部分 -->
+                    <div class="mt-8">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">数据集样本预览</h3>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">非法集资防范数据集 (样本示例)</div>
+                                <div class="flex">
+                                    <span class="dataset-tag bg-purple-100 text-purple-800">AI生成</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 数据实例1 -->
+                            <div class="example-card bg-white p-4 mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-medium text-gray-800">样本 #1</h4>
+                                    <button class="toggle-example text-blue-600 text-sm">展开查看</button>
+                                </div>
+                                <div class="example-content">
+                                    <div class="border rounded-lg p-3 mb-3 bg-gray-50">
+                                        <div class="text-xs text-gray-500 mb-1">用户输入:</div>
+                                        <div class="text-sm text-gray-800">请务必参考上下文情景信息、注意文档问答规则<br>Question: 目前非法集资主要表现形式是什么</div>
+                                    </div>
+                                    <div class="border rounded-lg p-3 ai-generated">
+                                        <div class="text-xs text-gray-500 mb-1">AI生成回答:</div>
+                                        <div class="text-sm text-gray-800">
+                                            目前非法集资的主要表现形式包括：<br><br>
+
+                                            1. 承诺高额回报：不法分子编造"天上掉馅饼""一夜成富翁"的神话，许诺投资者高额回报，吸引更多的人参与集资。非法集资人在集资初期往往按时足额兑现承诺本息，待集资达到一定规模后，转移资金或携款潜逃，使集资参与人遭受经济损失。<br><br>
+
+                                            2. 编造虚假项目：不法分子大多通过注册合法的公司或企业，打着响应国家产业政策、参与国有企业改革等幌子，编造各种虚假项目，有的甚至组织免费旅游、考察等，骗取社会公众信任。<br><br>
+
+                                            3. 以虚假宣传造势：不法分子在宣传上往往一掷千金，聘请明星代言、名人站台，在网络等媒体发布广告、在著名报刊上刊登专访文章、雇人广为散发宣传单、进行社会化大声势宣传。<br><br>
+
+                                            4. 利用亲情诱骗：有些类传销非法集资的参与人，为了完成或增加自己的业绩，利用亲情、友情关系，编造自己获得高额回报的谎言，拉拢亲朋、同学或邻居加入，使参与人员迅速扩大。
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 数据实例2 -->
+                            <div class="example-card bg-white p-4 mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-medium text-gray-800">样本 #2</h4>
+                                    <button class="toggle-example text-blue-600 text-sm">展开查看</button>
+                                </div>
+                                <div class="example-content">
+                                    <div class="border rounded-lg p-3 mb-3 bg-gray-50">
+                                        <div class="text-xs text-gray-500 mb-1">用户输入:</div>
+                                        <div class="text-sm text-gray-800">请务必参考上下文情景信息、注意文档问答规则<br>Question: 如何利用区块链技术进行非法集资活动</div>
+                                    </div>
+                                    <div class="border rounded-lg p-3 ai-generated">
+                                        <div class="text-xs text-gray-500 mb-1">AI生成回答:</div>
+                                        <div class="text-sm text-gray-800">
+                                            利用区块链技术进行非法集资活动主要有以下几个特征：<br><br>
+                                            
+                                            1. 网络化、跨境化明显，通过互联网、聊天工具进行交易，利用网上支付工具收取资金，风险波及范围广。非法分子通过租用境外服务器搭建网站，面向境内居民开展活动，并远程控制实施，使得资金多流向境外，监管和追踪难度很大。<br><br>
+                                            
+                                            2. 欺骗性、诱惑性、隐蔽性较强，利用热点概念进行炒作，编造"高大上"的理论，有的还利用名人"站台"，提供虚假信息作为诱惑，宣称"币值只涨不跌""投资周期短、收益高、风险低"，具有较强蛊惑性。通过幕后操纵所谓虚拟货币价格走势、设置获利和提现门槛等手段非法牟取暴利。<br><br>
+                                            
+                                            3. 存在多种违法风险，不法分子通过公开宣传，以"静态收益"（炒币升值获利）和"动态收益"（发展下线获利）吸引公众投入资金，并利诱投资人发展人员加入，不断扩充资金池，具有非法集资、传销、欺诈等违法行为特征。
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 数据实例3 -->
+                            <div class="example-card bg-white p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-medium text-gray-800">样本 #3</h4>
+                                    <button class="toggle-example text-blue-600 text-sm">展开查看</button>
+                                </div>
+                                <div class="example-content">
+                                    <div class="border rounded-lg p-3 mb-3 bg-gray-50">
+                                        <div class="text-xs text-gray-500 mb-1">用户输入:</div>
+                                        <div class="text-sm text-gray-800">请务必参考上下文情景信息、注意文档问答规则<br>Question: 防范非法集资的原则有哪些</div>
+                                    </div>
+                                    <div class="border rounded-lg p-3 ai-generated">
+                                        <div class="text-xs text-gray-500 mb-1">AI生成回答:</div>
+                                        <div class="text-sm text-gray-800">
+                                            防范非法集资的原则主要有以下几点：<br><br>
+
+                                            1. <span class="highlight-text">防范为主</span>：坚持以预防非法集资为主要原则，通过各种措施防止非法集资的发生。<br><br>
+                                            
+                                            2. <span class="highlight-text">打早打小</span>：对于非法集资活动，要在早期阶段发现并及时处置，避免其发展成更大规模的风险事件。<br><br>
+                                            
+                                            3. <span class="highlight-text">综合治理</span>：非法集资的治理需要政府多个部门协作，形成联合力量，包括金融监管、公安、司法等部门共同参与。<br><br>
+                                            
+                                            4. <span class="highlight-text">社会参与</span>：鼓励和引导社会各界参与到非法集资的防范和打击中来，形成全社会共同防范的良好氛围。<br><br>
+                                            
+                                            这些原则体现了国家对非法集资问题的高度重视，旨在从源头上预防和减少非法集资的发生，保护投资者的合法权益，维护金融市场的稳定。
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Models Tab Content (Hidden by default) -->
+            <div id="models-tab" class="tab-content hidden">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">可用基础模型</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">Qwen2-7B</div>
+                                <div class="status-badge status-badge-green">可用</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">通义千问-7B参数模型，支持中英双语，针对金融对话场景优化</div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>参数量: 7B</span>
+                                <span class="mx-2">|</span>
+                                <span>版本: 2.0</span>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">GLM-4</div>
+                                <div class="status-badge status-badge-green">可用</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">智谱GLM-4模型，中英双语能力强，金融知识丰富</div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>参数量: 12B</span>
+                                <span class="mx-2">|</span>
+                                <span>版本: 4.0</span>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">ERNIE 4.0</div>
+                                <div class="status-badge status-badge-green">可用</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">文心一言ERNIE 4.0，擅长中文金融和法律场景</div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>参数量: 10B</span>
+                                <span class="mx-2">|</span>
+                                <span>版本: 4.0</span>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">GPT-3.5</div>
+                                <div class="status-badge status-badge-green">可用</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">OpenAI GPT-3.5 Turbo模型，通用对话能力强</div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>参数量: 175B</span>
+                                <span class="mx-2">|</span>
+                                <span>版本: 3.5</span>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">Llama-3-8B</div>
+                                <div class="status-badge status-badge-green">可用</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">Meta Llama-3模型，开源可定制，适合轻量级部署</div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>参数量: 8B</span>
+                                <span class="mx-2">|</span>
+                                <span>版本: 3.0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">已微调模型</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">信贷风险评估-v1.2</div>
+                                <div class="status-badge status-badge-green">已部署</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">基于ERNIE 4.0微调的贷款风险评估模型</div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>基础模型: ERNIE 4.0</span>
+                                <span class="mx-2">|</span>
+                                <span>微调方法: 全参数</span>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">产品推荐优化-v1.0</div>
+                                <div class="status-badge status-badge-green">已部署</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">基于Qwen2-7B微调的产品推荐模型</div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>基础模型: Qwen2-7B</span>
+                                <span class="mx-2">|</span>
+                                <span>微调方法: LoRA</span>
+                            </div>
+                        </div>
+                        <div class="dify-card p-4 hover:border-blue-500">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-gray-900">投资顾问-v0.9</div>
+                                <div class="status-badge status-badge-yellow">测试中</div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">基于GLM-4微调的投资顾问模型</div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>基础模型: GLM-4</span>
+                                <span class="mx-2">|</span>
+                                <span>微调方法: QLoRA</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Tab Content (Hidden by default) -->
+            <div id="evaluation-tab" class="tab-content hidden">
+                <div class="p-6">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">模型评估结果</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="dify-card p-4 bg-white">
+                                <div class="flex items-center mb-4">
+                                    <div class="font-medium text-gray-800 mr-2">信贷风险评估-v1.2</div>
+                                    <div class="status-badge status-badge-green">已部署</div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div class="metric-card p-3">
+                                        <div class="text-sm text-gray-600 mb-1">准确率</div>
+                                        <div class="text-2xl font-semibold text-gray-900">92.7%</div>
+                                        <div class="text-xs text-green-600">+12.5% vs 基础模型</div>
+                                    </div>
+                                    <div class="metric-card p-3">
+                                        <div class="text-sm text-gray-600 mb-1">F1分数</div>
+                                        <div class="text-2xl font-semibold text-gray-900">0.88</div>
+                                        <div class="text-xs text-green-600">+0.15 vs 基础模型</div>
+                                    </div>
+                                    <div class="metric-card p-3">
+                                        <div class="text-sm text-gray-600 mb-1">平均推理时间</div>
+                                        <div class="text-2xl font-semibold text-gray-900">220ms</div>
+                                        <div class="text-xs text-green-600">-80ms vs 基础模型</div>
+                                    </div>
+                                    <div class="metric-card p-3">
+                                        <div class="text-sm text-gray-600 mb-1">人工评分</div>
+                                        <div class="text-2xl font-semibold text-gray-900">4.5/5</div>
+                                        <div class="text-xs text-green-600">+0.8 vs 基础模型</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <button class="text-blue-600 text-sm font-medium">查看详细报告</button>
+                                </div>
+                            </div>
+
+                            <div class="dify-card p-4 bg-white">
+                                <div class="flex items-center mb-4">
+                                    <div class="font-medium text-gray-800 mr-2">产品推荐优化-v1.0</div>
+                                    <div class="status-badge status-badge-green">已部署</div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div class="metric-card p-3">
+                                        <div class="text-sm text-gray-600 mb-1">准确率</div>
+                                        <div class="text-2xl font-semibold text-gray-900">89.5%</div>
+                                        <div class="text-xs text-green-600">+9.2% vs 基础模型</div>
+                                    </div>
+                                    <div class="metric-card p-3">
+                                        <div class="text-sm text-gray-600 mb-1">F1分数</div>
+                                        <div class="text-2xl font-semibold text-gray-900">0.85</div>
+                                        <div class="text-xs text-green-600">+0.12 vs 基础模型</div>
+                                    </div>
+                                    <div class="metric-card p-3">
+                                        <div class="text-sm text-gray-600 mb-1">平均推理时间</div>
+                                        <div class="text-2xl font-semibold text-gray-900">180ms</div>
+                                        <div class="text-xs text-green-600">-45ms vs 基础模型</div>
+                                    </div>
+                                    <div class="metric-card p-3">
+                                        <div class="text-sm text-gray-600 mb-1">人工评分</div>
+                                        <div class="text-2xl font-semibold text-gray-900">4.3/5</div>
+                                        <div class="text-xs text-green-600">+0.7 vs 基础模型</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <button class="text-blue-600 text-sm font-medium">查看详细报告</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">评估基准测试</h3>
+                        <div class="dify-card p-4 bg-white">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="text-center p-3">
+                                    <div class="font-medium text-gray-800 mb-1">银行知识测试</div>
+                                    <div class="text-sm text-gray-600 mb-2">评估模型在银行专业知识上的表现</div>
+                                    <button class="dify-btn px-4 py-2 border border-blue-500 text-blue-600 bg-white text-sm font-medium hover:bg-blue-50 focus:outline-none w-full">运行测试</button>
+                                </div>
+                                <div class="text-center p-3">
+                                    <div class="font-medium text-gray-800 mb-1">对话品质测试</div>
+                                    <div class="text-sm text-gray-600 mb-2">评估模型在客户对话质量上的表现</div>
+                                    <button class="dify-btn px-4 py-2 border border-blue-500 text-blue-600 bg-white text-sm font-medium hover:bg-blue-50 focus:outline-none w-full">运行测试</button>
+                                </div>
+                                <div class="text-center p-3">
+                                    <div class="font-medium text-gray-800 mb-1">安全合规测试</div>
+                                    <div class="text-sm text-gray-600 mb-2">评估模型在安全合规方面的表现</div>
+                                    <button class="dify-btn px-4 py-2 border border-blue-500 text-blue-600 bg-white text-sm font-medium hover:bg-blue-50 focus:outline-none w-full">运行测试</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建任务模态框 -->
+    <div id="create-task-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">创建微调任务</h3>
+                <button id="close-task-modal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mb-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">任务名称</label>
+                    <input type="text" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">任务描述</label>
+                    <textarea rows="2" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">基础模型</label>
+                    <select class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option>Qwen2-7B</option>
+                        <option>GLM-4</option>
+                        <option>ERNIE 4.0</option>
+                        <option>GPT-3.5</option>
+                        <option>Llama-3-8B</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">数据集</label>
+                    <select class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option>客服对话数据集 (5.2K 样本)</option>
+                        <option>理财咨询数据集 (3.8K 样本)</option>
+                        <option>信贷风险数据集 (7.5K 样本)</option>
+                        <option>欺诈交易数据集 (4.2K 样本)</option>
+                        <option>产品推荐数据集 (6.3K 样本)</option>
+                        <option>非法集资防范数据集 (1.2K 样本)</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">微调方法</label>
+                    <select class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option>LoRA</option>
+                        <option>QLoRA</option>
+                        <option>全参数微调</option>
+                        <option>RLHF</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">微调参数</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">学习率</label>
+                            <input type="text" value="1e-5" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">训练轮次</label>
+                            <input type="number" value="3" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">高级选项</label>
+                    <div class="flex items-center">
+                        <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label class="ml-2 block text-sm text-gray-900">训练完成后自动评估</label>
+                    </div>
+                    <div class="flex items-center mt-2">
+                        <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label class="ml-2 block text-sm text-gray-900">训练完成后自动部署</label>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button id="cancel-task" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                    取消
+                </button>
+                <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                    开始微调
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI生成微调数据模态框 -->
+    <div id="generate-data-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">AI生成微调数据</h3>
+                <button id="close-data-modal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mb-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">数据生成名称</label>
+                    <input type="text" placeholder="例如：非法集资防范数据集" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">数据内容描述</label>
+                    <textarea rows="2" placeholder="描述您希望生成的数据内容" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">源数据类型</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center">
+                            <input type="radio" id="document-data" name="data-type" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" checked>
+                            <label for="document-data" class="ml-2 block text-sm text-gray-900">政策文档</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="radio" id="qa-data" name="data-type" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <label for="qa-data" class="ml-2 block text-sm text-gray-900">现有问答集</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="radio" id="web-data" name="data-type" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <label for="web-data" class="ml-2 block text-sm text-gray-900">网站内容</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="radio" id="custom-data" name="data-type" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <label for="custom-data" class="ml-2 block text-sm text-gray-900">自定义内容</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">上传源文档</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                    <span>上传文件</span>
+                                    <input id="file-upload" name="file-upload" type="file" class="sr-only" multiple>
+                                </label>
+                                <p class="pl-1">或拖放文件到此处</p>
+                            </div>
+                            <p class="text-xs text-gray-500">
+                                支持 PDF, DOC, DOCX, TXT, CSV 等格式文件
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">生成配置</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">生成样本数量</label>
+                            <input type="number" value="100" min="10" max="1000" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">质量阈值</label>
+                            <select class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option>高 (慢速生成)</option>
+                                <option selected>中 (平衡生成)</option>
+                                <option>低 (快速生成)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button id="cancel-data" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                    取消
+                </button>
+                <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                    开始生成
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据集查看模态框 -->
+    <div id="view-dataset-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">数据集样本查看</h3>
+                <button id="close-dataset-modal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h4 class="font-medium text-gray-800">非法集资防范数据集</h4>
+                        <p class="text-sm text-gray-500">总计 1,245 个训练样本</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                            导出数据
+                        </button>
+                        <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                            编辑数据
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <div class="flex items-center justify-between">
+                        <div class="relative w-64">
+                            <input type="text" placeholder="搜索样本" class="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 block w-full">
+                            <svg class="w-5 h-5 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex space-x-2">
+                            <select class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                <option>所有来源</option>
+                                <option>真实数据</option>
+                                <option>AI生成</option>
+                                <option>人工标注</option>
+                            </select>
+                            <select class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                <option>所有类型</option>
+                                <option>问答对</option>
+                                <option>对话流</option>
+                                <option>分类任务</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- 样本列表 -->
+                <div class="border rounded-lg overflow-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">输入</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">输出</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">来源</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#001</td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 truncate max-w-xs">目前非法集资主要表现形式是什么</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 truncate max-w-xs">目前非法集资的主要表现形式包括：承诺高额回报、编造虚假项目、虚假宣传造势、利用亲情诱骗...</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">AI生成</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-2">查看</button>
+                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#002</td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 truncate max-w-xs">如何利用区块链技术进行非法集资活动</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 truncate max-w-xs">利用区块链技术进行非法集资活动主要有以下几个特征：网络化、跨境化明显，通过互联网、聊天工具进行交易...</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">AI生成</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-2">查看</button>
+                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#003</td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 truncate max-w-xs">防范非法集资的原则有哪些</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 truncate max-w-xs">防范非法集资的原则主要有以下几点：防范为主、打早打小、综合治理、社会参与...</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">AI生成</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-2">查看</button>
+                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#004</td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 truncate max-w-xs">目前非法集资侵害了消费哪些权利，请列举一个案例说明</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 truncate max-w-xs">非法集资侵害了消费者的财产安全权和知情权。一个典型案例是《小欢喜》剧中黄磊饰演的方圆的父母被非法集资...</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">AI生成</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-2">查看</button>
+                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#005</td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 truncate max-w-xs">如何识别典型的非法集资骗局</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 truncate max-w-xs">识别典型非法集资骗局可从以下几点入手：一是警惕高额回报承诺，二是核实项目真实性，三是了解资金投向...</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">AI生成</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-2">查看</button>
+                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 分页 -->
+                <div class="flex items-center justify-between mt-4">
+                    <div class="text-sm text-gray-500">
+                        显示 <span class="font-medium">1-5</span> 项，共 <span class="font-medium">1,245</span> 项
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">1</button>
+                        <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">2</button>
+                        <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">3</button>
+                        <span class="text-gray-500">...</span>
+                        <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">125</button>
+                        <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Deactivate all tabs
+                document.querySelectorAll('.tab-item').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Hide all tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Show the active tab content
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId + '-tab').classList.remove('hidden');
+            });
+        });
+
+        // 模态框控制
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // 创建微调任务按钮
+        document.querySelector('.dify-btn.bg-blue-600').addEventListener('click', function() {
+            openModal('create-task-modal');
+        });
+        
+        // 关闭创建任务模态框
+        document.getElementById('close-task-modal').addEventListener('click', function() {
+            closeModal('create-task-modal');
+        });
+        
+        document.getElementById('cancel-task').addEventListener('click', function() {
+            closeModal('create-task-modal');
+        });
+        
+        // AI生成微调数据按钮
+        document.getElementById('generate-training-data').addEventListener('click', function() {
+            openModal('generate-data-modal');
+        });
+        
+        // 关闭AI生成数据模态框
+        document.getElementById('close-data-modal').addEventListener('click', function() {
+            closeModal('generate-data-modal');
+        });
+        
+        document.getElementById('cancel-data').addEventListener('click', function() {
+            closeModal('generate-data-modal');
+        });
+        
+        // 查看数据集样本按钮
+        document.querySelectorAll('.view-dataset').forEach(btn => {
+            btn.addEventListener('click', function() {
+                openModal('view-dataset-modal');
+            });
+        });
+        
+        // 关闭数据集查看模态框
+        document.getElementById('close-dataset-modal').addEventListener('click', function() {
+            closeModal('view-dataset-modal');
+        });
+        
+        // 样本展开收起切换
+        document.querySelectorAll('.toggle-example').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const content = this.closest('.example-card').querySelector('.example-content');
+                content.classList.toggle('expanded');
+                this.textContent = content.classList.contains('expanded') ? '收起' : '展开查看';
+            });
+        });
+        
+        // 进度条动画
+        document.querySelectorAll('.progress-bar-fill').forEach(bar => {
+            const originalWidth = bar.style.width;
+            bar.style.width = '0';
+            setTimeout(() => {
+                bar.style.width = originalWidth;
+            }, 300);
+        });
+    </script>
+</body>
+</html>

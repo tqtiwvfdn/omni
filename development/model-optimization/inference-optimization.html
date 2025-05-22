@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>推理优化 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .param-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: #E5E7EB;
+            outline: none;
+        }
+
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #2970FF;
+            cursor: pointer;
+        }
+
+        .param-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #2970FF;
+            cursor: pointer;
+        }
+
+        .tabbed-content > div {
+            display: none;
+        }
+
+        .tabbed-content > div.active {
+            display: block;
+        }
+
+        .tab-btn {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn:hover {
+            color: var(--dify-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+            border-bottom: 2px solid var(--dify-primary);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="container mx-auto py-6 px-4">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-800">推理优化 Inference</h1>
+                <p class="text-gray-600 mt-1">优化模型推理参数与性能，提升响应速度与结果质量</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="dify-btn px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50">
+                    <span class="mr-1">
+                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                    </span>
+                    重置默认值
+                </button>
+                <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+                    <span class="mr-1">
+                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </span>
+                    保存配置
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabs Nav -->
+        <div class="flex border-b border-gray-200 mb-6">
+            <button class="tab-btn px-4 py-3 text-gray-800 font-medium active" data-target="manual-settings">手动参数设置</button>
+            <button class="tab-btn px-4 py-3 text-gray-600 font-medium" data-target="auto-optimization">自动参数调优</button>
+            <button class="tab-btn px-4 py-3 text-gray-600 font-medium" data-target="performance-config">性能配置</button>
+            <button class="tab-btn px-4 py-3 text-gray-600 font-medium" data-target="optimization-history">优化历史</button>
+        </div>
+
+        <!-- Tabbed Content -->
+        <div class="tabbed-content">
+            <!-- 手动参数设置 Tab -->
+            <div id="manual-settings" class="active">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- 模型选择卡片 -->
+                    <div class="dify-card p-6 bg-white col-span-3">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">模型选择</h3>
+                        <div class="flex flex-col md:flex-row md:items-center gap-4">
+                            <div class="w-full md:w-1/3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">选择模型类型</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option>通用对话模型</option>
+                                    <option>金融专用模型</option>
+                                    <option>客服对话模型</option>
+                                    <option>文档理解模型</option>
+                                </select>
+                            </div>
+                            <div class="w-full md:w-1/3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">选择具体模型</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option>金融-LLM-14B</option>
+                                    <option>金融-LLM-7B</option>
+                                    <option>金融-LLM-3B</option>
+                                    <option>通用-LLM-7B</option>
+                                </select>
+                            </div>
+                            <div class="w-full md:w-1/3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">推理模式</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option>平衡模式（默认）</option>
+                                    <option>高性能模式</option>
+                                    <option>节能模式</option>
+                                    <option>自定义模式</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 生成参数卡片 -->
+                    <div class="dify-card p-6 bg-white">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">生成参数</h3>
+                        
+                        <!-- Temperature -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">Temperature (温度)</label>
+                                <span class="text-sm text-blue-600 font-medium" id="temp-value">0.7</span>
+                            </div>
+                            <input type="range" class="param-slider" min="0" max="2" step="0.1" value="0.7" id="temp-slider"
+                                oninput="document.getElementById('temp-value').textContent = this.value">
+                            <p class="text-xs text-gray-500 mt-1">控制回答的随机性，较高的值会使输出更加随机和创造性，较低的值使其更加确定和一致</p>
+                        </div>
+                        
+                        <!-- Top P -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">Top P (概率筛选)</label>
+                                <span class="text-sm text-blue-600 font-medium" id="top-p-value">0.95</span>
+                            </div>
+                            <input type="range" class="param-slider" min="0" max="1" step="0.05" value="0.95" id="top-p-slider"
+                                oninput="document.getElementById('top-p-value').textContent = this.value">
+                            <p class="text-xs text-gray-500 mt-1">选择累积概率超过设定阈值的词汇，通常与温度结合使用以控制生成文本的多样性</p>
+                        </div>
+                        
+                        <!-- Top K -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">Top K (保留词数)</label>
+                                <span class="text-sm text-blue-600 font-medium" id="top-k-value">50</span>
+                            </div>
+                            <input type="range" class="param-slider" min="0" max="100" step="1" value="50" id="top-k-slider"
+                                oninput="document.getElementById('top-k-value').textContent = this.value">
+                            <p class="text-xs text-gray-500 mt-1">在每一步只考虑概率最高的K个词，限制词汇选择范围，降低生成无关内容的可能性</p>
+                        </div>
+                        
+                        <!-- Frequency Penalty -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">Frequency Penalty (频率惩罚)</label>
+                                <span class="text-sm text-blue-600 font-medium" id="freq-value">0.0</span>
+                            </div>
+                            <input type="range" class="param-slider" min="-2" max="2" step="0.1" value="0.0" id="freq-slider"
+                                oninput="document.getElementById('freq-value').textContent = this.value">
+                            <p class="text-xs text-gray-500 mt-1">对高频词施加惩罚，减少重复，正值降低重复率，负值可能增加重复</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 上下文控制卡片 -->
+                    <div class="dify-card p-6 bg-white">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">上下文控制</h3>
+                        
+                        <!-- Max Tokens -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">Max Tokens (最大输出长度)</label>
+                                <span class="text-sm text-blue-600 font-medium" id="max-tokens-value">2048</span>
+                            </div>
+                            <input type="range" class="param-slider" min="100" max="4096" step="50" value="2048" id="max-tokens-slider"
+                                oninput="document.getElementById('max-tokens-value').textContent = this.value">
+                            <p class="text-xs text-gray-500 mt-1">限制生成文本的最大长度，较大的值允许生成更长的回答</p>
+                        </div>
+                        
+                        <!-- Context Window -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">Context Window (上下文窗口)</label>
+                                <span class="text-sm text-blue-600 font-medium" id="context-value">8192</span>
+                            </div>
+                            <input type="range" class="param-slider" min="1000" max="16000" step="1000" value="8192" id="context-slider"
+                                oninput="document.getElementById('context-value').textContent = this.value">
+                            <p class="text-xs text-gray-500 mt-1">模型可处理的最大上下文长度，包括输入和输出的总token数</p>
+                        </div>
+                        
+                        <!-- 上下文保留策略 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">上下文保留策略</label>
+                            <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>滑动窗口 (保留最近N轮对话)</option>
+                                <option>重要信息优先</option>
+                                <option>长期记忆</option>
+                                <option>摘要压缩</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">当对话超出上下文窗口时，如何保留和丢弃信息</p>
+                        </div>
+                        
+                        <!-- 历史压缩率 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">历史压缩率</label>
+                                <span class="text-sm text-blue-600 font-medium" id="compress-value">50%</span>
+                            </div>
+                            <input type="range" class="param-slider" min="0" max="100" step="5" value="50" id="compress-slider"
+                                oninput="document.getElementById('compress-value').textContent = this.value + '%'">
+                            <p class="text-xs text-gray-500 mt-1">对历史上下文进行压缩的比例，以在保留重要信息的同时节省token使用</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 金融业务参数卡片 -->
+                    <div class="dify-card p-6 bg-white">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">金融业务参数</h3>
+                        
+                        <!-- 业务专注度 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">业务专注度</label>
+                                <span class="text-sm text-blue-600 font-medium" id="focus-value">75%</span>
+                            </div>
+                            <input type="range" class="param-slider" min="0" max="100" step="5" value="75" id="focus-slider"
+                                oninput="document.getElementById('focus-value').textContent = this.value + '%'">
+                            <p class="text-xs text-gray-500 mt-1">控制回答严格遵循银行业务规范的程度，高值更严格限制在业务范围内</p>
+                        </div>
+                        
+                        <!-- 风险控制强度 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">风险控制强度</label>
+                                <span class="text-sm text-blue-600 font-medium" id="risk-value">85%</span>
+                            </div>
+                            <input type="range" class="param-slider" min="0" max="100" step="5" value="85" id="risk-slider"
+                                oninput="document.getElementById('risk-value').textContent = this.value + '%'">
+                            <p class="text-xs text-gray-500 mt-1">对敏感金融信息和操作的安全控制程度，高值提供更严格的风险控制</p>
+                        </div>
+                        
+                        <!-- 业务场景 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">业务场景</label>
+                            <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>转账汇款</option>
+                                <option>理财投资</option>
+                                <option>贷款申请</option>
+                                <option>信用卡服务</option>
+                                <option>保险服务</option>
+                                <option>多场景通用</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">针对特定业务场景优化推理参数</p>
+                        </div>
+                        
+                        <!-- 合规检查级别 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">合规检查级别</label>
+                            <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>严格模式</option>
+                                <option>标准模式</option>
+                                <option>宽松模式</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">控制模型生成内容的合规审核严格程度</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 参数效果测试区域 -->
+                <div class="dify-card p-6 bg-white mt-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">参数效果测试</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">测试输入</label>
+                            <textarea
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-40"
+                                placeholder="请输入测试文本，例如：我想了解一下购买理财产品的流程和风险..."></textarea>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">测试结果</label>
+                                <button class="dify-btn px-3 py-1 bg-blue-600 text-white text-xs font-medium hover:bg-blue-700">
+                                    运行测试
+                                </button>
+                            </div>
+                            <div class="border border-gray-300 rounded-md px-3 py-2 h-40 bg-gray-50 overflow-y-auto">
+                                <p class="text-gray-400 text-sm italic">测试结果将显示在这里...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="border border-gray-200 rounded-md p-3 bg-gray-50">
+                            <div class="text-xs text-gray-500 mb-1">响应时间</div>
+                            <div class="text-lg font-medium text-gray-800">--</div>
+                        </div>
+                        <div class="border border-gray-200 rounded-md p-3 bg-gray-50">
+                            <div class="text-xs text-gray-500 mb-1">Token 消耗</div>
+                            <div class="text-lg font-medium text-gray-800">--</div>
+                        </div>
+                        <div class="border border-gray-200 rounded-md p-3 bg-gray-50">
+                            <div class="text-xs text-gray-500 mb-1">业务相关性评分</div>
+                            <div class="text-lg font-medium text-gray-800">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 自动参数调优 Tab -->
+            <div id="auto-optimization">
+                <div class="dify-card p-6 bg-white">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">自动参数调优</h3>
+                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+                            开始自动优化
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-base font-medium text-gray-700 mb-3">优化配置</h4>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">选择模型</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option>金融-LLM-14B</option>
+                                    <option>金融-LLM-7B</option>
+                                    <option>金融-LLM-3B</option>
+                                    <option>通用-LLM-7B</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">优化目标</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option>提高业务相关性</option>
+                                    <option>平衡质量与速度</option>
+                                    <option>最大化响应速度</option>
+                                    <option>减少Token消耗</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">业务场景</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option>转账汇款</option>
+                                    <option>理财投资</option>
+                                    <option>贷款申请</option>
+                                    <option>信用卡服务</option>
+                                    <option>保险服务</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">优化强度</label>
+                                <div class="flex items-center space-x-2">
+                                    <input type="range" class="param-slider flex-grow" min="1" max="5" step="1" value="3">
+                                    <span class="text-sm text-gray-700 w-24 text-center">中等 (3/5)</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">较高的强度进行更细致的参数搜索，但耗时更长</p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">测试数据来源</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option>使用系统示例数据</option>
+                                    <option>使用历史对话数据</option>
+                                    <option>上传自定义测试数据</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">优化参数范围</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" class="form-checkbox text-blue-600" checked>
+                                        <span class="ml-2 text-sm text-gray-700">Temperature</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" class="form-checkbox text-blue-600" checked>
+                                        <span class="ml-2 text-sm text-gray-700">Top P</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" class="form-checkbox text-blue-600" checked>
+                                        <span class="ml-2 text-sm text-gray-700">Top K</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" class="form-checkbox text-blue-600">
+                                        <span class="ml-2 text-sm text-gray-700">Frequency Penalty</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" class="form-checkbox text-blue-600">
+                                        <span class="ml-2 text-sm text-gray-700">Presence Penalty</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" class="form-checkbox text-blue-600">
+                                        <span class="ml-2 text-sm text-gray-700">业务专注度</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-base font-medium text-gray-700 mb-3">优化历史</h4>
+                            
+                            <div class="border border-gray-200 rounded-md overflow-hidden">
+                                <div class="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                                    <div class="text-sm font-medium text-gray-700">最近优化任务</div>
+                                </div>
+                                <div class="divide-y divide-gray-200">
+                                    <div class="p-4">
+                                        <div class="flex justify-between mb-2">
+                                            <div class="text-sm font-medium text-gray-800">理财投资场景优化</div>
+                                            <span class="text-xs text-green-600 bg-green-50 rounded-full px-2 py-0.5">完成</span>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mb-2">2025-05-10 14:25:30</div>
+                                        <div class="text-xs text-gray-700">性能提升: <span class="text-green-600">+12.5%</span> | 业务相关性: <span class="text-green-600">+8.2%</span></div>
+                                        <div class="mt-2">
+                                            <button class="text-xs text-blue-600 hover:text-blue-800">应用此配置</button>
+                                            <span class="mx-2 text-gray-300">|</span>
+                                            <button class="text-xs text-blue-600 hover:text-blue-800">查看详情</button>
+                                        </div>
+                                    </div>
+                                    <div class="p-4">
+                                        <div class="flex justify-between mb-2">
+                                            <div class="text-sm font-medium text-gray-800">转账流程优化</div>
+                                            <span class="text-xs text-green-600 bg-green-50 rounded-full px-2 py-0.5">完成</span>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mb-2">2025-05-08 09:15:42</div>
+                                        <div class="text-xs text-gray-700">性能提升: <span class="text-green-600">+8.7%</span> | 业务相关性: <span class="text-green-600">+15.3%</span></div>
+                                        <div class="mt-2">
+                                            <button class="text-xs text-blue-600 hover:text-blue-800">应用此配置</button>
+                                            <span class="mx-2 text-gray-300">|</span>
+                                            <button class="text-xs text-blue-600 hover:text-blue-800">查看详情</button>
+                                        </div>
+                                    </div>
+                                    <div class="p-4">
+                                        <div class="flex justify-between mb-2">
+                                            <div class="text-sm font-medium text-gray-800">全场景性能优化</div>
+                                            <span class="text-xs text-yellow-600 bg-yellow-50 rounded-full px-2 py-0.5">进行中</span>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mb-2">2025-05-15 16:05:12</div>
+                                        <div class="text-xs text-gray-700">
+                                            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2 mb-1">
+                                                <div class="bg-blue-600 h-2.5 rounded-full" style="width: 45%"></div>
+                                            </div>
+                                            <span>已完成 45% (预计剩余时间: 35分钟)</span>
+                                        </div>
+                                        <div class="mt-2">
+                                            <button class="text-xs text-red-600 hover:text-red-800">取消优化</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 性能配置 Tab -->
+            <div id="performance-config">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 硬件资源配置 -->
+                    <div class="dify-card p-6 bg-white">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">硬件资源配置</h3>
+                        
+                        <!-- GPU分配 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">GPU分配</label>
+                                <span class="text-sm text-blue-600 font-medium" id="gpu-value">2</span>
+                            </div>
+                            <input type="range" class="param-slider" min="1" max="8" step="1" value="2" id="gpu-slider"
+                                oninput="document.getElementById('gpu-value').textContent = this.value">
+                            <p class="text-xs text-gray-500 mt-1">用于模型推理的GPU数量，增加可提高并行处理能力</p>
+                        </div>
+                        
+                        <!-- 量化精度 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">量化精度</label>
+                            <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>FP16 (半精度)</option>
+                                <option>INT8 (8位整数)</option>
+                                <option>INT4 (4位整数)</option>
+                                <option>FP32 (全精度)</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">降低精度可减少内存使用并提高速度，但可能影响输出质量</p>
+                        </div>
+                        
+                        <!-- 推理优化方式 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">推理优化方式</label>
+                            <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>TensorRT 加速</option>
+                                <option>ONNX Runtime</option>
+                                <option>Flash Attention</option>
+                                <option>vLLM</option>
+                                <option>标准推理</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">选择适合硬件的推理优化方式，提高推理速度</p>
+                        </div>
+                        
+                        <!-- 内存配置 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">内存配置</label>
+                                <span class="text-sm text-blue-600 font-medium" id="memory-value">16GB</span>
+                            </div>
+                            <input type="range" class="param-slider" min="4" max="32" step="4" value="16" id="memory-slider"
+                                oninput="document.getElementById('memory-value').textContent = this.value + 'GB'">
+                            <p class="text-xs text-gray-500 mt-1">分配给每个模型实例的内存大小</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 并发与扩展配置 -->
+                    <div class="dify-card p-6 bg-white">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">并发与扩展配置</h3>
+                        
+                        <!-- 并发请求数 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">最大并发请求数</label>
+                                <span class="text-sm text-blue-600 font-medium" id="concurrent-value">32</span>
+                            </div>
+                            <input type="range" class="param-slider" min="4" max="128" step="4" value="32" id="concurrent-slider"
+                                oninput="document.getElementById('concurrent-value').textContent = this.value">
+                            <p class="text-xs text-gray-500 mt-1">系统同时处理的最大请求数量，影响服务QPS</p>
+                        </div>
+                        
+                        <!-- 批处理大小 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">批处理大小</label>
+                                <span class="text-sm text-blue-600 font-medium" id="batch-value">4</span>
+                            </div>
+                            <input type="range" class="param-slider" min="1" max="16" step="1" value="4" id="batch-slider"
+                                oninput="document.getElementById('batch-value').textContent = this.value">
+                            <p class="text-xs text-gray-500 mt-1">同时处理的请求批次大小，较大值提高吞吐量但增加延迟</p>
+                        </div>
+                        
+                        <!-- 自动扩缩容 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">自动扩缩容</label>
+                                <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                    <input type="checkbox" name="auto-scale" id="auto-scale" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                                    <label for="auto-scale" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">根据负载自动调整资源，高峰期自动增加实例</p>
+                            <div class="mt-3 pl-4 border-l-2 border-gray-200">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">最小实例数</label>
+                                    <input type="number" value="2" class="w-full border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">最大实例数</label>
+                                    <input type="number" value="10" class="w-full border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">扩容触发阈值</label>
+                                    <div class="flex items-center">
+                                        <input type="number" value="80" class="w-full border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <span class="ml-2">% CPU</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 缓存设置与高级配置 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <!-- 缓存设置 -->
+                    <div class="dify-card p-6 bg-white">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">缓存设置</h3>
+                        
+                        <!-- KV Cache配置 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">KV缓存大小</label>
+                                <span class="text-sm text-blue-600 font-medium" id="kv-cache-value">4GB</span>
+                            </div>
+                            <input type="range" class="param-slider" min="1" max="8" step="1" value="4" id="kv-cache-slider"
+                                oninput="document.getElementById('kv-cache-value').textContent = this.value + 'GB'">
+                            <p class="text-xs text-gray-500 mt-1">模型Key-Value缓存大小，增加可提高长文本处理性能</p>
+                        </div>
+                        
+                        <!-- 结果缓存 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">结果缓存</label>
+                                <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                    <input type="checkbox" name="result-cache" id="result-cache" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                                    <label for="result-cache" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">缓存常见查询结果，提高重复问题的响应速度</p>
+                        </div>
+                        
+                        <!-- 缓存过期时间 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">缓存过期时间</label>
+                            <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>1小时</option>
+                                <option>6小时</option>
+                                <option>24小时</option>
+                                <option>7天</option>
+                                <option>30天</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">设置缓存结果的有效期限</p>
+                        </div>
+                        
+                        <!-- 预热模型 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">模型预热</label>
+                                <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                    <input type="checkbox" name="model-warmup" id="model-warmup" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                                    <label for="model-warmup" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">启动时预热模型，减少首次请求延迟</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 高级配置 -->
+                    <div class="dify-card p-6 bg-white">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">高级配置</h3>
+                        
+                        <!-- 推理模式 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">推理模式</label>
+                            <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>贪婪解码 (Greedy)</option>
+                                <option>束搜索 (Beam Search)</option>
+                                <option>采样 (Sampling)</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">选择不同的解码策略，影响生成文本的多样性和确定性</p>
+                        </div>
+                        
+                        <!-- 束宽度 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">束宽度</label>
+                                <span class="text-sm text-blue-600 font-medium" id="beam-value">4</span>
+                            </div>
+                            <input type="range" class="param-slider" min="1" max="10" step="1" value="4" id="beam-slider"
+                                oninput="document.getElementById('beam-value').textContent = this.value">
+                            <p class="text-xs text-gray-500 mt-1">束搜索的宽度，较大值产生更高质量输出但计算成本更高</p>
+                        </div>
+                        
+                        <!-- 断词惩罚 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">断词惩罚 (alpha)</label>
+                                <span class="text-sm text-blue-600 font-medium" id="alpha-value">0.6</span>
+                            </div>
+                            <input type="range" class="param-slider" min="0" max="1" step="0.1" value="0.6" id="alpha-slider"
+                                oninput="document.getElementById('alpha-value').textContent = this.value">
+                            <p class="text-xs text-gray-500 mt-1">控制长度归一化的强度，更高的值倾向于更长的生成结果</p>
+                        </div>
+                        
+                        <!-- 并行解码 -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">并行解码</label>
+                                <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                    <input type="checkbox" name="parallel-decode" id="parallel-decode" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                                    <label for="parallel-decode" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">启用并行解码技术（如Medusa），加速模型生成过程</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 监控与日志配置 -->
+                <div class="dify-card p-6 bg-white mt-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">监控与日志配置</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <h4 class="text-base font-medium text-gray-700 mb-3">性能监控</h4>
+                            <div class="mb-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="block text-sm font-medium text-gray-700">启用详细监控</label>
+                                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                        <input type="checkbox" name="detailed-monitoring" id="detailed-monitoring" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                                        <label for="detailed-monitoring" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">记录详细的推理性能指标，用于优化</p>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">监控采样率</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option>100% (全量)</option>
+                                    <option>50%</option>
+                                    <option>10%</option>
+                                    <option>1%</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-base font-medium text-gray-700 mb-3">日志级别</h4>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">推理日志级别</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option>ERROR (仅错误)</option>
+                                    <option>WARN (警告和错误)</option>
+                                    <option>INFO (一般信息)</option>
+                                    <option>DEBUG (详细调试)</option>
+                                    <option>TRACE (全量跟踪)</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="block text-sm font-medium text-gray-700">记录推理参数</label>
+                                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                        <input type="checkbox" name="log-params" id="log-params" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                                        <label for="log-params" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">记录每次推理使用的参数配置</p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-base font-medium text-gray-700 mb-3">告警设置</h4>
+                            <div class="mb-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="block text-sm font-medium text-gray-700">性能告警</label>
+                                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                        <input type="checkbox" name="perf-alert" id="perf-alert" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                                        <label for="perf-alert" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">当推理性能低于阈值时发送告警</p>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">响应时间阈值</label>
+                                <div class="flex items-center">
+                                    <input type="number" value="3000" class="w-full border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <span class="ml-2">ms</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">超过此响应时间触发性能告警</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 优化历史 Tab -->
+            <div id="optimization-history">
+                <div class="dify-card p-6 bg-white">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">参数优化历史记录</h3>
+                        <div class="flex space-x-2">
+                            <select class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>所有模型</option>
+                                <option>金融-LLM-14B</option>
+                                <option>金融-LLM-7B</option>
+                                <option>通用-LLM-7B</option>
+                            </select>
+                            <button class="dify-btn px-3 py-1 bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                                </svg>
+                                筛选
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        配置名称
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        模型
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        业务场景
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        更新时间
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        性能指标
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        操作
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">转账流程-高精度配置</div>
+                                        <div class="text-xs text-gray-500">手动优化</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">金融-LLM-14B</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                            转账汇款
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        2025-05-15 10:25:36
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            <span class="text-green-600">95%</span> 准确率 | <span class="text-green-600">1.2s</span> 响应时间
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">应用</a>
+                                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900">导出</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">理财产品咨询优化配置</div>
+                                        <div class="text-xs text-gray-500">自动调优</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">金融-LLM-7B</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            理财投资
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        2025-05-12 14:32:10
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            <span class="text-green-600">92%</span> 准确率 | <span class="text-green-600">0.8s</span> 响应时间
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">应用</a>
+                                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900">导出</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">跨境业务高性能配置</div>
+                                        <div class="text-xs text-gray-500">手动优化</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">金融-LLM-14B</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                            跨境转账
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        2025-05-08 09:17:45
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            <span class="text-green-600">90%</span> 准确率 | <span class="text-green-600">1.5s</span> 响应时间
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">应用</a>
+                                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900">导出</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">信用卡服务优化</div>
+                                        <div class="text-xs text-gray-500">自动调优</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">通用-LLM-7B</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                            信用卡
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        2025-05-05 16:43:22
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            <span class="text-green-600">88%</span> 准确率 | <span class="text-green-600">0.7s</span> 响应时间
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">应用</a>
+                                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900">导出</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">低延迟全场景配置</div>
+                                        <div class="text-xs text-gray-500">自动调优</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">金融-LLM-3B</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                            多场景
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        2025-05-01 10:15:38
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            <span class="text-yellow-600">82%</span> 准确率 | <span class="text-green-600">0.5s</span> 响应时间
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">应用</a>
+                                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900">导出</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-6 flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            显示 <span class="font-medium">1</span> 到 <span class="font-medium">5</span> 条，共 <span class="font-medium">12</span> 条
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="dify-btn px-3 py-1 bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 rounded-md">
+                                上一页
+                            </button>
+                            <button class="dify-btn px-3 py-1 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 rounded-md">
+                                1
+                            </button>
+                            <button class="dify-btn px-3 py-1 bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 rounded-md">
+                                2
+                            </button>
+                            <button class="dify-btn px-3 py-1 bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 rounded-md">
+                                3
+                            </button>
+                            <button class="dify-btn px-3 py-1 bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 rounded-md">
+                                下一页
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 配置对比卡片 -->
+                <div class="dify-card p-6 bg-white mt-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">配置对比分析</h3>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">选择对比配置</label>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <select class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>转账流程-高精度配置</option>
+                                <option>理财产品咨询优化配置</option>
+                                <option>跨境业务高性能配置</option>
+                                <option>信用卡服务优化</option>
+                                <option>低延迟全场景配置</option>
+                            </select>
+                            <select class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option>选择配置...</option>
+                                <option>转账流程-高精度配置</option>
+                                <option>理财产品咨询优化配置</option>
+                                <option>跨境业务高性能配置</option>
+                                <option>信用卡服务优化</option>
+                                <option>低延迟全场景配置</option>
+                            </select>
+                            <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+                                生成对比报告
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-8 flex flex-col items-center justify-center border border-dashed border-gray-300 rounded-lg bg-gray-50">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-500">选择两个配置进行对比分析</p>
+                        <p class="text-xs text-gray-400 mt-1">报告将以图表形式展示参数差异和性能对比</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.querySelectorAll('.tab-btn').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Hide all content
+                document.querySelectorAll('.tabbed-content > div').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab-btn').forEach(t => {
+                    t.classList.remove('active');
+                });
+                
+                // Show selected content
+                const targetId = this.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+            });
+        });
+        
+        // Add toggle functionality for checkboxes with sliders
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggles = document.querySelectorAll('.toggle-checkbox');
+            toggles.forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const label = this.nextElementSibling;
+                    if (this.checked) {
+                        label.classList.remove('bg-gray-300');
+                        label.classList.add('bg-blue-600');
+                    } else {
+                        label.classList.remove('bg-blue-600');
+                        label.classList.add('bg-gray-300');
+                    }
+                });
+                
+                // Initialize toggle state
+                const event = new Event('change');
+                toggle.dispatchEvent(event);
+            });
+        });
+    </script>
+</body>
+
+</html>

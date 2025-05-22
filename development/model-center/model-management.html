@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型管理/部署 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .model-card {
+            transition: all 0.3s ease;
+        }
+        .model-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        }
+        .tab-item {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tab-item:hover {
+            color: var(--dify-primary);
+        }
+        .tab-item.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+        .status-badge-online {
+            background-color: #DCFCE7;
+            color: #16A34A;
+        }
+        .status-badge-offline {
+            background-color: #FEF2F2;
+            color: #DC2626;
+        }
+        .status-badge-maintenance {
+            background-color: #FEF3C7;
+            color: #D97706;
+        }
+        /* 添加模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        /* 模型历史记录样式 */
+        .version-item {
+            transition: all 0.2s ease;
+        }
+        .version-item:hover {
+            background-color: var(--dify-active);
+        }
+        .version-item.selected {
+            background-color: var(--dify-primary-light);
+            border-color: var(--dify-primary);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Page Header -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">模型管理与部署</h1>
+                    <p class="text-gray-600 mt-1">管理银行AI中台的模型资源、部署和监控</p>
+                </div>
+                <!-- <div class="flex items-center space-x-3">
+                    <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none flex items-center" id="showModelHistory">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        模型版本历史
+                    </button>
+                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        导入新模型
+                    </button>
+                </div> -->
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <!-- Card 1 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-800">总模型数</h2>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">6</p>
+                        <p class="text-sm text-gray-500">当前环境中的模型</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-800">已部署模型</h2>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">6</p>
+                        <p class="text-sm text-gray-500">正在服务的模型</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-800">GPU使用率</h2>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">72%</p>
+                        <p class="text-sm text-gray-500">当前使用情况</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-50 text-yellow-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-800">请求量</h2>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">25.4K</p>
+                        <p class="text-sm text-gray-500">本周模型调用</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Table -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-800">大模型列表</h3>
+                <div class="flex items-center">
+                    <button id="rollbackBtn" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none flex items-center mr-2">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        模型回滚
+                    </button>
+                    <div class="relative">
+                        <input type="text" placeholder="搜索模型" class="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 block w-64">
+                        <svg class="w-5 h-5 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">使用模块</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">模型用途</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">模型名称</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">模型大小</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">部署资源</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">并发量</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GPU服务</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">版本</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Row 1 -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="model-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" data-model-id="1">
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">多轮对话模块</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-700 max-w-xs">结合上下文语义，以及对当前提问中指代不明或省略的内容进行完整还原</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">改写模型</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">7B</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">2卡910B3</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">2/20</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    是
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    在线
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">v2.3</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end space-x-2">
+                                    <button class="text-purple-600 hover:text-purple-900 view-history" data-model-id="1">历史</button>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Row 2 -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="model-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" data-model-id="2">
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">意图识别模块</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-700 max-w-xs">识别用户输入意图，适用于同时配置问答、文档、工作流的场景，意图识别效果更佳</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">意图识别模型</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">32B</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">8卡910B3</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">5/20</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    是
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    在线
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">v1.8</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end space-x-2">
+                                    <button class="text-purple-600 hover:text-purple-900 view-history" data-model-id="2">历史</button>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Row 3 -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="model-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" data-model-id="3">
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">审核模块</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-700 max-w-xs">赋问模型安全护盾</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">Security模型</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">7B</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">2卡910B3</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">5/20</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    是
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    在线
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">v1.5</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end space-x-2">
+                                    <button class="text-purple-600 hover:text-purple-900 view-history" data-model-id="3">历史</button>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Row 4 -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="model-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" data-model-id="4">
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">工作流模块</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-700 max-w-xs">提供了直观的可视化画布，支持通过大模型、代码、参数提取等多种节点来编排复杂的业务流程</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">工作流模型</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">32B</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">8卡910B3</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">4/20</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    是
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    在线
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">v2.0</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end space-x-2">
+                                    <button class="text-purple-600 hover:text-purple-900 view-history" data-model-id="4">历史</button>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Row 5 -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="model-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" data-model-id="5">
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">文本转化向量模块</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-700 max-w-xs">可以将文本转化为用数值表示的向量格式，用于文本检索、信息推荐、知识挖掘</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">embedding模型</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">1B以内</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">1卡910B3</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">4/20</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    是
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    在线
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">v3.1</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end space-x-2">
+                                    <button class="text-purple-600 hover:text-purple-900 view-history" data-model-id="5">历史</button>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Row 6 -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="model-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" data-model-id="6">
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">重排序模块</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-700 max-w-xs">对多路召回的结果进行重排序，根据query与切片内容的相关性，按分数由高到低对切片进行排序</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">rerank模型</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">1B以内</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">1卡910B3</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">2/20</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    是
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    在线
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">v2.4</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end space-x-2">
+                                    <button class="text-purple-600 hover:text-purple-900 view-history" data-model-id="6">历史</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                <div class="text-sm text-gray-500">
+                    显示 <span class="font-medium">1</span> 到 <span class="font-medium">6</span> 共 <span class="font-medium">6</span> 条
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50 disabled:opacity-50" disabled>
+                        上一页
+                    </button>
+                    <button class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">
+                        1
+                    </button>
+                    <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50 disabled:opacity-50" disabled>
+                        下一页
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模型历史版本模态框 -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">模型历史版本</h3>
+                <button id="closeHistoryModal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="historyContent" class="mb-4">
+                <div class="mb-4">
+                    <div class="font-medium text-gray-700 mb-2">改写模型</div>
+                    <div class="text-sm text-gray-500 mb-4">查看模型历史版本及其评估表现</div>
+                </div>
+                <div class="space-y-3">
+                    <div class="version-item border rounded-lg p-4 cursor-pointer selected">
+                        <div class="flex justify-between">
+                            <div class="font-medium">v2.3 (当前版本)</div>
+                            <div class="text-green-600 font-medium">评分: 94.2</div>
+                        </div>
+                        <div class="text-sm text-gray-500 mt-1">部署时间: 2025-05-01</div>
+                        <div class="text-sm text-gray-600 mt-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mr-2">
+                                准确率: 95.3%
+                            </span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                                延迟: 168ms
+                            </span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                使用内存: 15GB
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="version-item border rounded-lg p-4 cursor-pointer">
+                        <div class="flex justify-between">
+                            <div class="font-medium">v2.2</div>
+                            <div class="text-yellow-600 font-medium">评分: 91.8</div>
+                        </div>
+                        <div class="text-sm text-gray-500 mt-1">部署时间: 2025-04-15</div>
+                        <div class="text-sm text-gray-600 mt-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mr-2">
+                                准确率: 94.1%
+                            </span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                                延迟: 175ms
+                            </span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                使用内存: 16GB
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="version-item border rounded-lg p-4 cursor-pointer">
+                        <div class="flex justify-between">
+                            <div class="font-medium">v2.1</div>
+                            <div class="text-green-600 font-medium">评分: 93.5</div>
+                        </div>
+                        <div class="text-sm text-gray-500 mt-1">部署时间: 2025-03-22</div>
+                        <div class="text-sm text-gray-600 mt-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mr-2">
+                                准确率: 94.7%
+                            </span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                                延迟: 182ms
+                            </span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                使用内存: 14GB
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="version-item border rounded-lg p-4 cursor-pointer">
+                        <div class="flex justify-between">
+                            <div class="font-medium">v2.0</div>
+                            <div class="text-yellow-600 font-medium">评分: 88.3</div>
+                        </div>
+                        <div class="text-sm text-gray-500 mt-1">部署时间: 2025-02-18</div>
+                        <div class="text-sm text-gray-600 mt-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mr-2">
+                                准确率: 91.2%
+                            </span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                                延迟: 190ms
+                            </span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                使用内存: 15GB
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button id="cancelHistoryBtn" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                    取消
+                </button>
+                <button id="confirmRollbackBtn" class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    回滚到该版本
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模型回滚模态框 -->
+    <div id="rollbackModal" class="modal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">模型回滚</h3>
+                <button id="closeRollbackModal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mb-6">
+                <p class="text-gray-700 mb-4">您选择了以下模型进行回滚操作，请选择目标版本：</p>
+                <div id="selectedModels" class="mb-4 py-3 px-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="font-medium">改写模型</div>
+                        <div class="text-sm text-gray-500">当前版本: v2.3</div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">选择回滚版本</label>
+                    <select class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="2.2">v2.2 (评分: 91.8, 2025-04-15)</option>
+                        <option value="2.1" selected>v2.1 (评分: 93.5, 2025-03-22)</option>
+                        <option value="2.0">v2.0 (评分: 88.3, 2025-02-18)</option>
+                    </select>
+                </div>
+                
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                回滚操作将替换当前模型为历史版本，可能影响现有业务。请确保您已进行充分测试，并有应急恢复方案。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">回滚原因</label>
+                    <textarea rows="3" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md" placeholder="请简要描述回滚原因，方便后续追踪"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button id="cancelRollbackBtn" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                    取消
+                </button>
+                <button id="confirmModelRollbackBtn" class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    确认回滚
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模型版本比较模态框 -->
+    <div id="compareModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">模型版本比较</h3>
+                <button id="closeCompareModal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mb-6">
+                <div class="mb-4 flex space-x-4">
+                    <div class="w-1/2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">当前版本</label>
+                        <select class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="2.3" selected>v2.3 (2025-05-01)</option>
+                        </select>
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">目标版本</label>
+                        <select class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="2.1" selected>v2.1 (2025-03-22)</option>
+                            <option value="2.2">v2.2 (2025-04-15)</option>
+                            <option value="2.0">v2.0 (2025-02-18)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="border rounded-lg overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-3 border-b">
+                        <h4 class="font-medium text-gray-700">性能指标比较</h4>
+                    </div>
+                    <div class="p-4">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">指标</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">v2.3 (当前)</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">v2.1 (回滚目标)</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">变化</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">准确率</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">95.3%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">94.7%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-red-500">-0.6%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">延迟</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">168ms</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">182ms</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-red-500">+14ms</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">金融术语准确率</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">92.1%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">94.5%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-green-500">+2.4%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">安全合规分</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">89.7</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">91.2</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-green-500">+1.5</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">内存使用</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">15GB</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">14GB</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-green-500">-1GB</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">总体评分</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">94.2</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">93.5</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-red-500">-0.7</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="mt-4 border rounded-lg overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-3 border-b">
+                        <h4 class="font-medium text-gray-700">业务场景表现</h4>
+                    </div>
+                    <div class="p-4">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">场景</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">v2.3 (当前)</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">v2.1 (回滚目标)</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">变化</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">转账场景</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">96.2%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">95.8%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-red-500">-0.4%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">理财咨询</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">91.3%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">93.7%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-green-500">+2.4%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">贷款申请</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">93.5%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">92.9%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-red-500">-0.6%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">外汇服务</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">88.4%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">91.2%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-green-500">+2.8%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">信用卡业务</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">94.1%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">93.8%</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-red-500">-0.3%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="mt-4 bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                <strong>分析结论：</strong> v2.1版本在理财咨询和外汇服务等特定场景表现更佳，安全合规分也更高。虽然总体评分略低，但在银行业务关键场景的表现值得考虑回滚。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button id="closeCompareBtn" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                    返回
+                </button>
+                <button id="applyRollbackBtn" class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                    应用回滚
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 回滚成功提示框 -->
+    <div id="successModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="mb-4 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">模型回滚成功</h3>
+                <p class="text-sm text-gray-500">
+                    模型已成功回滚到历史版本，系统将在后台完成部署。您可以在事件日志中查看详细进度。
+                </p>
+            </div>
+            <div class="mt-5 sm:mt-6">
+                <button id="closeSuccessModal" class="dify-btn w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                    确认
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab-item').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+        
+        // 模态框控制
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // 历史版本模态框
+        document.querySelectorAll('.view-history').forEach(btn => {
+            btn.addEventListener('click', function() {
+                openModal('historyModal');
+            });
+        });
+        
+        document.getElementById('closeHistoryModal').addEventListener('click', function() {
+            closeModal('historyModal');
+        });
+        
+        document.getElementById('cancelHistoryBtn').addEventListener('click', function() {
+            closeModal('historyModal');
+        });
+        
+        // 回滚按钮
+        document.getElementById('rollbackBtn').addEventListener('click', function() {
+            // 检查是否有选中的模型
+            const checkedBoxes = document.querySelectorAll('.model-checkbox:checked');
+            if (checkedBoxes.length > 0) {
+                openModal('rollbackModal');
+            } else {
+                alert('请先选择需要回滚的模型');
+            }
+        });
+        
+        document.getElementById('closeRollbackModal').addEventListener('click', function() {
+            closeModal('rollbackModal');
+        });
+        
+        document.getElementById('cancelRollbackBtn').addEventListener('click', function() {
+            closeModal('rollbackModal');
+        });
+        
+        // // 显示模型历史版本按钮
+        // document.getElementById('showModelHistory').addEventListener('click', function() {
+        //     openModal('historyModal');
+        // });
+        
+        // 版本项选择
+        document.querySelectorAll('.version-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.version-item').forEach(i => {
+                    i.classList.remove('selected');
+                });
+                this.classList.add('selected');
+            });
+        });
+        
+        // 确认回滚
+        document.getElementById('confirmRollbackBtn').addEventListener('click', function() {
+            closeModal('historyModal');
+            openModal('compareModal');
+        });
+        
+        // 关闭比较模态框
+        document.getElementById('closeCompareModal').addEventListener('click', function() {
+            closeModal('compareModal');
+        });
+        
+        document.getElementById('closeCompareBtn').addEventListener('click', function() {
+            closeModal('compareModal');
+        });
+        
+        // 应用回滚按钮
+        document.getElementById('applyRollbackBtn').addEventListener('click', function() {
+            closeModal('compareModal');
+            openModal('successModal');
+        });
+        
+        // 确认回滚按钮
+        document.getElementById('confirmModelRollbackBtn').addEventListener('click', function() {
+            closeModal('rollbackModal');
+            openModal('successModal');
+        });
+        
+        // 关闭成功提示
+        document.getElementById('closeSuccessModal').addEventListener('click', function() {
+            closeModal('successModal');
+        });
+    </script>
+</body>
+</html>

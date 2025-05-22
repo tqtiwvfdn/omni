@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智言银行后台管理端 - 场景详情</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+            background-color: #f9fafb;
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .tab-button.active {
+            color: var(--dify-primary);
+            border-bottom: 2px solid var(--dify-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--dify-primary);
+            cursor: pointer;
+        }
+
+        .range-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--dify-primary);
+            cursor: pointer;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--dify-primary);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(14px);
+        }
+
+        .badge-success {
+            background-color: #D1FAE5;
+            color: #047857;
+        }
+
+        .badge-warning {
+            background-color: #FEF3C7;
+            color: #B45309;
+        }
+
+        .badge-pending {
+            background-color: #E0E7FF;
+            color: #4F46E5;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .steps-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 16px;
+            height: 2px;
+            background-color: #E5E7EB;
+            z-index: -1;
+        }
+
+        .steps-line-progress {
+            position: absolute;
+            left: 0;
+            top: 16px;
+            height: 2px;
+            background-color: #2970FF;
+            z-index: -1;
+            transition: width 0.3s ease;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 120px;
+        }
+
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .step-title {
+            font-size: 14px;
+            text-align: center;
+            color: #6B7280;
+            transition: all 0.3s ease;
+        }
+
+        .step-item.completed .step-circle {
+            background-color: #2970FF;
+            color: white;
+        }
+
+        .step-item.completed .step-title {
+            color: #2970FF;
+        }
+
+        .step-item.active .step-circle {
+            background-color: #2970FF;
+            color: white;
+        }
+
+        .step-item.active .step-title {
+            color: #2970FF;
+            font-weight: 500;
+        }
+
+        .step-item.inactive .step-circle {
+            background-color: #F3F4F6;
+            color: #9CA3AF;
+            border: 1px solid #E5E7EB;
+        }
+
+        .model-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .model-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .model-card.selected {
+            border: 2px solid var(--dify-primary);
+            background-color: var(--dify-primary-light);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="container mx-auto py-6 px-4">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex items-center mb-2">
+                <a href="./embedding-models.html" class="text-gray-500 hover:text-blue-600 mr-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+                <h1 class="text-2xl font-semibold text-gray-800">智能客服向量检索</h1>
+                <span class="ml-3 dify-tag badge-warning">测试中</span>
+            </div>
+            <p class="text-gray-600">针对客服问答场景的向量检索优化配置</p>
+        </div>
+
+        <!-- 进度步骤条 -->
+        <div class="dify-card p-6 mb-6">
+            <div class="steps">
+                <div class="steps-line"></div>
+                <div class="steps-line-progress" style="width: 50%;"></div>
+                
+                <div class="step-item completed">
+                    <div class="step-circle">1</div>
+                    <div class="step-title">选择模板</div>
+                </div>
+                
+                <div class="step-item active">
+                    <div class="step-circle">2</div>
+                    <div class="step-title">个性化配置</div>
+                </div>
+                
+                <div class="step-item inactive">
+                    <div class="step-circle">3</div>
+                    <div class="step-title">评估效果</div>
+                </div>
+                
+                <div class="step-item inactive">
+                    <div class="step-circle">4</div>
+                    <div class="step-title">发布应用</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 配置内容区域 -->
+        <div class="mb-6">
+            <!-- 配置操作栏 -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex">
+                    <div class="mr-4">
+                        <span class="text-sm text-gray-500">当前配置模板:</span>
+                        <span class="ml-1 text-sm font-medium text-gray-800">客服问答专精</span>
+                    </div>
+                    <button class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        切换模板
+                    </button>
+                </div>
+                <div class="flex gap-3">
+                    <button class="dify-btn px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                        保存为草稿
+                    </button>
+                    <button id="preview-effect-btn" class="dify-btn px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">
+                        调试评估效果
+                    </button>
+                </div>
+            </div>
+
+            <!-- 配置Tabs -->
+            <div class="border-b border-gray-200 mb-6">
+                <div class="flex space-x-8">
+                    <div class="tab-button active" data-tab="model-tab">模型选择</div>
+                    <div class="tab-button" data-tab="retrieval-tab">检索配置</div>
+                    <div class="tab-button" data-tab="business-tab">业务场景</div>
+                    <div class="tab-button" data-tab="quality-tab">质量优化</div>
+                </div>
+            </div>
+
+            <!-- Tab内容 -->
+            <!-- 模型选择Tab -->
+            <div class="tab-content active" id="model-tab">
+                <div class="dify-card p-6 mb-6">
+                    <h2 class="text-lg font-medium text-gray-800 mb-4">Embedding 模型选择</h2>
+                    <p class="text-gray-600 mb-4">选择文本向量化的模型，影响检索的语义理解能力</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <!-- Embedding模型1 -->
+                        <div class="model-card dify-card p-4 selected">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="font-medium text-gray-800">Embedding-SuperEdition</h3>
+                                    <p class="text-xs text-gray-500 mt-1">中文金融场景优化向量模型</p>
+                                </div>
+                                <div class="w-5 h-5 rounded-full border border-blue-600 flex items-center justify-center">
+                                    <div class="w-3 h-3 rounded-full bg-blue-600"></div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <div class="text-gray-500">维度</div>
+                                    <div class="font-medium">1536</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-500">版本</div>
+                                    <div class="font-medium">v2.1</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Embedding模型2 -->
+                        <div class="model-card dify-card p-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="font-medium text-gray-800">MultiLingual-Base</h3>
+                                    <p class="text-xs text-gray-500 mt-1">多语言通用向量模型</p>
+                                </div>
+                                <div class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center">
+                                    <div class="w-3 h-3 rounded-full bg-white"></div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <div class="text-gray-500">维度</div>
+                                    <div class="font-medium">768</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-500">版本</div>
+                                    <div class="font-medium">v1.5</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 添加Embedding模型卡片 -->
+                        <div class="dify-card h-28 flex items-center justify-center cursor-pointer border-dashed border-2 border-gray-300 bg-white hover:bg-gray-50">
+                            <div class="text-center">
+                                <div class="w-8 h-8 bg-blue-50 rounded-full mx-auto flex items-center justify-center mb-2">
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-600 text-xs">添加新模型</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="text-lg font-medium text-gray-800 mb-4">Rerank 模型选择</h2>
+                    <p class="text-gray-600 mb-4">选择对检索结果进行重新排序的模型，提高结果相关性</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Rerank模型1 -->
+                        <div class="model-card dify-card p-4 selected">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="font-medium text-gray-800">BankRerank-Pro</h3>
+                                    <p class="text-xs text-gray-500 mt-1">银行业务场景优化的重排序模型</p>
+                                </div>
+                                <div class="w-5 h-5 rounded-full border border-blue-600 flex items-center justify-center">
+                                    <div class="w-3 h-3 rounded-full bg-blue-600"></div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <div class="text-gray-500">阈值</div>
+                                    <div class="font-medium">0.75</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-500">版本</div>
+                                    <div class="font-medium">v2.0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rerank模型2 -->
+                        <div class="model-card dify-card p-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="font-medium text-gray-800">Standard-Rerank</h3>
+                                    <p class="text-xs text-gray-500 mt-1">通用型重排序模型</p>
+                                </div>
+                                <div class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center">
+                                    <div class="w-3 h-3 rounded-full bg-white"></div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <div class="text-gray-500">阈值</div>
+                                    <div class="font-medium">0.7</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-500">版本</div>
+                                    <div class="font-medium">v1.5</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 添加Rerank模型卡片 -->
+                        <div class="dify-card h-28 flex items-center justify-center cursor-pointer border-dashed border-2 border-gray-300 bg-white hover:bg-gray-50">
+                            <div class="text-center">
+                                <div class="w-8 h-8 bg-blue-50 rounded-full mx-auto flex items-center justify-center mb-2">
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-600 text-xs">添加新模型</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 检索配置Tab -->
+            <div class="tab-content" id="retrieval-tab">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 文档切片策略配置 Card -->
+                    <div class="dify-card p-6">
+                        <h2 class="text-lg font-medium text-gray-800 mb-4">文档切片策略配置</h2>
+                        <p class="text-gray-500 mb-4 text-sm">调整文档如何被分割成向量块以便检索</p>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                切片长度（字符数）
+                            </label>
+                            <div class="flex items-center space-x-4">
+                                <input type="range" min="500" max="5000" value="3000" step="100" class="range-slider flex-1"
+                                    id="chunk-size-slider">
+                                <span class="text-gray-700 w-16 text-right" id="chunk-size-value">3000</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">建议：问答场景使用较短切片(1000-2000)，知识场景使用较长切片(3000-5000)</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                切片重叠比例
+                            </label>
+                            <select
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="0">无重叠 (0%)</option>
+                                <option value="10" selected>轻度重叠 (10%)</option>
+                                <option value="30">中度重叠 (30%)</option>
+                                <option value="50">重度重叠 (50%)</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">增加重叠可提高完整性，但会增加存储和计算开销</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                特殊内容处理规则
+                            </label>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600 text-sm">表格作为整体处理</span>
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600 text-sm">保留图片描述文本</span>
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600 text-sm">公式转换为文本</span>
+                                    <label class="switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                业务文档切片策略
+                            </label>
+                            <div class="bg-gray-50 p-3 rounded-md">
+                                <div class="mb-2 pb-2 border-b border-gray-200">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600 text-sm">规章制度</span>
+                                        <span class="text-sm text-gray-500">按段落切分</span>
+                                    </div>
+                                </div>
+                                <div class="mb-2 pb-2 border-b border-gray-200">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600 text-sm">产品说明书</span>
+                                        <span class="text-sm text-gray-500">按章节切分</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600 text-sm">监管文件</span>
+                                        <span class="text-sm text-gray-500">按条款切分</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="mt-3 text-sm text-blue-600 hover:text-blue-800">+ 添加业务文档切片策略</button>
+                        </div>
+                    </div>
+
+                    <!-- 检索召回配置 Card -->
+                    <div class="dify-card p-6">
+                        <h2 class="text-lg font-medium text-gray-800 mb-4">检索召回配置</h2>
+                        <p class="text-gray-500 mb-4 text-sm">调整检索结果的数量、相似度要求和排序方式</p>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                检索结果数量 (Top-K)
+                            </label>
+                            <div class="flex items-center space-x-4">
+                                <input type="range" min="1" max="20" value="5" class="range-slider flex-1"
+                                    id="top-k-slider">
+                                <span class="text-gray-700 w-16 text-right" id="top-k-value">5</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">客服场景建议3-5，知识库场景建议5-10</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                相似度阈值 (0-1)
+                            </label>
+                            <div class="flex items-center space-x-4">
+                                <input type="range" min="0" max="1" value="0.7" step="0.01" class="range-slider flex-1"
+                                    id="similarity-slider">
+                                <span class="text-gray-700 w-16 text-right" id="similarity-value">0.7</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">低于此阈值的结果将被过滤，建议值：0.6-0.8</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                混合检索策略
+                            </label>
+                            <div class="bg-blue-50 rounded-md p-4 mb-3">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-gray-700 font-medium">语义检索权重</span>
+                                    <span class="text-gray-700" id="semantic-weight">70%</span>
+                                </div>
+                                <input type="range" min="0" max="100" value="70" class="range-slider"
+                                    id="semantic-weight-slider">
+
+                                <div class="flex items-center justify-between mt-4 mb-3">
+                                    <span class="text-gray-700 font-medium">关键词检索权重</span>
+                                    <span class="text-gray-700" id="keyword-weight">30%</span>
+                                </div>
+                                <input type="range" min="0" max="100" value="30" class="range-slider"
+                                    id="keyword-weight-slider" disabled>
+                            </div>
+                            <p class="text-xs text-gray-500">混合检索可平衡语义理解和关键词匹配的优势</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                检索结果重排序规则
+                            </label>
+                            <div class="space-y-1">
+                                <div class="flex items-center">
+                                    <span
+                                        class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2">1</span>
+                                    <span class="text-gray-700">相似度得分</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span
+                                        class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2">2</span>
+                                    <span class="text-gray-700">内容时效性</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span
+                                        class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2">3</span>
+                                    <span class="text-gray-700">业务优先级</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span
+                                        class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2">4</span>
+                                    <span class="text-gray-700">用户反馈得分</span>
+                                </div>
+                            </div>
+                            <button class="mt-3 text-sm text-blue-600 hover:text-blue-800">调整排序规则</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 业务场景Tab -->
+            <div class="tab-content" id="business-tab">
+                <div class="dify-card p-6 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-medium text-gray-800">业务场景优化配置</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-md font-medium text-gray-700 mb-3">业务优先级设置</h3>
+                            <p class="text-gray-500 mb-3 text-sm">配置不同业务内容在检索中的优先级权重</p>
+                            <div class="bg-gray-50 p-4 rounded-md mb-4">
+                                <div class="space-y-3">
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm font-medium text-gray-700">账单与还款</span>
+                                            <span class="text-sm text-blue-600">优先级: 高</span>
+                                        </div>
+                                        <input type="range" min="1" max="5" value="5" class="range-slider w-full">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm font-medium text-gray-700">分期业务</span>
+                                            <span class="text-sm text-blue-600">优先级: 高</span>
+                                        </div>
+                                        <input type="range" min="1" max="5" value="4" class="range-slider w-full">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm font-medium text-gray-700">权益与活动</span>
+                                            <span class="text-sm text-gray-600">优先级: 中</span>
+                                        </div>
+                                        <input type="range" min="1" max="5" value="3" class="range-slider w-full">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm font-medium text-gray-700">申卡流程</span>
+                                            <span class="text-sm text-gray-600">优先级: 中</span>
+                                        </div>
+                                        <input type="range" min="1" max="5" value="3" class="range-slider w-full">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm font-medium text-gray-700">额度管理</span>
+                                            <span class="text-sm text-gray-500">优先级: 低</span>
+                                        </div>
+                                        <input type="range" min="1" max="5" value="2" class="range-slider w-full">
+                                    </div>
+                                </div>
+                                <button class="mt-3 text-sm text-blue-600 hover:text-blue-800">+ 添加业务类型</button>
+                            </div>
+
+                            <h3 class="text-md font-medium text-gray-700 mb-3">业务术语映射</h3>
+                            <p class="text-gray-500 mb-3 text-sm">配置用户常用表述与正式业务术语的映射关系</p>
+                            <div class="border border-gray-200 rounded-md overflow-hidden">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th
+                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                用户常用表述</th>
+                                            <th
+                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                映射业务术语</th>
+                                            <th class="px-4 py-3 w-10"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">最低还款</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">最低还款额、最低还款金额</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-right text-sm">
+                                                <button class="text-gray-400 hover:text-gray-500">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                        xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                        </path>
+                                                    </svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">刷卡手续费</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">境外交易手续费、货币转换费</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-right text-sm">
+                                                <button class="text-gray-400 hover:text-gray-500">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                        xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                        </path>
+                                                    </svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">提额</td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">信用额度调整、信用卡额度提升
+                                            </td>
+                                            <td class="px-4 py-2 whitespace-nowrap text-right text-sm">
+                                                <button class="text-gray-400 hover:text-gray-500">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                        xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                        </path>
+                                                    </svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button class="mt-3 text-sm text-blue-600 hover:text-blue-800">+ 添加术语映射</button>
+                        </div>
+
+                        <div>
+                            <h3 class="text-md font-medium text-gray-700 mb-3">敏感信息过滤规则</h3>
+                            <p class="text-gray-500 mb-3 text-sm">配置文档中敏感个人信息的处理方式</p>
+                            <div class="bg-gray-50 p-4 rounded-md mb-4">
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-700">信用卡号码脱敏</span>
+                                        <label class="switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-700">CVV码完全过滤</span>
+                                        <label class="switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-700">身份证号脱敏</span>
+                                        <label class="switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-700">手机号码脱敏</span>
+                                        <label class="switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-700">账单详情脱敏</span>
+                                        <label class="switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h3 class="text-md font-medium text-gray-700 mb-3">必须包含信息</h3>
+                            <p class="text-gray-500 mb-3 text-sm">配置在回答中必须包含的合规提示和风险提示</p>
+                            <div class="bg-gray-50 p-4 rounded-md">
+                                <div class="mb-3">
+                                    <textarea
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        rows="3"
+                                        placeholder="添加必须包含的信息...">根据《银行卡业务管理办法》，信用卡透支利率上限为日利率万分之五，相当于年化利率18.25%。请您按照账单日期及时还款，避免产生额外利息。</textarea>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button
+                                        class="dify-btn bg-white border border-gray-300 text-gray-700 px-3 py-1 text-sm">添加</button>
+                                    <button
+                                        class="dify-btn bg-white border border-gray-300 text-gray-700 px-3 py-1 text-sm">保存</button>
+                                    <button
+                                        class="dify-btn bg-white border border-gray-300 text-gray-700 px-3 py-1 text-sm">取消</button>
+                                </div>
+                            </div>
+
+                            <h3 class="text-md font-medium text-gray-700 mt-4 mb-3">检索性能配置</h3>
+                            <p class="text-gray-500 mb-3 text-sm">平衡检索速度与准确性的配置</p>
+                            <div class="bg-gray-50 p-4 rounded-md">
+                                <div class="mb-3">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-sm font-medium">检索速度与准确性平衡</span>
+                                        <span class="text-sm text-blue-600">偏向准确性</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 mr-2">速度</span>
+                                        <input type="range" min="1" max="10" value="7" class="range-slider flex-1">
+                                        <span class="text-xs text-gray-500 ml-2">准确性</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-sm font-medium">缓存策略</span>
+                                    </div>
+                                    <select
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="none">不使用缓存</option>
+                                        <option value="light">轻度缓存（高频问题）</option>
+                                        <option value="medium" selected>中度缓存（平衡策略）</option>
+                                        <option value="heavy">重度缓存（优先速度）</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 质量优化Tab -->
+            <div class="tab-content" id="quality-tab">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 知识时效性管理 Card -->
+                    <div class="dify-card p-6">
+                        <h2 class="text-lg font-medium text-gray-800 mb-4">知识时效性管理</h2>
+                        <p class="text-gray-500 mb-4 text-sm">管理文档内容的时效性、过期内容的处理策略</p>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                内容时效性权重
+                            </label>
+                            <div class="flex items-center space-x-4">
+                                <input type="range" min="0" max="100" value="60" step="5" class="range-slider flex-1"
+                                    id="timeliness-slider">
+                                <span class="text-gray-700 w-16 text-right" id="timeliness-value">60%</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">影响检索结果排序的时效性因素权重</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                过期内容处理策略
+                            </label>
+                            <select
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="hide">完全隐藏</option>
+                                <option value="mark" selected>标记为过期但仍可检索</option>
+                                <option value="reduce">降低检索权重</option>
+                                <option value="archive">自动归档</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">客服场景建议"标记为过期"，保留历史知识可追溯性</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                政策法规更新处理
+                            </label>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600 text-sm">新政策自动高优先级</span>
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600 text-sm">过期政策自动标记</span>
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600 text-sm">保留政策变更历史</span>
+                                    <label class="switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                季节性内容管理
+                            </label>
+                            <div class="bg-gray-50 p-3 rounded-md">
+                                <div class="mb-2 pb-2 border-b border-gray-200">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600 text-sm">年度理财产品</span>
+                                        <span class="dify-tag bg-green-50 text-green-600">活跃</span>
+                                    </div>
+                                </div>
+                                <div class="mb-2 pb-2 border-b border-gray-200">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600 text-sm">春节特别活动</span>
+                                        <span class="dify-tag bg-gray-100 text-gray-600">待激活</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600 text-sm">暑期留学金融服务</span>
+                                        <span class="dify-tag bg-yellow-50 text-yellow-600">即将结束</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="mt-3 text-sm text-blue-600 hover:text-blue-800">管理季节性内容</button>
+                        </div>
+                    </div>
+
+                    <!-- 结果质量优化 Card -->
+                    <div class="dify-card p-6">
+                        <h2 class="text-lg font-medium text-gray-800 mb-4">结果质量优化</h2>
+                        <p class="text-gray-500 mb-4 text-sm">提高检索结果的质量、相关性和可用性</p>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                重要信息强制展示规则
+                            </label>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <span class="text-gray-700 text-sm">监管合规提示</span>
+                                        <span class="ml-2 dify-tag bg-red-50 text-red-600">必须</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <span class="text-gray-700 text-sm">风险提示声明</span>
+                                        <span class="ml-2 dify-tag bg-red-50 text-red-600">必须</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <span class="text-gray-700 text-sm">重点产品推荐</span>
+                                        <span class="ml-2 dify-tag bg-orange-50 text-orange-600">建议</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                用户反馈调整机制
+                            </label>
+                            <select
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="none">不使用用户反馈</option>
+                                <option value="light" selected>轻度影响（权重10%）</option>
+                                <option value="medium">中度影响（权重30%）</option>
+                                <option value="heavy">重度影响（权重50%）</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">用户反馈如何影响未来相同问题的检索结果排序</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                常见问题直接回答
+                            </label>
+                            <div class="rounded-md bg-gray-50 p-4">
+                                <div class="text-sm text-gray-700 mb-3">
+                                    配置高频问题的预设回答，无需检索即可直接响应
+                                </div>
+                                <div class="border-t border-gray-200 pt-3">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-gray-600 font-medium">已配置FAQ数量</span>
+                                        <span
+                                            class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-medium">128</span>
+                                    </div>
+                                    <div class="flex">
+                                        <button class="text-sm text-blue-600 hover:text-blue-800 mr-4">查看FAQ列表</button>
+                                        <button class="text-sm text-blue-600 hover:text-blue-800">添加FAQ</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                检索质量监控
+                            </label>
+                            <div class="bg-gray-50 p-4 rounded-md">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-gray-700 text-sm">平均检索相关性得分</span>
+                                    <div class="text-green-600 font-medium">0.82</div>
+                                </div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-gray-700 text-sm">用户满意度评分</span>
+                                    <div class="text-green-600 font-medium">4.7/5</div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-700 text-sm">无答案比例</span>
+                                    <div class="text-yellow-600 font-medium">3.2%</div>
+                                </div>
+                                <button
+                                    class="mt-3 text-sm text-blue-600 hover:text-blue-800 w-full text-center">查看详细检索质量报告</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab切换
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.dataset.tab;
+
+                    // 移除所有活跃状态
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+
+                    // 设置当前活跃
+                    button.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+
+            // 滑块值更新
+            const updateSliderValue = (sliderId, valueId, unit = '') => {
+                const slider = document.getElementById(sliderId);
+                const valueDisplay = document.getElementById(valueId);
+
+                if (slider && valueDisplay) {
+                    valueDisplay.textContent = slider.value + unit;
+                    slider.addEventListener('input', () => {
+                        valueDisplay.textContent = slider.value + unit;
+                    });
+                }
+            };
+
+            // 初始化各个滑块值显示
+            updateSliderValue('chunk-size-slider', 'chunk-size-value');
+            updateSliderValue('top-k-slider', 'top-k-value');
+            updateSliderValue('similarity-slider', 'similarity-value');
+            updateSliderValue('timeliness-slider', 'timeliness-value', '%');
+
+            // 混合检索策略滑块联动
+            const semanticSlider = document.getElementById('semantic-weight-slider');
+            const keywordSlider = document.getElementById('keyword-weight-slider');
+            const semanticWeight = document.getElementById('semantic-weight');
+            const keywordWeight = document.getElementById('keyword-weight');
+
+            if (semanticSlider && keywordSlider && semanticWeight && keywordWeight) {
+                semanticSlider.addEventListener('input', () => {
+                    const value = semanticSlider.value;
+                    semanticWeight.textContent = value + '%';
+                    keywordWeight.textContent = (100 - value) + '%';
+                    keywordSlider.value = 100 - value;
+                });
+            }
+
+            // 模型卡片选择
+            const modelCards = document.querySelectorAll('.model-card');
+            modelCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // 找到同组的所有卡片
+                    const group = this.parentElement.querySelectorAll('.model-card');
+                    
+                    // 移除其他卡片的选中状态
+                    group.forEach(c => {
+                        if (c !== this) {
+                            c.classList.remove('selected');
+                            const radioBtn = c.querySelector('.w-5');
+                            if (radioBtn) {
+                                radioBtn.classList.remove('border-blue-600');
+                                radioBtn.classList.add('border-gray-300');
+                                radioBtn.querySelector('.w-3').classList.remove('bg-blue-600');
+                                radioBtn.querySelector('.w-3').classList.add('bg-white');
+                            }
+                        }
+                    });
+                    
+                    // 添加当前卡片的选中状态
+                    this.classList.add('selected');
+                    const radioBtn = this.querySelector('.w-5');
+                    if (radioBtn) {
+                        radioBtn.classList.remove('border-gray-300');
+                        radioBtn.classList.add('border-blue-600');
+                        radioBtn.querySelector('.w-3').classList.remove('bg-white');
+                        radioBtn.querySelector('.w-3').classList.add('bg-blue-600');
+                    }
+                });
+            });
+
+            // 调试评估效果按钮
+            document.getElementById('preview-effect-btn').addEventListener('click', function() {
+                // 模拟跳转到评估效果页面
+                window.location.href = "evaluation.html";
+            });
+        });
+    </script>
+</body>
+
+</html>

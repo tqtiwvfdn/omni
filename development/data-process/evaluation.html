@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智言银行后台管理端 - 评估效果</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+            background-color: #f9fafb;
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background-color: #D1FAE5;
+            color: #047857;
+        }
+
+        .badge-warning {
+            background-color: #FEF3C7;
+            color: #B45309;
+        }
+
+        .badge-pending {
+            background-color: #E0E7FF;
+            color: #4F46E5;
+        }
+
+        .badge-danger {
+            background-color: #FEE2E2;
+            color: #B91C1C;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .steps-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 16px;
+            height: 2px;
+            background-color: #E5E7EB;
+            z-index: -1;
+        }
+
+        .steps-line-progress {
+            position: absolute;
+            left: 0;
+            top: 16px;
+            height: 2px;
+            background-color: #2970FF;
+            z-index: -1;
+            transition: width 0.3s ease;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 120px;
+        }
+
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .step-title {
+            font-size: 14px;
+            text-align: center;
+            color: #6B7280;
+            transition: all 0.3s ease;
+        }
+
+        .step-item.completed .step-circle {
+            background-color: #2970FF;
+            color: white;
+        }
+
+        .step-item.completed .step-title {
+            color: #2970FF;
+        }
+
+        .step-item.active .step-circle {
+            background-color: #2970FF;
+            color: white;
+        }
+
+        .step-item.active .step-title {
+            color: #2970FF;
+            font-weight: 500;
+        }
+
+        .step-item.inactive .step-circle {
+            background-color: #F3F4F6;
+            color: #9CA3AF;
+            border: 1px solid #E5E7EB;
+        }
+
+        .test-item {
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .test-item:hover {
+            background-color: #F9FAFB;
+        }
+
+        .chat-message {
+            max-width: 70%;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+        }
+
+        .chat-user {
+            background-color: #F3F4F6;
+            margin-left: auto;
+            border-top-right-radius: 2px;
+        }
+
+        .chat-bot {
+            background-color: #EBF5FF;
+            border-top-left-radius: 2px;
+        }
+
+        .test-query-input {
+            resize: none;
+            overflow: hidden;
+            min-height: 50px;
+        }
+
+        .test-query-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        }
+
+        /* 模拟加载效果的动画 */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .loading {
+            animation: pulse 1.5s infinite;
+            background-color: #EBF5FF;
+        }
+
+        .analysis-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #E5E7EB;
+            margin-bottom: 6px;
+        }
+
+        .analysis-bar-progress {
+            height: 100%;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="container mx-auto py-6 px-4">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex items-center mb-2">
+                <a href="scenario-detail.html" class="text-gray-500 hover:text-blue-600 mr-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+                <h1 class="text-2xl font-semibold text-gray-800">智能客服向量检索 - 评估效果</h1>
+                <span class="ml-3 dify-tag badge-warning">测试中</span>
+            </div>
+            <p class="text-gray-600">调试并评估当前配置的向量检索效果和性能</p>
+        </div>
+
+        <!-- 进度步骤条 -->
+        <div class="dify-card p-6 mb-6">
+            <div class="steps">
+                <div class="steps-line"></div>
+                <div class="steps-line-progress" style="width: 75%;"></div>
+                
+                <div class="step-item completed">
+                    <div class="step-circle">1</div>
+                    <div class="step-title">选择模板</div>
+                </div>
+                
+                <div class="step-item completed">
+                    <div class="step-circle">2</div>
+                    <div class="step-title">个性化配置</div>
+                </div>
+                
+                <div class="step-item active">
+                    <div class="step-circle">3</div>
+                    <div class="step-title">评估效果</div>
+                </div>
+                
+                <div class="step-item inactive">
+                    <div class="step-circle">4</div>
+                    <div class="step-title">发布应用</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主测试区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 左侧测试栏 -->
+            <div class="lg:col-span-2">
+                <div class="dify-card p-6 mb-6">
+                    <h2 class="text-lg font-medium text-gray-800 mb-4">检索效果测试</h2>
+
+                    <!-- 测试输入区域 -->
+                    <div class="border border-gray-200 rounded-lg p-4 mb-4">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">测试问题</label>
+                            <div class="border border-gray-300 rounded-lg overflow-hidden">
+                                <textarea id="test-query"
+                                    class="test-query-input w-full px-3 py-2 border-none focus:border-blue-500"
+                                    placeholder="输入您想测试的问题..." rows="2"></textarea>
+                                <div class="px-3 py-2 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+                                    <div>
+                                        <select class="text-xs border border-gray-300 rounded px-2 py-1">
+                                            <option value="default">默认测试</option>
+                                            <option value="specific">特定业务场景</option>
+                                            <option value="edge">边界问题</option>
+                                            <option value="challenge">挑战问题</option>
+                                        </select>
+                                    </div>
+                                    <button id="test-run-btn" class="dify-btn px-3 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700">
+                                        运行测试
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 内置测试示例 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">快速测试示例</label>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="test-example-btn px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200">
+                                    信用卡分期手续费怎么计算？
+                                </button>
+                                <button class="test-example-btn px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200">
+                                    我的信用卡额度太低如何提高？
+                                </button>
+                                <button class="test-example-btn px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200">
+                                    怎么查询账单明细？
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 测试结果区域 - 默认隐藏，测试后显示 -->
+                    <div id="test-result" class="hidden">
+                        <!-- 检索结果展示 -->
+                        <div class="border border-gray-200 rounded-lg p-4 mb-4">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-medium text-gray-800">检索文本块</h3>
+                                <span class="text-sm text-gray-600">召回<span class="font-medium">5</span>条结果</span>
+                            </div>
+
+                            <div class="space-y-3">
+                                <!-- 检索结果项 -->
+                                <div class="test-item p-3 border border-gray-200 rounded-lg">
+                                    <div class="flex justify-between mb-2">
+                                        <div class="flex items-center">
+                                            <span class="dify-tag bg-blue-50 text-blue-700 mr-2">Top 1</span>
+                                            <span class="text-sm text-gray-700">信用卡分期费用说明</span>
+                                        </div>
+                                        <div class="text-sm font-medium text-green-600">相似度: 0.92</div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2">
+                                        信用卡分期手续费的计算公式为：手续费=分期本金×手续费率×期数。我行信用卡分期业务手续费率为0.7%/月，最低0.7%起。例如，您申请10,000元分3期，手续费=10000×0.7%×3=210元。手续费将在首期账单一次性收取。请注意，部分营销活动期间可能有特殊费率，以实际分期申请页面展示为准。
+                                    </p>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-500">来源: 信用卡产品手册-2025版</span>
+                                        <span class="text-gray-500">更新时间: 2025-03-10</span>
+                                    </div>
+                                </div>
+
+                                <div class="test-item p-3 border border-gray-200 rounded-lg">
+                                    <div class="flex justify-between mb-2">
+                                        <div class="flex items-center">
+                                            <span class="dify-tag bg-blue-50 text-blue-700 mr-2">Top 2</span>
+                                            <span class="text-sm text-gray-700">分期业务费率表</span>
+                                        </div>
+                                        <div class="text-sm font-medium text-green-600">相似度: 0.88</div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2">
+                                        信用卡分期业务费率表（2025年4月更新）：
+                                        1. 账单分期：手续费率0.7%/月，3/6/9/12/18/24期可选
+                                        2. 消费分期：手续费率0.7%/月，3/6/9/12/18/24期可选
+                                        3. 现金分期：手续费率0.7%/月+1%手续费，3/6/9/12/18/24期可选
+                                        4. 大额分期：手续费率0.6%/月（5万元以上专享），6/12/24/36期可选
+                                    </p>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-500">来源: 信用卡费率表</span>
+                                        <span class="text-gray-500">更新时间: 2025-04-01</span>
+                                    </div>
+                                </div>
+
+                                <div class="test-item p-3 border border-gray-200 rounded-lg">
+                                    <div class="flex justify-between mb-2">
+                                        <div class="flex items-center">
+                                            <span class="dify-tag bg-blue-50 text-blue-700 mr-2">Top 3</span>
+                                            <span class="text-sm text-gray-700">分期业务说明</span>
+                                        </div>
+                                        <div class="text-sm font-medium text-green-600">相似度: 0.78</div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2">
+                                        信用卡分期是指持卡人可将大额消费或账单金额分散到多个账单期内偿还的业务。申请分期后，原消费金额将转为分期本金，分期手续费在首期一次性收取。若客户提前清偿分期欠款，已收取的手续费不予退还。分期申请后无法撤销，请谨慎选择。
+                                    </p>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-500">来源: 信用卡业务指南</span>
+                                        <span class="text-gray-500">更新时间: 2025-02-20</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 text-right">
+                                <button class="text-sm text-blue-600 hover:text-blue-800">查看全部结果</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 模拟对话展示 -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-medium text-gray-800">AI回答结果</h3>
+                                <span class="text-xs text-gray-500">检索延迟: 165ms</span>
+                            </div>
+
+                            <div class="space-y-3 mb-4">
+                                <div class="chat-message chat-user">
+                                    <p class="text-sm">信用卡分期手续费怎么计算？</p>
+                                </div>
+                                
+                                <div class="chat-message chat-bot">
+                                    <p class="text-sm">信用卡分期手续费的计算公式是：手续费 = 分期本金 × 手续费率 × 期数。</p>
+                                    <p class="text-sm mt-2">我行信用卡分期业务的手续费率为0.7%/月，所以如果您申请10,000元分3期，计算如下：</p>
+                                    <p class="text-sm mt-2">手续费 = 10,000元 × 0.7% × 3 = 210元</p>
+                                    <p class="text-sm mt-2">手续费会在首期账单中一次性收取。请注意，某些营销活动期间可能会有特殊优惠费率，具体以您申请分期时页面显示的费率为准。</p>
+                                    <p class="text-sm mt-2 text-gray-500">根据《银行卡业务管理办法》，信用卡透支利率上限为日利率万分之五，相当于年化利率18.25%。请您按照账单日期及时还款，避免产生额外利息。</p>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-gray-200 pt-3 flex justify-between items-center">
+                                <div class="flex space-x-2">
+                                    <button class="px-2 py-1 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50">重新生成</button>
+                                    <button class="px-2 py-1 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50">查看引用来源</button>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <div>评价结果:</div>
+                                    <button class="ml-2 text-green-600 hover:text-green-700">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
+                                        </svg>
+                                    </button>
+                                    <button class="ml-1 text-gray-400 hover:text-gray-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧分析面板 -->
+            <div class="lg:col-span-1">
+                <div class="dify-card p-6 mb-6">
+                    <h2 class="text-lg font-medium text-gray-800 mb-4">检索性能分析</h2>
+                    
+                    <div id="performance-metrics" class="space-y-4">
+                        <!-- 性能指标 -->
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-gray-600">相关性得分</span>
+                                <span class="text-sm font-medium text-green-600">0.92</span>
+                            </div>
+                            <div class="analysis-bar">
+                                <div class="analysis-bar-progress bg-green-500" style="width: 92%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-gray-600">时效性得分</span>
+                                <span class="text-sm font-medium text-green-600">0.98</span>
+                            </div>
+                            <div class="analysis-bar">
+                                <div class="analysis-bar-progress bg-green-500" style="width: 98%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-gray-600">覆盖率</span>
+                                <span class="text-sm font-medium text-green-600">0.85</span>
+                            </div>
+                            <div class="analysis-bar">
+                                <div class="analysis-bar-progress bg-green-500" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-gray-600">提取准确率</span>
+                                <span class="text-sm font-medium text-green-600">0.88</span>
+                            </div>
+                            <div class="analysis-bar">
+                                <div class="analysis-bar-progress bg-green-500" style="width: 88%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-gray-600">回答完整性</span>
+                                <span class="text-sm font-medium text-green-600">0.95</span>
+                            </div>
+                            <div class="analysis-bar">
+                                <div class="analysis-bar-progress bg-green-500" style="width: 95%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-gray-600">检索延迟</span>
+                                <span class="text-sm font-medium text-yellow-600">165ms</span>
+                            </div>
+                            <div class="analysis-bar">
+                                <div class="analysis-bar-progress bg-yellow-500" style="width: 75%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-medium text-gray-700">总体评分</span>
+                            <span class="text-lg font-semibold text-green-600">4.6/5.0</span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            检索效果整体优秀，时效性和完整性表现突出，检索延迟可进一步优化。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dify-card p-6 mb-6">
+                    <h2 class="text-lg font-medium text-gray-800 mb-4">优化建议</h2>
+                    
+                    <div class="space-y-3">
+                        <div class="p-3 border border-gray-200 rounded-lg">
+                            <div class="flex items-center mb-1">
+                                <span class="dify-tag badge-success mr-2">建议</span>
+                                <h3 class="text-sm font-medium text-gray-800">缓存热门问题</h3>
+                            </div>
+                            <p class="text-sm text-gray-600">
+                                该问题是高频查询，建议添加到缓存中以提高响应速度。
+                            </p>
+                        </div>
+                        
+                        <div class="p-3 border border-gray-200 rounded-lg">
+                            <div class="flex items-center mb-1">
+                                <span class="dify-tag badge-warning mr-2">建议</span>
+                                <h3 class="text-sm font-medium text-gray-800">增加业务示例</h3>
+                            </div>
+                            <p class="text-sm text-gray-600">
+                                可以在回答中增加更多实际计算示例，帮助用户理解分期费用。
+                            </p>
+                        </div>
+                        
+                        <div class="p-3 border border-gray-200 rounded-lg">
+                            <div class="flex items-center mb-1">
+                                <span class="dify-tag badge-success mr-2">建议</span>
+                                <h3 class="text-sm font-medium text-gray-800">提高检索速度</h3>
+                            </div>
+                            <p class="text-sm text-gray-600">
+                                增加语义检索权重(70%→80%)可能会提高检索速度，建议测试影响。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button class="dify-btn px-4 py-2 w-full bg-blue-600 text-white hover:bg-blue-700">
+                            应用优化建议
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dify-card p-6">
+                    <h2 class="text-lg font-medium text-gray-800 mb-4">批量测试</h2>
+                    
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-600 mb-3">
+                            通过预设测试集评估向量检索性能和稳定性
+                        </p>
+                        <div class="flex space-x-2 mb-4">
+                            <select class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="credit-card">信用卡业务测试集 (50题)</option>
+                                <option value="loan">贷款业务测试集 (40题)</option>
+                                <option value="edge">边界问题测试集 (30题)</option>
+                                <option value="custom">自定义测试集</option>
+                            </select>
+                            <button class="dify-btn px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                                上传
+                            </button>
+                        </div>
+                        <button class="dify-btn px-4 py-2 w-full bg-blue-600 text-white hover:bg-blue-700">
+                            开始批量测试
+                        </button>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-3">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700">历史测试记录</span>
+                            <button class="text-xs text-blue-600 hover:text-blue-800">查看全部</button>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center text-sm">
+                                <div class="text-gray-600">信用卡测试集</div>
+                                <div class="flex items-center">
+                                    <span class="text-green-600 font-medium mr-2">4.7</span>
+                                    <span class="text-xs text-gray-500">05-12</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <div class="text-gray-600">贷款业务测试集</div>
+                                <div class="flex items-center">
+                                    <span class="text-green-600 font-medium mr-2">4.3</span>
+                                    <span class="text-xs text-gray-500">05-10</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <div class="text-gray-600">边界问题测试集</div>
+                                <div class="flex items-center">
+                                    <span class="text-yellow-600 font-medium mr-2">3.8</span>
+                                    <span class="text-xs text-gray-500">05-08</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部操作栏 -->
+        <div class="flex justify-between items-center mt-6">
+            <button class="dify-btn px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                返回配置页面
+            </button>
+            <div class="flex space-x-3">
+                <button class="dify-btn px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                    保存为测试版本
+                </button>
+                <button class="dify-btn px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">
+                    继续发布应用
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const testQuery = document.getElementById('test-query');
+            const testRunBtn = document.getElementById('test-run-btn');
+            const testResult = document.getElementById('test-result');
+            const performanceMetrics = document.getElementById('performance-metrics');
+            const testExampleBtns = document.querySelectorAll('.test-example-btn');
+            
+            // 隐藏性能指标，直到测试运行
+            performanceMetrics.style.opacity = '0.5';
+            
+            // 测试示例按钮点击事件
+            testExampleBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    testQuery.value = this.textContent.trim();
+                    testQuery.style.height = 'auto';
+                    testQuery.style.height = (testQuery.scrollHeight) + 'px';
+                });
+            });
+            
+            // 自动调整文本区域高度
+            testQuery.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+            
+            // 运行测试按钮点击事件
+            testRunBtn.addEventListener('click', function() {
+                if (!testQuery.value.trim()) {
+                    alert('请输入测试问题');
+                    return;
+                }
+                
+                // 显示加载动画
+                this.disabled = true;
+                this.innerHTML = '<span class="inline-block animate-pulse">处理中...</span>';
+                
+                // 模拟加载延迟
+                setTimeout(() => {
+                    // 显示测试结果和性能指标
+                    testResult.classList.remove('hidden');
+                    performanceMetrics.style.opacity = '1';
+                    
+                    // 恢复按钮状态
+                    this.disabled = false;
+                    this.innerHTML = '运行测试';
+                    
+                    // 滚动到结果区域
+                    testResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 1500);
+            });
+            
+            // 返回配置页面按钮点击事件
+            document.querySelector('button:contains("返回配置页面")').addEventListener('click', function() {
+                window.location.href = "scenario-detail.html";
+            });
+            
+            // 继续发布应用按钮点击事件
+            document.querySelector('button:contains("继续发布应用")').addEventListener('click', function() {
+                // 模拟跳转到发布页面
+                alert('将跳转到发布应用页面');
+            });
+        });
+        
+        // 辅助函数：按内容查找元素
+        HTMLElement.prototype.contains = function(text) {
+            return this.textContent.includes(text);
+        };
+    </script>
+</body>
+
+</html>

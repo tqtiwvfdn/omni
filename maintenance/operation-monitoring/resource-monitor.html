@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资源监控 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .resource-gauge {
+            position: relative;
+            display: inline-block;
+            width: 100px;
+            height: 50px;
+            overflow: hidden;
+        }
+
+        .resource-gauge .gauge-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            border-radius: 100px 100px 0 0;
+            background-color: #f3f4f6;
+        }
+
+        .resource-gauge .gauge-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #10B981;
+            border-radius: 0 0 100px 100px;
+            transition: height 0.5s ease;
+        }
+
+        .resource-gauge .gauge-text {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .resource-gauge.warning .gauge-fill {
+            background-color: #F59E0B;
+        }
+
+        .resource-gauge.danger .gauge-fill {
+            background-color: #EF4444;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .status-normal {
+            background-color: #10B981;
+        }
+
+        .status-warning {
+            background-color: #F59E0B;
+        }
+
+        .status-critical {
+            background-color: #EF4444;
+        }
+
+        .usage-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #f3f4f6;
+            overflow: hidden;
+        }
+
+        .usage-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background-color: var(--dify-primary);
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="p-6">
+        <!-- Page Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-800">资源监控</h1>
+                <p class="text-gray-600 mt-1">监控AI系统的硬件资源和基础设施使用情况</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="bg-white border border-gray-200 rounded-lg px-3 py-2 flex items-center space-x-2">
+                    <span class="text-sm text-gray-600">更新间隔:</span>
+                    <select class="text-sm border-0 focus:ring-0 text-gray-800 font-medium">
+                        <option>30秒</option>
+                        <option>1分钟</option>
+                        <option selected>5分钟</option>
+                        <option>15分钟</option>
+                    </select>
+                </div>
+                <button class="dify-btn px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium">
+                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                    刷新
+                </button>
+                <button
+                    class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    添加监控
+                </button>
+            </div>
+        </div>
+
+        <!-- Period Selection -->
+        <div class="mb-6 flex items-center bg-white rounded-lg shadow-sm p-2 inline-block">
+            <button class="px-4 py-2 rounded-md text-sm font-medium bg-blue-50 text-blue-600">实时</button>
+            <button class="px-4 py-2 rounded-md text-sm font-medium text-gray-600">今日</button>
+            <button class="px-4 py-2 rounded-md text-sm font-medium text-gray-600">本周</button>
+            <button class="px-4 py-2 rounded-md text-sm font-medium text-gray-600">本月</button>
+            <button class="px-4 py-2 rounded-md text-sm font-medium text-gray-600">
+                <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                自定义
+            </button>
+        </div>
+
+        <!-- Overall Resource Status -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <!-- CPU Status -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">CPU 使用率</h3>
+                    <div class="dify-tag bg-green-50 text-green-600">正常</div>
+                </div>
+                <div class="flex items-center">
+                    <div class="resource-gauge">
+                        <div class="gauge-bg"></div>
+                        <div class="gauge-fill" style="height: 30px;"></div>
+                        <div class="gauge-text">36%</div>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm text-gray-600">平均值: <span class="font-medium text-gray-800">36%</span></div>
+                        <div class="text-sm text-gray-600">峰值: <span class="font-medium text-gray-800">58%</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memory Status -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">内存使用率</h3>
+                    <div class="dify-tag bg-yellow-50 text-yellow-600">注意</div>
+                </div>
+                <div class="flex items-center">
+                    <div class="resource-gauge warning">
+                        <div class="gauge-bg"></div>
+                        <div class="gauge-fill" style="height: 65px;"></div>
+                        <div class="gauge-text">75%</div>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm text-gray-600">已用: <span class="font-medium text-gray-800">45GB</span></div>
+                        <div class="text-sm text-gray-600">总计: <span class="font-medium text-gray-800">64GB</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GPU Status -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">GPU 使用率</h3>
+                    <div class="dify-tag bg-green-50 text-green-600">正常</div>
+                </div>
+                <div class="flex items-center">
+                    <div class="resource-gauge">
+                        <div class="gauge-bg"></div>
+                        <div class="gauge-fill" style="height: 40px;"></div>
+                        <div class="gauge-text">42%</div>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm text-gray-600">平均值: <span class="font-medium text-gray-800">42%</span></div>
+                        <div class="text-sm text-gray-600">峰值: <span class="font-medium text-gray-800">68%</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Storage Status -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">存储使用率</h3>
+                    <div class="dify-tag bg-red-50 text-red-600">警告</div>
+                </div>
+                <div class="flex items-center">
+                    <div class="resource-gauge danger">
+                        <div class="gauge-bg"></div>
+                        <div class="gauge-fill" style="height: 85px;"></div>
+                        <div class="gauge-text">85%</div>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm text-gray-600">已用: <span class="font-medium text-gray-800">3.4TB</span></div>
+                        <div class="text-sm text-gray-600">总计: <span class="font-medium text-gray-800">4TB</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resource Usage Trends -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- CPU Usage Graph -->
+            <div class="dify-card p-6 bg-white">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">CPU 使用率趋势</h3>
+                <div class="aspect-[16/9] bg-gray-50 rounded-lg flex items-center justify-center">
+                    <!-- 实际项目中这里应该是一个图表组件 -->
+                    <div class="text-gray-400">CPU使用率历史趋势图</div>
+                </div>
+                <div class="mt-4 grid grid-cols-3 gap-2">
+                    <div class="text-center">
+                        <div class="text-sm text-gray-500">平均使用率</div>
+                        <div class="text-lg font-medium text-gray-800">36%</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-sm text-gray-500">CPU核心数</div>
+                        <div class="text-lg font-medium text-gray-800">48</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-sm text-gray-500">主频</div>
+                        <div class="text-lg font-medium text-gray-800">3.2GHz</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memory Usage Graph -->
+            <div class="dify-card p-6 bg-white">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">内存使用率趋势</h3>
+                <div class="aspect-[16/9] bg-gray-50 rounded-lg flex items-center justify-center">
+                    <!-- 实际项目中这里应该是一个图表组件 -->
+                    <div class="text-gray-400">内存使用率历史趋势图</div>
+                </div>
+                <div class="mt-4 grid grid-cols-3 gap-2">
+                    <div class="text-center">
+                        <div class="text-sm text-gray-500">已用内存</div>
+                        <div class="text-lg font-medium text-gray-800">45GB</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-sm text-gray-500">总内存</div>
+                        <div class="text-lg font-medium text-gray-800">64GB</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-sm text-gray-500">交换区</div>
+                        <div class="text-lg font-medium text-gray-800">16GB</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Server Resources List -->
+        <div class="dify-card bg-white overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="text-lg font-medium text-gray-800">服务器资源列表</h3>
+                <div class="flex items-center space-x-2">
+                    <div class="relative">
+                        <input type="text" placeholder="搜索服务器..."
+                            class="pl-8 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+                        <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-gray-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <select
+                        class="border border-gray-200 rounded-lg text-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500">
+                        <option>全部资源</option>
+                        <option>CPU服务器</option>
+                        <option>GPU服务器</option>
+                        <option>存储服务器</option>
+                    </select>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    服务器名称</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    类型</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    状态</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    CPU利用率</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    内存利用率</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    磁盘利用率</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    网络带宽</th>
+                                <th
+                                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <!-- Server 1 -->
+                            <tr>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">prod-ai-server-01</div>
+                                    <div class="text-xs text-gray-500">192.168.1.101</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">AI计算服务器</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="status-indicator status-normal"></div>
+                                        <span class="text-sm text-gray-500">正常</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">32%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 32%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">64%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 64%; background-color: #F59E0B;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">42%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 42%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">2.1 GB/s</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">重启</a>
+                                </td>
+                            </tr>
+
+                            <!-- Server 2 -->
+                            <tr>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">prod-gpu-server-01</div>
+                                    <div class="text-xs text-gray-500">192.168.1.102</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">GPU计算服务器</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="status-indicator status-normal"></div>
+                                        <span class="text-sm text-gray-500">正常</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">28%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 28%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">52%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 52%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">55%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 55%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">3.4 GB/s</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">重启</a>
+                                </td>
+                            </tr>
+
+                            <!-- Server 3 -->
+                            <tr>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">prod-storage-server-01</div>
+                                    <div class="text-xs text-gray-500">192.168.1.103</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">存储服务器</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="status-indicator status-critical"></div>
+                                        <span class="text-sm text-gray-500">警告</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">15%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 15%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">48%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 48%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">92%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 92%; background-color: #EF4444;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">1.8 GB/s</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">重启</a>
+                                </td>
+                            </tr>
+
+                            <!-- Server 4 -->
+                            <tr>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">prod-db-server-01</div>
+                                    <div class="text-xs text-gray-500">192.168.1.104</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">数据库服务器</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="status-indicator status-warning"></div>
+                                        <span class="text-sm text-gray-500">注意</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">75%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 75%; background-color: #F59E0B;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">82%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 82%; background-color: #F59E0B;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">68%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 68%; background-color: #F59E0B;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">1.2 GB/s</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">重启</a>
+                                </td>
+                            </tr>
+
+                            <!-- Server 5 -->
+                            <tr>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">prod-ai-server-02</div>
+                                    <div class="text-xs text-gray-500">192.168.1.105</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">AI计算服务器</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="status-indicator status-normal"></div>
+                                        <span class="text-sm text-gray-500">正常</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">45%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 45%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">52%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 52%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 mb-1">38%</div>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width: 38%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">2.5 GB/s</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">重启</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex items-center justify-between mt-6">
+                    <div class="text-sm text-gray-600">显示 1 至 5，共 12 条</div>
+                    <div class="flex items-center space-x-2">
+                        <button class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-500">上一页</button>
+                        <button
+                            class="px-3 py-1 border border-blue-500 bg-blue-50 rounded text-sm text-blue-600">1</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-500">2</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-500">3</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-500">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI模型资源分配 -->
+        <div class="dify-card bg-white overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h3 class="text-lg font-medium text-gray-800">AI模型资源分配</h3>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    模型名称</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    资源池</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    服务节点</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    GPU分配</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    内存分配</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    状态</th>
+                                <th
+                                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <!-- Model 1 -->
+                            <tr>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">银行通用大模型</div>
+                                    <div class="text-xs text-gray-500">bank-llm-v2</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">高性能计算池</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">4</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">8 x A100</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">128GB</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">运行中</span>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">调整</a>
+                                </td>
+                            </tr>
+
+                            <!-- Model 2 -->
+                            <tr>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">风控模型</div>
+                                    <div class="text-xs text-gray-500">risk-control-v3</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">标准计算池</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">2</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">4 x T4</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">64GB</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">运行中</span>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">调整</a>
+                                </td>
+                            </tr>
+
+                            <!-- Model 3 -->
+                            <tr>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">交易分析模型</div>
+                                    <div class="text-xs text-gray-500">transaction-analytics-v1</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">高性能计算池</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">2</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">4 x A100</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">96GB</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">服务降级</span>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">调整</a>
+                                </td>
+                            </tr>
+
+                            <!-- Model 4 -->
+                            <tr>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">客户服务助手</div>
+                                    <div class="text-xs text-gray-500">customer-service-assistant-v2</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">标准计算池</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">3</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">6 x T4</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">48GB</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">运行中</span>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">调整</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 这里可以添加交互逻辑，如刷新数据、点击操作按钮响应等
+        document.addEventListener('DOMContentLoaded', function () {
+            // 示例：模拟定时刷新资源使用率数据
+            function updateResourceMetrics() {
+                // 这里只是模拟，实际应用中应该通过API获取实时数据
+                const cpuGauge = document.querySelector('.resource-gauge:nth-child(1) .gauge-fill');
+                const memoryGauge = document.querySelector('.resource-gauge:nth-child(2) .gauge-fill');
+                const gpuGauge = document.querySelector('.resource-gauge:nth-child(3) .gauge-fill');
+                
+                // 随机波动模拟真实场景
+                const cpuValue = Math.floor(30 + Math.random() * 15);
+                const memoryValue = Math.floor(70 + Math.random() * 10);
+                const gpuValue = Math.floor(38 + Math.random() * 12);
+                
+                cpuGauge.style.height = cpuValue + 'px';
+                cpuGauge.nextElementSibling.textContent = cpuValue + '%';
+                
+                memoryGauge.style.height = memoryValue + 'px';
+                memoryGauge.nextElementSibling.textContent = memoryValue + '%';
+                
+                gpuGauge.style.height = gpuValue + 'px';
+                gpuGauge.nextElementSibling.textContent = gpuValue + '%';
+            }
+            
+            // 每30秒更新一次数据
+            setInterval(updateResourceMetrics, 30000);
+            
+            // 刷新按钮点击事件
+            const refreshButton = document.querySelector('button:contains("刷新")');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', updateResourceMetrics);
+            }
+        });
+    </script>
+</body>
+
+</html>

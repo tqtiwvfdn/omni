@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Client - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .model-card {
+            transition: all 0.2s ease;
+        }
+
+        .model-card:hover {
+            border-color: var(--dify-primary);
+        }
+
+        .model-card.active {
+            border-color: var(--dify-primary);
+            background-color: var(--dify-primary-light);
+        }
+
+        .tab-button {
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: var(--dify-primary);
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+    <div class="p-6">
+        <!-- Page Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-semibold text-gray-800">MCP Client</h1>
+            <p class="text-gray-600 mt-1">连接和管理外部大型语言模型服务，支持多种模型供应商和灵活的调用策略</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="mb-6 border-b border-gray-200">
+            <ul class="flex flex-wrap -mb-px">
+                <li class="mr-6">
+                    <button class="tab-button active inline-block py-4 px-1 text-sm font-medium"
+                        data-target="models-tab">
+                        模型管理
+                    </button>
+                </li>
+                <li class="mr-6">
+                    <button
+                        class="tab-button inline-block py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700"
+                        data-target="providers-tab">
+                        供应商设置
+                    </button>
+                </li>
+                <li class="mr-6">
+                    <button
+                        class="tab-button inline-block py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700"
+                        data-target="fallback-tab">
+                        故障转移策略
+                    </button>
+                </li>
+                <!-- <li class="mr-6">
+                    <button
+                        class="tab-button inline-block py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700"
+                        data-target="monitoring-tab">
+                        监控与统计
+                    </button>
+                </li> -->
+            </ul>
+        </div>
+
+        <!-- Models Tab Content -->
+        <div id="models-tab" class="tab-content active">
+            <!-- Action Bar -->
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex space-x-2">
+                    <div class="relative">
+                        <input type="text"
+                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="搜索模型...">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <select
+                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">全部供应商</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="zhipu">智谱AI</option>
+                        <option value="baidu">百度文心</option>
+                    </select>
+                    <select
+                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">全部状态</option>
+                        <option value="active">已启用</option>
+                        <option value="inactive">已禁用</option>
+                    </select>
+                </div>
+                <button
+                    class="dify-btn px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 focus:outline-none">
+                    添加模型
+                </button>
+            </div>
+
+            <!-- Models Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Model Card 1 -->
+                <div class="dify-card bg-white p-4 model-card relative">
+                    <div class="absolute top-4 right-4">
+                        <div class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-start mb-4">
+                        <div class="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center mr-3">
+                            <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13 7H7v6h6V7z"></path>
+                                <path fill-rule="evenodd"
+                                    d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-md font-semibold">GPT-4 Turbo</h3>
+                            <p class="text-xs text-gray-500">OpenAI · 高级</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">模型版本</span>
+                            <span class="font-medium">2024-04</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">上下文窗口</span>
+                            <span class="font-medium">128K tokens</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">单次费用</span>
+                            <span class="font-medium">¥0.024/1K tokens</span>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-gray-100 flex justify-between">
+                        <span class="dify-tag bg-green-50 text-green-600">已启用</span>
+                        <div class="flex space-x-2">
+                            <button class="text-gray-600 hover:text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
+                                    </path>
+                                </svg>
+                            </button>
+                            <button class="text-gray-600 hover:text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Card 2 -->
+                <div class="dify-card bg-white p-4 model-card relative">
+                    <div class="absolute top-4 right-4">
+                        <div class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-start mb-4">
+                        <div class="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center mr-3">
+                            <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13 7H7v6h6V7z"></path>
+                                <path fill-rule="evenodd"
+                                    d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-md font-semibold">Claude 3 Opus</h3>
+                            <p class="text-xs text-gray-500">Anthropic · 高级</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">模型版本</span>
+                            <span class="font-medium">2024-02</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">上下文窗口</span>
+                            <span class="font-medium">200K tokens</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">单次费用</span>
+                            <span class="font-medium">¥0.030/1K tokens</span>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-gray-100 flex justify-between">
+                        <span class="dify-tag bg-green-50 text-green-600">已启用</span>
+                        <div class="flex space-x-2">
+                            <button class="text-gray-600 hover:text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
+                                    </path>
+                                </svg>
+                            </button>
+                            <button class="text-gray-600 hover:text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Card 3 -->
+                <div class="dify-card bg-white p-4 model-card relative">
+                    <div class="absolute top-4 right-4">
+                        <div class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-start mb-4">
+                        <div class="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
+                            <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13 7H7v6h6V7z"></path>
+                                <path fill-rule="evenodd"
+                                    d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-md font-semibold">GLM-4</h3>
+                            <p class="text-xs text-gray-500">智谱AI · 标准</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">模型版本</span>
+                            <span class="font-medium">2024-01</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">上下文窗口</span>
+                            <span class="font-medium">128K tokens</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">单次费用</span>
+                            <span class="font-medium">¥0.015/1K tokens</span>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-gray-100 flex justify-between">
+                        <span class="dify-tag bg-green-50 text-green-600">已启用</span>
+                        <div class="flex space-x-2">
+                            <button class="text-gray-600 hover:text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
+                                    </path>
+                                </svg>
+                            </button>
+                            <button class="text-gray-600 hover:text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Card 4 -->
+                <div class="dify-card bg-white p-4 model-card relative">
+                    <div class="absolute top-4 right-4">
+                        <div class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-start mb-4">
+                        <div class="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center mr-3">
+                            <svg class="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13 7H7v6h6V7z"></path>
+                                <path fill-rule="evenodd"
+                                    d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-md font-semibold">文心一言4.0</h3>
+                            <p class="text-xs text-gray-500">百度 · 标准</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">模型版本</span>
+                            <span class="font-medium">2024-03</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">上下文窗口</span>
+                            <span class="font-medium">32K tokens</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">单次费用</span>
+                            <span class="font-medium">¥0.012/1K tokens</span>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-gray-100 flex justify-between">
+                        <span class="dify-tag bg-gray-50 text-gray-600">已禁用</span>
+                        <div class="flex space-x-2">
+                            <button class="text-gray-600 hover:text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
+                                    </path>
+                                </svg>
+                            </button>
+                            <button class="text-gray-600 hover:text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Card 5 -->
+                <div class="dify-card bg-white p-4 model-card relative">
+                    <div class="absolute top-4 right-4">
+                        <div class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-start mb-4">
+                        <div class="h-10 w-10 rounded-lg bg-yellow-100 flex items-center justify-center mr-3">
+                            <svg class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13 7H7v6h6V7z"></path>
+                                <path fill-rule="evenodd"
+                                    d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-md font-semibold">GPT-3.5 Turbo</h3>
+                            <p class="text-xs text-gray-500">OpenAI · 基础</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">模型版本</span>
+                            <span class="font-medium">2024-04</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">上下文窗口</span>
+                            <span class="font-medium">16K tokens</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">单次费用</span>
+                            <span class="font-medium">¥0.002/1K tokens</span>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-gray-100 flex justify-between">
+                        <span class="dify-tag bg-green-50 text-green-600">已启用</span>
+                        <div class="flex space-x-2">
+                            <button class="text-gray-600 hover:text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
+                                    </path>
+                                </svg>
+                            </button>
+                            <button class="text-gray-600 hover:text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add New Model Card -->
+                <div
+                    class="dify-card bg-white p-4 border-dashed border-2 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50">
+                    <div class="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center mb-2">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </div>
+                    <p class="text-blue-600 font-medium">添加新模型</p>
+                </div>
+            </div>
+
+            <!-- Usage Stats Summary -->
+            <div class="dify-card bg-white p-6 mt-6">
+                <h3 class="text-lg font-semibold mb-4">模型使用统计</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">今日调用次数</p>
+                        <p class="text-2xl font-semibold">12,583</p>
+                        <p class="text-xs text-green-600">+15% 较昨日</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">本月总费用</p>
+                        <p class="text-2xl font-semibold">¥3,852.68</p>
+                        <p class="text-xs text-yellow-600">+8% 较上月</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">平均响应时间</p>
+                        <p class="text-2xl font-semibold">1.85s</p>
+                        <p class="text-xs text-green-600">-0.3s 较上周</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">故障转移率</p>
+                        <p class="text-2xl font-semibold">0.42%</p>
+                        <p class="text-xs text-green-600">-0.1% 较上月</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Providers Tab Content -->
+        <div id="providers-tab" class="tab-content">
+            <div class="dify-card bg-white p-6 mb-6">
+                <h3 class="text-lg font-semibold mb-4">API供应商管理</h3>
+                <p class="text-gray-600 mb-6">配置和管理外部大型语言模型API供应商的凭证和设置</p>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    供应商名称</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    API类型</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    API密钥状态</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    配额使用</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    更新时间</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
+                                            <svg class="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">GPT-3.5 Turbo</div>
+                                            <div class="text-xs text-gray-500">OpenAI</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">响应超时 (>4秒)</div>
+                                    <div class="text-sm text-gray-900">HTTP错误 (5xx)</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">已禁用</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button
+                        class="dify-btn px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 focus:outline-none">
+                        添加故障转移规则
+                    </button>
+                </div>
+            </div>
+
+            <!-- Global Settings -->
+            <!-- <div class="dify-card bg-white p-6">
+                <h3 class="text-lg font-semibold mb-4">全局故障转移设置</h3>
+
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-md font-medium mb-2">超时阈值设置</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="w-1/3">
+                                    <label class="block text-sm font-medium text-gray-700">默认响应超时阈值</label>
+                                    <p class="text-xs text-gray-500 mt-1">超过此时间将触发故障转移</p>
+                                </div>
+                                <div class="w-2/3 flex items-center">
+                                    <input type="number" value="5"
+                                        class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                    <span class="ml-2 text-gray-600">秒</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="w-1/3">
+                                    <label class="block text-sm font-medium text-gray-700">最大重试次数</label>
+                                    <p class="text-xs text-gray-500 mt-1">故障转移前尝试的最大次数</p>
+                                </div>
+                                <div class="w-2/3">
+                                    <input type="number" value="2"
+                                        class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-200">
+                        <h4 class="text-md font-medium mb-2">故障通知设置</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <label class="toggle-switch mr-3">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">启用邮件通知</span>
+                                    <p class="text-xs text-gray-500">当故障转移触发时通过邮件通知管理员</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <label class="toggle-switch mr-3">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">启用系统通知</span>
+                                    <p class="text-xs text-gray-500">在管理控制台显示故障转移通知</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-200">
+                        <h4 class="text-md font-medium mb-2">高级选项</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <label class="toggle-switch mr-3">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">自动回退</span>
+                                    <p class="text-xs text-gray-500">当主模型恢复后自动切回主模型</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <label class="toggle-switch mr-3">
+                                    <input type="checkbox">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">保持上下文一致性</span>
+                                    <p class="text-xs text-gray-500">故障转移后将对话历史传递给备用模型</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button
+                        class="mr-3 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                        重置为默认
+                    </button>
+                    <button
+                        class="dify-btn px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 focus:outline-none">
+                        保存设置
+                    </button>
+                </div>
+            </div> -->
+        </div>
+
+        <!-- Fallback Tab Content -->
+        <div id="fallback-tab" class="tab-content">
+            <!-- 故障转移规则列表 -->
+            <div class="dify-card bg-white p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">故障转移策略</h3>
+                    <button
+                        class="dify-btn px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 focus:outline-none">
+                        添加故障转移规则
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-6">配置当主要模型不可用或超出响应时间阈值时的后备方案，确保业务连续性</p>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    优先级</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    主要模型</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    备用模型</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    触发条件</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    应用场景</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    状态</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                    1
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">GPT-4 Turbo</div>
+                                            <div class="text-xs text-gray-500">OpenAI</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">GLM-4</div>
+                                            <div class="text-xs text-gray-500">智谱AI</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 mb-1">响应超时 (>5秒)</div>
+                                    <div class="text-sm text-gray-900">HTTP错误 (5xx)</div>
+                                    <div class="text-sm text-gray-900">配额限制</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">转账流程</span>
+                                    <span
+                                        class="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">客户咨询</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已启用</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                    2
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-purple-600" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">Claude 3 Opus</div>
+                                            <div class="text-xs text-gray-500">Anthropic</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">GPT-4 Turbo</div>
+                                            <div class="text-xs text-gray-500">OpenAI</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 mb-1">响应超时 (>6秒)</div>
+                                    <div class="text-sm text-gray-900">配额耗尽</div>
+                                    <div class="text-sm text-gray-900">内容安全过滤</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">金融顾问</span>
+                                    <span
+                                        class="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">投资建议</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已启用</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                    3
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">GLM-4</div>
+                                            <div class="text-xs text-gray-500">智谱AI</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-yellow-600" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">GPT-3.5 Turbo</div>
+                                            <div class="text-xs text-gray-500">OpenAI</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 mb-1">响应超时 (>4秒)</div>
+                                    <div class="text-sm text-gray-900">HTTP错误 (5xx)</div>
+                                    <div class="text-sm text-gray-900">API调用失败</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">日常咨询</span>
+                                    <span
+                                        class="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">业务介绍</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">已禁用</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                    4
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">GPT-4 Turbo</div>
+                                            <div class="text-xs text-gray-500">OpenAI</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-purple-600" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">Claude 3 Opus</div>
+                                            <div class="text-xs text-gray-500">Anthropic</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 mb-1">敏感信息处理</div>
+                                    <div class="text-sm text-gray-900">安全扫描超时</div>
+                                    <div class="text-sm text-gray-900">合规检查失败</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">贵宾理财</span>
+                                    <span
+                                        class="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">私人银行</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已启用</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-red-600 hover:text-red-900">删除</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 全局故障转移设置 -->
+            <div class="dify-card bg-white p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">全局故障转移设置</h3>
+                    <div class="flex space-x-2">
+                        <button
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white hover:bg-gray-50">
+                            重置默认
+                        </button>
+                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+                            保存设置
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 左侧设置 -->
+                    <div>
+                        <!-- 超时阈值设置 -->
+                        <div class="mb-6">
+                            <h4 class="text-md font-medium mb-3">超时阈值设置</h4>
+                            <div class="space-y-4 bg-gray-50 p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-sm font-medium text-gray-700">默认响应超时阈值</label>
+                                    <div class="w-1/3 flex items-center">
+                                        <input type="number" value="5"
+                                            class="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        <span class="ml-2 text-gray-600">秒</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-sm font-medium text-gray-700">最大重试次数</label>
+                                    <div class="w-1/3">
+                                        <input type="number" value="2"
+                                            class="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-sm font-medium text-gray-700">重试间隔</label>
+                                    <div class="w-1/3 flex items-center">
+                                        <input type="number" value="1"
+                                            class="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        <span class="ml-2 text-gray-600">秒</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 故障通知设置 -->
+                        <div class="mb-6">
+                            <h4 class="text-md font-medium mb-3">故障通知设置</h4>
+                            <div class="space-y-3 bg-gray-50 p-4 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="mr-4">
+                                        <label class="toggle-switch mr-3">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700">启用邮件通知</span>
+                                        <p class="text-xs text-gray-500">当故障转移触发时通过邮件通知管理员</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="mr-4">
+                                        <label class="toggle-switch mr-3">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700">启用短信通知</span>
+                                        <p class="text-xs text-gray-500">紧急故障时通过短信通知运维人员</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="mr-4">
+                                        <label class="toggle-switch mr-3">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700">启用系统通知</span>
+                                        <p class="text-xs text-gray-500">在管理控制台显示故障转移通知</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧设置 -->
+                    <div>
+                        <!-- 高级选项 -->
+                        <div class="mb-6">
+                            <h4 class="text-md font-medium mb-3">高级选项</h4>
+                            <div class="space-y-4 bg-gray-50 p-4 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="mr-4">
+                                        <label class="toggle-switch mr-3">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700">自动回退机制</span>
+                                        <p class="text-xs text-gray-500">当主模型恢复后自动切回主模型</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="mr-4">
+                                        <label class="toggle-switch mr-3">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700">保持上下文一致性</span>
+                                        <p class="text-xs text-gray-500">故障转移后将对话历史传递给备用模型</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="mr-4">
+                                        <label class="toggle-switch mr-3">
+                                            <input type="checkbox">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700">用户通知</span>
+                                        <p class="text-xs text-gray-500">通知用户当前正在使用备用模型</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="mr-4">
+                                        <label class="toggle-switch mr-3">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700">事务安全保障</span>
+                                        <p class="text-xs text-gray-500">确保银行事务在模型切换过程中不中断</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 业务连续性策略 -->
+                        <div>
+                            <h4 class="text-md font-medium mb-3">业务连续性策略</h4>
+                            <div class="space-y-4 bg-gray-50 p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-sm font-medium text-gray-700">核心业务优先级</label>
+                                    <select
+                                        class="w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        <option>最高 - 必须保证连续性</option>
+                                        <option>高 - 允许短暂中断</option>
+                                        <option>中 - 标准回退策略</option>
+                                        <option>低 - 可容忍延迟</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="mr-4">
+                                        <label class="toggle-switch mr-3">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700">紧急降级模式</span>
+                                        <p class="text-xs text-gray-500">当所有模型不可用时启用简单响应模式</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-sm font-medium text-gray-700">合规与安全检查</label>
+                                    <select
+                                        class="w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        <option>强制 - 所有模型必须通过</option>
+                                        <option>标准 - 保持基本安全检查</option>
+                                        <option>灵活 - 紧急情况下可调整</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 银行业务场景配置 -->
+            <!-- <div class="dify-card bg-white p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">银行业务场景配置</h3>
+                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+                        添加业务场景
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-6">为不同银行业务场景设置专属的故障转移策略，确保关键业务连续性</p>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    业务场景</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    优先级</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    主要模型</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    备用模型 (顺序)</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    响应时间要求</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    状态</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900">转账汇款</div>
+                                    <div class="text-xs text-gray-500">个人和企业转账流程</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">最高</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-7 w-7 rounded-lg bg-green-100 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <span class="ml-2 text-sm text-gray-900">GPT-4 Turbo</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col space-y-2">
+                                        <div class="flex items-center">
+                                            <div
+                                                class="h-6 w-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                <span class="text-xs font-medium text-blue-800">1</span>
+                                            </div>
+                                            <span class="ml-2 text-sm text-gray-900">GLM-4</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <div
+                                                class="h-6 w-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                <span class="text-xs font-medium text-blue-800">2</span>
+                                            </div>
+                                            <span class="ml-2 text-sm text-gray-900">Claude 3 Opus</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    < 3 秒 </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已启用</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900">投资理财</div>
+                                    <div class="text-xs text-gray-500">基金、股票、理财产品咨询</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">高</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-7 w-7 rounded-lg bg-purple-100 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-purple-600" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <span class="ml-2 text-sm text-gray-900">Claude 3 Opus</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col space-y-2">
+                                        <div class="flex items-center">
+                                            <div
+                                                class="h-6 w-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                <span class="text-xs font-medium text-blue-800">1</span>
+                                            </div>
+                                            <span class="ml-2 text-sm text-gray-900">GPT-4 Turbo</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <div
+                                                class="h-6 w-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                <span class="text-xs font-medium text-blue-800">2</span>
+                                            </div>
+                                            <span class="ml-2 text-sm text-gray-900">GLM-4</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    < 5 秒 </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已启用</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900">信用卡服务</div>
+                                    <div class="text-xs text-gray-500">账单、还款、额度调整</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">高</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-7 w-7 rounded-lg bg-green-100 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <span class="ml-2 text-sm text-gray-900">GPT-4 Turbo</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col space-y-2">
+                                        <div class="flex items-center">
+                                            <div
+                                                class="h-6 w-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                <span class="text-xs font-medium text-blue-800">1</span>
+                                            </div>
+                                            <span class="ml-2 text-sm text-gray-900">GLM-4</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <div
+                                                class="h-6 w-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                <span class="text-xs font-medium text-blue-800">2</span>
+                                            </div>
+                                            <span class="ml-2 text-sm text-gray-900">GPT-3.5 Turbo</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    < 4 秒 </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已启用</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900">贷款申请</div>
+                                    <div class="text-xs text-gray-500">个人贷款、抵押贷款咨询</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">中</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-7 w-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <span class="ml-2 text-sm text-gray-900">GLM-4</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col space-y-2">
+                                        <div class="flex items-center">
+                                            <div
+                                                class="h-6 w-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                <span class="text-xs font-medium text-blue-800">1</span>
+                                            </div>
+                                            <span class="ml-2 text-sm text-gray-900">Claude 3 Opus</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    < 6 秒 </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">测试中</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div> -->
+        </div>
+
+        <style>
+            .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 44px;
+                height: 22px;
+            }
+
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .toggle-slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: .4s;
+                border-radius: 34px;
+            }
+
+            .toggle-slider:before {
+                position: absolute;
+                content: "";
+                height: 18px;
+                width: 18px;
+                left: 3px;
+                bottom: 2px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+            input:checked+.toggle-slider {
+                background-color: #2970FF;
+            }
+
+            input:checked+.toggle-slider:before {
+                transform: translateX(20px);
+            }
+        </style>
+
+        <!-- Monitoring Tab Content -->
+        <div id="monitoring-tab" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Summary Card 1 -->
+                <div class="dify-card bg-white p-6">
+                    <h3 class="text-md font-medium mb-3">模型调用总数</h3>
+                    <div class="flex items-end space-x-2">
+                        <p class="text-3xl font-semibold">43,728</p>
+                        <p class="text-green-600 text-sm">+12%</p>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-1">过去7天</p>
+
+                    <div class="h-40 mt-4">
+                        <!-- Placeholder for chart -->
+                        <div class="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+                            <span class="text-gray-400">调用趋势图</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Card 2 -->
+                <div class="dify-card bg-white p-6">
+                    <h3 class="text-md font-medium mb-3">模型响应时间</h3>
+                    <div class="flex items-end space-x-2">
+                        <p class="text-3xl font-semibold">1.82s</p>
+                        <p class="text-green-600 text-sm">-0.2s</p>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-1">平均响应时间</p>
+
+                    <div class="h-40 mt-4">
+                        <!-- Placeholder for chart -->
+                        <div class="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+                            <span class="text-gray-400">响应时间趋势图</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Card 3 -->
+                <div class="dify-card bg-white p-6">
+                    <h3 class="text-md font-medium mb-3">Token消耗</h3>
+                    <div class="flex items-end space-x-2">
+                        <p class="text-3xl font-semibold">12.5M</p>
+                        <p class="text-yellow-600 text-sm">+8%</p>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-1">本月累计</p>
+
+                    <div class="h-40 mt-4">
+                        <!-- Placeholder for chart -->
+                        <div class="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+                            <span class="text-gray-400">Token消耗趋势图</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Performance Breakdown -->
+            <div class="dify-card bg-white p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">模型性能指标</h3>
+                    <div class="flex space-x-2">
+                        <select class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                            <option>过去7天</option>
+                            <option>过去30天</option>
+                            <option>过去90天</option>
+                        </select>
+                        <button class="px-3 py-1 bg-gray-100 rounded-md text-sm text-gray-600 hover:bg-gray-200">
+                            导出
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    模型</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    调用次数</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    平均响应时间</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Token消耗</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    错误率</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    成本</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">GPT-4 Turbo</div>
+                                            <div class="text-xs text-gray-500">OpenAI</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">15,342</div>
+                                    <div class="text-xs text-green-600">+18%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2.14s</div>
+                                    <div class="text-xs text-green-600">-0.3s</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">5.2M</div>
+                                    <div class="text-xs text-yellow-600">+15%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">0.6%</div>
+                                    <div class="text-xs text-green-600">-0.2%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">¥1,248.32</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-purple-600" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">Claude 3 Opus</div>
+                                            <div class="text-xs text-gray-500">Anthropic</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">8,921</div>
+                                    <div class="text-xs text-green-600">+22%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2.45s</div>
+                                    <div class="text-xs text-yellow-600">+0.1s</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">3.8M</div>
+                                    <div class="text-xs text-yellow-600">+12%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">0.4%</div>
+                                    <div class="text-xs text-green-600">-0.3%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">¥1,140.00</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">GLM-4</div>
+                                            <div class="text-xs text-gray-500">智谱AI</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">12,632</div>
+                                    <div class="text-xs text-green-600">+8%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">1.92s</div>
+                                    <div class="text-xs text-green-600">-0.4s</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">2.8M</div>
+                                    <div class="text-xs text-green-600">+5%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">0.8%</div>
+                                    <div class="text-xs text-yellow-600">+0.1%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">¥420.00</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-yellow-600" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">GPT-3.5 Turbo</div>
+                                            <div class="text-xs text-gray-500">OpenAI</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">6,833</div>
+                                    <div class="text-xs text-red-600">-4%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">0.85s</div>
+                                    <div class="text-xs text-green-600">-0.1s</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">0.7M</div>
+                                    <div class="text-xs text-red-600">-7%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">0.3%</div>
+                                    <div class="text-xs text-green-600">-0.1%</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">¥42.36</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Errors -->
+            <div class="dify-card bg-white p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">最近故障记录</h3>
+                    <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        查看全部
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    时间</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    模型</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    错误类型</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    故障转移</th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    状态</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-16 09:32:45</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-7 w-7 rounded-lg bg-green-100 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-2">
+                                            <div class="text-sm font-medium text-gray-900">GPT-4 Turbo</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">HTTP
+                                        503</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <svg class="h-4 w-4 text-green-600 mr-1" fill="currentColor"
+                                            viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                clip-rule="evenodd"></path>
+                                        </svg>
+                                        <div class="text-sm text-gray-900">
+                                            GLM-4
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已解决</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-15 16:48:12</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-7 w-7 rounded-lg bg-purple-100 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-purple-600" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-2">
+                                            <div class="text-sm font-medium text-gray-900">Claude 3 Opus</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">响应超时</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <svg class="h-4 w-4 text-green-600 mr-1" fill="currentColor"
+                                            viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                clip-rule="evenodd"></path>
+                                        </svg>
+                                        <div class="text-sm text-gray-900">
+                                            GPT-4 Turbo
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已解决</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-15 10:22:37</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-7 w-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-2">
+                                            <div class="text-sm font-medium text-gray-900">GLM-4</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">配额耗尽</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <svg class="h-4 w-4 text-green-600 mr-1" fill="currentColor"
+                                            viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                clip-rule="evenodd"></path>
+                                        </svg>
+                                        <div class="text-sm text-gray-900">
+                                            GPT-3.5 Turbo
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已解决</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-14 14:11:08</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-7 w-7 rounded-lg bg-red-100 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-2">
+                                            <div class="text-sm font-medium text-gray-900">文心一言4.0</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">API错误</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">
+                                        无
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">已禁用</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Navigation
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', function () {
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+
+                // Remove active class from all tab buttons
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                // Add active class to clicked button
+                this.classList.add('active');
+
+                // Show the corresponding tab content
+                const targetId = this.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch input').forEach(toggle => {
+            toggle.addEventListener('change', function () {
+                const modelCard = this.closest('.model-card');
+                if (modelCard) {
+                    const statusTag = modelCard.querySelector('.dify-tag');
+                    if (this.checked) {
+                        statusTag.textContent = '已启用';
+                        statusTag.classList.remove('bg-gray-50', 'text-gray-600');
+                        statusTag.classList.add('bg-green-50', 'text-green-600');
+                    } else {
+                        statusTag.textContent = '已禁用';
+                        statusTag.classList.remove('bg-green-50', 'text-green-600');
+                        statusTag.classList.add('bg-gray-50', 'text-gray-600');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智言银行后台管理端 - 向量检索</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+            background-color: #f9fafb;
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .scenario-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .scenario-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 模态框样式 */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+
+        .modal {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 640px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            animation: modal-appear 0.3s ease forwards;
+        }
+
+        @keyframes modal-appear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .badge-success {
+            background-color: #D1FAE5;
+            color: #047857;
+        }
+
+        .badge-warning {
+            background-color: #FEF3C7;
+            color: #B45309;
+        }
+
+        .badge-pending {
+            background-color: #E0E7FF;
+            color: #4F46E5;
+        }
+
+        /* 为第一层代码的style标签添加以下内容 */
+
+        .best-practice-option {
+            transition: all 0.2s ease;
+        }
+
+        .best-practice-option.active {
+            border-color: #2563EB;
+            background-color: #EBF5FF;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="container mx-auto py-6 px-4">
+        <!-- Header -->
+        <div class="mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-800">向量检索管理</h1>
+                <p class="text-gray-600 mt-1">管理银行业务知识库的向量检索场景及配置</p>
+            </div>
+            <button id="create-scenario-btn" class="dify-btn px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">
+                创建新场景
+            </button>
+        </div>
+
+        <!-- 搜索和筛选区域 -->
+        <div class="mb-6 flex flex-col sm:flex-row justify-between gap-4">
+            <div class="relative flex-1">
+                <input type="text" placeholder="搜索场景名称或描述..."
+                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <select
+                    class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">所有场景类型</option>
+                    <option value="customer-service">智能客服</option>
+                    <option value="mobile-bank">手机银行</option>
+                    <option value="knowledge-base">行内制度知识</option>
+                    <option value="marketing">营销助手</option>
+                </select>
+                <select
+                    class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">所有状态</option>
+                    <option value="active">已上线</option>
+                    <option value="testing">测试中</option>
+                    <option value="draft">草稿</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 场景卡片列表 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <!-- 智能客服场景 -->
+            <div class="scenario-card dify-card">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <div class="flex items-center">
+                                <h3 class="text-lg font-medium text-gray-800">智能客服向量检索</h3>
+                                <span class="ml-2 dify-tag badge-success">已上线</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">针对客服问答场景的向量检索优化配置</p>
+                        </div>
+                        <div class="flex gap-1">
+                            <button class="p-1.5 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-100">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-gray-50 p-3 rounded-md">
+                            <div class="text-xs text-gray-500">Embedding模型</div>
+                            <div class="text-sm font-medium">Embedding-SuperEdition</div>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-md">
+                            <div class="text-xs text-gray-500">Rerank模型</div>
+                            <div class="text-sm font-medium">BankRerank-Pro</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs text-gray-500">检索性能</span>
+                            <span class="text-xs font-medium text-green-600">优秀</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-200 rounded-full">
+                            <div class="h-2 bg-green-500 rounded-full" style="width: 92%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="text-gray-500">更新于 2025-05-01</div>
+                        <a href="scenario-detail.html" class="text-blue-600 hover:text-blue-800 font-medium">查看详情</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 手机银行场景 -->
+            <div class="scenario-card dify-card">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <div class="flex items-center">
+                                <h3 class="text-lg font-medium text-gray-800">手机银行助手</h3>
+                                <span class="ml-2 dify-tag badge-success">已上线</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">手机银行APP内嵌智能助手的向量检索配置</p>
+                        </div>
+                        <div class="flex gap-1">
+                            <button class="p-1.5 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-100">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-gray-50 p-3 rounded-md">
+                            <div class="text-xs text-gray-500">Embedding模型</div>
+                            <div class="text-sm font-medium">Embedding-SuperEdition</div>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-md">
+                            <div class="text-xs text-gray-500">Rerank模型</div>
+                            <div class="text-sm font-medium">BankRerank-Pro</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs text-gray-500">检索性能</span>
+                            <span class="text-xs font-medium text-green-600">良好</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-200 rounded-full">
+                            <div class="h-2 bg-green-500 rounded-full" style="width: 85%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="text-gray-500">更新于 2025-04-15</div>
+                        <a href="scenario-detail.html" class="text-blue-600 hover:text-blue-800 font-medium">查看详情</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 行内制度知识库场景 -->
+            <div class="scenario-card dify-card">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <div class="flex items-center">
+                                <h3 class="text-lg font-medium text-gray-800">行内制度知识助手</h3>
+                                <span class="ml-2 dify-tag badge-warning">测试中</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">针对内部员工查询规章制度的检索配置</p>
+                        </div>
+                        <div class="flex gap-1">
+                            <button class="p-1.5 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-100">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-gray-50 p-3 rounded-md">
+                            <div class="text-xs text-gray-500">Embedding模型</div>
+                            <div class="text-sm font-medium">MultiLingual-Base</div>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-md">
+                            <div class="text-xs text-gray-500">Rerank模型</div>
+                            <div class="text-sm font-medium">BankRerank-Pro</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs text-gray-500">检索性能</span>
+                            <span class="text-xs font-medium text-yellow-600">待优化</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-200 rounded-full">
+                            <div class="h-2 bg-yellow-500 rounded-full" style="width: 70%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="text-gray-500">更新于 2025-05-10</div>
+                        <a href="scenario-detail.html" class="text-blue-600 hover:text-blue-800 font-medium">查看详情</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 营销助手场景 -->
+            <div class="scenario-card dify-card">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <div class="flex items-center">
+                                <h3 class="text-lg font-medium text-gray-800">营销助手</h3>
+                                <span class="ml-2 dify-tag badge-pending">草稿</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">支持客户经理提供产品推荐的营销助手</p>
+                        </div>
+                        <div class="flex gap-1">
+                            <button class="p-1.5 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-100">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-gray-50 p-3 rounded-md">
+                            <div class="text-xs text-gray-500">Embedding模型</div>
+                            <div class="text-sm font-medium">待配置</div>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-md">
+                            <div class="text-xs text-gray-500">Rerank模型</div>
+                            <div class="text-sm font-medium">待配置</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs text-gray-500">检索性能</span>
+                            <span class="text-xs font-medium text-gray-500">未评估</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-200 rounded-full">
+                            <div class="h-2 bg-gray-400 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="text-gray-500">创建于 2025-05-12</div>
+                        <a href="scenario-detail.html" class="text-blue-600 hover:text-blue-800 font-medium">继续配置</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 添加场景卡片 -->
+            <div id="add-scenario-card"
+                class="dify-card h-64 flex items-center justify-center cursor-pointer border-dashed border-2 border-gray-300 bg-white hover:bg-gray-50">
+                <div class="text-center">
+                    <div class="w-14 h-14 bg-blue-50 rounded-full mx-auto flex items-center justify-center mb-3">
+                        <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600 font-medium">创建新场景</p>
+                    <p class="text-gray-400 text-sm mt-1">配置新的业务场景向量检索</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建场景模态框 (第二层) 会在您要求的第二部分提供 -->
+    <!-- 创建场景模态框 (第二层) -->
+    <div id="create-scenario-modal" class="modal-backdrop">
+        <div class="modal active p-0">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-medium text-gray-800">创建向量检索场景</h3>
+                    <button id="close-modal-btn" class="text-gray-400 hover:text-gray-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">场景名称</label>
+                    <input type="text" placeholder="输入场景名称"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">场景描述</label>
+                    <textarea placeholder="简要描述此场景的用途和特点"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        rows="2"></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">场景类型</label>
+                    <select
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">选择场景类型</option>
+                        <option value="customer-service">智能客服</option>
+                        <option value="mobile-bank">手机银行</option>
+                        <option value="knowledge-base">行内制度知识</option>
+                        <option value="marketing">营销助手</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">选择最佳实践配置</label>
+                    <p class="text-sm text-gray-500 mb-4">根据业务场景选择一个预设的最佳实践配置方案</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- 客服场景最佳实践 -->
+                        <div
+                            class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50 best-practice-option active">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <div
+                                        class="w-5 h-5 rounded-full border border-blue-600 flex items-center justify-center">
+                                        <div class="w-3 h-3 rounded-full bg-blue-600"></div>
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-medium text-gray-800">客服问答专精</h4>
+                                    <p class="text-xs text-gray-500 mt-1">适用于高并发、多样化的客户咨询问答场景</p>
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 bg-blue-50 text-xs font-medium text-blue-700 rounded-md">
+                                            高召回率
+                                        </span>
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 bg-blue-50 text-xs font-medium text-blue-700 rounded-md">
+                                            快速响应
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 内部知识库最佳实践 -->
+                        <div
+                            class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50 best-practice-option">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <div
+                                        class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center">
+                                        <div class="w-3 h-3 rounded-full bg-white"></div>
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-medium text-gray-800">内部知识库专精</h4>
+                                    <p class="text-xs text-gray-500 mt-1">适用于规章制度、业务手册等内部知识检索</p>
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 bg-green-50 text-xs font-medium text-green-700 rounded-md">
+                                            高精确度
+                                        </span>
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 bg-green-50 text-xs font-medium text-green-700 rounded-md">
+                                            完整引用
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 产品营销最佳实践 -->
+                        <div
+                            class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50 best-practice-option">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <div
+                                        class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center">
+                                        <div class="w-3 h-3 rounded-full bg-white"></div>
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-medium text-gray-800">产品营销专精</h4>
+                                    <p class="text-xs text-gray-500 mt-1">适用于产品推荐、营销活动等业务场景</p>
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 bg-yellow-50 text-xs font-medium text-yellow-700 rounded-md">
+                                            产品优先
+                                        </span>
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 bg-yellow-50 text-xs font-medium text-yellow-700 rounded-md">
+                                            关联推荐
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 手机银行最佳实践 -->
+                        <div
+                            class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50 best-practice-option">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <div
+                                        class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center">
+                                        <div class="w-3 h-3 rounded-full bg-white"></div>
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-medium text-gray-800">手机银行专精</h4>
+                                    <p class="text-xs text-gray-500 mt-1">适用于手机银行APP内嵌助手场景</p>
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 bg-purple-50 text-xs font-medium text-purple-700 rounded-md">
+                                            轻量级
+                                        </span>
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 bg-purple-50 text-xs font-medium text-purple-700 rounded-md">
+                                            功能引导
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700">
+                                    选择最佳实践后，您仍可以在下一步进行个性化调整
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-gray-100 flex justify-end space-x-3 bg-gray-50">
+                <button id="cancel-scenario-btn"
+                    class="dify-btn px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                    取消
+                </button>
+                <button id="create-scenario-continue-btn"
+                    class="dify-btn px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">
+                    继续
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 配置详情预览 -->
+    <div id="config-preview-panel"
+        class="fixed right-0 top-0 h-full bg-white shadow-xl w-80 transform translate-x-full transition-transform duration-300 ease-in-out z-40 overflow-y-auto">
+        <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="font-medium text-gray-800">配置详情预览</h3>
+            <button id="close-preview-btn" class="text-gray-400 hover:text-gray-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-4">
+            <h4 class="font-medium text-sm text-gray-700 mb-2">客服问答专精</h4>
+
+            <div class="space-y-4">
+                <div>
+                    <div class="text-xs text-gray-500 mb-1">Embedding模型</div>
+                    <div class="text-sm">Embedding-SuperEdition</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 mb-1">Rerank模型</div>
+                    <div class="text-sm">BankRerank-Pro</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 mb-1">切片长度</div>
+                    <div class="text-sm">3000字符 (10%重叠)</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 mb-1">检索结果数量</div>
+                    <div class="text-sm">Top-5</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 mb-1">相似度阈值</div>
+                    <div class="text-sm">0.7</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 mb-1">混合检索权重</div>
+                    <div class="text-sm">语义:70% / 关键词:30%</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 mb-1">优先业务内容</div>
+                    <div class="text-sm">账单与还款、分期业务</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 mb-1">时效性管理</div>
+                    <div class="text-sm">激活 (过期内容降权)</div>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-100">
+                <div class="bg-blue-50 rounded-md p-3 text-xs text-blue-700">
+                    这只是预览，您可以在下一步进行个性化调整
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 为第一层代码的script标签添加以下内容
+
+    </script>
+
+
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 绑定创建场景按钮事件
+            // document.getElementById('create-scenario-btn').addEventListener('click', function() {
+            //     // 显示创建场景模态框的逻辑将在第二部分实现
+            //     alert('将显示创建场景模态框');
+            // });
+
+            // 绑定添加场景卡片点击事件
+            // document.getElementById('add-scenario-card').addEventListener('click', function() {
+            //     // 与上面的按钮逻辑相同
+            //     alert('将显示创建场景模态框');
+            // });
+
+            // 场景卡片交互效果
+            const scenarioCards = document.querySelectorAll('.scenario-card');
+            scenarioCards.forEach(card => {
+                card.addEventListener('mouseenter', function () {
+                    this.classList.add('shadow-md');
+                });
+                card.addEventListener('mouseleave', function () {
+                    this.classList.remove('shadow-md');
+                });
+            });
+        });
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const createScenarioModal = document.getElementById('create-scenario-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const createScenarioBtn = document.getElementById('create-scenario-btn');
+            const addScenarioCard = document.getElementById('add-scenario-card');
+            const cancelScenarioBtn = document.getElementById('cancel-scenario-btn');
+            const createScenarioContinueBtn = document.getElementById('create-scenario-continue-btn');
+
+            const configPreviewPanel = document.getElementById('config-preview-panel');
+            const closePreviewBtn = document.getElementById('close-preview-btn');
+            const bestPracticeOptions = document.querySelectorAll('.best-practice-option');
+
+            // 显示创建场景模态框
+            function showCreateModal() {
+                createScenarioModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden'; // 防止背景滚动
+            }
+
+            // 隐藏创建场景模态框
+            function hideCreateModal() {
+                createScenarioModal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+
+            // 绑定按钮事件
+            createScenarioBtn.addEventListener('click', showCreateModal);
+            addScenarioCard.addEventListener('click', showCreateModal);
+            closeModalBtn.addEventListener('click', hideCreateModal);
+            cancelScenarioBtn.addEventListener('click', hideCreateModal);
+
+            // 继续按钮 - 将在下一步实现
+            createScenarioContinueBtn.addEventListener('click', function () {
+                // 模拟跳转到场景详情页面
+                window.location.href = "scenario-detail.html";
+            });
+
+            // 最佳实践选项点击事件
+            bestPracticeOptions.forEach(option => {
+                option.addEventListener('click', function () {
+                    // 移除其他选项的选中状态
+                    bestPracticeOptions.forEach(opt => {
+                        opt.classList.remove('active');
+                        opt.querySelector('.w-5').classList.remove('border-blue-600');
+                        opt.querySelector('.w-5').classList.add('border-gray-300');
+                        opt.querySelector('.w-3').classList.remove('bg-blue-600');
+                        opt.querySelector('.w-3').classList.add('bg-white');
+                    });
+
+                    // 设置当前选项为选中状态
+                    this.classList.add('active');
+                    this.querySelector('.w-5').classList.remove('border-gray-300');
+                    this.querySelector('.w-5').classList.add('border-blue-600');
+                    this.querySelector('.w-3').classList.remove('bg-white');
+                    this.querySelector('.w-3').classList.add('bg-blue-600');
+
+                    // 显示配置预览面板
+                    configPreviewPanel.classList.remove('translate-x-full');
+                });
+            });
+
+            // 关闭配置预览面板
+            closePreviewBtn.addEventListener('click', function () {
+                configPreviewPanel.classList.add('translate-x-full');
+            });
+        });
+    </script>
+</body>
+
+</html>

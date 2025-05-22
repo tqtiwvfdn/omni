@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI表现 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tab {
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid var(--dify-primary);
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+
+        .tab:hover:not(.active) {
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-semibold text-gray-800">AI表现分析</h1>
+            <p class="text-gray-600 mt-1">分析AI模型在实际应用中的表现和效果</p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="dify-card bg-white p-4 mb-6 flex flex-wrap items-center justify-between">
+            <div class="flex flex-wrap items-center gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">时间范围</label>
+                    <select class="border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option>最近7天</option>
+                        <option>最近30天</option>
+                        <option>最近90天</option>
+                        <option>自定义</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">模型选择</label>
+                    <select class="border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option>全部模型</option>
+                        <option>金融大模型</option>
+                        <option>专业模型-存款</option>
+                        <option>专业模型-贷款</option>
+                        <option>专业模型-信用卡</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">业务场景</label>
+                    <select class="border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option>全部场景</option>
+                        <option>存款咨询</option>
+                        <option>贷款申请</option>
+                        <option>转账汇款</option>
+                        <option>理财咨询</option>
+                        <option>信用卡</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 mr-2">
+                    应用筛选
+                </button>
+                <button class="dify-btn px-4 py-2 border border-gray-300 text-gray-700 text-sm bg-white hover:bg-gray-50">
+                    导出报告
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <!-- 准确率卡片 -->
+            <div class="dify-card p-5 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-500">模型准确率</h3>
+                    <span class="dify-tag bg-green-50 text-green-600">+2.1%</span>
+                </div>
+                <div class="flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">93.7%</p>
+                        <p class="text-xs text-gray-500 mt-1">较上期提升2.1%</p>
+                    </div>
+                    <div class="h-10 w-20 bg-green-50 rounded">
+                        <!-- 简化版迷你图表 -->
+                        <div class="flex h-full items-end">
+                            <div class="w-2 h-7 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-6 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-8 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-9 bg-green-500 rounded-sm mx-0.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 回答质量卡片 -->
+            <div class="dify-card p-5 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-500">回答质量评分</h3>
+                    <span class="dify-tag bg-green-50 text-green-600">+0.3</span>
+                </div>
+                <div class="flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">4.5</p>
+                        <p class="text-xs text-gray-500 mt-1">满分5分，较上期提升0.3</p>
+                    </div>
+                    <div class="h-10 w-20 bg-green-50 rounded">
+                        <!-- 简化版迷你图表 -->
+                        <div class="flex h-full items-end">
+                            <div class="w-2 h-6 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-8 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-9 bg-green-500 rounded-sm mx-0.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 幻觉率卡片 -->
+            <div class="dify-card p-5 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-500">幻觉率</h3>
+                    <span class="dify-tag bg-green-50 text-green-600">-1.2%</span>
+                </div>
+                <div class="flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">2.8%</p>
+                        <p class="text-xs text-gray-500 mt-1">较上期下降1.2%</p>
+                    </div>
+                    <div class="h-10 w-20 bg-green-50 rounded">
+                        <!-- 简化版迷你图表 -->
+                        <div class="flex h-full items-end">
+                            <div class="w-2 h-9 bg-yellow-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-8 bg-yellow-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-yellow-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-6 bg-yellow-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-4 bg-green-500 rounded-sm mx-0.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 平均响应时间卡片 -->
+            <div class="dify-card p-5 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-500">平均响应时间</h3>
+                    <span class="dify-tag bg-green-50 text-green-600">-120ms</span>
+                </div>
+                <div class="flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">0.8s</p>
+                        <p class="text-xs text-gray-500 mt-1">较上期减少120ms</p>
+                    </div>
+                    <div class="h-10 w-20 bg-green-50 rounded">
+                        <!-- 简化版迷你图表 -->
+                        <div class="flex h-full items-end">
+                            <div class="w-2 h-9 bg-blue-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-8 bg-blue-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-blue-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-blue-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-6 bg-green-500 rounded-sm mx-0.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs and Content Area -->
+        <div class="dify-card bg-white overflow-hidden mb-6">
+            <!-- Tabs -->
+            <div class="border-b border-gray-200">
+                <div class="flex overflow-x-auto">
+                    <div class="tab active" data-tab="model-accuracy">模型准确率</div>
+                    <div class="tab" data-tab="answer-quality">回答质量</div>
+                    <div class="tab" data-tab="hallucination-analysis">幻觉分析</div>
+                    <div class="tab" data-tab="model-comparison">模型对比</div>
+                </div>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- 模型准确率 Tab -->
+                <div class="tab-content active" id="model-accuracy-content">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">准确率趋势</h3>
+                        <div class="chart-container">
+                            <!-- 图表占位 -->
+                            <div class="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="w-full h-64 bg-white rounded-lg overflow-hidden">
+                                        <!-- 模拟的折线图 -->
+                                        <svg viewBox="0 0 400 200" class="w-full h-full">
+                                            <!-- X轴和Y轴 -->
+                                            <line x1="40" y1="160" x2="380" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                            <line x1="40" y1="20" x2="40" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                            
+                                            <!-- 折线数据 - 准确率 -->
+                                            <polyline 
+                                                points="40,70 100,80 160,60 220,50 280,40 340,30" 
+                                                fill="none" 
+                                                stroke="#2970FF" 
+                                                stroke-width="2"
+                                            ></polyline>
+                                            
+                                            <!-- 数据点 -->
+                                            <circle cx="40" cy="70" r="4" fill="#2970FF"></circle>
+                                            <circle cx="100" cy="80" r="4" fill="#2970FF"></circle>
+                                            <circle cx="160" cy="60" r="4" fill="#2970FF"></circle>
+                                            <circle cx="220" cy="50" r="4" fill="#2970FF"></circle>
+                                            <circle cx="280" cy="40" r="4" fill="#2970FF"></circle>
+                                            <circle cx="340" cy="30" r="4" fill="#2970FF"></circle>
+                                            
+                                            <!-- X轴标签 -->
+                                            <text x="40" y="180" font-size="10" text-anchor="middle">5.10</text>
+                                            <text x="100" y="180" font-size="10" text-anchor="middle">5.11</text>
+                                            <text x="160" y="180" font-size="10" text-anchor="middle">5.12</text>
+                                            <text x="220" y="180" font-size="10" text-anchor="middle">5.13</text>
+                                            <text x="280" y="180" font-size="10" text-anchor="middle">5.14</text>
+                                            <text x="340" y="180" font-size="10" text-anchor="middle">5.15</text>
+                                            
+                                            <!-- Y轴标签 -->
+                                            <text x="30" y="160" font-size="10" text-anchor="end">85%</text>
+                                            <text x="30" y="120" font-size="10" text-anchor="end">90%</text>
+                                            <text x="30" y="80" font-size="10" text-anchor="end">95%</text>
+                                            <text x="30" y="40" font-size="10" text-anchor="end">100%</text>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">业务场景准确率</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">业务场景</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">准确率</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">环比</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">存款咨询</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">96.8%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↑1.2%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">贷款申请</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">92.5%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↑2.3%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">转账汇款</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">95.2%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↑0.8%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">理财咨询</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">91.8%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600">↓0.4%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">信用卡</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">94.3%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↑1.6%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">问题类型准确率</h3>
+                            <div class="chart-container">
+                                <!-- 图表占位 -->
+                                <div class="w-full h-full bg-white rounded-lg flex items-center justify-center">
+                                    <!-- 模拟的条形图 -->
+                                    <svg viewBox="0 0 400 200" class="w-full h-full">
+                                        <!-- X轴和Y轴 -->
+                                        <line x1="80" y1="160" x2="380" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="80" y1="20" x2="80" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                        
+                                        <!-- 条形 -->
+                                        <rect x="100" y="40" width="30" height="120" fill="#EBF2FF" rx="2"></rect>
+                                        <rect x="150" y="60" width="30" height="100" fill="#EBF2FF" rx="2"></rect>
+                                        <rect x="200" y="70" width="30" height="90" fill="#EBF2FF" rx="2"></rect>
+                                        <rect x="250" y="80" width="30" height="80" fill="#EBF2FF" rx="2"></rect>
+                                        <rect x="300" y="90" width="30" height="70" fill="#EBF2FF" rx="2"></rect>
+                                        
+                                        <!-- 标签 -->
+                                        <text x="115" y="170" font-size="10" text-anchor="middle">产品咨询</text>
+                                        <text x="165" y="170" font-size="10" text-anchor="middle">业务办理</text>
+                                        <text x="215" y="170" font-size="10" text-anchor="middle">投诉处理</text>
+                                        <text x="265" y="170" font-size="10" text-anchor="middle">账户查询</text>
+                                        <text x="315" y="170" font-size="10" text-anchor="middle">政策解读</text>
+                                        
+                                        <!-- 百分比数值 -->
+                                        <text x="115" y="35" font-size="10" text-anchor="middle">97%</text>
+                                        <text x="165" y="55" font-size="10" text-anchor="middle">94%</text>
+                                        <text x="215" y="65" font-size="10" text-anchor="middle">92%</text>
+                                        <text x="265" y="75" font-size="10" text-anchor="middle">90%</text>
+                                        <text x="315" y="85" font-size="10" text-anchor="middle">87%</text>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 回答质量 Tab -->
+                <div class="tab-content" id="answer-quality-content">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">回答质量评分趋势</h3>
+                        <div class="chart-container">
+                            <!-- 图表占位 -->
+                            <div class="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="w-full h-64 bg-white rounded-lg overflow-hidden">
+                                        <!-- 模拟的折线图 -->
+                                        <svg viewBox="0 0 400 200" class="w-full h-full">
+                                            <!-- X轴和Y轴 -->
+                                            <line x1="40" y1="160" x2="380" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                            <line x1="40" y1="20" x2="40" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                            
+                                            <!-- 折线数据 - 回答质量 -->
+                                            <polyline 
+                                                points="40,80 100,75 160,70 220,60 280,50 340,40" 
+                                                fill="none" 
+                                                stroke="#10B981" 
+                                                stroke-width="2"
+                                            ></polyline>
+                                            
+                                            <!-- 数据点 -->
+                                            <circle cx="40" cy="80" r="4" fill="#10B981"></circle>
+                                            <circle cx="100" cy="75" r="4" fill="#10B981"></circle>
+                                            <circle cx="160" cy="70" r="4" fill="#10B981"></circle>
+                                            <circle cx="220" cy="60" r="4" fill="#10B981"></circle>
+                                            <circle cx="280" cy="50" r="4" fill="#10B981"></circle>
+                                            <circle cx="340" cy="40" r="4" fill="#10B981"></circle>
+                                            
+                                            <!-- X轴标签 -->
+                                            <text x="40" y="180" font-size="10" text-anchor="middle">5.10</text>
+                                            <text x="100" y="180" font-size="10" text-anchor="middle">5.11</text>
+                                            <text x="160" y="180" font-size="10" text-anchor="middle">5.12</text>
+                                            <text x="220" y="180" font-size="10" text-anchor="middle">5.13</text>
+                                            <text x="280" y="180" font-size="10" text-anchor="middle">5.14</text>
+                                            <text x="340" y="180" font-size="10" text-anchor="middle">5.15</text>
+                                            
+                                            <!-- Y轴标签 -->
+                                            <text x="30" y="160" font-size="10" text-anchor="end">3.0</text>
+                                            <text x="30" y="120" font-size="10" text-anchor="end">3.5</text>
+                                            <text x="30" y="80" font-size="10" text-anchor="end">4.0</text>
+                                            <text x="30" y="40" font-size="10" text-anchor="end">4.5</text>
+                                            <text x="30" y="20" font-size="10" text-anchor="end">5.0</text>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">质量评分维度分布</h3>
+                            <div class="bg-white rounded-lg p-4">
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-medium">完整性</span>
+                                            <span class="text-sm font-medium">4.6</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: 92%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-medium">准确性</span>
+                                            <span class="text-sm font-medium">4.7</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: 94%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-medium">清晰度</span>
+                                            <span class="text-sm font-medium">4.4</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: 88%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-medium">相关性</span>
+                                            <span class="text-sm font-medium">4.5</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: 90%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-medium">专业性</span>
+                                            <span class="text-sm font-medium">4.3</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: 86%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">改进建议</h3>
+                            <div class="bg-white rounded-lg p-4">
+                                <div class="space-y-4">
+                                    <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                                        <h4 class="font-medium text-sm text-yellow-800">理财产品知识需要更新</h4>
+                                        <p class="text-xs text-yellow-700 mt-1">最新理财产品信息不完整，建议更新理财产品知识库。</p>
+                                    </div>
+                                    <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                                        <h4 class="font-medium text-sm text-yellow-800">专业术语解释不够通俗</h4>
+                                        <p class="text-xs text-yellow-700 mt-1">在解释金融专业术语时，建议增加更通俗易懂的示例。</p>
+                                    </div>
+                                    <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                                        <h4 class="font-medium text-sm text-yellow-800">回答过于冗长</h4>
+                                        <p class="text-xs text-yellow-700 mt-1">某些场景下回答内容过多，建议优化提示词，使回答更加简洁。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 幻觉分析 Tab -->
+                <div class="tab-content" id="hallucination-analysis-content">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">幻觉率趋势</h3>
+                        <div class="chart-container">
+                            <!-- 图表占位 -->
+                            <div class="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="w-full h-64 bg-white rounded-lg overflow-hidden">
+                                        <!-- 模拟的折线图 -->
+                                        <svg viewBox="0 0 400 200" class="w-full h-full">
+                                            <!-- X轴和Y轴 -->
+                                            <line x1="40" y1="160" x2="380" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                            <line x1="40" y1="20" x2="40" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                            
+                                            <!-- 折线数据 - 幻觉率 -->
+                                            <polyline 
+                                                points="40,60 100,70 160,80 220,90 280,100 340,120" 
+                                                fill="none" 
+                                                stroke="#F59E0B" 
+                                                stroke-width="2"
+                                            ></polyline>
+                                            
+                                            <!-- 数据点 -->
+                                            <circle cx="40" cy="60" r="4" fill="#F59E0B"></circle>
+                                            <circle cx="100" cy="70" r="4" fill="#F59E0B"></circle>
+                                            <circle cx="160" cy="80" r="4" fill="#F59E0B"></circle>
+                                            <circle cx="220" cy="90" r="4" fill="#F59E0B"></circle>
+                                            <circle cx="280" cy="100" r="4" fill="#F59E0B"></circle>
+                                            <circle cx="340" cy="120" r="4" fill="#F59E0B"></circle>
+                                            
+                                            <!-- X轴标签 -->
+                                            <text x="40" y="180" font-size="10" text-anchor="middle">5.10</text>
+                                            <text x="100" y="180" font-size="10" text-anchor="middle">5.11</text>
+                                            <text x="160" y="180" font-size="10" text-anchor="middle">5.12</text>
+                                            <text x="220" y="180" font-size="10" text-anchor="middle">5.13</text>
+                                            <text x="280" y="180" font-size="10" text-anchor="middle">5.14</text>
+                                            <text x="340" y="180" font-size="10" text-anchor="middle">5.15</text>
+                                            
+                                            <!-- Y轴标签 -->
+                                            <text x="30" y="160" font-size="10" text-anchor="end">5.0%</text>
+                                            <text x="30" y="120" font-size="10" text-anchor="end">4.0%</text>
+                                            <text x="30" y="80" font-size="10" text-anchor="end">3.0%</text>
+                                            <text x="30" y="40" font-size="10" text-anchor="end">2.0%</text>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">幻觉类型分布</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">幻觉类型</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">占比</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">环比</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">产品信息错误</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">38%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600">↑2.1%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">数字计算错误</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">24%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↓1.5%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">流程描述错误</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">18%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↓2.3%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">法规政策错误</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">12%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↓0.8%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">其他幻觉</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">8%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↓0.4%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">近期幻觉样本</h3>
+                            <div class="space-y-4">
+                                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                    <div class="flex items-start">
+                                        <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-1">
+                                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">产品信息错误</div>
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                <p>问题：请介绍一下你们的"星享收益"理财产品</p>
+                                                <p class="mt-1 text-red-600">幻觉：错误描述了不存在的理财产品及收益率</p>
+                                            </div>
+                                            <div class="mt-2 flex">
+                                                <button class="text-xs text-blue-600 hover:text-blue-800">查看详情</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                    <div class="flex items-start">
+                                        <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-1">
+                                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">数字计算错误</div>
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                <p>问题：如果我存10万元3年期定期，利息是多少？</p>
+                                                <p class="mt-1 text-red-600">幻觉：计算利息时使用了错误的利率</p>
+                                            </div>
+                                            <div class="mt-2 flex">
+                                                <button class="text-xs text-blue-600 hover:text-blue-800">查看详情</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模型对比 Tab -->
+                <div class="tab-content" id="model-comparison-content">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">模型性能对比</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">模型名称</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">准确率</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">回答质量</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">幻觉率</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">响应时间</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">版本</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">金融大模型v2(生产)</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">93.7%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">4.5</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">2.8%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">0.8s</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">v2.3</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">金融大模型v3(测试)</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">95.2% ↑</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">4.7 ↑</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">1.9% ↓</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">0.7s ↓</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">v3.0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">专业模型-存款</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">96.8%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">4.6</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">1.5%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">0.6s</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">v1.8</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">专业模型-贷款</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">94.5%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">4.4</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">2.2%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">0.7s</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">v1.7</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">专业模型-信用卡</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">95.6%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">4.5</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">1.8%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">0.7s</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">v1.9</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">模型对比分析</h3>
+                            <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                <div class="space-y-3">
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">金融大模型v3优势</h4>
+                                        <ul class="mt-1 text-xs text-gray-600 list-disc list-inside">
+                                            <li>准确率提升1.5个百分点，特别是在复杂金融产品咨询方面</li>
+                                            <li>幻觉率下降显著，尤其是产品信息正确性提升</li>
+                                            <li>响应速度略有提升，体验更流畅</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">专业模型表现分析</h4>
+                                        <ul class="mt-1 text-xs text-gray-600 list-disc list-inside">
+                                            <li>存款专业模型在其垂直领域表现最佳，适合存款业务深度咨询</li>
+                                            <li>贷款模型在复杂场景中准确率仍有提升空间</li>
+                                            <li>信用卡模型在多轮对话中表现优异</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">建议执行策略</h4>
+                                        <ul class="mt-1 text-xs text-gray-600 list-disc list-inside">
+                                            <li>继续金融大模型v3的测试，重点关注复杂场景</li>
+                                            <li>对贷款模型进行针对性优化，提升复杂贷款咨询场景准确率</li>
+                                            <li>考虑采用混合调用策略，根据问题类型智能选择合适模型</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">模型能力雷达图</h3>
+                            <div class="chart-container bg-white p-4 rounded-lg border border-gray-200">
+                                <!-- 雷达图 -->
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <svg viewBox="0 0 300 300" class="w-full h-full max-h-64">
+                                        <!-- 雷达图背景 -->
+                                        <circle cx="150" cy="150" r="120" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"></circle>
+                                        <circle cx="150" cy="150" r="90" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"></circle>
+                                        <circle cx="150" cy="150" r="60" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"></circle>
+                                        <circle cx="150" cy="150" r="30" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"></circle>
+                                        
+                                        <!-- 雷达图轴线 -->
+                                        <line x1="150" y1="150" x2="150" y2="30" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="254" y2="150" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="150" y2="270" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="46" y2="150" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="213" y2="87" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="87" y2="87" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="213" y2="213" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="87" y2="213" stroke="#E5E7EB" stroke-width="1"></line>
+                                        
+                                        <!-- 轴标签 -->
+                                        <text x="150" y="20" text-anchor="middle" font-size="10">准确率</text>
+                                        <text x="270" y="155" text-anchor="middle" font-size="10">响应速度</text>
+                                        <text x="150" y="280" text-anchor="middle" font-size="10">幻觉控制</text>
+                                        <text x="30" y="155" text-anchor="middle" font-size="10">专业性</text>
+                                        <text x="223" y="77" text-anchor="middle" font-size="10">多轮对话</text>
+                                        <text x="77" y="77" text-anchor="middle" font-size="10">知识覆盖</text>
+                                        <text x="223" y="223" text-anchor="middle" font-size="10">理解能力</text>
+                                        <text x="77" y="223" text-anchor="middle" font-size="10">解释清晰</text>
+                                        
+                                        <!-- 金融大模型v2数据 -->
+                                        <polygon points="150,50 230,150 150,230 70,150 150,50 220,90 220,210 80,210 80,90" 
+                                            fill="rgba(41, 112, 255, 0.2)" stroke="#2970FF" stroke-width="1.5"></polygon>
+                                        
+                                        <!-- 金融大模型v3数据 -->
+                                        <polygon points="150,40 240,150 150,240 60,150 150,40 230,80 230,220 70,220 70,80" 
+                                            fill="rgba(16, 185, 129, 0.2)" stroke="#10B981" stroke-width="1.5" stroke-dasharray="4 2"></polygon>
+                                        
+                                        <!-- 图例 -->
+                                        <rect x="60" y="290" width="10" height="10" fill="rgba(41, 112, 255, 0.2)" stroke="#2970FF"></rect>
+                                        <text x="75" y="298" font-size="9">金融大模型v2</text>
+                                        
+                                        <rect x="160" y="290" width="10" height="10" fill="rgba(16, 185, 129, 0.2)" stroke="#10B981" stroke-dasharray="4 2"></rect>
+                                        <text x="175" y="298" font-size="9">金融大模型v3</text>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 相关资源和建议 -->
+        <div class="dify-card bg-white p-6">
+            <h3 class="text-lg font-medium text-gray-800 mb-4">相关资源与改进建议</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                    <h4 class="font-medium text-blue-800 mb-2">提升建议</h4>
+                    <ul class="text-sm text-blue-700 space-y-2">
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-blue-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>更新理财产品知识库，减少产品信息幻觉</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-blue-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>优化提示词设计，提高回答专业性和清晰度</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-blue-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>加强数字计算能力，减少计算类错误</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                    <h4 class="font-medium text-purple-800 mb-2">关联功能</h4>
+                    <ul class="text-sm text-purple-700 space-y-2">
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-purple-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-purple-900">知识库管理</a>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-purple-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-purple-900">模型评估</a>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-purple-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-purple-900">提示词工程</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4 border border-green-100">
+                    <h4 class="font-medium text-green-800 mb-2">相关报告</h4>
+                    <ul class="text-sm text-green-700 space-y-2">
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-green-900">模型迭代效果报告</a>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-green-900">用户满意度综合分析</a>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-green-900">银行AI年度报告</a>
+                        </li>
+                    </ul>
+                </div>
+            </div><!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI表现 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tab {
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid var(--dify-primary);
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+
+        .tab:hover:not(.active) {
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-semibold text-gray-800">AI表现分析</h1>
+            <p class="text-gray-600 mt-1">分析AI模型在实际应用中的表现和效果</p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="dify-card bg-white p-4 mb-6 flex flex-wrap items-center justify-between">
+            <div class="flex flex-wrap items-center gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">时间范围</label>
+                    <select class="border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option>最近7天</option>
+                        <option>最近30天</option>
+                        <option>最近90天</option>
+                        <option>自定义</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">模型选择</label>
+                    <select class="border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option>全部模型</option>
+                        <option>金融大模型</option>
+                        <option>专业模型-存款</option>
+                        <option>专业模型-贷款</option>
+                        <option>专业模型-信用卡</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">业务场景</label>
+                    <select class="border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option>全部场景</option>
+                        <option>存款咨询</option>
+                        <option>贷款申请</option>
+                        <option>转账汇款</option>
+                        <option>理财咨询</option>
+                        <option>信用卡</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 mr-2">
+                    应用筛选
+                </button>
+                <button class="dify-btn px-4 py-2 border border-gray-300 text-gray-700 text-sm bg-white hover:bg-gray-50">
+                    导出报告
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <!-- 准确率卡片 -->
+            <div class="dify-card p-5 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-500">模型准确率</h3>
+                    <span class="dify-tag bg-green-50 text-green-600">+2.1%</span>
+                </div>
+                <div class="flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">93.7%</p>
+                        <p class="text-xs text-gray-500 mt-1">较上期提升2.1%</p>
+                    </div>
+                    <div class="h-10 w-20 bg-green-50 rounded">
+                        <!-- 简化版迷你图表 -->
+                        <div class="flex h-full items-end">
+                            <div class="w-2 h-7 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-6 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-8 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-9 bg-green-500 rounded-sm mx-0.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 回答质量卡片 -->
+            <div class="dify-card p-5 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-500">回答质量评分</h3>
+                    <span class="dify-tag bg-green-50 text-green-600">+0.3</span>
+                </div>
+                <div class="flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">4.5</p>
+                        <p class="text-xs text-gray-500 mt-1">满分5分，较上期提升0.3</p>
+                    </div>
+                    <div class="h-10 w-20 bg-green-50 rounded">
+                        <!-- 简化版迷你图表 -->
+                        <div class="flex h-full items-end">
+                            <div class="w-2 h-6 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-8 bg-green-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-9 bg-green-500 rounded-sm mx-0.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 幻觉率卡片 -->
+            <div class="dify-card p-5 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-500">幻觉率</h3>
+                    <span class="dify-tag bg-green-50 text-green-600">-1.2%</span>
+                </div>
+                <div class="flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">2.8%</p>
+                        <p class="text-xs text-gray-500 mt-1">较上期下降1.2%</p>
+                    </div>
+                    <div class="h-10 w-20 bg-green-50 rounded">
+                        <!-- 简化版迷你图表 -->
+                        <div class="flex h-full items-end">
+                            <div class="w-2 h-9 bg-yellow-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-8 bg-yellow-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-yellow-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-6 bg-yellow-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-4 bg-green-500 rounded-sm mx-0.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 平均响应时间卡片 -->
+            <div class="dify-card p-5 bg-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-500">平均响应时间</h3>
+                    <span class="dify-tag bg-green-50 text-green-600">-120ms</span>
+                </div>
+                <div class="flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">0.8s</p>
+                        <p class="text-xs text-gray-500 mt-1">较上期减少120ms</p>
+                    </div>
+                    <div class="h-10 w-20 bg-green-50 rounded">
+                        <!-- 简化版迷你图表 -->
+                        <div class="flex h-full items-end">
+                            <div class="w-2 h-9 bg-blue-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-8 bg-blue-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-blue-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-7 bg-blue-200 rounded-sm mx-0.5"></div>
+                            <div class="w-2 h-6 bg-green-500 rounded-sm mx-0.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs and Content Area -->
+        <div class="dify-card bg-white overflow-hidden mb-6">
+            <!-- Tabs -->
+            <div class="border-b border-gray-200">
+                <div class="flex overflow-x-auto">
+                    <div class="tab active" data-tab="model-accuracy">模型准确率</div>
+                    <div class="tab" data-tab="answer-quality">回答质量</div>
+                    <div class="tab" data-tab="hallucination-analysis">幻觉分析</div>
+                    <div class="tab" data-tab="model-comparison">模型对比</div>
+                </div>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- 模型准确率 Tab -->
+                <div class="tab-content active" id="model-accuracy-content">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">准确率趋势</h3>
+                        <div class="chart-container">
+                            <!-- 图表占位 -->
+                            <div class="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="w-full h-64 bg-white rounded-lg overflow-hidden">
+                                        <!-- 模拟的折线图 -->
+                                        <svg viewBox="0 0 400 200" class="w-full h-full">
+                                            <!-- X轴和Y轴 -->
+                                            <line x1="40" y1="160" x2="380" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                            <line x1="40" y1="20" x2="40" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                            
+                                            <!-- 折线数据 - 准确率 -->
+                                            <polyline 
+                                                points="40,70 100,80 160,60 220,50 280,40 340,30" 
+                                                fill="none" 
+                                                stroke="#2970FF" 
+                                                stroke-width="2"
+                                            ></polyline>
+                                            
+                                            <!-- 数据点 -->
+                                            <circle cx="40" cy="70" r="4" fill="#2970FF"></circle>
+                                            <circle cx="100" cy="80" r="4" fill="#2970FF"></circle>
+                                            <circle cx="160" cy="60" r="4" fill="#2970FF"></circle>
+                                            <circle cx="220" cy="50" r="4" fill="#2970FF"></circle>
+                                            <circle cx="280" cy="40" r="4" fill="#2970FF"></circle>
+                                            <circle cx="340" cy="30" r="4" fill="#2970FF"></circle>
+                                            
+                                            <!-- X轴标签 -->
+                                            <text x="40" y="180" font-size="10" text-anchor="middle">5.10</text>
+                                            <text x="100" y="180" font-size="10" text-anchor="middle">5.11</text>
+                                            <text x="160" y="180" font-size="10" text-anchor="middle">5.12</text>
+                                            <text x="220" y="180" font-size="10" text-anchor="middle">5.13</text>
+                                            <text x="280" y="180" font-size="10" text-anchor="middle">5.14</text>
+                                            <text x="340" y="180" font-size="10" text-anchor="middle">5.15</text>
+                                            
+                                            <!-- Y轴标签 -->
+                                            <text x="30" y="160" font-size="10" text-anchor="end">85%</text>
+                                            <text x="30" y="120" font-size="10" text-anchor="end">90%</text>
+                                            <text x="30" y="80" font-size="10" text-anchor="end">95%</text>
+                                            <text x="30" y="40" font-size="10" text-anchor="end">100%</text>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">业务场景准确率</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">业务场景</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">准确率</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">环比</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">存款咨询</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">96.8%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↑1.2%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">贷款申请</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">92.5%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↑2.3%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">转账汇款</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">95.2%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↑0.8%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">理财咨询</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">91.8%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600">↓0.4%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">信用卡</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">94.3%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↑1.6%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">问题类型准确率</h3>
+                            <div class="chart-container">
+                                <!-- 图表占位 -->
+                                <div class="w-full h-full bg-white rounded-lg flex items-center justify-center">
+                                    <!-- 模拟的条形图 -->
+                                    <svg viewBox="0 0 400 200" class="w-full h-full">
+                                        <!-- X轴和Y轴 -->
+                                        <line x1="80" y1="160" x2="380" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="80" y1="20" x2="80" y2="160" stroke="#E5E7EB" stroke-width="1"></line>
+                                        
+                                        <!-- 条形 -->
+                                        <rect x="100" y="40" width="30" height="120" fill="#EBF2FF" rx="2"></rect>
+                                        <rect x="150" y="60" width="30" height="100" fill="#EBF2FF" rx="2"></rect>
+                                        <rect x="200" y="70" width="30" height="90" fill="#EBF2FF" rx="2"></rect>
+                                        <rect x="250" y="80" width="30" height="80" fill="#EBF2FF" rx="2"></rect>
+                                        <rect x="300" y="90" width="30" height="70" fill="#EBF2FF" rx="2"></rect>
+                                        
+                                        <!-- 标签 -->
+                                        <text x="115" y="170" font-size="10" text-anchor="middle">产品咨询</text>
+                                        <text x="165" y="170" font-size="10" text-anchor="middle">业务办理</text>
+                                        <text x="215" y="170" font-size="10" text-anchor="middle">投诉处理</text>
+                                        <text x="265" y="170" font-size="10" text-anchor="middle">账户查询</text>
+                                        <text x="315" y="170" font-size="10" text-anchor="middle">政策解读</text>
+                                        
+                                        <!-- 百分比数值 -->
+                                        <text x="115" y="35" font-size="10" text-anchor="middle">97%</text>
+                                        <text x="165" y="55" font-size="10" text-anchor="middle">94%</text>
+                                        <text x="215" y="65" font-size="10" text-anchor="middle">92%</text>
+                                        <text x="265" y="75" font-size="10" text-anchor="middle">90%</text>
+                                        <text x="315" y="85" font-size="10" text-anchor="middle">87%</text>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 回答质量 Tab -->
+                <div class="tab-content" id="answer-quality-content">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">回答质量评分趋势</h3>
+                        <div class="chart-container">
+                            <!-- 图表占位 -->
+                            <div class="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+                                <div class="text-center">
+                                    <p class="text-gray-500">回答质量评分趋势图表将显示在这里</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">质量评分维度分布</h3>
+                            <div class="bg-white rounded-lg p-4">
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-medium">完整性</span>
+                                            <span class="text-sm font-medium">4.6</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: 92%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-medium">准确性</span>
+                                            <span class="text-sm font-medium">4.7</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: 94%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-medium">清晰度</span>
+                                            <span class="text-sm font-medium">4.4</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: 88%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-medium">相关性</span>
+                                            <span class="text-sm font-medium">4.5</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: 90%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-medium">专业性</span>
+                                            <span class="text-sm font-medium">4.3</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: 86%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">改进建议</h3>
+                            <div class="bg-white rounded-lg p-4">
+                                <div class="space-y-4">
+                                    <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                                        <h4 class="font-medium text-sm text-yellow-800">理财产品知识需要更新</h4>
+                                        <p class="text-xs text-yellow-700 mt-1">最新理财产品信息不完整，建议更新理财产品知识库。</p>
+                                    </div>
+                                    <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                                        <h4 class="font-medium text-sm text-yellow-800">专业术语解释不够通俗</h4>
+                                        <p class="text-xs text-yellow-700 mt-1">在解释金融专业术语时，建议增加更通俗易懂的示例。</p>
+                                    </div>
+                                    <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                                        <h4 class="font-medium text-sm text-yellow-800">回答过于冗长</h4>
+                                        <p class="text-xs text-yellow-700 mt-1">某些场景下回答内容过多，建议优化提示词，使回答更加简洁。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 幻觉分析 Tab -->
+                <div class="tab-content" id="hallucination-analysis-content">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">幻觉率趋势</h3>
+                        <div class="chart-container">
+                            <!-- 图表占位 -->
+                            <div class="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+                                <div class="text-center">
+                                    <p class="text-gray-500">幻觉率趋势图表将显示在这里</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">幻觉类型分布</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">幻觉类型</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">占比</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">环比</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">产品信息错误</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">38%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600">↑2.1%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">数字计算错误</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">24%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↓1.5%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">流程描述错误</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">18%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↓2.3%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">法规政策错误</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">12%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↓0.8%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">其他幻觉</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">8%</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">↓0.4%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">近期幻觉样本</h3>
+                            <div class="space-y-4">
+                                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                    <div class="flex items-start">
+                                        <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-1">
+                                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">产品信息错误</div>
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                <p>问题：请介绍一下你们的"星享收益"理财产品</p>
+                                                <p class="mt-1 text-red-600">幻觉：错误描述了不存在的理财产品及收益率</p>
+                                            </div>
+                                            <div class="mt-2 flex">
+                                                <button class="text-xs text-blue-600 hover:text-blue-800">查看详情</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                    <div class="flex items-start">
+                                        <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-1">
+                                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">数字计算错误</div>
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                <p>问题：如果我存10万元3年期定期，利息是多少？</p>
+                                                <p class="mt-1 text-red-600">幻觉：计算利息时使用了错误的利率</p>
+                                            </div>
+                                            <div class="mt-2 flex">
+                                                <button class="text-xs text-blue-600 hover:text-blue-800">查看详情</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模型对比 Tab -->
+                <div class="tab-content" id="model-comparison-content">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">模型性能对比</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">模型名称</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">准确率</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">回答质量</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">幻觉率</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">响应时间</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">版本</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">金融大模型v2(生产)</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">93.7%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">4.5</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">2.8%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">0.8s</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">v2.3</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">金融大模型v3(测试)</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">95.2% ↑</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">4.7 ↑</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">1.9% ↓</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">0.7s ↓</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">v3.0</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">专业模型-存款</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">96.8%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">4.6</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">1.5%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">0.6s</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">v1.8</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">专业模型-贷款</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">94.5%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">4.4</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">2.2%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">0.7s</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">v1.7</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">专业模型-信用卡</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">95.6%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">4.5</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">1.8%</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">0.7s</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-500">v1.9</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">模型对比分析</h3>
+                            <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                <div class="space-y-3">
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">金融大模型v3优势</h4>
+                                        <ul class="mt-1 text-xs text-gray-600 list-disc list-inside">
+                                            <li>准确率提升1.5个百分点，特别是在复杂金融产品咨询方面</li>
+                                            <li>幻觉率下降显著，尤其是产品信息正确性提升</li>
+                                            <li>响应速度略有提升，体验更流畅</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">专业模型表现分析</h4>
+                                        <ul class="mt-1 text-xs text-gray-600 list-disc list-inside">
+                                            <li>存款专业模型在其垂直领域表现最佳，适合存款业务深度咨询</li>
+                                            <li>贷款模型在复杂场景中准确率仍有提升空间</li>
+                                            <li>信用卡模型在多轮对话中表现优异</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">建议执行策略</h4>
+                                        <ul class="mt-1 text-xs text-gray-600 list-disc list-inside">
+                                            <li>继续金融大模型v3的测试，重点关注复杂场景</li>
+                                            <li>对贷款模型进行针对性优化，提升复杂贷款咨询场景准确率</li>
+                                            <li>考虑采用混合调用策略，根据问题类型智能选择合适模型</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">模型能力雷达图</h3>
+                            <div class="chart-container bg-white p-4 rounded-lg border border-gray-200">
+                                <!-- 雷达图 -->
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <svg viewBox="0 0 300 300" class="w-full h-full max-h-64">
+                                        <!-- 雷达图背景 -->
+                                        <circle cx="150" cy="150" r="120" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"></circle>
+                                        <circle cx="150" cy="150" r="90" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"></circle>
+                                        <circle cx="150" cy="150" r="60" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"></circle>
+                                        <circle cx="150" cy="150" r="30" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"></circle>
+                                        
+                                        <!-- 雷达图轴线 -->
+                                        <line x1="150" y1="150" x2="150" y2="30" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="254" y2="150" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="150" y2="270" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="46" y2="150" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="213" y2="87" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="87" y2="87" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="213" y2="213" stroke="#E5E7EB" stroke-width="1"></line>
+                                        <line x1="150" y1="150" x2="87" y2="213" stroke="#E5E7EB" stroke-width="1"></line>
+                                        
+                                        <!-- 轴标签 -->
+                                        <text x="150" y="20" text-anchor="middle" font-size="10">准确率</text>
+                                        <text x="270" y="155" text-anchor="middle" font-size="10">响应速度</text>
+                                        <text x="150" y="280" text-anchor="middle" font-size="10">幻觉控制</text>
+                                        <text x="30" y="155" text-anchor="middle" font-size="10">专业性</text>
+                                        <text x="223" y="77" text-anchor="middle" font-size="10">多轮对话</text>
+                                        <text x="77" y="77" text-anchor="middle" font-size="10">知识覆盖</text>
+                                        <text x="223" y="223" text-anchor="middle" font-size="10">理解能力</text>
+                                        <text x="77" y="223" text-anchor="middle" font-size="10">解释清晰</text>
+                                        
+                                        <!-- 金融大模型v2数据 -->
+                                        <polygon points="150,50 230,150 150,230 70,150 150,50 220,90 220,210 80,210 80,90" 
+                                            fill="rgba(41, 112, 255, 0.2)" stroke="#2970FF" stroke-width="1.5"></polygon>
+                                        
+                                        <!-- 金融大模型v3数据 -->
+                                        <polygon points="150,40 240,150 150,240 60,150 150,40 230,80 230,220 70,220 70,80" 
+                                            fill="rgba(16, 185, 129, 0.2)" stroke="#10B981" stroke-width="1.5" stroke-dasharray="4 2"></polygon>
+                                        
+                                        <!-- 图例 -->
+                                        <rect x="60" y="290" width="10" height="10" fill="rgba(41, 112, 255, 0.2)" stroke="#2970FF"></rect>
+                                        <text x="75" y="298" font-size="9">金融大模型v2</text>
+                                        
+                                        <rect x="160" y="290" width="10" height="10" fill="rgba(16, 185, 129, 0.2)" stroke="#10B981" stroke-dasharray="4 2"></rect>
+                                        <text x="175" y="298" font-size="9">金融大模型v3</text>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 相关资源和建议 -->
+        <div class="dify-card bg-white p-6">
+            <h3 class="text-lg font-medium text-gray-800 mb-4">相关资源与改进建议</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                    <h4 class="font-medium text-blue-800 mb-2">提升建议</h4>
+                    <ul class="text-sm text-blue-700 space-y-2">
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-blue-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>更新理财产品知识库，减少产品信息幻觉</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-blue-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>优化提示词设计，提高回答专业性和清晰度</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-blue-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>加强数字计算能力，减少计算类错误</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                    <h4 class="font-medium text-purple-800 mb-2">关联功能</h4>
+                    <ul class="text-sm text-purple-700 space-y-2">
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-purple-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-purple-900">知识库管理</a>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-purple-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-purple-900">模型评估</a>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-purple-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-purple-900">提示词工程</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4 border border-green-100">
+                    <h4 class="font-medium text-green-800 mb-2">相关报告</h4>
+                    <ul class="text-sm text-green-700 space-y-2">
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-green-900">模型迭代效果报告</a>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-green-900">用户满意度综合分析</a>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mt-0.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <a href="#" class="hover:text-green-900">银行AI年度报告</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab切换功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 移除所有tab的active类
+                    tabs.forEach(t => t.classList.remove('active'));
+                    
+                    // 为当前点击的tab添加active类
+                    tab.classList.add('active');
+                    
+                    // 获取对应的内容区域id
+                    const contentId = `${tab.getAttribute('data-tab')}-content`;
+                    
+                    // 隐藏所有内容
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // 显示当前tab对应的内容
+                    document.getElementById(contentId).classList.add('active');
+                });
+            });
+
+            // 模拟数据加载和图表初始化
+            setTimeout(() => {
+                console.log('AI表现数据加载完成');
+                // 这里可以添加图表初始化代码
+            }, 500);
+
+            // 日期筛选和导出报告功能
+            document.querySelector('button').addEventListener('click', function() {
+                alert('筛选条件已应用');
+            });
+
+            // 与其他模块的联动功能
+            document.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = this.textContent.trim();
+                    console.log(`正在跳转到: ${target}`);
+                    // 实际项目中可以添加页面跳转逻辑
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

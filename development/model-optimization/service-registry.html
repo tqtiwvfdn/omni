@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务注册 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tab-button {
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: var(--dify-primary);
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        .service-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .service-card:hover {
+            border-color: var(--dify-primary);
+            background-color: var(--dify-primary-light);
+        }
+
+        .service-card.active {
+            border-color: var(--dify-primary);
+            background-color: var(--dify-primary-light);
+        }
+
+        .health-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .health-good {
+            background-color: #10B981;
+        }
+
+        .health-warning {
+            background-color: #F59E0B;
+        }
+
+        .health-critical {
+            background-color: #EF4444;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+    <div class="p-6">
+        <!-- Page Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-semibold text-gray-800">服务注册中心</h1>
+            <p class="text-gray-600 mt-1">智能体和业务服务的注册、健康检查与管理平台</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="mb-6 border-b border-gray-200">
+            <ul class="flex flex-wrap -mb-px">
+                <li class="mr-6">
+                    <button class="tab-button active inline-block py-4 px-1 text-sm font-medium"
+                        data-target="registry-tab">
+                        服务列表
+                    </button>
+                </li>
+                <li class="mr-6">
+                    <button
+                        class="tab-button inline-block py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700"
+                        data-target="health-tab">
+                        健康检查
+                    </button>
+                </li>
+                <li class="mr-6">
+                    <button
+                        class="tab-button inline-block py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700"
+                        data-target="topology-tab">
+                        服务拓扑
+                    </button>
+                </li>
+                <li class="mr-6">
+                    <button
+                        class="tab-button inline-block py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700"
+                        data-target="config-tab">
+                        配置中心
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Services Registry Tab Content -->
+        <div id="registry-tab" class="tab-content active">
+            <!-- Action Bar -->
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex space-x-2">
+                    <div class="relative">
+                        <input type="text"
+                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="搜索服务...">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <select
+                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">全部类型</option>
+                        <option value="agent">智能体服务</option>
+                        <option value="business">业务服务</option>
+                        <option value="infrastructure">基础设施</option>
+                        <option value="data">数据服务</option>
+                    </select>
+                    <select
+                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">全部状态</option>
+                        <option value="online">在线</option>
+                        <option value="offline">离线</option>
+                        <option value="warning">警告</option>
+                    </select>
+                </div>
+                <button
+                    class="dify-btn px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 focus:outline-none">
+                    注册服务
+                </button>
+            </div>
+
+            <!-- Services Table -->
+            <div class="dify-card bg-white overflow-x-auto mb-6">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                服务名称
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                类型
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                版本
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                实例数
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                状态
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                上次更新
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                操作
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div
+                                        class="flex-shrink-0 h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">转账智能助手</div>
+                                        <div class="text-xs text-gray-500">agent-transfer-assistant</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    智能体服务
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                v2.4.1
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                3/3
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="flex items-center">
+                                    <span class="health-indicator health-good"></span>
+                                    <span class="text-sm text-gray-900">正常</span>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                2025-05-15 14:32
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                <button class="text-gray-600 hover:text-gray-900">管理</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div
+                                        class="flex-shrink-0 h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">账户交易服务</div>
+                                        <div class="text-xs text-gray-500">service-account-transaction</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    业务服务
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                v3.1.0
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                5/5
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="flex items-center">
+                                    <span class="health-indicator health-good"></span>
+                                    <span class="text-sm text-gray-900">正常</span>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                2025-05-16 09:12
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                <button class="text-gray-600 hover:text-gray-900">管理</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div
+                                        class="flex-shrink-0 h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">文档理解服务</div>
+                                        <div class="text-xs text-gray-500">service-document-parser</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    智能体服务
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                v1.8.5
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                2/3
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="flex items-center">
+                                    <span class="health-indicator health-warning"></span>
+                                    <span class="text-sm text-gray-900">警告</span>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                2025-05-15 23:45
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                <button class="text-gray-600 hover:text-gray-900">管理</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div
+                                        class="flex-shrink-0 h-10 w-10 rounded-lg bg-yellow-100 flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">金融数据服务</div>
+                                        <div class="text-xs text-gray-500">service-financial-data</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    数据服务
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                v2.0.3
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                4/4
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="flex items-center">
+                                    <span class="health-indicator health-good"></span>
+                                    <span class="text-sm text-gray-900">正常</span>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                2025-05-16 08:43
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                <button class="text-gray-600 hover:text-gray-900">管理</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div
+                                        class="flex-shrink-0 h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">风控审核服务</div>
+                                        <div class="text-xs text-gray-500">service-risk-control</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    业务服务
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                v3.2.1
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                1/3
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="flex items-center">
+                                    <span class="health-indicator health-critical"></span>
+                                    <span class="text-sm text-gray-900">告警</span>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                2025-05-16 10:15
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                <button class="text-gray-600 hover:text-gray-900">管理</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div
+                                        class="flex-shrink-0 h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">服务器监控</div>
+                                        <div class="text-xs text-gray-500">infra-server-monitor</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                    基础设施
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                v1.4.2
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                2/2
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="flex items-center">
+                                    <span class="health-indicator health-good"></span>
+                                    <span class="text-sm text-gray-900">正常</span>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                2025-05-16 08:23
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                <button class="text-gray-600 hover:text-gray-900">管理</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="dify-card bg-white p-4">
+                    <h3 class="text-sm font-medium text-gray-500 mb-1">注册服务总数</h3>
+                    <p class="text-2xl font-semibold text-gray-900">28</p>
+                    <div class="mt-1 flex items-center">
+                        <span class="text-xs text-green-600 mr-1">+3</span>
+                        <span class="text-xs text-gray-500">较上月</span>
+                    </div>
+                </div>
+                <div class="dify-card bg-white p-4">
+                    <h3 class="text-sm font-medium text-gray-500 mb-1">健康服务</h3>
+                    <p class="text-2xl font-semibold text-green-600">25</p>
+                    <div class="mt-1 flex items-center">
+                        <span class="text-xs text-gray-500">占比</span>
+                        <span class="text-xs font-medium text-gray-900 ml-1">89.3%</span>
+                    </div>
+                </div>
+                <div class="dify-card bg-white p-4">
+                    <h3 class="text-sm font-medium text-gray-500 mb-1">警告服务</h3>
+                    <p class="text-2xl font-semibold text-yellow-600">2</p>
+                    <div class="mt-1 flex items-center">
+                        <span class="text-xs text-gray-500">占比</span>
+                        <span class="text-xs font-medium text-gray-900 ml-1">7.1%</span>
+                    </div>
+                </div>
+                <div class="dify-card bg-white p-4">
+                    <h3 class="text-sm font-medium text-gray-500 mb-1">告警服务</h3>
+                    <p class="text-2xl font-semibold text-red-600">1</p>
+                    <div class="mt-1 flex items-center">
+                        <span class="text-xs text-gray-500">占比</span>
+                        <span class="text-xs font-medium text-gray-900 ml-1">3.6%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Check Tab Content -->
+        <div id="health-tab" class="tab-content">
+            <div class="dify-card bg-white p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">健康检查配置</h3>
+                    <button
+                        class="dify-btn px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 focus:outline-none">
+                        添加检查项
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    服务名称
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    检查类型
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    检查频率
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    超时阈值
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    状态
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    上次检查
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">转账智能助手</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    HTTP
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    30秒
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    2秒
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="flex items-center">
+                                        <span class="health-indicator health-good"></span>
+                                        <span class="text-sm text-gray-900">正常</span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    1分钟前
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">账户交易服务</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    TCP
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    15秒
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    1秒
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="flex items-center">
+                                        <span class="health-indicator health-good"></span>
+                                        <span class="text-sm text-gray-900">正常</span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    15秒前
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-purple-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">文档理解服务</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    HTTP
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    30秒
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    3秒
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="flex items-center">
+                                        <span class="health-indicator health-warning"></span>
+                                        <span class="text-sm text-gray-900">警告</span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    30秒前
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-8 w-8 rounded-lg bg-red-100 flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">风控审核服务</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    gRPC
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    20秒
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    2秒
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="flex items-center">
+                                        <span class="health-indicator health-critical"></span>
+                                        <span class="text-sm text-gray-900">告警</span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    2分钟前
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">详情</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Health Check Settings Card -->
+            <div class="dify-card bg-white p-6">
+                <h3 class="text-lg font-semibold mb-4">全局健康检查设置</h3>
+
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-md font-medium mb-2">自动恢复设置</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="w-1/3">
+                                    <label class="block text-sm font-medium text-gray-700">最大重试次数</label>
+                                    <p class="text-xs text-gray-500 mt-1">服务标记为不健康前尝试的最大次数</p>
+                                </div>
+                                <div class="w-2/3">
+                                    <input type="number" value="3"
+                                        class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="w-1/3">
+                                    <label class="block text-sm font-medium text-gray-700">重试间隔</label>
+                                    <p class="text-xs text-gray-500 mt-1">连续检查之间的间隔时间</p>
+                                </div>
+                                <div class="w-2/3 flex items-center">
+                                    <input type="number" value="10"
+                                        class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                    <span class="ml-2 text-gray-600">秒</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-200">
+                        <h4 class="text-md font-medium mb-2">通知设置</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <label class="toggle-switch mr-3">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">启用邮件通知</span>
+                                    <p class="text-xs text-gray-500">当服务状态变更时通知相关负责人</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <label class="toggle-switch mr-3">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">启用短信通知</span>
+                                    <p class="text-xs text-gray-500">严重故障时通过短信通知负责人</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <label class="toggle-switch mr-3">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">升级策略</span>
+                                    <p class="text-xs text-gray-500">若服务持续故障，按级别升级通知管理层</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-200">
+                        <h4 class="text-md font-medium mb-2">高级选项</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <label class="toggle-switch mr-3">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">自动恢复</span>
+                                    <p class="text-xs text-gray-500">尝试自动重启不健康的服务实例</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <label class="toggle-switch mr-3">
+                                    <input type="checkbox">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">服务降级</span>
+                                    <p class="text-xs text-gray-500">当服务不可用时自动启用降级策略</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button
+                        class="mr-3 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                        重置为默认
+                    </button>
+                    <button
+                        class="dify-btn px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 focus:outline-none">
+                        保存设置
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Topology Tab Content -->
+        <div id="topology-tab" class="tab-content">
+            <div class="dify-card bg-white p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">服务依赖关系</h3>
+                    <div class="flex space-x-2">
+                        <button
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50">
+                            刷新
+                        </button>
+                        <button
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50">
+                            导出
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Placeholder for topology visualization -->
+                <div class="w-full h-96 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <div class="text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z">
+                            </path>
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-500">服务拓扑关系图</p>
+                        <p class="text-xs text-gray-400">支持拖拽、缩放和交互式探索</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Service Dependencies Table -->
+            <div class="dify-card bg-white p-6">
+                <h3 class="text-lg font-semibold mb-4">服务依赖明细</h3>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    服务名称
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    依赖服务
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    依赖类型
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    调用方式
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    状态
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">转账智能助手</div>
+                                    <div class="text-xs text-gray-500">agent-transfer-assistant</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">账户交易服务</div>
+                                    <div class="text-xs text-gray-500">service-account-transaction</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    强依赖
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    REST API
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="flex items-center">
+                                        <span class="health-indicator health-good"></span>
+                                        <span class="text-sm text-gray-900">正常</span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900">查看详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">转账智能助手</div>
+                                    <div class="text-xs text-gray-500">agent-transfer-assistant</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">风控审核服务</div>
+                                    <div class="text-xs text-gray-500">service-risk-control</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    强依赖
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    gRPC
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="flex items-center">
+                                        <span class="health-indicator health-critical"></span>
+                                        <span class="text-sm text-gray-900">告警</span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900">查看详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">转账智能助手</div>
+                                    <div class="text-xs text-gray-500">agent-transfer-assistant</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">金融数据服务</div>
+                                    <div class="text-xs text-gray-500">service-financial-data</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    弱依赖
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    REST API
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="flex items-center">
+                                        <span class="health-indicator health-good"></span>
+                                        <span class="text-sm text-gray-900">正常</span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900">查看详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">文档理解服务</div>
+                                    <div class="text-xs text-gray-500">service-document-parser</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">金融数据服务</div>
+                                    <div class="text-xs text-gray-500">service-financial-data</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    强依赖
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    REST API
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="flex items-center">
+                                        <span class="health-indicator health-good"></span>
+                                        <span class="text-sm text-gray-900">正常</span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900">查看详情</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Config Center Tab Content -->
+        <div id="config-tab" class="tab-content">
+            <div class="dify-card bg-white p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">配置管理</h3>
+                    <button
+                        class="dify-btn px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 focus:outline-none">
+                        添加配置项
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    配置名称
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    服务范围
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    配置类型
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    环境
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    最后更新
+                                </th>
+                                <th
+                                    class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">交易限额配置</div>
+                                    <div class="text-xs text-gray-500">transaction-limits</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">账户交易服务</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        JSON
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    生产环境
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    2025-05-10 15:23
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">历史版本</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">风控规则配置</div>
+                                    <div class="text-xs text-gray-500">risk-control-rules</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">风控审核服务</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        YAML
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    生产环境
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    2025-05-14 11:34
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">历史版本</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">智能体行为参数</div>
+                                    <div class="text-xs text-gray-500">agent-behavior-params</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">转账智能助手</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        JSON
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    预发布环境
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    2025-05-15 16:21
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">历史版本</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">数据库连接配置</div>
+                                    <div class="text-xs text-gray-500">db-connections</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">全局配置</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        KV配置
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    生产环境
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    2025-05-02 09:18
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">历史版本</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">服务发现设置</div>
+                                    <div class="text-xs text-gray-500">service-discovery-settings</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">全局配置</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        YAML
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    生产环境
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    2025-05-12 14:05
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-900">历史版本</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Configuration Detail Card -->
+            <div class="dify-card bg-white p-6">
+                <h3 class="text-lg font-semibold mb-4">配置详情: 交易限额配置</h3>
+
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-md font-medium">配置内容</h4>
+                        <div class="flex space-x-2">
+                            <button
+                                class="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50">
+                                编辑
+                            </button>
+                            <button
+                                class="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50">
+                                复制
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Configuration content editor (mocked as readonly) -->
+                    <div class="bg-gray-50 p-4 rounded-md font-mono text-sm text-gray-800 h-64 overflow-y-auto">
+                        {
+                        "limits": {
+                        "personal": {
+                        "singleTransactionMax": 50000,
+                        "dailyTransactionMax": 200000,
+                        "monthlyTransactionMax": 3000000
+                        },
+                        "business": {
+                        "singleTransactionMax": 500000,
+                        "dailyTransactionMax": 2000000,
+                        "monthlyTransactionMax": 30000000
+                        },
+                        "vip": {
+                        "singleTransactionMax": 1000000,
+                        "dailyTransactionMax": 5000000,
+                        "monthlyTransactionMax": 100000000
+                        }
+                        },
+                        "approvalRules": {
+                        "requireApprovalAbove": 100000,
+                        "requireDoubleApprovalAbove": 1000000,
+                        "requireRiskCheckAbove": 10000
+                        },
+                        "updated": "2025-05-10T15:23:45",
+                        "updatedBy": "admin",
+                        "version": "3.1.5"
+                        }
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-md font-medium mb-2">配置信息</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">创建时间</span>
+                                <span class="text-sm text-gray-900">2025-01-15 10:23</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">最后修改</span>
+                                <span class="text-sm text-gray-900">2025-05-10 15:23</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">修改人</span>
+                                <span class="text-sm text-gray-900">admin</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">版本</span>
+                                <span class="text-sm text-gray-900">3.1.5</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">环境</span>
+                                <span class="text-sm text-gray-900">生产环境</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-md font-medium mb-2">发布历史</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 h-4 w-4 rounded-full bg-blue-500 mt-1"></div>
+                                <div class="ml-3">
+                                    <div class="text-sm text-gray-900">v3.1.5 - 2025-05-10 15:23</div>
+                                    <div class="text-xs text-gray-500">提高VIP客户交易限额</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 h-4 w-4 rounded-full bg-gray-300 mt-1"></div>
+                                <div class="ml-3">
+                                    <div class="text-sm text-gray-900">v3.1.4 - 2025-04-22 11:45</div>
+                                    <div class="text-xs text-gray-500">调整企业客户月度限额</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 h-4 w-4 rounded-full bg-gray-300 mt-1"></div>
+                                <div class="ml-3">
+                                    <div class="text-sm text-gray-900">v3.1.3 - 2025-03-15 09:12</div>
+                                    <div class="text-xs text-gray-500">更新审批规则</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Navigation
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', function () {
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+
+                // Remove active class from all tab buttons
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                // Add active class to clicked button
+                this.classList.add('active');
+
+                // Show the corresponding tab content
+                const targetId = this.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch input').forEach(toggle => {
+            toggle.addEventListener('change', function () {
+                // You can add functionality here if needed
+            });
+        });
+
+        // Service card highlighting
+        document.querySelectorAll('.service-card').forEach(card => {
+            card.addEventListener('click', function () {
+                document.querySelectorAll('.service-card').forEach(c => {
+                    c.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+
+</html>

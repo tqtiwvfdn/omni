@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能体评测 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .flow-canvas {
+            background-image:
+                linear-gradient(to right, #f3f4f6 1px, transparent 1px),
+                linear-gradient(to bottom, #f3f4f6 1px, transparent 1px);
+            background-size: 20px 20px;
+            position: relative;
+            overflow: auto;
+            min-height: 500px;
+        }
+
+        .flow-node {
+            position: absolute;
+            min-width: 200px;
+            background: white;
+            border: 1px solid var(--dify-border);
+            border-radius: 8px;
+            box-shadow: var(--dify-shadow);
+            padding: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .flow-node:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .node-start {
+            top: 50px;
+            left: 50px;
+        }
+
+        .node-input {
+            top: 150px;
+            left: 50px;
+        }
+
+        .node-agent {
+            top: 250px;
+            left: 300px;
+        }
+
+        .node-evaluation {
+            top: 150px;
+            left: 550px;
+        }
+
+        .node-output {
+            top: 350px;
+            left: 550px;
+        }
+
+        .flow-connection {
+            position: absolute;
+            stroke: #94a3b8;
+            stroke-width: 2;
+            fill: none;
+            z-index: 1;
+        }
+
+        .test-case-card {
+            border: 1px solid var(--dify-border);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s ease;
+        }
+
+        .test-case-card:hover {
+            border-color: var(--dify-primary);
+        }
+
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            transition: 0.5s;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Page Header -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">智能体评测</h1>
+                    <p class="text-gray-600 mt-1">全方位评估银行AI智能体性能、准确性与安全性</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button
+                        class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        新建测试计划
+                    </button>
+                    <button
+                        class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6V4m-2 2h4m-2 0v2m0 8V4m6 8c0 .552-.448 1-1 1H5c-.552 0-1-.448-1-1s.448-1 1-1h14c.552 0 1 .448 1 1zm-4 0V8m0 0c0-1.105-.895-2-2-2s-2 .895-2 2m0 0V4">
+                            </path>
+                        </svg>
+                        测试模板
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-6 bg-white shadow-sm rounded-lg">
+            <div class="flex border-b border-gray-200">
+                <button id="tab-overview"
+                    class="tab-btn px-6 py-4 text-sm font-medium focus:outline-none border-b-2 border-blue-600 text-blue-600"
+                    data-tab="overview">
+                    测试概览
+                </button>
+                <button id="tab-flow"
+                    class="tab-btn px-6 py-4 text-sm font-medium focus:outline-none border-b-2 border-transparent text-gray-500 hover:text-gray-700"
+                    data-tab="flow">
+                    测试流程
+                </button>
+                <button id="tab-report"
+                    class="tab-btn px-6 py-4 text-sm font-medium focus:outline-none border-b-2 border-transparent text-gray-500 hover:text-gray-700"
+                    data-tab="report">
+                    测试报告
+                </button>
+                <button id="tab-cases"
+                    class="tab-btn px-6 py-4 text-sm font-medium focus:outline-none border-b-2 border-transparent text-gray-500 hover:text-gray-700"
+                    data-tab="cases">
+                    测试用例管理
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Content: Overview -->
+        <div id="content-overview" class="tab-content active">
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="dify-card p-6 bg-white">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-medium text-gray-800">运行中测试</h2>
+                    </div>
+                    <div class="mt-4 flex items-end justify-between">
+                        <div>
+                            <p class="text-3xl font-semibold text-gray-800">3</p>
+                            <p class="text-sm text-gray-500">当前测试任务</p>
+                        </div>
+                        <div class="metric-icon bg-blue-50 text-blue-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
+                                </path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dify-card p-6 bg-white">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-medium text-gray-800">测试通过率</h2>
+                    </div>
+                    <div class="mt-4 flex items-end justify-between">
+                        <div>
+                            <p class="text-3xl font-semibold text-gray-800">92.5%</p>
+                            <p class="text-sm text-gray-500">本月平均通过率</p>
+                        </div>
+                        <div class="relative w-12 h-12">
+                            <svg class="progress-ring w-12 h-12">
+                                <circle class="text-gray-200 w-full h-full" stroke="currentColor" stroke-width="2"
+                                    fill="transparent" r="16" cx="50%" cy="50%" />
+                                <circle class="progress-ring-circle text-green-600 w-full h-full" stroke="currentColor"
+                                    stroke-width="2" fill="transparent" stroke-dasharray="100" stroke-dashoffset="7.5"
+                                    stroke-linecap="round" r="16" cx="50%" cy="50%" />
+                            </svg>
+                            <div
+                                class="absolute inset-0 flex items-center justify-center text-green-600 text-sm font-medium">
+                                92%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dify-card p-6 bg-white">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-medium text-gray-800">测试用例数</h2>
+                    </div>
+                    <div class="mt-4 flex items-end justify-between">
+                        <div>
+                            <p class="text-3xl font-semibold text-gray-800">284</p>
+                            <p class="text-sm text-gray-500">覆盖各业务场景</p>
+                        </div>
+                        <div class="metric-icon bg-indigo-50 text-indigo-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dify-card p-6 bg-white">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-medium text-gray-800">平均评测时间</h2>
+                    </div>
+                    <div class="mt-4 flex items-end justify-between">
+                        <div>
+                            <p class="text-3xl font-semibold text-gray-800">2.3分</p>
+                            <p class="text-sm text-gray-500">每个测试用例</p>
+                        </div>
+                        <div class="metric-icon bg-orange-50 text-orange-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Tests -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Running Tests -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">正在运行的测试</h3>
+                        <a href="#" class="text-sm text-blue-600 hover:text-blue-800">查看全部</a>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">转账业务智能体测试</h4>
+                                    <p class="text-sm text-gray-600">测试ID: AGT-001-TEST-2024</p>
+                                </div>
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    运行中
+                                </span>
+                            </div>
+                            <div class="mt-3">
+                                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>进度</span>
+                                    <span>65%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 65%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">客服支持智能体评估</h4>
+                                    <p class="text-sm text-gray-600">测试ID: AGT-002-TEST-2024</p>
+                                </div>
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    队列中
+                                </span>
+                            </div>
+                            <div class="mt-3">
+                                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>预计开始时间</span>
+                                    <span>14:30</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Results -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">最近测试结果</h3>
+                        <a href="#" class="text-sm text-blue-600 hover:text-blue-800">查看更多</a>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">理财顾问智能体</h4>
+                                    <p class="text-sm text-gray-600">完成时间: 今天 13:45</p>
+                                </div>
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    通过
+                                </span>
+                            </div>
+                            <div class="mt-3 grid grid-cols-3 gap-4 text-sm">
+                                <div>
+                                    <p class="text-gray-600">准确率</p>
+                                    <p class="font-medium">95.2%</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600">响应时间</p>
+                                    <p class="font-medium">1.8s</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600">安全分数</p>
+                                    <p class="font-medium">98/100</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">信贷申请智能体</h4>
+                                    <p class="text-sm text-gray-600">完成时间: 今天 11:20</p>
+                                </div>
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    失败
+                                </span>
+                            </div>
+                            <div class="mt-3 grid grid-cols-3 gap-4 text-sm">
+                                <div>
+                                    <p class="text-gray-600">准确率</p>
+                                    <p class="font-medium">78.5%</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600">响应时间</p>
+                                    <p class="font-medium">4.2s</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600">安全分数</p>
+                                    <p class="font-medium">82/100</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Categories -->
+            <div class="dify-card bg-white p-6">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">测试类别覆盖情况</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <div class="text-sm font-medium text-gray-700">功能测试</div>
+                            <div class="text-sm font-medium text-gray-700">89%</div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 89%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">验证智能体功能完整性</p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <div class="text-sm font-medium text-gray-700">性能测试</div>
+                            <div class="text-sm font-medium text-gray-700">72%</div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: 72%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">评估响应速度和并发能力</p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <div class="text-sm font-medium text-gray-700">安全测试</div>
+                            <div class="text-sm font-medium text-gray-700">96%</div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-purple-500 h-2 rounded-full" style="width: 96%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">检测安全漏洞与风险点</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Flow -->
+        <div id="content-flow" class="tab-content">
+            <div class="dify-card bg-white mb-6">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-800">测试流程设计器</h3>
+                        <div class="flex items-center space-x-3">
+                            <button
+                                class="dify-btn px-3 py-1 text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
+                                保存模板
+                            </button>
+                            <button class="dify-btn px-3 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700">
+                                运行测试
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-canvas relative">
+                    <!-- SVG for connections -->
+                    <svg class="absolute inset-0 w-full h-full" style="z-index: 1;">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
+                            </marker>
+                        </defs>
+                        <!-- Connection lines -->
+                        <path class="flow-connection" d="M 150 100 L 150 200" marker-end="url(#arrowhead)" />
+                        <path class="flow-connection" d="M 150 250 L 300 300" marker-end="url(#arrowhead)" />
+                        <path class="flow-connection" d="M 500 300 L 550 200" marker-end="url(#arrowhead)" />
+                        <path class="flow-connection" d="M 650 250 L 650 400" marker-end="url(#arrowhead)" />
+                    </svg>
+
+                    <!-- Flow Nodes -->
+                    <div class="flow-node node-start bg-green-50 border-green-300">
+                        <div class="flex items-center mb-2">
+                            <div
+                                class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
+                                S
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-sm">开始测试</h4>
+                                <p class="text-xs text-gray-600">初始化测试环境</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-node node-input bg-blue-50 border-blue-300">
+                        <div class="flex items-center mb-2">
+                            <div
+                                class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
+                                I
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-sm">测试输入</h4>
+                                <p class="text-xs text-gray-600">执行测试用例</p>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600">
+                            <div class="bg-white rounded p-2 border border-gray-200">
+                                <p class="font-medium">示例输入:</p>
+                                <p>"我想转账1000元给张三"</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-node node-agent bg-purple-50 border-purple-300" style="min-width: 250px;">
+                        <div class="flex items-center mb-2">
+                            <div
+                                class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
+                                A
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-sm">智能体执行</h4>
+                                <p class="text-xs text-gray-600">转账业务智能体</p>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600">
+                            <div class="bg-white rounded p-2 border border-gray-200">
+                                <p class="font-medium">监控指标:</p>
+                                <ul class="list-disc list-inside text-xs mt-1">
+                                    <li>响应时间</li>
+                                    <li>准确性</li>
+                                    <li>异常处理</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-node node-evaluation bg-orange-50 border-orange-300">
+                        <div class="flex items-center mb-2">
+                            <div
+                                class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
+                                E
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-sm">结果评估</h4>
+                                <p class="text-xs text-gray-600">自动评分与分析</p>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600">
+                            <div class="bg-white rounded p-2 border border-gray-200">
+                                <p class="font-medium">评估维度:</p>
+                                <ul class="list-disc list-inside text-xs mt-1">
+                                    <li>功能正确性</li>
+                                    <li>性能指标</li>
+                                    <li>安全合规</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-node node-output bg-gray-50 border-gray-300">
+                        <div class="flex items-center mb-2">
+                            <div
+                                class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
+                                R
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-sm">报告生成</h4>
+                                <p class="text-xs text-gray-600">输出测试结果</p>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600">
+                            <div class="bg-white rounded p-2 border border-gray-200">
+                                <p class="font-medium">报告内容:</p>
+                                <ul class="list-disc list-inside text-xs mt-1">
+                                    <li>详细日志</li>
+                                    <li>性能图表</li>
+                                    <li>改进建议</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flow Configuration Panel -->
+            <div class="dify-card bg-white">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-800">测试配置</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">测试智能体</label>
+                            <select
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <option>转账业务智能体</option>
+                                <option>客服支持智能体</option>
+                                <option>理财顾问智能体</option>
+                                <option>信贷申请智能体</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">测试类型</label>
+                            <select
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <option>功能测试</option>
+                                <option>性能测试</option>
+                                <option>安全测试</option>
+                                <option>回归测试</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">并发用户数</label>
+                            <input type="number" value="10"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">测试时长(分钟)</label>
+                            <input type="number" value="30"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">测试环境</label>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="environment" value="dev"
+                                    class="text-blue-600 focus:ring-blue-500" checked />
+                                <span class="ml-2 text-sm text-gray-700">开发环境</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="environment" value="staging"
+                                    class="text-blue-600 focus:ring-blue-500" />
+                                <span class="ml-2 text-sm text-gray-700">测试环境</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="environment" value="prod"
+                                    class="text-blue-600 focus:ring-blue-500" />
+                                <span class="ml-2 text-sm text-gray-700">生产环境</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Report -->
+        <div id="content-report" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Test Summary Card -->
+                <div class="lg:col-span-2 dify-card bg-white p-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">测试报告摘要</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-semibold text-gray-900">95.2%</div>
+                            <div class="text-sm text-gray-600">准确率</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-semibold text-gray-900">1.8s</div>
+                            <div class="text-sm text-gray-600">平均响应时间</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-semibold text-gray-900">98/100</div>
+                            <div class="text-sm text-gray-600">安全分数</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-semibold text-gray-900">156</div>
+                            <div class="text-sm text-gray-600">执行用例数</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 border-t pt-4">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">测试用例结果分布</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <div class="w-32 text-sm text-gray-600">通过</div>
+                                <div class="flex-1 bg-gray-200 rounded-full h-4 mx-3">
+                                    <div class="bg-green-500 h-4 rounded-full" style="width: 85%"></div>
+                                </div>
+                                <div class="w-12 text-sm text-gray-900 text-right">133</div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-32 text-sm text-gray-600">失败</div>
+                                <div class="flex-1 bg-gray-200 rounded-full h-4 mx-3">
+                                    <div class="bg-red-500 h-4 rounded-full" style="width: 10%"></div>
+                                </div>
+                                <div class="w-12 text-sm text-gray-900 text-right">15</div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-32 text-sm text-gray-600">警告</div>
+                                <div class="flex-1 bg-gray-200 rounded-full h-4 mx-3">
+                                    <div class="bg-yellow-500 h-4 rounded-full" style="width: 5%"></div>
+                                </div>
+                                <div class="w-12 text-sm text-gray-900 text-right">8</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="dify-card bg-white p-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">快速操作</h3>
+                    <div class="space-y-3">
+                        <button
+                            class="w-full dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-left flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
+                            </svg>
+                            下载完整报告
+                        </button>
+                        <button
+                            class="w-full dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-left flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z">
+                                </path>
+                            </svg>
+                            分享报告
+                        </button>
+                        <button
+                            class="w-full dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-left flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+                                </path>
+                            </svg>
+                            创建优化任务
+                        </button>
+                        <button
+                            class="w-full dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-left flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                </path>
+                            </svg>
+                            重新测试
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Results -->
+            <div class="dify-card bg-white">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-800">详细测试结果</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    测试用例</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    输入</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    预期输出</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    实际输出</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    响应时间</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    状态</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TC-TRF-001
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">转账1000元给张三</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">显示转账确认界面</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">显示转账确认界面</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.2s</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">通过</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TC-TRF-002
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">查询账户余额</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">显示当前余额</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">显示当前余额</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.8s</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">通过</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TC-TRF-003
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">转账金额超限</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">提示超过日限额</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">未能正确识别超限</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.5s</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">失败</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-500">
+                            显示 1 到 3 共 156 条测试用例
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button
+                                class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">上一页</button>
+                            <button
+                                class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">1</button>
+                            <button
+                                class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">2</button>
+                            <button
+                                class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Cases -->
+        <div id="content-cases" class="tab-content">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">测试用例库</h2>
+                    <p class="text-sm text-gray-600 mt-1">管理和维护智能体测试用例</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button
+                        class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">
+                        导入用例
+                    </button>
+                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 text-sm">
+                        新建用例
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Test Suite Navigation -->
+                <div class="lg:col-span-1">
+                    <div class="dify-card bg-white">
+                        <div class="px-4 py-3 border-b border-gray-200">
+                            <h3 class="text-sm font-medium text-gray-800">测试套件</h3>
+                        </div>
+                        <div class="p-4 space-y-2">
+                            <div
+                                class="flex items-center px-3 py-2 text-sm rounded-md bg-blue-50 text-blue-700 cursor-pointer">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                                    </path>
+                                </svg>
+                                转账业务测试
+                            </div>
+                            <div
+                                class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                                    </path>
+                                </svg>
+                                客服处理测试
+                            </div>
+                            <div
+                                class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                                    </path>
+                                </svg>
+                                理财咨询测试
+                            </div>
+                            <div
+                                class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                                    </path>
+                                </svg>
+                                安全防护测试
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases List -->
+                <div class="lg:col-span-3">
+                    <div class="dify-card bg-white">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-medium text-gray-800">转账业务测试用例</h3>
+                                <div class="flex items-center space-x-3">
+                                    <input type="text" placeholder="搜索用例..."
+                                        class="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" />
+                                    <select
+                                        class="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                        <option>全部状态</option>
+                                        <option>已启用</option>
+                                        <option>已禁用</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <!-- Test Case Card -->
+                            <div class="test-case-card p-4">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex items-start">
+                                        <input type="checkbox" class="mt-1 mr-3 text-blue-600 focus:ring-blue-500" />
+                                        <div>
+                                            <h4 class="font-medium text-gray-900">标准转账流程测试</h4>
+                                            <p class="text-sm text-gray-600 mt-1">用例ID: TC-TRF-001</p>
+                                            <div class="mt-2 text-sm">
+                                                <div class="flex">
+                                                    <span class="w-16 text-gray-500">输入:</span>
+                                                    <span class="text-gray-700">"我要转账1000元给张三"</span>
+                                                </div>
+                                                <div class="flex">
+                                                    <span class="w-16 text-gray-500">预期:</span>
+                                                    <span class="text-gray-700">展示转账确认界面，包含收款人信息、金额确认</span>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3 flex items-center space-x-4">
+                                                <span class="text-xs text-gray-500">优先级: 高</span>
+                                                <span class="text-xs text-gray-500">最后执行: 今天 14:30</span>
+                                                <span class="text-xs text-gray-500">通过率: 98%</span>
+                                                <span class="text-xs text-gray-500">执行时长: 1.2s</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span
+                                            class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">已启用</span>
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z">
+                                                </path>
+                                            </svg>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
+                                                </path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- More Test Cases -->
+                            <div class="test-case-card p-4">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex items-start">
+                                        <input type="checkbox" class="mt-1 mr-3 text-blue-600 focus:ring-blue-500" />
+                                        <div>
+                                            <h4 class="font-medium text-gray-900">余额不足转账测试</h4>
+                                            <p class="text-sm text-gray-600 mt-1">用例ID: TC-TRF-002</p>
+                                            <div class="mt-2 text-sm">
+                                                <div class="flex">
+                                                    <span class="w-16 text-gray-500">输入:</span>
+                                                    <span class="text-gray-700">"转账10000元给李四"</span>
+                                                </div>
+                                                <div class="flex">
+                                                    <span class="w-16 text-gray-500">预期:</span>
+                                                    <span class="text-gray-700">提示余额不足，建议充值</span>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3 flex items-center space-x-4">
+                                                <span class="text-xs text-gray-500">优先级: 中</span>
+                                                <span class="text-xs text-gray-500">最后执行: 今天 13:45</span>
+                                                <span class="text-xs text-gray-500">通过率: 95%</span>
+                                                <span class="text-xs text-gray-500">执行时长: 1.5s</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span
+                                            class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">已启用</span>
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z">
+                                                </path>
+                                            </svg>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
+                                                </path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Test Case with Issues -->
+                            <div class="test-case-card p-4">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex items-start">
+                                        <input type="checkbox" class="mt-1 mr-3 text-blue-600 focus:ring-blue-500" />
+                                        <div>
+                                            <h4 class="font-medium text-gray-900">跨行转账流程测试</h4>
+                                            <p class="text-sm text-gray-600 mt-1">用例ID: TC-TRF-003</p>
+                                            <div class="mt-2 text-sm">
+                                                <div class="flex">
+                                                    <span class="w-16 text-gray-500">输入:</span>
+                                                    <span class="text-gray-700">"转账5000元到建设银行账户"</span>
+                                                </div>
+                                                <div class="flex">
+                                                    <span class="w-16 text-gray-500">预期:</span>
+                                                    <span class="text-gray-700">显示跨行转账手续费，要求确认</span>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3 flex items-center space-x-4">
+                                                <span class="text-xs text-gray-500">优先级: 高</span>
+                                                <span class="text-xs text-gray-500">最后执行: 昨天 16:20</span>
+                                                <span class="text-xs text-red-600">通过率: 76% ↓</span>
+                                                <span class="text-xs text-gray-500">执行时长: 3.2s</span>
+                                            </div>
+                                            <div class="mt-2 text-xs text-red-600">⚠️ 近期失败率上升，需要检查</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span
+                                            class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">待优化</span>
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z">
+                                                </path>
+                                            </svg>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
+                                                </path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="px-6 py-4 border-t border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm text-gray-500">
+                                    显示 1 到 3 共 42 个测试用例
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button
+                                        class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">上一页</button>
+                                    <button
+                                        class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">1</button>
+                                    <button
+                                        class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">2</button>
+                                    <button
+                                        class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">3</button>
+                                    <button
+                                        class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">下一页</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+            tabBtn.addEventListener('click', function () {
+                const targetTab = this.getAttribute('data-tab');
+
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('border-blue-600', 'text-blue-600');
+                    btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+                });
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+
+                // Add active class to clicked tab and corresponding content
+                this.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+                this.classList.add('border-blue-600', 'text-blue-600');
+                document.getElementById(`content-${targetTab}`).classList.add('active');
+            });
+        });
+
+        // Flow node drag functionality (basic simulation)
+        const flowNodes = document.querySelectorAll('.flow-node');
+        flowNodes.forEach(node => {
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+
+            node.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                if (e.type === "mousedown") {
+                    initialX = e.clientX - xOffset;
+                    initialY = e.clientY - yOffset;
+                }
+                if (e.target === node) {
+                    isDragging = true;
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    if (e.type === "mousemove") {
+                        currentX = e.clientX - initialX;
+                        currentY = e.clientY - initialY;
+                    }
+                    xOffset = currentX;
+                    yOffset = currentY;
+                    setTranslate(currentX, currentY, node);
+                }
+            }
+
+            function setTranslate(xPos, yPos, el) {
+                el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+            }
+
+            function dragEnd(e) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

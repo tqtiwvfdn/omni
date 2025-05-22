@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>输出私域管理 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-border: #E5E7EB;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .dify-card {
+            border-radius: 8px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+        }
+        .dify-btn {
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .rule-type-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .rule-type-block {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+        .rule-type-mask {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+        .rule-type-limit {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+        .rule-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .mask-preview {
+            font-family: monospace;
+            background: #f3f4f6;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .tab-btn {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .view-toggle button.active {
+            background-color: #2970FF;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-semibold text-gray-800 mb-2">输出私域管理</h1>
+            <!-- <div class="flex items-center text-sm text-gray-500">
+                <a href="#" class="hover:text-blue-600">AI安全护盾</a>
+                <span class="mx-2">></span>
+                <span>输出私域</span>
+            </div> -->
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">输出规则总数</div>
+                <div class="text-xl font-semibold mt-1">32</div>
+                <div class="text-xs text-gray-400 mt-1">已启用 28 个</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">脱敏规则数</div>
+                <div class="text-xl font-semibold mt-1">18</div>
+                <div class="text-xs text-gray-400 mt-1">覆盖主要信息类型</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">今日处理次数</div>
+                <div class="text-xl font-semibold mt-1">842</div>
+                <div class="text-xs text-gray-400 mt-1">脱敏 567次 · 拦截 89次</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">安全防护率</div>
+                <div class="text-xl font-semibold mt-1">99.8%</div>
+                <div class="text-xs text-gray-400 mt-1">输出内容安全保障</div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="dify-card bg-white mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6">
+                    <button class="tab-btn active py-4 px-1 text-sm font-medium" data-tab="rules">
+                        输出规则管理
+                    </button>
+                    <button class="tab-btn py-4 px-1 text-sm font-medium" data-tab="templates">
+                        脱敏模板管理
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Rules Tab Content -->
+            <div class="tab-content active" id="rules-content">
+                <!-- View Controls -->
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <!-- <h2 class="text-lg font-medium text-gray-900 mr-4">输出规则列表</h2> -->
+                            <div class="view-toggle flex rounded-lg border border-gray-300">
+                                <button class="px-4 py-2 active" id="rule-card-view">分类视图</button>
+                                <button class="px-4 py-2" id="rule-table-view">表格视图</button>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm" id="add-output-rule">添加规则</button>
+                            <button class="dify-btn px-3 py-2 border border-gray-300 bg-white text-gray-700 text-sm">批量测试</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card View -->
+                <div id="rule-card-view-content" class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Block Rules Card -->
+                        <div class="rule-card dify-card bg-white">
+                            <div class="p-4 border-b border-gray-200 bg-red-50">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="font-medium text-gray-900">禁止输出规则</h3>
+                                        <p class="text-xs text-gray-600">8个规则 · 今日拦截89次</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                        <span class="text-sm text-gray-700">账户密码</span>
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs configure-output-rule" data-rule="password-block">配置</button>
+                                    </div>
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                        <span class="text-sm text-gray-700">系统架构信息</span>
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs configure-output-rule" data-rule="arch-block">配置</button>
+                                    </div>
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                        <span class="text-sm text-gray-700">API密钥</span>
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs configure-output-rule" data-rule="api-block">配置</button>
+                                    </div>
+                                </div>
+                                <button class="mt-3 text-sm text-blue-600 hover:text-blue-900 w-full text-center">查看全部 ></button>
+                            </div>
+                        </div>
+
+                        <!-- Mask Rules Card -->
+                        <div class="rule-card dify-card bg-white">
+                            <div class="p-4 border-b border-gray-200 bg-yellow-50">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="font-medium text-gray-900">脱敏输出规则</h3>
+                                        <p class="text-xs text-gray-600">18个规则 · 今日处理567次</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                        <span class="text-sm text-gray-700">身份证号脱敏</span>
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs configure-output-rule" data-rule="idcard-mask">配置</button>
+                                    </div>
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                        <span class="text-sm text-gray-700">银行卡号脱敏</span>
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs configure-output-rule" data-rule="bankcard-mask">配置</button>
+                                    </div>
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                        <span class="text-sm text-gray-700">手机号脱敏</span>
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs configure-output-rule" data-rule="phone-mask">配置</button>
+                                    </div>
+                                </div>
+                                <button class="mt-3 text-sm text-blue-600 hover:text-blue-900 w-full text-center">查看全部 ></button>
+                            </div>
+                        </div>
+
+                        <!-- Limit Rules Card -->
+                        <div class="rule-card dify-card bg-white">
+                            <div class="p-4 border-b border-gray-200 bg-blue-50">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="font-medium text-gray-900">限量输出规则</h3>
+                                        <p class="text-xs text-gray-600">6个规则 · 今日限制186次</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                        <span class="text-sm text-gray-700">交易记录限制</span>
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs configure-output-rule" data-rule="transaction-limit">配置</button>
+                                    </div>
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                        <span class="text-sm text-gray-700">批量查询限制</span>
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs configure-output-rule" data-rule="batch-limit">配置</button>
+                                    </div>
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                        <span class="text-sm text-gray-700">详细信息控制</span>
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs configure-output-rule" data-rule="detail-limit">配置</button>
+                                    </div>
+                                </div>
+                                <button class="mt-3 text-sm text-blue-600 hover:text-blue-900 w-full text-center">查看全部 ></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table View -->
+                <div id="rule-table-view-content" class="hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">规则名称</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">规则类型</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">检测内容</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">处理方式</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">今日处理</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 text-sm text-gray-900">账户密码</td>
+                                    <td class="px-6 py-4">
+                                        <span class="rule-type-tag rule-type-block">禁止输出</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">包含"密码""口令"关键词</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">直接拦截</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">45</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 configure-output-rule" data-rule="password-block">编辑</button>
+                                        <button class="text-green-600 hover:text-green-900">测试</button>
+                                        <button class="text-red-600 hover:text-red-900">禁用</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 text-sm text-gray-900">身份证号脱敏</td>
+                                    <td class="px-6 py-4">
+                                        <span class="rule-type-tag rule-type-mask">脱敏输出</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">18位数字身份证格式</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">前6后2显示</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">156</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 configure-output-rule" data-rule="idcard-mask">编辑</button>
+                                        <button class="text-green-600 hover:text-green-900">测试</button>
+                                        <button class="text-red-600 hover:text-red-900">禁用</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 text-sm text-gray-900">交易记录限制</td>
+                                    <td class="px-6 py-4">
+                                        <span class="rule-type-tag rule-type-limit">限量输出</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">交易明细查询</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">最多显示50条/次</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">89</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 configure-output-rule" data-rule="transaction-limit">编辑</button>
+                                        <button class="text-green-600 hover:text-green-900">测试</button>
+                                        <button class="text-red-600 hover:text-red-900">禁用</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates Tab Content -->
+            <div class="tab-content" id="templates-content">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-medium text-gray-900">脱敏模板库</h2>
+                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm" id="add-template">新建模板</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="text-sm font-medium text-gray-900">身份证号脱敏</h4>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs edit-template" data-template="idcard">编辑</button>
+                                        <button class="text-green-600 hover:text-green-900 text-xs use-template" data-template="idcard">使用</button>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">保留前6位后2位，中间用*替代</div>
+                                <div class="mask-preview text-xs">
+                                    原始：420106199001012345<br>
+                                    脱敏：420106***********45
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="text-sm font-medium text-gray-900">银行卡号脱敏</h4>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs edit-template" data-template="bankcard">编辑</button>
+                                        <button class="text-green-600 hover:text-green-900 text-xs use-template" data-template="bankcard">使用</button>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">仅显示最后4位，其他用*替代</div>
+                                <div class="mask-preview text-xs">
+                                    原始：6217003810010000123<br>
+                                    脱敏：***************0123
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="text-sm font-medium text-gray-900">手机号脱敏</h4>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs edit-template" data-template="phone">编辑</button>
+                                        <button class="text-green-600 hover:text-green-900 text-xs use-template" data-template="phone">使用</button>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">保留前3位后4位，中间用*替代</div>
+                                <div class="mask-preview text-xs">
+                                    原始：13812345678<br>
+                                    脱敏：138****5678
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="text-sm font-medium text-gray-900">邮箱地址脱敏</h4>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs edit-template" data-template="email">编辑</button>
+                                        <button class="text-green-600 hover:text-green-900 text-xs use-template" data-template="email">使用</button>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">保留前2位和@后的域名</div>
+                                <div class="mask-preview text-xs">
+                                    原始：user123@example.com<br>
+                                    脱敏：us*****@example.com
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="text-sm font-medium text-gray-900">姓名脱敏</h4>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs edit-template" data-template="name">编辑</button>
+                                        <button class="text-green-600 hover:text-green-900 text-xs use-template" data-template="name">使用</button>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">保留姓氏，名字用*替代</div>
+                                <div class="mask-preview text-xs">
+                                    原始：张三<br>
+                                    脱敏：张*
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="text-sm font-medium text-gray-900">地址脱敏</h4>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 text-xs edit-template" data-template="address">编辑</button>
+                                        <button class="text-green-600 hover:text-green-900 text-xs use-template" data-template="address">使用</button>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">保留省市区，详细地址用*替代</div>
+                                <div class="mask-preview text-xs">
+                                    原始：北京市朝阳区建国门外大街1号<br>
+                                    脱敏：北京市朝阳区*********
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Output Rule Modal -->
+    <div id="output-rule-modal" class="modal">
+        <div class="modal-content p-6 w-full max-w-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-900" id="output-rule-modal-title">添加输出规则</h2>
+                <button id="close-output-rule-modal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="output-rule-form">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">规则名称</label>
+                            <input type="text" name="rule-name" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="例：身份证号脱敏">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">规则类型</label>
+                            <select name="rule-type" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <option value="block">禁止输出</option>
+                                <option value="mask">脱敏输出</option>
+                                <option value="limit">限量输出</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">检测内容</label>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">关键词匹配</label>
+                                <input type="text" name="keywords" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="输入关键词，用逗号分隔">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">格式匹配</label>
+                                <input type="text" name="pattern" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="输入正则表达式">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="mask-template-selector" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">选择脱敏模板</label>
+                        <select name="template" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <option value="">自定义脱敏规则</option>
+                            <option value="idcard">身份证号脱敏</option>
+                            <option value="bankcard">银行卡号脱敏</option>
+                            <option value="phone">手机号脱敏</option>
+                            <option value="email">邮箱地址脱敏</option>
+                            <option value="name">姓名脱敏</option>
+                            <option value="address">地址脱敏</option>
+                        </select>
+                    </div>
+                    
+                    <div id="processing-config">
+                        <!-- Dynamic content based on rule type -->
+                        <div id="block-config" class="output-action">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">拦截设置</label>
+                            <div class="space-y-2">
+                                <input type="text" name="block-replace" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="替换文本，如：[该信息不能显示]">
+                                <label class="flex items-center text-sm">
+                                    <input type="checkbox" name="log-blocked" checked class="mr-2">
+                                    记录拦截日志
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="mask-config" class="output-action hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">脱敏设置</label>
+                            <div class="space-y-2">
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">保留前</label>
+                                        <input type="number" name="keep-prefix" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="3">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">保留后</label>
+                                        <input type="number" name="keep-suffix" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="4">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">掩码字符</label>
+                                        <input type="text" name="mask-char" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="*" maxlength="1">
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded text-sm">
+                                    <div class="text-gray-600">预览示例：</div>
+                                    <div class="font-mono">138****5678</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="limit-config" class="output-action hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">限量设置</label>
+                            <div class="space-y-2">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">单次最大数量</label>
+                                        <input type="number" name="max-count" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="50">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">时间窗口(分钟)</label>
+                                        <input type="number" name="time-window" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="60">
+                                    </div>
+                                </div>
+                                <input type="text" name="limit-message" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="超限提示语" value="数据量过大，仅显示部分结果">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="enable-output-rule" name="enabled" checked class="mr-2">
+                        <label for="enable-output-rule" class="text-sm text-gray-700">启用此规则</label>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-output-rule" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm">取消</button>
+                    <button type="submit" class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active state from all tabs
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Add active state to clicked tab
+                this.classList.add('active');
+                
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Show selected tab content
+                const tabName = this.getAttribute('data-tab');
+                document.getElementById(`${tabName}-content`).classList.add('active');
+            });
+        });
+
+        // View toggle for rules tab
+        document.getElementById('rule-card-view').addEventListener('click', function() {
+            document.getElementById('rule-card-view-content').style.display = 'block';
+            document.getElementById('rule-table-view-content').style.display = 'none';
+            this.classList.add('active');
+            document.getElementById('rule-table-view').classList.remove('active');
+        });
+
+        document.getElementById('rule-table-view').addEventListener('click', function() {
+            document.getElementById('rule-card-view-content').style.display = 'none';
+            document.getElementById('rule-table-view-content').style.display = 'block';
+            this.classList.add('active');
+            document.getElementById('rule-card-view').classList.remove('active');
+        });
+
+        // Add Output Rule
+        document.getElementById('add-output-rule').addEventListener('click', function() {
+            document.getElementById('output-rule-modal-title').textContent = '添加输出规则';
+            document.getElementById('output-rule-modal').classList.add('show');
+        });
+
+        // Configure Output Rule
+        document.querySelectorAll('.configure-output-rule').forEach(button => {
+            button.addEventListener('click', function() {
+                const ruleName = this.closest('tr') ? this.closest('tr').querySelector('td').textContent : this.closest('.flex').querySelector('span').textContent;
+                document.getElementById('output-rule-modal-title').textContent = `编辑规则 - ${ruleName}`;
+                document.getElementById('output-rule-modal').classList.add('show');
+            });
+        });
+
+        // Close Modal
+        document.getElementById('close-output-rule-modal').addEventListener('click', function() {
+            document.getElementById('output-rule-modal').classList.remove('show');
+        });
+
+        document.getElementById('cancel-output-rule').addEventListener('click', function() {
+            document.getElementById('output-rule-modal').classList.remove('show');
+        });
+
+        // Rule Type Change
+        document.querySelector('select[name="rule-type"]').addEventListener('change', function() {
+            document.querySelectorAll('.output-action').forEach(action => {
+                action.classList.add('hidden');
+            });
+            document.getElementById(`${this.value}-config`).classList.remove('hidden');
+            
+            // Show/hide template selector based on rule type
+            const templateSelector = document.getElementById('mask-template-selector');
+            if (this.value === 'mask') {
+                templateSelector.classList.remove('hidden');
+            } else {
+                templateSelector.classList.add('hidden');
+            }
+        });
+
+        // Use Template from Templates Tab
+        document.querySelectorAll('.use-template').forEach(button => {
+            button.addEventListener('click', function() {
+                const template = this.getAttribute('data-template');
+                // Switch to rules tab and open add rule modal with template selected
+                document.querySelector('[data-tab="rules"]').click();
+                document.getElementById('add-output-rule').click();
+                document.querySelector('select[name="rule-type"]').value = 'mask';
+                const typeChangeEvent = new Event('change');
+                document.querySelector('select[name="rule-type"]').dispatchEvent(typeChangeEvent);
+                document.querySelector('select[name="template"]').value = template;
+            });
+        });
+
+        // Close modal on outside click
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

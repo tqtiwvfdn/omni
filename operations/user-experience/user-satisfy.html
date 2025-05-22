@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>满意度分析 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+            background-color: #F9FAFB;
+        }
+        .analysis-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            background-color: white;
+            box-shadow: var(--dify-shadow);
+            transition: all 0.2s ease;
+        }
+        .analysis-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .tab-button {
+            position: relative;
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            color: var(--dify-primary);
+        }
+        .tab-button.active:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+        .satisfaction-high {
+            color: #047857;
+        }
+        .satisfaction-medium {
+            color: #D97706;
+        }
+        .satisfaction-low {
+            color: #B91C1C;
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #E5E7EB;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Page Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-800">满意度分析</h1>
+                <p class="text-gray-600 mt-1">分析智能银行服务的用户满意度数据，发现改进机会</p>
+            </div>
+            <div class="flex space-x-3">
+                <div class="relative">
+                    <select class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none">
+                        <option>过去7天</option>
+                        <option>过去30天</option>
+                        <option>过去90天</option>
+                        <option>今年至今</option>
+                        <option>自定义时间段</option>
+                    </select>
+                    <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <button class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none flex items-center" id="filter-button">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                    </svg>
+                    筛选
+                </button>
+                <button class="px-3 py-2 bg-blue-600 rounded-lg text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center" id="export-button">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    导出报告
+                </button>
+            </div>
+        </div>
+
+        <!-- Satisfaction Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="analysis-card p-4">
+                <h3 class="text-sm font-medium text-gray-500">整体满意度</h3>
+                <div class="flex items-end space-x-2 mt-2">
+                    <p class="text-3xl font-semibold">8.2</p>
+                    <p class="text-sm text-gray-500 pb-1">/10分</p>
+                </div>
+                <div class="flex items-center mt-2">
+                    <span class="text-xs text-green-600 flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                        </svg>
+                        较上月提升0.3分
+                    </span>
+                </div>
+            </div>
+            
+            <div class="analysis-card p-4">
+                <h3 class="text-sm font-medium text-gray-500">NPS推荐值</h3>
+                <div class="flex items-end space-x-2 mt-2">
+                    <p class="text-3xl font-semibold">62</p>
+                    <p class="text-sm text-gray-500 pb-1">分</p>
+                </div>
+                <div class="flex items-center mt-2">
+                    <span class="text-xs text-green-600 flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                        </svg>
+                        较上月提升5分
+                    </span>
+                </div>
+            </div>
+            
+            <div class="analysis-card p-4">
+                <h3 class="text-sm font-medium text-gray-500">问题解决率</h3>
+                <div class="flex items-end space-x-2 mt-2">
+                    <p class="text-3xl font-semibold">92.4</p>
+                    <p class="text-sm text-gray-500 pb-1">%</p>
+                </div>
+                <div class="flex items-center mt-2">
+                    <span class="text-xs text-green-600 flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                        </svg>
+                        较上月提升2.1%
+                    </span>
+                </div>
+            </div>
+            
+            <div class="analysis-card p-4">
+                <h3 class="text-sm font-medium text-gray-500">客户评价量</h3>
+                <div class="flex items-end space-x-2 mt-2">
+                    <p class="text-3xl font-semibold">2,436</p>
+                </div>
+                <div class="flex items-center mt-2">
+                    <span class="text-xs text-gray-600 flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                        评价率 32.8%
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Analysis Content -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Satisfaction Trend Chart -->
+            <div class="analysis-card md:col-span-2">
+                <div class="border-b border-gray-200">
+                    <div class="flex px-4">
+                        <button class="tab-button active" data-tab="trend">满意度趋势</button>
+                        <button class="tab-button" data-tab="dimension">维度分析</button>
+                        <button class="tab-button" data-tab="compare">同业对比</button>
+                    </div>
+                </div>
+                <div class="p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">满意度变化趋势</h3>
+                        <div class="flex items-center space-x-3">
+                            <button class="text-sm text-gray-600 px-2 py-1 rounded hover:bg-gray-100">日</button>
+                            <button class="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">周</button>
+                            <button class="text-sm text-gray-600 px-2 py-1 rounded hover:bg-gray-100">月</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart Placeholder -->
+                    <div class="w-full h-64 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center">
+                        <p class="text-gray-400">满意度趋势图表</p>
+                    </div>
+                    
+                    <div class="mt-4 grid grid-cols-3 gap-4">
+                        <div class="border border-gray-200 rounded-lg p-3">
+                            <h4 class="text-sm font-medium text-gray-600">高满意度占比</h4>
+                            <p class="text-xl font-semibold mt-1 satisfaction-high">73.5%</p>
+                            <p class="text-xs text-gray-500 mt-1">评分 8-10分</p>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-3">
+                            <h4 class="text-sm font-medium text-gray-600">中等满意度占比</h4>
+                            <p class="text-xl font-semibold mt-1 satisfaction-medium">18.2%</p>
+                            <p class="text-xs text-gray-500 mt-1">评分 5-7分</p>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-3">
+                            <h4 class="text-sm font-medium text-gray-600">低满意度占比</h4>
+                            <p class="text-xl font-semibold mt-1 satisfaction-low">8.3%</p>
+                            <p class="text-xs text-gray-500 mt-1">评分 1-4分</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Business Category Analysis -->
+            <div class="analysis-card">
+                <div class="p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">业务类型满意度</h3>
+                        <button class="text-sm text-blue-600 hover:text-blue-800 flex items-center" id="view-details">
+                            详细分析
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-700">转账汇款</span>
+                                    <span class="ml-2 text-xs px-1.5 py-0.5 bg-green-100 text-green-800 rounded-full">+0.2</span>
+                                </div>
+                                <span class="text-sm font-medium satisfaction-high">8.6</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-green-500" style="width: 86%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">8,934 评价 · 昨日上升 0.2 分</p>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-700">理财投资</span>
+                                    <span class="ml-2 text-xs px-1.5 py-0.5 bg-red-100 text-red-800 rounded-full">-0.3</span>
+                                </div>
+                                <span class="text-sm font-medium satisfaction-medium">7.4</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-yellow-500" style="width: 74%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">4,283 评价 · 昨日下降 0.3 分</p>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-700">信用卡服务</span>
+                                    <span class="ml-2 text-xs px-1.5 py-0.5 bg-green-100 text-green-800 rounded-full">+0.5</span>
+                                </div>
+                                <span class="text-sm font-medium satisfaction-high">8.1</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-green-500" style="width: 81%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">6,132 评价 · 昨日上升 0.5 分</p>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-700">贷款申请</span>
+                                    <span class="ml-2 text-xs px-1.5 py-0.5 bg-gray-100 text-gray-800 rounded-full">0</span>
+                                </div>
+                                <span class="text-sm font-medium satisfaction-medium">7.9</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-yellow-500" style="width: 79%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">2,845 评价 · 昨日持平</p>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-700">账户管理</span>
+                                    <span class="ml-2 text-xs px-1.5 py-0.5 bg-green-100 text-green-800 rounded-full">+0.1</span>
+                                </div>
+                                <span class="text-sm font-medium satisfaction-high">8.8</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-green-500" style="width: 88%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">5,672 评价 · 昨日上升 0.1 分</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dimension Analysis -->
+            <div class="analysis-card md:col-span-2">
+                <div class="p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">满意度维度分析</h3>
+                        <div class="relative">
+                            <select class="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-1.5 pr-8 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option>所有渠道</option>
+                                <option>手机银行</option>
+                                <option>网上银行</option>
+                                <option>微信小程序</option>
+                                <option>线下柜台</option>
+                            </select>
+                            <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700">智能服务准确性</span>
+                                <span class="text-sm font-medium">8.7 <span class="text-xs text-green-600">+0.4</span></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-green-500" style="width: 87%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700">解决问题能力</span>
+                                <span class="text-sm font-medium">8.3 <span class="text-xs text-green-600">+0.2</span></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-green-500" style="width: 83%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700">操作流程便捷性</span>
+                                <span class="text-sm font-medium">7.8 <span class="text-xs text-red-600">-0.1</span></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-yellow-500" style="width: 78%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700">响应速度</span>
+                                <span class="text-sm font-medium">8.5 <span class="text-xs text-green-600">+0.3</span></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-green-500" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700">信息安全感</span>
+                                <span class="text-sm font-medium">9.1 <span class="text-xs text-green-600">+0.1</span></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-green-500" style="width: 91%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700">用户界面友好度</span>
+                                <span class="text-sm font-medium">8.0 <span class="text-xs text-gray-600">0</span></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill bg-green-500" style="width: 80%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customer Group Analysis -->
+            <div class="analysis-card">
+                <div class="p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">客群满意度差异</h3>
+                        <button class="text-sm text-blue-600 hover:text-blue-800" id="view-details-customer">详情</button>
+                    </div>
+                    
+                    <!-- Chart Placeholder -->
+                    <div class="w-full h-48 bg-gray-50 rounded-lg border border-gray-200 mb-4 flex items-center justify-center">
+                        <p class="text-gray-400">客群满意度分布图</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-600">高净值客户</span>
+                            <span class="font-medium satisfaction-high">8.6</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-600">中端客户</span>
+                            <span class="font-medium satisfaction-high">8.3</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-600">青年客户</span>
+                            <span class="font-medium satisfaction-high">8.4</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-600">老年客户</span>
+                            <span class="font-medium satisfaction-medium">7.5</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-600">新客户（<1年）</span>
+                            <span class="font-medium satisfaction-high">8.2</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Improvement Opportunities -->
+        <div class="analysis-card mt-6">
+            <div class="p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">满意度提升机会</h3>
+                    <button class="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        智能分析
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-800">理财产品解释不清晰</h4>
+                                <p class="text-xs text-gray-600 mt-1">客户反馈智能助手在解释理财产品风险和收益率时信息不够清晰准确。</p>
+                                <div class="mt-2">
+                                    <span class="inline-block px-2 py-1 text-xs bg-red-50 text-red-700 rounded-full">
+                                        影响分值：-0.3分
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-800">贷款申请流程繁琐</h4>
+                                <p class="text-xs text-gray-600 mt-1">客户反馈在AI引导下贷款申请流程步骤过多，表单填写繁琐。</p>
+                                <div class="mt-2">
+                                    <span class="inline-block px-2 py-1 text-xs bg-yellow-50 text-yellow-700 rounded-full">
+                                        影响分值：-0.2分
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-800">老年客户操作困难</h4>
+                                <p class="text-xs text-gray-600 mt-1">60岁以上客户群体对智能服务操作不熟悉，满意度评分明显低于平均水平。</p>
+                                <div class="mt-2">
+                                    <span class="inline-block px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-full">
+                                        影响分值：-0.25分
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-800 mb-2">改进建议摘要</h4>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            优化理财产品风险和收益率的解释，增加直观图表和对比示例
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            简化贷款申请流程，减少不必要的表单字段，增加智能辅助填写功能
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            为老年客户开发专属简化版界面，增大字体和按钮，提供更详细的语音引导
+                        </li>
+                    </ul>
+                    <button class="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center" id="view-all-suggestions">
+                        查看完整改进报告
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dimension Analysis Detail Modal -->
+    <div id="dimension-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" id="modal-backdrop"></div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
+                                维度满意度详细分析
+                            </h3>
+                            
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-sm font-medium text-gray-700">数据范围</h4>
+                                    <div class="flex items-center space-x-2">
+                                        <button class="px-2 py-1 text-xs bg-blue-600 text-white rounded">过去7天</button>
+                                        <button class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">过去30天</button>
+                                        <button class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">过去90天</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Chart Placeholder -->
+                            <div class="w-full h-64 bg-gray-50 rounded-lg border border-gray-200 mb-4 flex items-center justify-center">
+                                <p class="text-gray-400">维度满意度雷达图</p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">维度满意度对比</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">维度</th>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当前分数</th>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">上月分数</th>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">变化</th>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">行业平均</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <tr>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">智能服务准确性</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">8.7</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">8.3</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-green-600">+0.4</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">8.2</div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">解决问题能力</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">8.3</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">8.1</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-green-600">+0.2</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">7.9</div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">操作流程便捷性</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">7.8</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">7.9</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-red-600">-0.1</div>
+                                                </td>
+                                                <td class="px-4 py-2 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">7.6</div>
+                                                </td>
+                                            </tr>
+                                            <!-- 更多数据行... -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">关键发现</h4>
+                                <ul class="space-y-2 text-sm text-gray-700">
+                                    <li class="flex items-start">
+                                        <svg class="w-4 h-4 text-green-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        智能服务准确性提升显著，主要受益于最近的AI模型升级
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-4 h-4 text-red-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        操作流程便捷性评分下降，主要来自于理财产品购买流程的反馈
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-4 h-4 text-blue-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        在所有维度中，信息安全感评分最高，展现了客户对银行安全性的信任
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        导出分析报告
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" id="close-dimension-modal">
+                        关闭
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter Modal -->
+    <div id="filter-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" id="filter-modal-backdrop"></div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">筛选条件</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">渠道</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked>
+                                    <span class="ml-2 text-sm text-gray-700">手机银行</span>
+                                </label>
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked>
+                                    <span class="ml-2 text-sm text-gray-700">网上银行</span>
+                                </label>
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked>
+                                    <span class="ml-2 text-sm text-gray-700">微信小程序</span>
+                                </label>
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked>
+                                    <span class="ml-2 text-sm text-gray-700">线下柜台</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">业务类型</label>
+                            <select class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                <option>所有业务</option>
+                                <option>转账汇款</option>
+                                <option>理财投资</option>
+                                <option>贷款申请</option>
+                                <option>信用卡</option>
+                                <option>账户管理</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">客户群体</label>
+                            <select class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                <option>所有客户</option>
+                                <option>高净值客户</option>
+                                <option>中端客户</option>
+                                <option>青年客户</option>
+                                <option>老年客户</option>
+                                <option>新客户（<1年）</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">评分范围</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" min="0" max="10" value="0" class="block w-20 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <span class="text-gray-500">至</span>
+                                <input type="number" min="0" max="10" value="10" class="block w-20 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">时间范围</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">开始日期</label>
+                                    <input type="date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">结束日期</label>
+                                    <input type="date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        应用筛选
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" id="close-filter-modal">
+                        取消
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">
+                        重置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabGroup = this.closest('div').querySelectorAll('.tab-button');
+                tabGroup.forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+        
+        // Filter modal
+        document.getElementById('filter-button').addEventListener('click', function() {
+            document.getElementById('filter-modal').classList.remove('hidden');
+        });
+        
+        document.getElementById('close-filter-modal').addEventListener('click', function() {
+            document.getElementById('filter-modal').classList.add('hidden');
+        });
+        
+        document.getElementById('filter-modal-backdrop').addEventListener('click', function() {
+            document.getElementById('filter-modal').classList.add('hidden');
+        });
+        
+        // Dimension detail modal
+        document.getElementById('view-details').addEventListener('click', function() {
+            document.getElementById('dimension-modal').classList.remove('hidden');
+        });
+        
+        document.getElementById('close-dimension-modal').addEventListener('click', function() {
+            document.getElementById('dimension-modal').classList.add('hidden');
+        });
+        
+        document.getElementById('modal-backdrop').addEventListener('click', function() {
+            document.getElementById('dimension-modal').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>

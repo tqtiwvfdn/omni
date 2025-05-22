@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用指标 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tab-item {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-item:hover {
+            color: var(--dify-primary);
+        }
+
+        .tab-item.active {
+            color: var(--dify-primary);
+            font-weight: 500;
+        }
+
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Tooltip style */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-800">使用指标</h1>
+                <p class="text-gray-600 mt-1">监控AI服务的使用情况和运营指标</p>
+            </div>
+            <div class="flex space-x-3">
+                <div class="relative">
+                    <select
+                        class="appearance-none border border-gray-300 rounded-lg py-2 px-4 pr-8 bg-white text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option>最近7天</option>
+                        <option>最近30天</option>
+                        <option>最近90天</option>
+                        <option>自定义</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                        </svg>
+                    </div>
+                </div>
+                <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 focus:outline-none">
+                    导出报告
+                </button>
+            </div>
+        </div>
+
+        <!-- Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Active Users Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-800">日活跃用户</h2>
+                    <div class="tooltip">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="tooltip-text">当日至少使用一次AI服务的用户数量</span>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">25,732</p>
+                        <p class="text-sm text-gray-500">
+                            <span class="text-green-600">↑ 12.4%</span> 较上周
+                        </p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactions Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-800">日交互总量</h2>
+                    <div class="tooltip">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="tooltip-text">当日用户与AI系统的总交互次数</span>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">108,543</p>
+                        <p class="text-sm text-gray-500">
+                            <span class="text-green-600">↑ 8.2%</span> 较上周
+                        </p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Retention Rate Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-800">7日留存率</h2>
+                    <div class="tooltip">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="tooltip-text">首次使用后7天内再次使用的用户比例</span>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">76.5%</p>
+                        <p class="text-sm text-gray-500">
+                            <span class="text-green-600">↑ 3.2%</span> 较上月
+                        </p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-purple-50 text-purple-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Peak Usage Card -->
+            <div class="dify-card p-6 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-800">日峰值时段</h2>
+                    <div class="tooltip">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="tooltip-text">每日用户使用量最高的时间段</span>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-end justify-between">
+                    <div>
+                        <p class="text-3xl font-semibold text-gray-800">10:00-11:30</p>
+                        <p class="text-sm text-gray-500">
+                            <span class="text-gray-600">12,356</span> 次交互
+                        </p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-50 text-yellow-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="border-b border-gray-200 mb-6">
+            <div class="flex space-x-8">
+                <div class="tab-item active px-1 py-4 text-center text-sm font-medium" data-tab="daily-usage">
+                    使用趋势
+                </div>
+                <div class="tab-item px-1 py-4 text-center text-sm font-medium" data-tab="channel-usage">
+                    渠道分布
+                </div>
+                <div class="tab-item px-1 py-4 text-center text-sm font-medium" data-tab="business-usage">
+                    场景分布
+                </div>
+                <div class="tab-item px-1 py-4 text-center text-sm font-medium" data-tab="user-insights">
+                    用户洞察
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Contents -->
+        <!-- Daily Usage Tab Content -->
+        <div class="tab-content active" id="daily-usage-content">
+            <div class="grid grid-cols-1 gap-6">
+                <!-- Chart Card -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">每日使用趋势</h3>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+                                <span class="text-sm text-gray-600">交互次数</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+                                <span class="text-sm text-gray-600">活跃用户</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-80 w-full">
+                        <!-- Chart would be rendered here -->
+                        <div class="h-full w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">每日使用趋势图表</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Peak Usage Analysis -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">用量时段分布</h3>
+                        <select
+                            class="border border-gray-300 rounded-lg py-1 px-3 text-sm text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>工作日</option>
+                            <option>周末</option>
+                            <option>全部</option>
+                        </select>
+                    </div>
+                    <div class="h-64 w-full">
+                        <!-- Chart would be rendered here -->
+                        <div class="h-full w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p class="text-gray-500">时段分布图表</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Detail -->
+                <div class="dify-card bg-white overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-medium text-gray-800">活跃度详情</h3>
+                            <button
+                                class="dify-btn px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                                查看全部
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            日期</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            活跃用户</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            交互总量</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            人均交互</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            峰值时段</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-17</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">25,732</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">108,543</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">4.2</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">10:00-11:30</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-16</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">24,890</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">102,679</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">4.1</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">14:00-15:30</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-15</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">23,587</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">98,752</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">4.2</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">10:30-12:00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-14</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">25,102</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">106,203</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">4.2</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">11:00-12:30</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-13</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">22,876</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">94,321</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">4.1</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">09:30-11:00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Channel Usage Tab Content -->
+        <div class="tab-content" id="channel-usage-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Channel Distribution Chart -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">渠道使用分布</h3>
+                        <select
+                            class="border border-gray-300 rounded-lg py-1 px-3 text-sm text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>按交互次数</option>
+                            <option>按用户数</option>
+                        </select>
+                    </div>
+                    <div class="h-80 w-full">
+                        <!-- Chart would be rendered here -->
+                        <div class="h-full w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                                </svg>
+                                <p class="text-gray-500">渠道分布饼图</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Channel Trend Chart -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">渠道趋势变化</h3>
+                        <select
+                            class="border border-gray-300 rounded-lg py-1 px-3 text-sm text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>全部渠道</option>
+                            <option>手机APP</option>
+                            <option>微信小程序</option>
+                            <option>网页端</option>
+                        </select>
+                    </div>
+                    <div class="h-80 w-full">
+                        <!-- Chart would be rendered here -->
+                        <div class="h-full w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">渠道趋势线图</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Channel Detail Table -->
+                <div class="dify-card bg-white overflow-hidden lg:col-span-2">
+                    <div class="px-6 py-4 border-b border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-medium text-gray-800">渠道使用详情</h3>
+                            <div class="flex items-center">
+                                <input type="text"
+                                    class="border border-gray-300 rounded-lg py-1 px-3 mr-2 text-sm text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="搜索渠道">
+                                <button
+                                    class="dify-btn px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                                    导出
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            渠道名称</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            用户数</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            交互量</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            占比</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            环比变化</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div
+                                                    class="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                    <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                                        </path>
+                                                    </svg>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">手机APP</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">15,238</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">67,432</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">62.1%</td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <span class="text-sm text-green-600">+8.3%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div
+                                                    class="flex-shrink-0 h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                                                    <svg class="h-5 w-5 text-green-600" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24"
+                                                        xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                                                        </path>
+                                                    </svg>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">微信小程序</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">6,821</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">24,576</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">22.6%</td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <span class="text-sm text-green-600">+12.7%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div
+                                                    class="flex-shrink-0 h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                                    <svg class="h-5 w-5 text-purple-600" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24"
+                                                        xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9">
+                                                        </path>
+                                                    </svg>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">网页端</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">3,673</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">16,535</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">15.2%</td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <span class="text-sm text-red-600">-2.1%</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Usage Tab Content -->
+        <div class="tab-content" id="business-usage-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Business Scenario Distribution -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">业务场景分布</h3>
+                        <select
+                            class="border border-gray-300 rounded-lg py-1 px-3 text-sm text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>按交互次数</option>
+                            <option>按用户数</option>
+                        </select>
+                    </div>
+                    <div class="h-80 w-full">
+                        <!-- Chart would be rendered here -->
+                        <div class="h-full w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                                </svg>
+                                <p class="text-gray-500">业务场景分布图</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Scenario Trend -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">场景使用趋势</h3>
+                        <select
+                            class="border border-gray-300 rounded-lg py-1 px-3 text-sm text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>全部场景</option>
+                            <option>账户查询</option>
+                            <option>转账汇款</option>
+                            <option>理财咨询</option>
+                        </select>
+                    </div>
+                    <div class="h-80 w-full">
+                        <!-- Chart would be rendered here -->
+                        <div class="h-full w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">场景使用趋势图</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Scenario Table -->
+                <div class="dify-card bg-white overflow-hidden lg:col-span-2">
+                    <div class="px-6 py-4 border-b border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-medium text-gray-800">场景使用详情</h3>
+                            <div class="flex items-center">
+                                <input type="text"
+                                    class="border border-gray-300 rounded-lg py-1 px-3 mr-2 text-sm text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="搜索场景">
+                                <button
+                                    class="dify-btn px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                                    导出
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            场景名称</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            用户数</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            交互量</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            占比</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            平均满意度</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            环比变化</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">账户查询</div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">18,426</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">42,735</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">39.4%</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">94.2%</td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <span class="text-sm text-green-600">+5.3%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">转账汇款</div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">10,834</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">29,821</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">27.5%</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">92.8%</td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <span class="text-sm text-green-600">+7.2%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">理财咨询</div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">8,547</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">24,213</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">22.3%</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">89.5%</td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <span class="text-sm text-green-600">+11.8%</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">信用卡服务</div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">4,268</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">11,774</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">10.8%</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">90.3%</td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <span class="text-sm text-green-600">+3.2%</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Insights Tab Content -->
+        <div class="tab-content" id="user-insights-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- User Segmentation -->
+                <div class="dify-card bg-white p-6 lg:col-span-2">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">用户活跃度分层</h3>
+                        <select
+                            class="border border-gray-300 rounded-lg py-1 px-3 text-sm text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>最近30天</option>
+                            <option>最近90天</option>
+                            <option>最近180天</option>
+                        </select>
+                    </div>
+                    <div class="h-80 w-full">
+                        <!-- Chart would be rendered here -->
+                        <div class="h-full w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">用户活跃度分层图</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Retention Card -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">用户留存率</h3>
+                    </div>
+                    <div>
+                        <div class="mb-6">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm text-gray-600">次日留存</span>
+                                <span class="text-sm font-medium text-gray-900">85.4%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm text-gray-600">7日留存</span>
+                                <span class="text-sm font-medium text-gray-900">76.5%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 77%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm text-gray-600">30日留存</span>
+                                <span class="text-sm font-medium text-gray-900">63.2%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 63%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm text-gray-600">60日留存</span>
+                                <span class="text-sm font-medium text-gray-900">52.8%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 53%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Age Group -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">用户年龄分布</h3>
+                    </div>
+                    <div class="h-64 w-full">
+                        <!-- Chart would be rendered here -->
+                        <div class="h-full w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">年龄分布柱状图</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Geography -->
+                <div class="dify-card bg-white p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">用户地域分布</h3>
+                    </div>
+                    <div class="h-64 w-full">
+                        <!-- Chart would be rendered here -->
+                        <div class="h-full w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                                    </path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <p class="text-gray-500">地域分布图</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Platform Distribution -->
+                <div class="dify-card bg-white p-6 lg:col-span-3">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-800">新老用户对比</h3>
+                        <select
+                            class="border border-gray-300 rounded-lg py-1 px-3 text-sm text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>按日</option>
+                            <option>按周</option>
+                            <option>按月</option>
+                        </select>
+                    </div>
+                    <div class="h-80 w-full">
+                        <!-- Chart would be rendered here -->
+                        <div class="h-full w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">新老用户对比图</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Tab Switching Logic
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.addEventListener('click', function () {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.tab-item').forEach(t => {
+                    t.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-content').forEach(c => {
+                    c.classList.remove('active');
+                });
+
+                // Add active class to clicked tab
+                this.classList.add('active');
+
+                // Show corresponding content
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(`${tabId}-content`).classList.add('active');
+            });
+        });
+
+        // In a real implementation, you'd load actual chart data and render charts here
+        // For example using libraries like Chart.js, ApexCharts, or ECharts
+    </script>
+</body>
+
+</html>

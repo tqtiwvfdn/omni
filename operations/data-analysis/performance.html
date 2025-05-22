@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>场景效能分析 - 银行AI中台管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--dify-text-primary);
+            background-color: #F9FAFB;
+        }
+        .dashboard-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            background-color: white;
+            box-shadow: var(--dify-shadow);
+            transition: all 0.2s ease;
+        }
+        .dashboard-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .growth-positive {
+            color: #10B981;
+        }
+        .growth-negative {
+            color: #EF4444;
+        }
+        .trend-badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .trend-positive {
+            background-color: #D1FAE5;
+            color: #047857;
+        }
+        .trend-negative {
+            background-color: #FEE2E2;
+            color: #B91C1C;
+        }
+        .trend-neutral {
+            background-color: #F3F4F6;
+            color: #6B7280;
+        }
+        .tab-button {
+            position: relative;
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            color: var(--dify-primary);
+        }
+        .tab-button.active:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--dify-primary);
+        }
+        .chart-placeholder {
+            background-color: #F9FAFB;
+            border: 1px dashed #D1D5DB;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: #6B7280;
+            font-size: 0.875rem;
+        }
+        .efficiency-excellent {
+            color: #10B981;
+        }
+        .efficiency-good {
+            color: #3B82F6;
+        }
+        .efficiency-average {
+            color: #F59E0B;
+        }
+        .efficiency-poor {
+            color: #EF4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Page Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-800">场景效能分析</h1>
+                <p class="text-gray-600 mt-1">智能分析各业务场景表现，发现优化机会并提供改进建议</p>
+            </div>
+            <div class="flex space-x-3">
+                <div class="relative">
+                    <select class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm">
+                        <option>过去7天</option>
+                        <option>过去30天</option>
+                        <option>过去90天</option>
+                        <option>自定义时间段</option>
+                    </select>
+                    <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <button class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none flex items-center" id="filter-button">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                    </svg>
+                    筛选
+                </button>
+                <button class="px-3 py-2 bg-blue-600 rounded-lg text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center" id="export-button">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    导出报告
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <!-- Completion Rate -->
+            <div class="dashboard-card p-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-medium text-gray-500">场景完成率</h3>
+                    <div class="relative w-10 h-10">
+                        <svg class="progress-ring" width="40" height="40">
+                            <circle cx="20" cy="20" r="15" fill="none" stroke="#E5E7EB" stroke-width="4"/>
+                            <circle cx="20" cy="20" r="15" fill="none" stroke="#3B82F6" stroke-width="4" stroke-dasharray="94.2" stroke-dashoffset="0"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-semibold">85%</div>
+                    </div>
+                </div>
+                <p class="text-2xl font-semibold mt-2">85.4%</p>
+                <div class="mt-2 text-xs flex items-center">
+                    <svg class="w-3 h-3 mr-1 growth-positive" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                    </svg>
+                    <span class="growth-positive">较上期提升 3.2%</span>
+                </div>
+            </div>
+            
+            <!-- Avg Process Time -->
+            <div class="dashboard-card p-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-medium text-gray-500">平均处理时间</h3>
+                    <div class="relative w-10 h-10">
+                        <svg class="progress-ring" width="40" height="40">
+                            <circle cx="20" cy="20" r="15" fill="none" stroke="#E5E7EB" stroke-width="4"/>
+                            <circle cx="20" cy="20" r="15" fill="none" stroke="#10B981" stroke-width="4" stroke-dasharray="94.2" stroke-dashoffset="18.84"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-semibold">-20%</div>
+                    </div>
+                </div>
+                <p class="text-2xl font-semibold mt-2">42<span class="text-base font-normal">秒</span></p>
+                <div class="mt-2 text-xs flex items-center">
+                    <svg class="w-3 h-3 mr-1 growth-positive" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                    <span class="growth-positive">较上期减少 8秒</span>
+                </div>
+            </div>
+            
+            <!-- Satisfaction Score -->
+            <div class="dashboard-card p-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-medium text-gray-500">用户满意度</h3>
+                    <div class="relative">
+                        <svg class="w-10 h-10 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-2xl font-semibold mt-2">4.6<span class="text-base font-normal">/5</span></p>
+                <div class="mt-2 text-xs flex items-center">
+                    <svg class="w-3 h-3 mr-1 growth-positive" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                    </svg>
+                    <span class="growth-positive">较上期提升 0.3</span>
+                </div>
+            </div>
+            
+            <!-- Conversion Rate -->
+            <div class="dashboard-card p-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-medium text-gray-500">场景转化率</h3>
+                    <div class="relative w-10 h-10">
+                        <svg class="progress-ring" width="40" height="40">
+                            <circle cx="20" cy="20" r="15" fill="none" stroke="#E5E7EB" stroke-width="4"/>
+                            <circle cx="20" cy="20" r="15" fill="none" stroke="#8B5CF6" stroke-width="4" stroke-dasharray="94.2" stroke-dashoffset="37.68"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-semibold">60%</div>
+                    </div>
+                </div>
+                <p class="text-2xl font-semibold mt-2">59.8%</p>
+                <div class="mt-2 text-xs flex items-center">
+                    <svg class="w-3 h-3 mr-1 growth-negative" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                    <span class="growth-negative">较上期下降 1.2%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Scene Performance Analysis -->
+        <div class="dashboard-card mb-6">
+            <div class="border-b border-gray-200">
+                <div class="flex px-4">
+                    <button class="tab-button active" data-tab="efficiency">效能总览</button>
+                    <button class="tab-button" data-tab="trend">趋势分析</button>
+                    <button class="tab-button" data-tab="comparison">场景对比</button>
+                </div>
+            </div>
+            
+            <div id="efficiency-tab" class="p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">业务场景效能总览</h3>
+                    <div class="relative">
+                        <select class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm">
+                            <option>按效能排序</option>
+                            <option>按使用量排序</option>
+                            <option>按增长率排序</option>
+                        </select>
+                        <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
+                
+                <!-- Performance Chart -->
+                <div class="grid grid-cols-4 gap-6 mb-6">
+                    <div class="col-span-3">
+                        <div class="chart-placeholder h-80">
+                            业务场景效能雷达图 - 比较各场景在完成率、处理时间、满意度、转化率等维度的表现
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="dashboard-card p-3">
+                            <div class="flex items-center">
+                                <div class="w-2 h-8 bg-green-500 rounded-sm mr-3"></div>
+                                <div>
+                                    <div class="text-sm font-medium">优秀表现场景</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">效能分 > 85</div>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-sm">
+                                <ul class="space-y-1 pl-5">
+                                    <li>账户余额查询</li>
+                                    <li>国内手机转账</li>
+                                    <li>信用卡账单查询</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-card p-3">
+                            <div class="flex items-center">
+                                <div class="w-2 h-8 bg-red-500 rounded-sm mr-3"></div>
+                                <div>
+                                    <div class="text-sm font-medium">待优化场景</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">效能分 < 65</div>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-sm">
+                                <ul class="space-y-1 pl-5">
+                                    <li>跨境转账</li>
+                                    <li>企业贷款申请</li>
+                                    <li>外汇兑换</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <button class="w-full px-3 py-2 border border-blue-600 rounded-lg text-blue-600 text-sm font-medium hover:bg-blue-50 focus:outline-none">
+                            查看详细分析
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Business Scene Efficiency Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    业务场景
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    场景效能
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    完成率
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    平均时长
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    满意度
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    转化率
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    对比
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            <!-- Row 1 -->
+                            <tr class="hover:bg-gray-50 cursor-pointer">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                        </svg>
+                                        <div class="text-sm font-medium text-gray-900">国内手机转账</div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <span class="text-sm font-medium efficiency-excellent">92</span>
+                                        <span class="ml-2 trend-badge trend-positive">+5</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">95.2%</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">28秒</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">4.8</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">82.5%</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="w-24 h-4 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-green-500" style="width: 92%"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                    <button class="text-green-600 hover:text-green-900">优化</button>
+                                </td>
+                            </tr>
+                            
+                            <!-- Row 2 -->
+                            <tr class="hover:bg-gray-50 cursor-pointer">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                                        </svg>
+                                        <div class="text-sm font-medium text-gray-900">理财产品购买</div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <span class="text-sm font-medium efficiency-good">78</span>
+                                        <span class="ml-2 trend-badge trend-positive">+2</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">82.7%</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">65秒</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">4.5</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">68.2%</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="w-24 h-4 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-blue-500" style="width: 78%"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                    <button class="text-green-600 hover:text-green-900">优化</button>
+                                </td>
+                            </tr>
+                            
+                            <!-- Row 3 -->
+                            <tr class="hover:bg-gray-50 cursor-pointer">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                        </svg>
+                                        <div class="text-sm font-medium text-gray-900">信用卡账单查询</div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <span class="text-sm font-medium efficiency-excellent">90</span>
+                                        <span class="ml-2 trend-badge trend-positive">+3</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">93.5%</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">22秒</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">4.7</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">81.3%</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="w-24 h-4 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-green-500" style="width: 90%"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                    <button class="text-green-600 hover:text-green-900">优化</button>
+                                </td>
+                            </tr>
+                            
+                            <!-- Row 4 -->
+                            <tr class="hover:bg-gray-50 cursor-pointer">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                        </svg>
+                                        <div class="text-sm font-medium text-gray-900">跨境转账</div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <span class="text-sm font-medium efficiency-poor">58</span>
+                                        <span class="ml-2 trend-badge trend-negative">-2</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">68.3%</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">120秒</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">3.4</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">42.8%</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="w-24 h-4 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-red-500" style="width: 58%"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                    <button class="text-red-600 hover:text-red-900">急需优化</button>
+                                </td>
+                            </tr>
+                            
+                            <!-- Row 5 -->
+                            <tr class="hover:bg-gray-50 cursor-pointer">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                        </svg>
+                                        <div class="text-sm font-medium text-gray-900">贷款申请</div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <span class="text-sm font-medium efficiency-average">73</span>
+                                        <span class="ml-2 trend-badge trend-positive">+6</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">80.1%</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">95秒</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">4.2</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">58.7%</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="w-24 h-4 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-yellow-500" style="width: 73%"></div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                    <button class="text-green-600 hover:text-green-900">优化</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="flex items-center justify-between mt-5">
+                    <div class="text-sm text-gray-700">
+                        显示 <span class="font-medium">1</span> 到 <span class="font-medium">5</span> 条，共 <span class="font-medium">12</span> 条
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            上一页
+                        </button>
+                        <button class="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            下一页
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="trend-tab" class="p-5 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">场景效能趋势分析</h3>
+                    <div class="flex space-x-3">
+                        <div class="relative">
+                            <select class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm">
+                                <option>全部场景</option>
+                                <option>转账汇款</option>
+                                <option>理财投资</option>
+                                <option>贷款服务</option>
+                                <option>信用卡服务</option>
+                            </select>
+                            <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div class="relative">
+                            <select class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm">
+                                <option>全部指标</option>
+                                <option>完成率</option>
+                                <option>处理时间</option>
+                                <option>满意度</option>
+                                <option>转化率</option>
+                            </select>
+                            <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-placeholder h-80 mb-6">
+                    场景效能趋势折线图 - 展示各场景关键指标随时间的变化趋势
+                </div>
+                
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="dashboard-card p-4">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">效能提升最快的场景</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                    <span class="text-sm font-medium">贷款申请</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-green-600">+6分</span>
+                                    <svg class="w-4 h-4 ml-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                    </svg>
+                                    <span class="text-sm font-medium">国内手机转账</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-green-600">+5分</span>
+                                    <svg class="w-4 h-4 ml-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    </svg>
+                                    <span class="text-sm font-medium">信用卡账单查询</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-green-600">+3分</span>
+                                    <svg class="w-4 h-4 ml-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card p-4">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">效能下降的场景</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                    </svg>
+                                    <span class="text-sm font-medium">跨境转账</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-red-600">-2分</span>
+                                    <svg class="w-4 h-4 ml-1 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="text-sm font-medium">外汇兑换</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-red-600">-1分</span>
+                                    <svg class="w-4 h-4 ml-1 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                    <span class="text-sm font-medium">企业贷款申请</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-red-600">-1分</span>
+                                    <svg class="w-4 h-4 ml-1 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="comparison-tab" class="p-5 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">场景对比分析</h3>
+                    <div class="flex space-x-3">
+                        <div class="relative">
+                            <select class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm">
+                                <option>选择对比场景1</option>
+                                <option>国内手机转账</option>
+                                <option>理财产品购买</option>
+                                <option>信用卡账单查询</option>
+                                <option>跨境转账</option>
+                                <option>贷款申请</option>
+                            </select>
+                            <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <span class="text-gray-500">vs</span>
+                        <div class="relative">
+                            <select class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm">
+                                <option>选择对比场景2</option>
+                                <option>国内手机转账</option>
+                                <option>理财产品购买</option>
+                                <option>信用卡账单查询</option>
+                                <option>跨境转账</option>
+                                <option>贷款申请</option>
+                            </select>
+                            <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <button class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none">
+                            对比
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="chart-placeholder h-80 mb-6">
+                    场景对比图表 - 展示两个选定场景在各维度指标上的差异对比
+                </div>
+                
+                <div class="dashboard-card p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-sm font-medium text-gray-700">示例对比: 国内手机转账 vs 跨境转账</h4>
+                        <div class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                            差异分析
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <h5 class="text-sm font-medium text-gray-600 mb-3">差异分析</h5>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs text-gray-500">完成率差异</span>
+                                        <span class="text-xs font-medium">+26.9%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div class="bg-green-500 h-1.5 rounded-full" style="width: 26.9%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs text-gray-500">处理时间差异</span>
+                                        <span class="text-xs font-medium">-92秒</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div class="bg-green-500 h-1.5 rounded-full" style="width: 76.7%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs text-gray-500">满意度差异</span>
+                                        <span class="text-xs font-medium">+1.4分</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div class="bg-green-500 h-1.5 rounded-full" style="width: 28%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs text-gray-500">转化率差异</span>
+                                        <span class="text-xs font-medium">+39.7%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div class="bg-green-500 h-1.5 rounded-full" style="width: 39.7%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                                <div class="flex items-start">
+                                    <svg class="w-5 h-5 text-yellow-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-800">主要差异原因</p>
+                                        <p class="text-xs text-gray-600 mt-1">跨境转账验证步骤繁琐，多重验证导致用户放弃率高。国内转账流程简化且有记忆功能，大幅提升完成率。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h5 class="text-sm font-medium text-gray-600 mb-3">优化建议</h5>
+                            <div class="space-y-3">
+                                <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                    <div class="flex items-start">
+                                        <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                        </svg>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-800">简化验证流程</p>
+                                            <p class="text-xs text-gray-600 mt-1">将跨境转账的多步验证整合为单一验证流程，减少30%的操作步骤</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                    <div class="flex items-start">
+                                        <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                        </svg>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-800">添加常用收款人功能</p>
+                                            <p class="text-xs text-gray-600 mt-1">为跨境转账添加常用收款人记忆功能，参考国内转账的实现模式</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                    <div class="flex items-start">
+                                        <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                        </svg>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-800">优化信息填写体验</p>
+                                            <p class="text-xs text-gray-600 mt-1">增加自动填充和智能提示，减少用户输入错误，参考国内转账的表单设计</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mt-3">
+                                    <button class="px-4 py-2 bg-blue-600 rounded-lg text-white text-sm font-medium hover:bg-blue-700 focus:outline-none">
+                                        应用优化建议
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Optimization Recommendations -->
+        <div class="dashboard-card">
+            <div class="p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">AI智能优化建议</h3>
+                    <div class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                        智能分析
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                    <!-- High Priority Recommendation -->
+                    <div class="dashboard-card p-4 border-l-4 border-red-500">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-sm font-medium text-gray-800">高优先级优化</h4>
+                            <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">紧急</span>
+                        </div>
+                        <div class="text-sm text-gray-800 mb-2">跨境转账流程优化</div>
+                        <p class="text-xs text-gray-600 mb-3">当前完成率仅68.3%，远低于平均水平。用户在认证环节频繁中断，建议简化验证流程。</p>
+                        <div class="text-xs text-gray-700 mb-2">预计收益:</div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="bg-gray-50 p-2 rounded">
+                                <div class="text-xs text-gray-500">完成率</div>
+                                <div class="text-sm font-medium text-green-600">+15%</div>
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded">
+                                <div class="text-xs text-gray-500">满意度</div>
+                                <div class="text-sm font-medium text-green-600">+0.8</div>
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded">
+                                <div class="text-xs text-gray-500">转化率</div>
+                                <div class="text-sm font-medium text-green-600">+12%</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="w-full px-3 py-1.5 bg-red-600 rounded text-white text-xs font-medium hover:bg-red-700 focus:outline-none">
+                                查看优化方案
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Medium Priority Recommendation -->
+                    <div class="dashboard-card p-4 border-l-4 border-yellow-500">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-sm font-medium text-gray-800">中优先级优化</h4>
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">重要</span>
+                        </div>
+                        <div class="text-sm text-gray-800 mb-2">理财产品购买引导优化</div>
+                        <p class="text-xs text-gray-600 mb-3">转化率偏低(68.2%)，用户在风险评估步骤放弃率高。建议优化风险提示的呈现方式。</p>
+                        <div class="text-xs text-gray-700 mb-2">预计收益:</div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="bg-gray-50 p-2 rounded">
+                                <div class="text-xs text-gray-500">转化率</div>
+                                <div class="text-sm font-medium text-green-600">+8%</div>
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded">
+                                <div class="text-xs text-gray-500">满意度</div>
+                                <div class="text-sm font-medium text-green-600">+0.3</div>
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded">
+                                <div class="text-xs text-gray-500">购买量</div>
+                                <div class="text-sm font-medium text-green-600">+5%</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="w-full px-3 py-1.5 bg-yellow-600 rounded text-white text-xs font-medium hover:bg-yellow-700 focus:outline-none">
+                                查看优化方案
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Low Priority Recommendation -->
+                    <div class="dashboard-card p-4 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-sm font-medium text-gray-800">低优先级优化</h4>
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">建议</span>
+                        </div>
+                        <div class="text-sm text-gray-800 mb-2">贷款申请表单简化</div>
+                        <p class="text-xs text-gray-600 mb-3">处理时间偏长(95秒)，用户在填写表单时停留时间过长。建议优化表单设计，减少填写项。</p>
+                        <div class="text-xs text-gray-700 mb-2">预计收益:</div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="bg-gray-50 p-2 rounded">
+                                <div class="text-xs text-gray-500">处理时间</div>
+                                <div class="text-sm font-medium text-green-600">-20秒</div>
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded">
+                                <div class="text-xs text-gray-500">完成率</div>
+                                <div class="text-sm font-medium text-green-600">+5%</div>
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded">
+                                <div class="text-xs text-gray-500">满意度</div>
+                                <div class="text-sm font-medium text-green-600">+0.2</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="w-full px-3 py-1.5 bg-blue-600 rounded text-white text-xs font-medium hover:bg-blue-700 focus:outline-none">
+                                查看优化方案
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center">
+                    <button class="px-4 py-2 border border-blue-600 rounded-lg text-blue-600 text-sm font-medium hover:bg-blue-50 focus:outline-none">
+                        查看全部优化建议 (8)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter Modal -->
+    <div id="filter-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" id="filter-modal-backdrop"></div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">筛选条件</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">业务场景</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">转账汇款</span>
+                                </label>
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">理财投资</span>
+                                </label>
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">贷款服务</span>
+                                </label>
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">信用卡服务</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">效能等级</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">优秀 (85-100)</span>
+                                </label>
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">良好 (70-84)</span>
+                                </label>
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">一般 (60-69)</span>
+                                </label>
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">欠佳 (0-59)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">变化趋势</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">上升</span>
+                                </label>
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">持平</span>
+                                </label>
+                                <label class="inline-flex items-center p-2 border border-gray-300 rounded-md">
+                                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">下降</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">完成率</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" class="w-24 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="最小值">
+                                <span class="text-gray-500">-</span>
+                                <input type="number" class="w-24 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="最大值">
+                                <span class="text-gray-500">%</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">用户满意度</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" class="w-24 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="最小值">
+                                <span class="text-gray-500">-</span>
+                                <input type="number" class="w-24 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="最大值">
+                                <span class="text-gray-500">/ 5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        应用筛选
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" id="cancel-filter-modal">
+                        取消
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">
+                        重置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Get the target tab
+                const target = this.getAttribute('data-tab');
+                
+                // Remove active class from all tab buttons
+                document.querySelectorAll('.tab-button').forEach(t => {
+                    t.classList.remove('active');
+                });
+                
+                // Add active class to clicked tab button
+                this.classList.add('active');
+                
+                // Hide all tab content
+                document.querySelectorAll('[id$="-tab"]').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Show the target tab content
+                document.getElementById(target + '-tab').classList.remove('hidden');
+            });
+        });
+        
+        // Open filter modal
+        document.getElementById('filter-button').addEventListener('click', function() {
+            document.getElementById('filter-modal').classList.remove('hidden');
+        });
+        
+        // Close filter modal
+        document.getElementById('cancel-filter-modal').addEventListener('click', function() {
+            document.getElementById('filter-modal').classList.add('hidden');
+        });
+        
+        document.getElementById('filter-modal-backdrop').addEventListener('click', function() {
+            document.getElementById('filter-modal').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>

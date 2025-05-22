@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>银行登录系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            padding: 30px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #1a73e8;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #1a73e8;
+        }
+
+        .captcha-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .captcha-container input {
+            flex: 1;
+        }
+
+        .captcha-image {
+            width: 120px;
+            height: 36px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .refresh-btn {
+            background-color: transparent;
+            border: none;
+            color: #1a73e8;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #1a73e8;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .login-button:hover {
+            background-color: #0d62c9;
+        }
+
+        .error-message {
+            color: #e53935;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 15px;
+            min-height: 20px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1a73e8;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>赞同银行</h1>
+            <p>欢迎使用网上银行系统</p>
+        </div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="mobile-phone">手机号码</label>
+                <input type="tel" id="mobile-phone" placeholder="请输入手机号码" required maxlength="11">
+            </div>
+
+            <div class="form-group">
+                <label for="password">登录密码</label>
+                <input type="password" id="password" placeholder="请输入登录密码" required>
+            </div>
+
+            <div class="form-group">
+                <label for="captcha-code">验证码</label>
+                <div class="captcha-container">
+                    <input type="text" id="captcha-code" placeholder="请输入验证码" required maxlength="6">
+                    <img id="captcha-img" class="captcha-image" src="" alt="验证码">
+                    <button type="button" id="refresh-captcha" class="refresh-btn">↻</button>
+                </div>
+            </div>
+
+            <button type="submit" class="login-button">登录</button>
+        </form>
+
+        <div id="error-message" class="error-message"></div>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <span>正在登录...</span>
+        </div>
+    </div>
+
+    <script>
+        // 模拟 JSEncrypt 库
+        class JSEncrypt {
+            setPublicKey(key) {
+                this.publicKey = key;
+            }
+
+            encrypt(text) {
+                // 真实环境下这里会进行RSA加密
+                return "LG5spVkyOc/X2JioXgpPt16R/FfLy6PeFKzPwlWAe6d39L9dtVhHzDHG6Fv/2JMc+zmYop6jOpFFxVqypDW3vO+vH9VP+dSEZ6mUluGwOAzHbbS7pPIPOtICXNn7FTsybUXtrGx60RF0vCJ/rqz9lHnB/t+2v+ZuFzpUb6vis0w=";
+            }
+        }
+
+        // 公钥（用于加密密码）
+        const publicKey = 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1EnW9OrwZpySJwgQ7ZwvQNFJtelTx6yOqvy6p3idRB/u/RP5vlDXCPhaI+o/pHHTG5tdYSTLlAA2PCJT65veNv8x4wzormmu8b0V4Yrt/hgJX92i8GDpeK7NdYk9prvW/L5B1mAlVbSSUYCvH9YVkDouyqjv1btAWUydOe/ueowIDAQAB';
+
+        // 当前验证码的UUID
+        let captchaUuid = '';
+
+        // 生成随机数函数
+        function randomWord(length = 13) {
+            let arr = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            let num = '';
+            for (let i = 0; i < length; i++) {
+                num += arr[parseInt(Math.random() * arr.length)];
+            }
+            return num;
+        }
+
+        // 模拟日期格式化
+        function formatDate() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}${month}${day}${hours}${minutes}${seconds}`;
+        }
+
+        // 生成全局流水号
+        function generateGlobalJnlNo() {
+            return 'PI' + formatDate() + randomWord();
+        }
+
+        // 密码加密函数
+        function encryptPassword(password) {
+            const encryptor = new JSEncrypt();
+            encryptor.setPublicKey(publicKey);
+            return encryptor.encrypt(password);
+        }
+
+        // 获取验证码函数
+        async function getCaptchaImage() {
+            try {
+                showLoading(false);
+                // 生成请求全局流水号
+                const requestGlobalJnlNo = generateGlobalJnlNo();
+
+                // 构建验证码请求URL及所有参数
+                const captchaUrl = "/per/captchaImage?bankId=10000&requestChannelCode=PI&requestChannelId=PI&requestCifSeq=800000003&requestDate=2020-02-13+12:00:00&requestDeptSeq=10000&requestGlobalJnlNo=123123123123123&requestGlobalTrackNo=track123123&requestIp=192.168.1.100&requestJnlNo=123123123123123&requestUserSeq=80000000301&terminalId=DJDJDJDJ&terminalType=ANDROID&channelCode=PI";
+
+                // 构建请求头
+                const headers = {
+                    "accept": "application/json, text/plain, */*",
+                    "accept-language": "zh-CN,zh;q=0.9",
+                    "requestchannelcode": "PI",
+                    "requestglobaljnlno": requestGlobalJnlNo
+                };
+
+                console.log("请求验证码，全局流水号: " + requestGlobalJnlNo);
+
+                // 发起请求
+                const response = await fetch(captchaUrl, {
+                    "headers": headers,
+                    "referrerPolicy": "no-referrer",
+                    "body": null,
+                    "method": "GET",
+                    "mode": "cors",
+                    "credentials": "omit"
+                });
+
+                // 如果响应不成功，抛出错误
+                if (!response.ok) {
+                    throw new Error(`验证码请求失败: ${response.status} ${response.statusText}`);
+                }
+
+                // 解析JSON响应
+                const responseData = await response.json();
+
+                // 检查响应状态码
+                if (responseData.respCode !== "00000000") {
+                    throw new Error(`验证码获取失败: ${responseData.respMessage}`);
+                }
+
+                // 保存uuid供登录使用
+                const captchaUuid = responseData.uuid;
+
+                // 更新验证码图片 - 使用base64图片
+                document.getElementById('captcha-img').src = "data:image/jpeg;base64," + responseData.img;
+
+                console.log("成功获取验证码，UUID: " + captchaUuid);
+
+                // 返回包含uuid和其他响应数据
+                return {
+                    uuid: captchaUuid,
+                    img: responseData.img,
+                    respCode: responseData.respCode,
+                    respMessage: responseData.respMessage
+                };
+            } catch (error) {
+                console.error("获取验证码失败:", error);
+                showError("获取验证码失败，请刷新页面重试");
+                throw error;
+            }
+        }
+
+        // 模拟登录函数
+        // 登录函数 - 真实调用后台接口
+        async function login(mobilePhone, password, captchaCode, captchaUuid) {
+            try {
+                // 显示加载状态
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('error-message').textContent = "";
+
+                // 生成全局流水号
+                const requestGlobalJnlNo = generateGlobalJnlNo();
+
+                // 加密密码
+                const encryptedPassword = encryptPassword(password);
+
+                // 构建请求体
+                const requestBody = {
+                    mobilePhone: mobilePhone,
+                    password: encryptedPassword,
+                    loginStyle: "PASSWORD",
+                    uuid: captchaUuid,  // 使用验证码接口返回的uuid
+                    code: captchaCode,  // 用户输入的验证码
+                    channelCode: "PI",
+                    requestGlobalJnlNo: 123123123123123,
+                    requestDate: "2020-02-13 12:00:00",
+                    requestGlobalTrackNo: "track123123",
+                    requestJnlNo: 123123123123123,
+                    requestChannelCode: "PI",
+                    requestChannelId: "PI",
+                    requestIp: "192.168.1.100",
+                    terminalType: "ANDROID",
+                    terminalId: "DJDJDJDJ",
+                    authType: "MESSAGE",
+                    authData: 123456,
+                    requestCifSeq: 800000003,
+                    requestUserSeq: 80000000301,
+                    requestDeptSeq: 10000,
+                    markingId: 100000,
+                    bankId: 10000,
+                    preCheck: false
+                };
+
+                console.log("发起登录请求，使用验证码UUID: " + captchaUuid);
+
+                // 发起登录请求
+                const response = await fetch("/per/login", {
+                    method: "POST",
+                    headers: {
+                        "accept": "application/json, text/plain, */*",
+                        "accept-language": "zh-CN,zh;q=0.9",
+                        "content-type": "application/json;charset=UTF-8",
+                        "requestchannelcode": "PI",
+                        "requestglobaljnlno": requestGlobalJnlNo
+                    },
+                    referrerPolicy: "no-referrer",
+                    body: JSON.stringify(requestBody),
+                    mode: "cors",
+                    credentials: "omit"
+                });
+
+                // 如果响应不成功，抛出错误
+                if (!response.ok) {
+                    throw new Error(`登录请求失败: ${response.status} ${response.statusText}`);
+                }
+
+                // 解析JSON响应
+                const responseData = await response.json();
+
+                // 登录成功
+                if (responseData.respCode === "00000000") {
+                    console.log("登录成功：", responseData.userName);
+
+                    // 保存token和用户信息到本地存储
+                    localStorage.setItem('token', responseData.token);
+                    localStorage.setItem('userInfo', JSON.stringify({
+                        userNo: responseData.userNo,
+                        userName: responseData.userName,
+                        userUuid: responseData.userUuid,
+                        expireTime: responseData.expireTime
+                    }));
+
+                    // 可以在这里添加登录成功后的其他处理，如页面跳转
+                } else {
+                    console.error("登录失败:", responseData.respMessage);
+                    document.getElementById('error-message').textContent = responseData.respMessage || "登录失败";
+
+                    // 登录失败，刷新验证码
+                    getCaptchaImage();
+                }
+
+                return responseData;
+
+            } catch (error) {
+                console.error("登录失败:", error);
+                document.getElementById('error-message').textContent = "登录请求失败，请稍后重试";
+
+                // 出错时刷新验证码
+                getCaptchaImage();
+
+                throw error;
+            } finally {
+                // 隐藏加载状态
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(show) {
+            const loadingElement = document.getElementById('loading');
+            loadingElement.style.display = show ? 'block' : 'none';
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function () {
+            // 获取验证码
+            getCaptchaImage();
+
+            // 刷新验证码按钮点击事件
+            document.getElementById('refresh-captcha').addEventListener('click', function () {
+                getCaptchaImage();
+            });
+
+            // 验证码图片点击事件（也是刷新）
+            document.getElementById('captcha-img').addEventListener('click', function () {
+                getCaptchaImage();
+            });
+
+            // 表单提交事件
+            document.getElementById('login-form').addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const mobilePhone = document.getElementById('mobile-phone').value;
+                const password = document.getElementById('password').value;
+                const captchaCode = document.getElementById('captcha-code').value;
+
+                // 表单验证
+                if (!mobilePhone) {
+                    return showError("请输入手机号码");
+                }
+                if (!/^1\d{10}$/.test(mobilePhone)) {
+                    return showError("请输入正确的手机号码");
+                }
+                if (!password) {
+                    return showError("请输入密码");
+                }
+                if (!captchaCode) {
+                    return showError("请输入验证码");
+                }
+
+                // 调用登录接口
+                try {
+                    const response = await login(mobilePhone, password, captchaCode);
+
+                    if (response.respCode === "00000000") {
+                        showError("");
+                        // 登录成功提示
+                        alert("登录成功！欢迎 " + response.userName);
+                        // 实际应用中，此处应跳转到首页
+                    } else {
+                        // 登录失败，刷新验证码
+                        showError(response.respMessage);
+                        getCaptchaImage();
+                    }
+                } catch (error) {
+                    // 发生错误，刷新验证码
+                    getCaptchaImage();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
