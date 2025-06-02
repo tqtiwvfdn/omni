@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交易风控 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <script src="/console/style/chart.min.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .risk-level-high {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .risk-level-medium {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .risk-level-low {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .ai-badge {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .metric-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--dify-primary);
+        }
+
+        .alert-item {
+            border-left: 4px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .alert-item:hover {
+            background-color: #f8fafc;
+            border-left-color: var(--dify-primary);
+        }
+
+        .alert-high {
+            border-left-color: #ef4444;
+            background-color: #fef2f2;
+        }
+
+        .alert-medium {
+            border-left-color: #f59e0b;
+            background-color: #fffbeb;
+        }
+
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="p-6">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800 flex items-center">
+                        <svg class="w-7 h-7 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        交易风控监控中心
+                        <span class="ai-badge ml-3">AI驱动</span>
+                    </h1>
+                    <p class="text-gray-600 mt-1">基于AI大模型的智能交易风险控制与实时监控</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2 text-sm">
+                        <div class="status-indicator bg-green-500"></div>
+                        <span class="text-gray-600">AI风控引擎运行正常</span>
+                    </div>
+                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">
+                        配置风控规则
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div class="dify-card p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">实时监控交易</p>
+                        <p class="text-2xl font-semibold text-gray-800" id="real-time-transactions">12,847</p>
+                        <p class="text-xs text-green-600 flex items-center mt-1">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            +5.2% 比昨日
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">AI风险拦截</p>
+                        <p class="text-2xl font-semibold text-red-600" id="risk-blocked">1,249</p>
+                        <p class="text-xs text-red-600 flex items-center mt-1">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                            </svg>
+                            高风险交易已阻止
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">可疑行为检测</p>
+                        <p class="text-2xl font-semibold text-yellow-600" id="suspicious-activities">387</p>
+                        <p class="text-xs text-yellow-600 flex items-center mt-1">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                            待人工审核
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">风控准确率</p>
+                        <p class="text-2xl font-semibold text-green-600" id="accuracy-rate">98.7%</p>
+                        <p class="text-xs text-green-600 flex items-center mt-1">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            AI模型优化中
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <button class="tab-btn border-b-2 border-blue-500 py-2 px-1 text-sm font-medium text-blue-600" data-tab="realtime">
+                        实时监控
+                    </button>
+                    <button class="tab-btn border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700" data-tab="rules">
+                        风控规则
+                    </button>
+                    <button class="tab-btn border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700" data-tab="analysis">
+                        风险分析
+                    </button>
+                    <button class="tab-btn border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700" data-tab="alerts">
+                        告警中心
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="realtime" class="tab-content active">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Real-time Transaction Flow -->
+                <div class="lg:col-span-2">
+                    <div class="dify-card p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-medium text-gray-800">实时交易流量监控</h3>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <span class="text-sm text-gray-600">实时更新</span>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="transactionFlowChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Alerts -->
+                <div class="dify-card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">实时风险告警</h3>
+                        <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">3 活跃告警</span>
+                    </div>
+                    <div class="space-y-3 max-h-80 overflow-y-auto">
+                        <div class="alert-item alert-high p-3 rounded-lg">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center">
+                                        <span class="risk-level-high px-2 py-1 text-xs rounded font-medium">高风险</span>
+                                        <span class="ml-2 text-sm font-medium">大额转账异常</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mt-1">用户 138****2847 尝试转账 ¥50,000</p>
+                                    <p class="text-xs text-gray-500 mt-1">2分钟前</p>
+                                </div>
+                                <button class="text-red-600 hover:text-red-700 ml-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="alert-item alert-medium p-3 rounded-lg">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center">
+                                        <span class="risk-level-medium px-2 py-1 text-xs rounded font-medium">中风险</span>
+                                        <span class="ml-2 text-sm font-medium">异地登录检测</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mt-1">用户 159****7923 从北京登录</p>
+                                    <p class="text-xs text-gray-500 mt-1">5分钟前</p>
+                                </div>
+                                <button class="text-yellow-600 hover:text-yellow-700 ml-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="alert-item p-3 rounded-lg border border-gray-200">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center">
+                                        <span class="risk-level-low px-2 py-1 text-xs rounded font-medium">低风险</span>
+                                        <span class="ml-2 text-sm font-medium">频繁小额交易</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mt-1">用户 186****3456 连续小额转账</p>
+                                    <p class="text-xs text-gray-500 mt-1">8分钟前</p>
+                                </div>
+                                <button class="text-green-600 hover:text-green-700 ml-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Blocked Transactions -->
+            <div class="mt-6 dify-card">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-800">最近拦截的可疑交易</h3>
+                        <button class="text-sm text-blue-600 hover:text-blue-700">查看全部</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户信息</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">交易金额</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">风险类型</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI判定</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">处理状态</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">14:23:15</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">138****2847</div>
+                                    <div class="text-sm text-gray-500">张某某</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">¥50,000</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">大额转账</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <span class="text-sm text-red-600 font-medium">高风险</span>
+                                        <span class="ai-badge ml-2">AI</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">已拦截</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                    <button class="text-green-600 hover:text-green-900">放行</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">14:18:42</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">159****7923</div>
+                                    <div class="text-sm text-gray-500">李某某</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">¥8,500</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">异地登录</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <span class="text-sm text-yellow-600 font-medium">中风险</span>
+                                        <span class="ai-badge ml-2">AI</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">待审核</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">详情</button>
+                                    <button class="text-green-600 hover:text-green-900">审核</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="rules" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- AI Risk Rules -->
+                <div class="dify-card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">AI智能风控规则</h3>
+                        <button class="dify-btn px-3 py-1 bg-blue-600 text-white text-sm">新增规则</button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium text-gray-800">大额交易监控</h4>
+                                <div class="flex items-center space-x-2">
+                                    <span class="ai-badge">AI</span>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="form-checkbox h-4 w-4 text-blue-600">
+                                    </label>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">单笔转账金额超过 ¥10,000 触发AI风险评估</p>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>触发次数: 1,249</span>
+                                <span class="mx-2">|</span>
+                                <span>准确率: 98.5%</span>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium text-gray-800">异常行为检测</h4>
+                                <div class="flex items-center space-x-2">
+                                    <span class="ai-badge">AI</span>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="form-checkbox h-4 w-4 text-blue-600">
+                                    </label>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">基于用户行为模式识别异常交易</p>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>触发次数: 387</span>
+                                <span class="mx-2">|</span>
+                                <span>准确率: 96.8%</span>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium text-gray-800">设备风险识别</h4>
+                                <div class="flex items-center space-x-2">
+                                    <span class="ai-badge">AI</span>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="form-checkbox h-4 w-4 text-blue-600">
+                                    </label>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">检测可疑设备和异地登录</p>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>触发次数: 156</span>
+                                <span class="mx-2">|</span>
+                                <span>准确率: 94.2%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Traditional Rules -->
+                <div class="dify-card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">传统风控规则</h3>
+                        <button class="dify-btn px-3 py-1 bg-gray-600 text-white text-sm">管理规则</button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium text-gray-800">单日转账限额</h4>
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="form-checkbox h-4 w-4 text-blue-600">
+                                </label>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">个人用户单日转账限额 ¥50,000</p>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>触发次数: 45</span>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium text-gray-800">频次限制</h4>
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="form-checkbox h-4 w-4 text-blue-600">
+                                </label>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">单小时内最多转账10次</p>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>触发次数: 23</span>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium text-gray-800">黑名单检查</h4>
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="form-checkbox h-4 w-4 text-blue-600">
+                                </label>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">检查收款方是否在黑名单中</p>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <span>触发次数: 12</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="analysis" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Risk Distribution -->
+                <div class="dify-card p-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">风险等级分布</h3>
+                    <div class="chart-container">
+                        <canvas id="riskDistributionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Time Series Analysis -->
+                <div class="dify-card p-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">风险趋势分析</h3>
+                    <div class="chart-container">
+                        <canvas id="riskTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Model Performance -->
+            <div class="mt-6 dify-card p-6">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">AI模型性能指标</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="text-center p-4 bg-blue-50 rounded-lg">
+                        <div class="text-2xl font-semibold text-blue-600">98.7%</div>
+                        <div class="text-sm text-gray-600">整体准确率</div>
+                    </div>
+                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                        <div class="text-2xl font-semibold text-green-600">96.2%</div>
+                        <div class="text-sm text-gray-600">召回率</div>
+                    </div>
+                    <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                        <div class="text-2xl font-semibold text-yellow-600">1.3%</div>
+                        <div class="text-sm text-gray-600">误报率</div>
+                    </div>
+                    <div class="text-center p-4 bg-purple-50 rounded-lg">
+                        <div class="text-2xl font-semibold text-purple-600">89ms</div>
+                        <div class="text-sm text-gray-600">平均响应时间</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="alerts" class="tab-content">
+            <div class="dify-card">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-800">风险告警历史</h3>
+                        <div class="flex items-center space-x-2">
+                            <select class="border border-gray-300 rounded-md px-3 py-1 text-sm">
+                                <option>全部告警</option>
+                                <option>高风险</option>
+                                <option>中风险</option>
+                                <option>低风险</option>
+                            </select>
+                            <button class="dify-btn px-3 py-1 bg-blue-600 text-white text-sm">导出报告</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">告警时间</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">风险等级</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">告警类型</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">涉及用户</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">交易金额</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">处理状态</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">处理人</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-29 14:23:15</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">高风险</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">大额转账异常</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">138****2847</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">¥50,000</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">已拦截</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">系统自动</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900">详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-29 14:18:42</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">中风险</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">异地登录检测</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">159****7923</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">¥8,500</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已放行</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">张三</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900">详情</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real-time data updates
+        function updateRealTimeData() {
+            const transactions = document.getElementById('real-time-transactions');
+            const riskBlocked = document.getElementById('risk-blocked');
+            const suspicious = document.getElementById('suspicious-activities');
+            const accuracy = document.getElementById('accuracy-rate');
+
+            // Simulate real-time updates
+            setInterval(() => {
+                transactions.textContent = (Math.floor(Math.random() * 1000) + 12000).toLocaleString();
+                riskBlocked.textContent = (Math.floor(Math.random() * 100) + 1200).toLocaleString();
+                suspicious.textContent = (Math.floor(Math.random() * 50) + 350).toLocaleString();
+                accuracy.textContent = (98 + Math.random() * 1).toFixed(1) + '%';
+            }, 5000);
+        }
+
+        // Button click handlers
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+                type === 'warning' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+                type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+                'bg-blue-100 text-blue-800 border border-blue-200'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-gray-500 hover:text-gray-700">×</button>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Modal functions
+        function showModal(title, content) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium">${title}</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">×</button>
+                    </div>
+                    <div class="mb-4">${content}</div>
+                    <div class="flex justify-end space-x-3">
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">取消</button>
+                        <button onclick="this.closest('.fixed').remove(); showNotification('操作已确认', 'success')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确认</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Main action buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            // Configure risk rules button
+            document.querySelector('[onclick*="配置风控规则"]')?.addEventListener('click', () => {
+                showModal('配置风控规则', `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">单笔转账限额</label>
+                            <input type="number" value="10000" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">单日转账限额</label>
+                            <input type="number" value="50000" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">风险评分阈值</label>
+                            <input type="number" value="85" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                        </div>
+                    </div>
+                `);
+                // Alert action buttons
+            const detailBtns = Array.from(document.querySelectorAll('button')).filter(btn => 
+                btn.textContent.includes('详情')
+            );
+            detailBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const row = btn.closest('tr');
+                    let userInfo = '138****2847';
+                    let amount = '¥50,000';
+                    
+                    if (row) {
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length >= 3) {
+                            userInfo = cells[1].textContent.trim();
+                            amount = cells[2].textContent.trim();
+                        }
+                    }
+                    
+                    showModal('交易详情', `
+                        <div class="space-y-3">
+                            <div class="flex justify-between"><span class="font-medium">用户信息:</span><span>${userInfo}</span></div>
+                            <div class="flex justify-between"><span class="font-medium">交易金额:</span><span>${amount}</span></div>
+                            <div class="flex justify-between"><span class="font-medium">交易时间:</span><span>2025-05-29 14:23:15</span></div>
+                            <div class="flex justify-between"><span class="font-medium">收款方:</span><span>中国银行 ****1234</span></div>
+                            <div class="flex justify-between"><span class="font-medium">风险评分:</span><span class="text-red-600">92分</span></div>
+                            <div class="flex justify-between"><span class="font-medium">触发规则:</span><span>大额转账 + 异常时间</span></div>
+                            <div class="mt-4 p-3 bg-red-50 rounded-lg">
+                                <div class="text-sm text-red-800">
+                                    <div class="font-medium mb-1">AI风险分析:</div>
+                                    <ul class="text-xs space-y-1">
+                                        <li>• 转账金额异常：超出用户历史平均金额300%</li>
+                                        <li>• 时间异常：非常规交易时间段</li>
+                                        <li>• 设备风险：检测到新设备登录</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                });
+            });
+
+            // Release/Approve buttons  
+            const actionBtns = Array.from(document.querySelectorAll('button')).filter(btn => 
+                btn.textContent.includes('放行') || btn.textContent.includes('审核')
+            );
+            actionBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const action = btn.textContent.includes('放行') ? '放行' : '审核';
+                    showModal(`确认${action}`, `
+                        <p>确定要${action}这笔交易吗？</p>
+                        <div class="mt-3 p-3 bg-yellow-50 rounded-lg">
+                            <p class="text-sm text-yellow-800">⚠️ 请谨慎操作，${action}后交易将立即执行</p>
+                        </div>
+                    `);
+                });
+            });
+
+            // Risk alert close buttons
+            document.querySelectorAll('.alert-item button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const alertItem = btn.closest('.alert-item');
+                    const riskElement = alertItem.querySelector('.risk-level-high, .risk-level-medium, .risk-level-low');
+                    const riskLevel = riskElement?.textContent || '未知';
+                    
+                    if (riskLevel === '高风险') {
+                        showModal('处理高风险告警', `
+                            <p class="text-red-600 mb-3">⚠️ 这是一个高风险告警，请选择处理方式：</p>
+                            <div class="space-y-2">
+                                <button onclick="this.closest('.fixed').remove(); showNotification('告警已忽略', 'warning')" class="w-full text-left p-2 hover:bg-gray-50 rounded">忽略告警</button>
+                                <button onclick="this.closest('.fixed').remove(); showNotification('交易已拦截', 'success')" class="w-full text-left p-2 hover:bg-gray-50 rounded">拦截交易</button>
+                                <button onclick="this.closest('.fixed').remove(); showNotification('已转人工处理', 'info')" class="w-full text-left p-2 hover:bg-gray-50 rounded">转人工处理</button>
+                            </div>
+                        `);
+                    } else {
+                        alertItem.style.transition = 'opacity 0.3s ease';
+                        alertItem.style.opacity = '0';
+                        setTimeout(() => alertItem.remove(), 300);
+                        showNotification(`${riskLevel}告警已处理`, 'success');
+                    }
+                });
+            });
+
+            // Filter dropdown in alerts tab
+            document.querySelector('#alerts select')?.addEventListener('change', (e) => {
+                const filterValue = e.target.value;
+                showNotification(`筛选条件已更新: ${filterValue}`, 'info');
+                // Here you would typically filter the table data
+            });
+
+            // Checkbox toggles for rules
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const ruleName = e.target.closest('.border').querySelector('h4').textContent;
+                    const status = e.target.checked ? '启用' : '禁用';
+                    showNotification(`${ruleName} 已${status}`, e.target.checked ? 'success' : 'warning');
+                });
+            });
+
+            // Add new rule buttons
+            document.querySelectorAll('[onclick*="新增规则"], [onclick*="管理规则"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showModal('新增风控规则', `
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">规则名称</label>
+                                <input type="text" placeholder="输入规则名称" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">规则类型</label>
+                                <select class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                    <option>金额限制</option>
+                                    <option>频次限制</option>
+                                    <option>行为分析</option>
+                                    <option>设备检测</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">规则描述</label>
+                                <textarea placeholder="输入规则详细描述" class="w-full border border-gray-300 rounded-lg px-3 py-2 h-20"></textarea>
+                            </div>
+                        </div>
+                    `);
+                });
+            });
+
+            // Export report button
+            document.querySelector('[onclick*="导出报告"]')?.addEventListener('click', () => {
+                showNotification('正在生成风控报告，请稍候...', 'info');
+                setTimeout(() => {
+                    showNotification('风控报告已生成完成！', 'success');
+                }, 2000);
+            });
+
+            // View all button
+            document.querySelector('[onclick*="查看全部"]')?.addEventListener('click', () => {
+                showModal('全部拦截交易', `
+                    <div class="max-h-96 overflow-y-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left">时间</th>
+                                    <th class="px-3 py-2 text-left">用户</th>
+                                    <th class="px-3 py-2 text-left">金额</th>
+                                    <th class="px-3 py-2 text-left">状态</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr><td class="px-3 py-2">14:23:15</td><td class="px-3 py-2">138****2847</td><td class="px-3 py-2">¥50,000</td><td class="px-3 py-2"><span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs">已拦截</span></td></tr>
+                                <tr><td class="px-3 py-2">14:18:42</td><td class="px-3 py-2">159****7923</td><td class="px-3 py-2">¥8,500</td><td class="px-3 py-2"><span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">待审核</span></td></tr>
+                                <tr><td class="px-3 py-2">14:12:33</td><td class="px-3 py-2">186****3456</td><td class="px-3 py-2">¥2,000</td><td class="px-3 py-2"><span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">已放行</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `);
+            });
+        });
+
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                
+                // Update button states
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('border-blue-500', 'text-blue-600');
+                    b.classList.add('border-transparent', 'text-gray-500');
+                });
+                btn.classList.remove('border-transparent', 'text-gray-500');
+                btn.classList.add('border-blue-500', 'text-blue-600');
+                
+                // Update content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabId).classList.add('active');
+                
+                // Show notification for tab switch
+                const tabNames = {
+                    'realtime': '实时监控',
+                    'rules': '风控规则',
+                    'analysis': '风险分析',
+                    'alerts': '告警中心'
+                };
+                showNotification(`已切换到 ${tabNames[tabId]} 面板`, 'info');
+            });
+        });
+
+        // Initialize charts
+        function initCharts() {
+            // Transaction Flow Chart
+            const ctx1 = document.getElementById('transactionFlowChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    datasets: [{
+                        label: '正常交易',
+                        data: [120, 190, 300, 500, 450, 300],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '可疑交易',
+                        data: [20, 35, 45, 60, 55, 40],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '高风险交易',
+                        data: [5, 8, 12, 18, 15, 10],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Risk Distribution Chart
+            const ctx2 = document.getElementById('riskDistributionChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['低风险', '中风险', '高风险'],
+                    datasets: [{
+                        data: [75, 20, 5],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+
+            // Risk Trend Chart
+            const ctx3 = document.getElementById('riskTrendChart').getContext('2d');
+            new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    datasets: [{
+                        label: '风险事件数',
+                        data: [45, 52, 38, 61, 48, 35, 42],
+                        backgroundColor: '#2970FF',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            updateRealTimeData();
+            initCharts();
+        });
+    </script>
+</body>
+</html>

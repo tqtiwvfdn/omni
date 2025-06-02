@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>负面新闻监控系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <script src="/console/style/chart.min.js"></script>
+    <style>
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .sentiment-negative {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+        
+        .sentiment-neutral {
+            background: linear-gradient(135deg, #feca57, #ff9ff3);
+        }
+        
+        .sentiment-positive {
+            background: linear-gradient(135deg, #48dbfb, #0abde3);
+        }
+        
+        .news-item-hover {
+            transition: all 0.2s ease;
+        }
+        
+        .news-item-hover:hover {
+            background: rgba(99, 102, 241, 0.05);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .notification-badge {
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="glass-effect shadow-lg border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">新</span>
+                        </div>
+                        <h1 class="text-xl font-bold text-gray-900">负面新闻监控系统</h1>
+                    </div>
+                </div>
+                
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#" class="text-indigo-600 border-b-2 border-indigo-600 pb-1 px-1 text-sm font-medium">概览</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700 px-1 text-sm font-medium">公司分析</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700 px-1 text-sm font-medium">事件时间轴</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700 px-1 text-sm font-medium">数据管理</a>
+                </nav>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button class="p-2 text-gray-400 hover:text-gray-500 relative">
+                            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" t="1748339129214" class="icon" viewBox="0 0 1024 1024" version="1.1" p-id="4616" width="200" height="200" style="&#10;    height: 24px;&#10;    width: 24px;&#10;"><path d="M903.869992 820.837904c11.452843 0 17.179264 5.726421 17.179264 17.179264 0 11.489682-5.726421 17.179264-17.179264 17.179264L113.619734 855.196433c-11.452843 0-17.179264-5.689582-17.179264-17.179264 0-11.452843 5.726421-17.179264 17.179264-17.179264 22.905686 0 42.952254-8.594749 60.132542-25.774013s25.764803-37.217646 25.764803-60.123332l17.179264-225.484498c7.15598-104.46012 34.001395-190.356442 80.527035-257.68999 46.526663-67.288522 105.58678-105.934704 177.162956-115.957988L474.386334 82.125439c0-11.452843 5.726421-17.179264 17.179264-17.179264l34.358529 0c11.452843 0 17.179264 5.726421 17.179264 17.179264l0 53.68162c71.585385 10.023284 130.636293 48.313356 177.162956 114.886587s73.372078 152.827711 80.528058 258.762415l17.179264 223.331461c0 24.381293 8.227382 45.097104 24.692379 62.276369C859.130022 812.243155 879.534747 820.837904 903.869992 820.837904zM820.116473 820.837904c-24.335245-21.476127-36.502355-50.109258-36.502355-85.896322l-17.179264-221.187635c-7.15598-104.46012-34.001395-188.212616-80.528058-251.249301-46.526663-62.990636-105.57757-94.481861-177.162956-94.481861-71.576175 0-130.636293 31.491225-177.162956 94.481861-46.526663 63.036685-73.372078 146.789181-80.527035 251.249301l-17.179264 223.331461c0 34.358529-12.167111 62.276369-36.502355 83.752496L820.116473 820.837904zM508.744863 958.273043c-35.788088 0-68.00279-12.891611-96.634898-38.655392-7.15598-7.15598-7.15598-15.749706 0-25.774013 7.15598-8.585539 15.035438-8.585539 23.620977 0 20.047592 20.092617 44.382836 30.070876 73.014944 30.070876 28.632107 0 52.967352-9.978259 73.014944-30.070876 8.585539-8.585539 16.464997-8.585539 23.620977 0 7.15598 10.023284 7.15598 18.618033 0 25.774013C579.605747 945.381431 547.400255 958.273043 508.744863 958.273043z" fill="#231815" p-id="4617"/></svg>
+                            <span class="notification-badge absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-700">中文</span>
+                        <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm font-medium">A</span>
+                        </div>
+                        <span class="text-sm text-gray-700">admin</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 数据概览卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-effect rounded-xl p-6 hover-lift fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">总新闻数</p>
+                        <p class="text-3xl font-bold text-gray-900">24</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-effect rounded-xl p-6 hover-lift fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">平均情感分</p>
+                        <p class="text-3xl font-bold text-red-600">-2.9</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-effect rounded-xl p-6 hover-lift fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">负面新闻比例</p>
+                        <p class="text-3xl font-bold text-red-500">100.0%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-effect rounded-xl p-6 hover-lift fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">最新负面事件</p>
+                        <p class="text-3xl font-bold text-blue-600">10 条</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左侧：近期负面新闻事件 -->
+            <div class="lg:col-span-2">
+                <div class="glass-effect rounded-xl p-6 fade-in">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-6">近期负面新闻事件</h2>
+                    <div class="space-y-4">
+                        <!-- 新闻项目 1 -->
+                        <div class="news-item-hover border border-gray-200 rounded-lg p-4 cursor-pointer">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="sentiment-negative text-white text-xs px-2 py-1 rounded-full font-medium">-4</span>
+                                        <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">税务逃漏</span>
+                                    </div>
+                                    <h3 class="text-blue-600 font-medium hover:text-blue-800 mb-2">
+                                        UBS to Pay $511 Million to Settle Credit Suisse U.S. Tax Case
+                                    </h3>
+                                    <p class="text-sm text-gray-600 mb-3">
+                                        The Swiss bank, which acquired Credit Suisse in 2023, settled the probe into violations of an agreement with the DOJ over American clients who evaded taxes.
+                                    </p>
+                                    <div class="flex items-center justify-between text-xs text-gray-500">
+                                        <div class="flex items-center space-x-4">
+                                            <span>UBS | WSJ</span>
+                                            <span class="bg-gray-100 px-2 py-1 rounded">K01</span>
+                                        </div>
+                                        <span>2025/05/06 下午03:09</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 新闻项目 2 -->
+                        <div class="news-item-hover border border-gray-200 rounded-lg p-4 cursor-pointer">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="sentiment-negative text-white text-xs px-2 py-1 rounded-full font-medium">-4</span>
+                                        <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">税务逃漏</span>
+                                        <span class="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">监管处罚</span>
+                                    </div>
+                                    <h3 class="text-blue-600 font-medium hover:text-blue-800 mb-2">
+                                        Credit Suisse to pay $511 million for helping U.S. taxpayers hide over $4 billion overseas
+                                    </h3>
+                                    <p class="text-sm text-gray-600 mb-3">
+                                        "Credit Suisse AG committed new crimes and breached its May 2014 plea agreement," the DOJ said in announcing the penalty with the UBS subsidiary.
+                                    </p>
+                                    <div class="flex items-center justify-between text-xs text-gray-500">
+                                        <div class="flex items-center space-x-4">
+                                            <span>Credit Suisse | CNBC</span>
+                                            <span class="bg-gray-100 px-2 py-1 rounded">K07</span>
+                                            <span class="bg-gray-100 px-2 py-1 rounded">K08</span>
+                                        </div>
+                                        <span>2025/05/06 下午12:23</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 新闻项目 3 -->
+                        <div class="news-item-hover border border-gray-200 rounded-lg p-4 cursor-pointer">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="sentiment-negative text-white text-xs px-2 py-1 rounded-full font-medium">-5</span>
+                                        <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">破产</span>
+                                    </div>
+                                    <h3 class="text-blue-600 font-medium hover:text-blue-800 mb-2">
+                                        Rite Aid files for second bankruptcy in two years
+                                    </h3>
+                                    <p class="text-sm text-gray-600 mb-3">
+                                        Pharmacy chain Rite Aid filed for bankruptcy protection for the second time in as many years, according to a court filing.
+                                    </p>
+                                    <div class="flex items-center justify-between text-xs text-gray-500">
+                                        <div class="flex items-center space-x-4">
+                                            <span>Rite Aid | CNBC</span>
+                                            <span class="bg-gray-100 px-2 py-1 rounded">K09</span>
+                                            <span class="bg-gray-100 px-2 py-1 rounded">K16</span>
+                                        </div>
+                                        <span>2025/05/06 上午04:22</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 新闻项目 4 -->
+                        <div class="news-item-hover border border-gray-200 rounded-lg p-4 cursor-pointer">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="sentiment-negative text-white text-xs px-2 py-1 rounded-full font-medium">-4</span>
+                                        <span class="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded-full">网络攻击与数据泄露</span>
+                                        <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">诉讼</span>
+                                    </div>
+                                    <h3 class="text-blue-600 font-medium hover:text-blue-800 mb-2">
+                                        Cyberattack on UnitedHealth Leaves Medical Providers in Debt
+                                    </h3>
+                                    <p class="text-sm text-gray-600 mb-3">
+                                        The company lent roughly $9 billion to practices affected by a vast cyberattack on its payment systems last year. Medical practices are now suing the health care colossus, saying it is pressuring them to repay funds.
+                                    </p>
+                                    <div class="flex items-center justify-between text-xs text-gray-500">
+                                        <div class="flex items-center space-x-4">
+                                            <span>UnitedHealth | NYT</span>
+                                            <span class="bg-gray-100 px-2 py-1 rounded">K12</span>
+                                        </div>
+                                        <span>2025/05/06 上午12:14</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：图表区域 -->
+            <div class="space-y-6">
+                <!-- 月度舆情趋势 -->
+                <div class="glass-effect rounded-xl p-6 fade-in">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">月度舆情趋势</h3>
+                    <canvas id="sentimentChart" width="300" height="200"></canvas>
+                </div>
+
+                <!-- 舆情分布 -->
+                <div class="glass-effect rounded-xl p-6 fade-in">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">舆情分布</h3>
+                    <canvas id="distributionChart" width="300" height="200"></canvas>
+                </div>
+
+                <!-- 各公司舆情概况 -->
+                <div class="glass-effect rounded-xl p-6 fade-in">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">各公司舆情概况</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Rite Aid</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 h-2 bg-gray-200 rounded-full">
+                                    <div class="w-full h-2 bg-red-500 rounded-full"></div>
+                                </div>
+                                <span class="text-sm font-medium text-red-600">-5.0</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Credit Suisse</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 h-2 bg-gray-200 rounded-full">
+                                    <div class="w-4/5 h-2 bg-red-500 rounded-full"></div>
+                                </div>
+                                <span class="text-sm font-medium text-red-600">-4.0</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">UnitedHealth</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 h-2 bg-gray-200 rounded-full">
+                                    <div class="w-4/5 h-2 bg-red-500 rounded-full"></div>
+                                </div>
+                                <span class="text-sm font-medium text-red-600">-4.0</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Tesla</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 h-2 bg-gray-200 rounded-full">
+                                    <div class="w-1/2 h-2 bg-orange-500 rounded-full"></div>
+                                </div>
+                                <span class="text-sm font-medium text-orange-600">-2.5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 月度舆情趋势图表
+        const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+        new Chart(sentimentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['2025年3月', '2025年4月', '2025年5月'],
+                datasets: [{
+                    label: '平均舆情分数',
+                    data: [-2.8, -4.2, -3.4],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(239, 68, 68)',
+                        'rgb(239, 68, 68)',
+                        'rgb(239, 68, 68)'
+                    ],
+                    borderWidth: 1
+                }, {
+                    label: '负面新闻数量',
+                    type: 'line',
+                    data: [8, 15, 7],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    yAxisID: 'y1',
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: -5
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+
+        // 舆情分布饼图
+        const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+        new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['负面', '中性', '正面'],
+                datasets: [{
+                    data: [95, 3, 2],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(34, 197, 94, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(239, 68, 68)',
+                        'rgb(59, 130, 246)',
+                        'rgb(34, 197, 94)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // 添加一些交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为新闻项目添加点击效果
+            const newsItems = document.querySelectorAll('.news-item-hover');
+            newsItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // 模拟新闻详情展开
+                    console.log('新闻详情展开');
+                });
+            });
+
+            // 实时更新时间戳效果
+            function updateTimestamps() {
+                const timestamps = document.querySelectorAll('.news-item-hover .text-xs.text-gray-500 span:last-child');
+                // 这里可以添加实时更新逻辑
+            }
+
+            // 添加脉冲效果到新的通知
+            setInterval(() => {
+                const badge = document.querySelector('.notification-badge');
+                if (badge) {
+                    badge.classList.add('pulse-animation');
+                    setTimeout(() => {
+                        badge.classList.remove('pulse-animation');
+                    }, 2000);
+                }
+            }, 5000);
+        });
+    </script>
+
+</body>
+</html>

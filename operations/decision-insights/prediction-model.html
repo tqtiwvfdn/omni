@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>决策洞察预测模型 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--dify-text-primary);
+            background-color: #FAFBFC;
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .prediction-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .prediction-card.accuracy {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .prediction-card.confidence {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .prediction-card.performance {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .prediction-card.trend {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #1F2937;
+        }
+
+        .chart-container {
+            height: 300px;
+            background: #f8fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            position: relative;
+            border: 1px solid #e2e8f0;
+        }
+
+        .chart-container.large {
+            height: 400px;
+        }
+
+        .chart-mock {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0369a1;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-mock::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230369a1' fill-opacity='0.1'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='17' cy='7' r='1'/%3E%3Ccircle cx='27' cy='7' r='1'/%3E%3Ccircle cx='37' cy='7' r='1'/%3E%3Ccircle cx='47' cy='7' r='1'/%3E%3Ccircle cx='7' cy='17' r='1'/%3E%3Ccircle cx='17' cy='17' r='1'/%3E%3Ccircle cx='27' cy='17' r='1'/%3E%3Ccircle cx='37' cy='17' r='1'/%3E%3Ccircle cx='47' cy='17' r='1'/%3E%3Ccircle cx='7' cy='27' r='1'/%3E%3Ccircle cx='17' cy='27' r='1'/%3E%3Ccircle cx='27' cy='27' r='1'/%3E%3Ccircle cx='37' cy='27' r='1'/%3E%3Ccircle cx='47' cy='27' r='1'/%3E%3Ccircle cx='7' cy='37' r='1'/%3E%3Ccircle cx='17' cy='37' r='1'/%3E%3Ccircle cx='27' cy='37' r='1'/%3E%3Ccircle cx='37' cy='37' r='1'/%3E%3Ccircle cx='47' cy='37' r='1'/%3E%3Ccircle cx='7' cy='47' r='1'/%3E%3Ccircle cx='17' cy='47' r='1'/%3E%3Ccircle cx='27' cy='47' r='1'/%3E%3Ccircle cx='37' cy='47' r='1'/%3E%3Ccircle cx='47' cy='47' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+        }
+
+        .accuracy-gauge {
+            width: 120px;
+            height: 120px;
+            position: relative;
+        }
+
+        .accuracy-gauge svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .accuracy-gauge circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+        }
+
+        .accuracy-gauge .bg {
+            stroke: #e5e7eb;
+        }
+
+        .accuracy-gauge .progress {
+            stroke: var(--dify-primary);
+            stroke-dasharray: 283;
+            transition: stroke-dashoffset 0.8s ease;
+        }
+
+        .accuracy-gauge .center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .model-card {
+            border: 1px solid var(--dify-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .model-card:hover {
+            border-color: var(--dify-primary);
+            box-shadow: 0 4px 12px rgba(41, 112, 255, 0.15);
+        }
+
+        .model-card.active {
+            border-color: var(--dify-primary);
+            background: var(--dify-active);
+        }
+
+        .confidence-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .confidence-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .confidence-high {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+
+        .confidence-medium {
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .confidence-low {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .prediction-timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .prediction-timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--dify-border);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--dify-border);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--dify-primary);
+            border: 3px solid white;
+            box-shadow: 0 0 0 1px var(--dify-border);
+        }
+
+        .scenario-card {
+            border: 1px solid var(--dify-border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .scenario-card.optimistic {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border-color: #22c55e;
+        }
+
+        .scenario-card.pessimistic {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            border-color: #ef4444;
+        }
+
+        .scenario-card.realistic {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-color: #3b82f6;
+        }
+
+        .feature-importance {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .feature-importance .bar {
+            flex: 1;
+            height: 20px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            margin: 0 12px;
+            overflow: hidden;
+        }
+
+        .feature-importance .fill {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, var(--dify-primary) 0%, #1d4ed8 100%);
+            transition: width 0.6s ease;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 3% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 95%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--dify-border);
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .tab-container {
+            border-bottom: 1px solid var(--dify-border);
+        }
+
+        .tab-item {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+            color: var(--dify-text-secondary);
+        }
+
+        .tab-item:hover {
+            color: var(--dify-primary);
+            background: var(--dify-hover);
+        }
+
+        .tab-item.active {
+            color: var(--dify-primary);
+            border-bottom-color: var(--dify-primary);
+            background: var(--dify-active);
+        }
+
+        .parameter-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            outline: none;
+        }
+
+        .parameter-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--dify-primary);
+            cursor: pointer;
+        }
+
+        .parameter-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--dify-primary);
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="p-6">
+        <!-- 页面标题和控制区 -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">AI预测模型中心</h1>
+                    <p class="text-gray-600 mt-1">基于机器学习的业务预测模型管理、训练和应用平台</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <select class="text-sm border border-gray-300 rounded px-3 py-2" id="modelCategory">
+                        <option value="all">全部模型</option>
+                        <option value="financial" selected>金融预测</option>
+                        <option value="user">用户行为</option>
+                        <option value="risk">风险评估</option>
+                        <option value="market">市场预测</option>
+                    </select>
+                    <select class="text-sm border border-gray-300 rounded px-3 py-2" id="timeHorizon">
+                        <option value="short">短期预测(1-30天)</option>
+                        <option value="medium" selected>中期预测(1-6个月)</option>
+                        <option value="long">长期预测(6个月-2年)</option>
+                    </select>
+                    <button class="dify-btn px-4 py-2 border text-gray-700 text-sm" onclick="exportPredictions()">导出预测</button>
+                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm" onclick="refreshModels()">刷新模型</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模型性能概览 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="dify-card prediction-card accuracy p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-white text-opacity-80 text-sm">平均准确率</div>
+                        <div class="text-3xl font-bold mt-2" id="avg-accuracy">92.8%</div>
+                        <div class="text-white text-opacity-70 text-xs mt-1">较上月 +2.1%</div>
+                    </div>
+                    <div class="text-white text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card prediction-card confidence p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-white text-opacity-80 text-sm">平均置信度</div>
+                        <div class="text-3xl font-bold mt-2" id="avg-confidence">87.2%</div>
+                        <div class="text-white text-opacity-70 text-xs mt-1">较上月 +1.5%</div>
+                    </div>
+                    <div class="text-white text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card prediction-card performance p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-white text-opacity-80 text-sm">模型数量</div>
+                        <div class="text-3xl font-bold mt-2" id="model-count">24个</div>
+                        <div class="text-white text-opacity-70 text-xs mt-1">运行中: 18个</div>
+                    </div>
+                    <div class="text-white text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card prediction-card trend p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-gray-700 text-opacity-80 text-sm">预测命中率</div>
+                        <div class="text-3xl font-bold mt-2" id="hit-rate">89.5%</div>
+                        <div class="text-gray-600 text-xs mt-1">过去30天</div>
+                    </div>
+                    <div class="text-gray-600 text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预测模型管理标签页 -->
+        <div class="dify-card mb-8">
+            <div class="tab-container">
+                <div class="flex">
+                    <div class="tab-item active" data-tab="models">模型管理</div>
+                    <div class="tab-item" data-tab="predictions">预测结果</div>
+                    <div class="tab-item" data-tab="scenarios">场景分析</div>
+                    <div class="tab-item" data-tab="optimization">模型优化</div>
+                </div>
+            </div>
+
+            <!-- 模型管理 -->
+            <div class="tab-content active" id="models-tab">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- 模型列表 -->
+                        <div class="lg:col-span-2">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-medium text-gray-800">活跃预测模型</h3>
+                                <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm" onclick="createNewModel()">创建新模型</button>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="model-card active" onclick="selectModel('revenue-forecast')">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                            <div>
+                                                <div class="font-medium text-gray-800">营收预测模型</div>
+                                                <div class="text-sm text-gray-600">基于历史数据和市场指标预测月度营收</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="dify-tag bg-green-50 text-green-600">运行中</span>
+                                            <span class="dify-tag bg-blue-50 text-blue-600">XGBoost</span>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-4 text-center">
+                                        <div>
+                                            <div class="text-lg font-bold text-green-600">94.2%</div>
+                                            <div class="text-xs text-gray-500">准确率</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-blue-600">91.8%</div>
+                                            <div class="text-xs text-gray-500">置信度</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-purple-600">15天</div>
+                                            <div class="text-xs text-gray-500">预测周期</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="model-card" onclick="selectModel('user-churn')">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                            <div>
+                                                <div class="font-medium text-gray-800">用户流失预测</div>
+                                                <div class="text-sm text-gray-600">识别潜在流失用户并预测流失概率</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="dify-tag bg-green-50 text-green-600">运行中</span>
+                                            <span class="dify-tag bg-purple-50 text-purple-600">Random Forest</span>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-4 text-center">
+                                        <div>
+                                            <div class="text-lg font-bold text-green-600">88.7%</div>
+                                            <div class="text-xs text-gray-500">准确率</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-blue-600">85.3%</div>
+                                            <div class="text-xs text-gray-500">置信度</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-purple-600">30天</div>
+                                            <div class="text-xs text-gray-500">预测周期</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="model-card" onclick="selectModel('risk-assessment')">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                                            <div>
+                                                <div class="font-medium text-gray-800">信用风险评估</div>
+                                                <div class="text-sm text-gray-600">评估客户信用风险等级和违约概率</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="dify-tag bg-yellow-50 text-yellow-600">训练中</span>
+                                            <span class="dify-tag bg-red-50 text-red-600">Neural Network</span>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-4 text-center">
+                                        <div>
+                                            <div class="text-lg font-bold text-green-600">92.1%</div>
+                                            <div class="text-xs text-gray-500">准确率</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-blue-600">89.6%</div>
+                                            <div class="text-xs text-gray-500">置信度</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-purple-600">实时</div>
+                                            <div class="text-xs text-gray-500">预测周期</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="model-card" onclick="selectModel('market-trend')">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                                            <div>
+                                                <div class="font-medium text-gray-800">市场趋势预测</div>
+                                                <div class="text-sm text-gray-600">预测股市和汇率变化趋势</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="dify-tag bg-red-50 text-red-600">待优化</span>
+                                            <span class="dify-tag bg-orange-50 text-orange-600">LSTM</span>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-4 text-center">
+                                        <div>
+                                            <div class="text-lg font-bold text-green-600">76.4%</div>
+                                            <div class="text-xs text-gray-500">准确率</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-blue-600">72.8%</div>
+                                            <div class="text-xs text-gray-500">置信度</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-purple-600">7天</div>
+                                            <div class="text-xs text-gray-500">预测周期</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 模型详情 -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">模型详情</h3>
+                            <div id="model-details" class="space-y-4">
+                                <!-- 选中模型的详细信息 -->
+                                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="font-medium text-blue-800 mb-2">营收预测模型</div>
+                                    <div class="text-sm text-blue-700 mb-3">最后训练时间: 2025-06-01 08:30</div>
+                                    
+                                    <div class="accuracy-gauge mx-auto mb-4">
+                                        <svg>
+                                            <circle class="bg" cx="60" cy="60" r="45"></circle>
+                                            <circle class="progress" cx="60" cy="60" r="45" style="stroke-dashoffset: 45;"></circle>
+                                        </svg>
+                                        <div class="center">
+                                            <div class="text-xl font-bold text-blue-600">94.2%</div>
+                                            <div class="text-xs text-blue-500">准确率</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between">
+                                            <span>训练样本:</span>
+                                            <span class="font-medium">12,450个</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>特征数量:</span>
+                                            <span class="font-medium">28个</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>模型大小:</span>
+                                            <span class="font-medium">15.2MB</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>预测延迟:</span>
+                                            <span class="font-medium">23ms</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 border border-gray-200 rounded-lg">
+                                    <div class="font-medium text-gray-800 mb-3">特征重要性</div>
+                                    <div class="space-y-2">
+                                        <div class="feature-importance">
+                                            <span class="w-20 text-xs text-gray-600">历史营收</span>
+                                            <div class="bar">
+                                                <div class="fill" style="width: 85%"></div>
+                                            </div>
+                                            <span class="w-8 text-xs text-gray-600">85%</span>
+                                        </div>
+                                        <div class="feature-importance">
+                                            <span class="w-20 text-xs text-gray-600">用户增长</span>
+                                            <div class="bar">
+                                                <div class="fill" style="width: 72%"></div>
+                                            </div>
+                                            <span class="w-8 text-xs text-gray-600">72%</span>
+                                        </div>
+                                        <div class="feature-importance">
+                                            <span class="w-20 text-xs text-gray-600">市场指数</span>
+                                            <div class="bar">
+                                                <div class="fill" style="width: 58%"></div>
+                                            </div>
+                                            <span class="w-8 text-xs text-gray-600">58%</span>
+                                        </div>
+                                        <div class="feature-importance">
+                                            <span class="w-20 text-xs text-gray-600">季节因子</span>
+                                            <div class="bar">
+                                                <div class="fill" style="width: 43%"></div>
+                                            </div>
+                                            <span class="w-8 text-xs text-gray-600">43%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button class="flex-1 dify-btn px-3 py-2 bg-blue-600 text-white text-sm" onclick="runPrediction()">运行预测</button>
+                                    <button class="flex-1 dify-btn px-3 py-2 border text-gray-700 text-sm" onclick="editModel()">编辑模型</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预测结果 -->
+            <div class="tab-content" id="predictions-tab">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <!-- 预测趋势图 -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">预测趋势分析</h3>
+                            <div class="chart-container large">
+                                <div class="chart-mock">
+                                    <div class="text-center z-10">
+                                        <svg class="w-16 h-16 mx-auto mb-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 12l3-3 3 3 4-4"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21H3V3"></path>
+                                        </svg>
+                                        <div class="text-lg font-medium">未来6个月预测曲线</div>
+                                        <div class="text-sm opacity-75">置信区间和实际值对比</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <div class="text-lg font-bold text-green-600">+18.5%</div>
+                                    <div class="text-xs text-gray-500">预期增长</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-bold text-blue-600">¥2,340万</div>
+                                    <div class="text-xs text-gray-500">预测峰值</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-bold text-purple-600">92%</div>
+                                    <div class="text-xs text-gray-500">置信度</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 预测准确性评估 -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">预测准确性评估</h3>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium text-green-800">营收预测</span>
+                                        <span class="dify-tag bg-green-100 text-green-700">优秀</span>
+                                    </div>
+                                    <div class="confidence-bar mb-2">
+                                        <div class="fill confidence-high" style="width: 94%"></div>
+                                    </div>
+                                    <div class="text-sm text-green-700">MAPE: 5.8% | R²: 0.942</div>
+                                </div>
+
+                                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium text-blue-800">用户流失</span>
+                                        <span class="dify-tag bg-blue-100 text-blue-700">良好</span>
+                                    </div>
+                                    <div class="confidence-bar mb-2">
+                                        <div class="fill confidence-high" style="width: 88%"></div>
+                                    </div>
+                                    <div class="text-sm text-blue-700">AUC: 0.887 | Precision: 0.823</div>
+                                </div>
+
+                                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium text-yellow-800">风险评估</span>
+                                        <span class="dify-tag bg-yellow-100 text-yellow-700">一般</span>
+                                    </div>
+                                    <div class="confidence-bar mb-2">
+                                        <div class="fill confidence-medium" style="width: 76%"></div>
+                                    </div>
+                                    <div class="text-sm text-yellow-700">MAPE: 12.4% | F1-Score: 0.764</div>
+                                </div>
+
+                                <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium text-red-800">市场趋势</span>
+                                        <span class="dify-tag bg-red-100 text-red-700">需改进</span>
+                                    </div>
+                                    <div class="confidence-bar mb-2">
+                                        <div class="fill confidence-low" style="width: 65%"></div>
+                                    </div>
+                                    <div class="text-sm text-red-700">MAPE: 18.6% | R²: 0.621</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 预测时间线 -->
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-800 mb-4">关键预测节点</h4>
+                        <div class="prediction-timeline">
+                            <div class="timeline-item">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="font-medium text-gray-800">2025年6月</div>
+                                        <div class="text-sm text-gray-600 mt-1">预测营收¥1,890万，用户增长率+12.5%</div>
+                                        <div class="text-xs text-green-600 mt-1">置信度: 95%</div>
+                                    </div>
+                                    <span class="dify-tag bg-green-50 text-green-600">高置信</span>
+                                </div>
+                            </div>
+
+                            <div class="timeline-item">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="font-medium text-gray-800">2025年8月</div>
+                                        <div class="text-sm text-gray-600 mt-1">营收峰值期，预计达到¥2,340万</div>
+                                        <div class="text-xs text-blue-600 mt-1">置信度: 88%</div>
+                                    </div>
+                                    <span class="dify-tag bg-blue-50 text-blue-600">中置信</span>
+                                </div>
+                            </div>
+
+                            <div class="timeline-item">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="font-medium text-gray-800">2025年11月</div>
+                                        <div class="text-sm text-gray-600 mt-1">季节性回调，但仍保持正增长</div>
+                                        <div class="text-xs text-yellow-600 mt-1">置信度: 76%</div>
+                                    </div>
+                                    <span class="dify-tag bg-yellow-50 text-yellow-600">低置信</span>
+                                </div>
+                            </div>
+
+                            <div class="timeline-item">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="font-medium text-gray-800">2026年1月</div>
+                                        <div class="text-sm text-gray-600 mt-1">新年度增长周期开始，预期强劲反弹</div>
+                                        <div class="text-xs text-green-600 mt-1">置信度: 82%</div>
+                                    </div>
+                                    <span class="dify-tag bg-green-50 text-green-600">中置信</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 场景分析 -->
+            <div class="tab-content" id="scenarios-tab">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <!-- 场景设置 -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">场景参数设置</h3>
+                            <div class="space-y-4">
+                                <div class="p-4 border border-gray-200 rounded-lg">
+                                    <div class="font-medium text-gray-800 mb-3">市场环境参数</div>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-sm text-gray-600 mb-1">市场增长率 (%)</label>
+                                            <input type="range" min="0" max="50" value="15" class="parameter-slider" id="market-growth">
+                                            <div class="flex justify-between text-xs text-gray-500">
+                                                <span>0%</span>
+                                                <span id="market-growth-value">15%</span>
+                                                <span>50%</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm text-gray-600 mb-1">竞争强度</label>
+                                            <input type="range" min="1" max="10" value="7" class="parameter-slider" id="competition-level">
+                                            <div class="flex justify-between text-xs text-gray-500">
+                                                <span>1 (低)</span>
+                                                <span id="competition-level-value">7</span>
+                                                <span>10 (高)</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm text-gray-600 mb-1">经济周期位置</label>
+                                            <select class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
+                                                <option>经济衰退期</option>
+                                                <option>经济复苏期</option>
+                                                <option selected>经济繁荣期</option>
+                                                <option>经济滞胀期</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 border border-gray-200 rounded-lg">
+                                    <div class="font-medium text-gray-800 mb-3">内部因素参数</div>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-sm text-gray-600 mb-1">研发投入增幅 (%)</label>
+                                            <input type="range" min="0" max="100" value="25" class="parameter-slider" id="rd-investment">
+                                            <div class="flex justify-between text-xs text-gray-500">
+                                                <span>0%</span>
+                                                <span id="rd-investment-value">25%</span>
+                                                <span>100%</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm text-gray-600 mb-1">团队扩张速度</label>
+                                            <input type="range" min="0" max="50" value="20" class="parameter-slider" id="team-expansion">
+                                            <div class="flex justify-between text-xs text-gray-500">
+                                                <span>0%</span>
+                                                <span id="team-expansion-value">20%</span>
+                                                <span>50%</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm text-gray-600 mb-1">营销预算调整 (%)</label>
+                                            <input type="range" min="-50" max="100" value="15" class="parameter-slider" id="marketing-budget">
+                                            <div class="flex justify-between text-xs text-gray-500">
+                                                <span>-50%</span>
+                                                <span id="marketing-budget-value">+15%</span>
+                                                <span>+100%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="w-full dify-btn px-4 py-3 bg-blue-600 text-white" onclick="runScenarioAnalysis()">运行场景分析</button>
+                            </div>
+                        </div>
+
+                        <!-- 场景结果 -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">场景分析结果</h3>
+                            <div class="space-y-4">
+                                <div class="scenario-card optimistic">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="font-medium text-green-800">乐观场景</div>
+                                        <span class="dify-tag bg-green-100 text-green-700">概率: 25%</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4 mb-3">
+                                        <div>
+                                            <div class="text-lg font-bold text-green-800">¥3,200万</div>
+                                            <div class="text-xs text-green-600">6个月营收</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-green-800">+35%</div>
+                                            <div class="text-xs text-green-600">增长率</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-green-700">
+                                        关键因素：市场快速增长、竞争压力适中、产品创新成功
+                                    </div>
+                                </div>
+
+                                <div class="scenario-card realistic">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="font-medium text-blue-800">现实场景</div>
+                                        <span class="dify-tag bg-blue-100 text-blue-700">概率: 50%</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4 mb-3">
+                                        <div>
+                                            <div class="text-lg font-bold text-blue-800">¥2,650万</div>
+                                            <div class="text-xs text-blue-600">6个月营收</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-blue-800">+22%</div>
+                                            <div class="text-xs text-blue-600">增长率</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-blue-700">
+                                        关键因素：稳定市场环境、正常竞争水平、渐进式增长
+                                    </div>
+                                </div>
+
+                                <div class="scenario-card pessimistic">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="font-medium text-red-800">悲观场景</div>
+                                        <span class="dify-tag bg-red-100 text-red-700">概率: 25%</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4 mb-3">
+                                        <div>
+                                            <div class="text-lg font-bold text-red-800">¥1,890万</div>
+                                            <div class="text-xs text-red-600">6个月营收</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-red-800">+8%</div>
+                                            <div class="text-xs text-red-600">增长率</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-red-700">
+                                        关键因素：市场增长放缓、竞争加剧、客户流失增加
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                                <div class="font-medium text-gray-800 mb-2">风险因素评估</div>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">市场波动风险:</span>
+                                        <span class="font-medium text-yellow-600">中等</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">竞争威胁:</span>
+                                        <span class="font-medium text-red-600">较高</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">技术风险:</span>
+                                        <span class="font-medium text-green-600">较低</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">资金风险:</span>
+                                        <span class="font-medium text-green-600">低</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 敏感性分析 -->
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-800 mb-4">敏感性分析</h4>
+                        <div class="chart-container">
+                            <div class="chart-mock">
+                                <div class="text-center z-10">
+                                    <svg class="w-12 h-12 mx-auto mb-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                    <div>参数敏感性分析图</div>
+                                    <div class="text-xs opacity-75">各参数对结果的影响程度</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模型优化 -->
+            <div class="tab-content" id="optimization-tab">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <!-- 模型性能分析 -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">模型性能分析</h3>
+                            <div class="chart-container">
+                                <div class="chart-mock">
+                                    <div class="text-center z-10">
+                                        <svg class="w-12 h-12 mx-auto mb-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 12l3-3 3 3 4-4"></path>
+                                        </svg>
+                                        <div>模型性能变化曲线</div>
+                                        <div class="text-xs opacity-75">准确率和损失函数变化</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <div class="text-lg font-bold text-green-600">94.2%</div>
+                                    <div class="text-xs text-gray-500">当前准确率</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-bold text-blue-600">96.1%</div>
+                                    <div class="text-xs text-gray-500">理论最优</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-bold text-purple-600">1.9%</div>
+                                    <div class="text-xs text-gray-500">提升空间</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 优化建议 -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">优化建议</h3>
+                            <div class="space-y-4">
+                                <div class="p-4 border-l-4 border-green-500 bg-green-50">
+                                    <div class="font-medium text-green-800">数据质量优化</div>
+                                    <div class="text-sm text-green-700 mt-1">增加数据清洗步骤，预计提升准确率0.8%</div>
+                                    <div class="mt-2">
+                                        <span class="dify-tag bg-green-100 text-green-700">优先级: 高</span>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 border-l-4 border-blue-500 bg-blue-50">
+                                    <div class="font-medium text-blue-800">特征工程改进</div>
+                                    <div class="text-sm text-blue-700 mt-1">添加时间序列特征和交叉特征，预计提升0.6%</div>
+                                    <div class="mt-2">
+                                        <span class="dify-tag bg-blue-100 text-blue-700">优先级: 高</span>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 border-l-4 border-yellow-500 bg-yellow-50">
+                                    <div class="font-medium text-yellow-800">超参数调优</div>
+                                    <div class="text-sm text-yellow-700 mt-1">使用贝叶斯优化调整模型参数，预计提升0.4%</div>
+                                    <div class="mt-2">
+                                        <span class="dify-tag bg-yellow-100 text-yellow-700">优先级: 中</span>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 border-l-4 border-purple-500 bg-purple-50">
+                                    <div class="font-medium text-purple-800">集成学习</div>
+                                    <div class="text-sm text-purple-700 mt-1">结合多个模型的预测结果，预计提升0.3%</div>
+                                    <div class="mt-2">
+                                        <span class="dify-tag bg-purple-100 text-purple-700">优先级: 中</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 优化执行计划 -->
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-800 mb-4">优化执行计划</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                                <div class="font-medium text-blue-800 mb-2">第1阶段 (1-2周)</div>
+                                <div class="text-sm text-blue-700 mb-3">数据质量优化和特征工程改进</div>
+                                <div class="text-xs text-blue-600">预期提升: +1.4%</div>
+                            </div>
+
+                            <div class="p-4 border border-green-200 bg-green-50 rounded-lg">
+                                <div class="font-medium text-green-800 mb-2">第2阶段 (2-3周)</div>
+                                <div class="text-sm text-green-700 mb-3">超参数调优和模型选择</div>
+                                <div class="text-xs text-green-600">预期提升: +0.4%</div>
+                            </div>
+
+                            <div class="p-4 border border-purple-200 bg-purple-50 rounded-lg">
+                                <div class="font-medium text-purple-800 mb-2">

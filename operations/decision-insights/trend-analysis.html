@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>决策洞察趋势分析 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--dify-text-primary);
+            background-color: #FAFBFC;
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .trend-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .trend-card.positive {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .trend-card.negative {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .trend-card.neutral {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .chart-container {
+            height: 300px;
+            background: #f8fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            position: relative;
+            border: 1px solid #e2e8f0;
+        }
+
+        .chart-container.large {
+            height: 400px;
+        }
+
+        .chart-mock {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0369a1;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-mock::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230369a1' fill-opacity='0.1'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='17' cy='7' r='1'/%3E%3Ccircle cx='27' cy='7' r='1'/%3E%3Ccircle cx='37' cy='7' r='1'/%3E%3Ccircle cx='47' cy='7' r='1'/%3E%3Ccircle cx='7' cy='17' r='1'/%3E%3Ccircle cx='17' cy='17' r='1'/%3E%3Ccircle cx='27' cy='17' r='1'/%3E%3Ccircle cx='37' cy='17' r='1'/%3E%3Ccircle cx='47' cy='17' r='1'/%3E%3Ccircle cx='7' cy='27' r='1'/%3E%3Ccircle cx='17' cy='27' r='1'/%3E%3Ccircle cx='27' cy='27' r='1'/%3E%3Ccircle cx='37' cy='27' r='1'/%3E%3Ccircle cx='47' cy='27' r='1'/%3E%3Ccircle cx='7' cy='37' r='1'/%3E%3Ccircle cx='17' cy='37' r='1'/%3E%3Ccircle cx='27' cy='37' r='1'/%3E%3Ccircle cx='37' cy='37' r='1'/%3E%3Ccircle cx='47' cy='37' r='1'/%3E%3Ccircle cx='7' cy='47' r='1'/%3E%3Ccircle cx='17' cy='47' r='1'/%3E%3Ccircle cx='27' cy='47' r='1'/%3E%3Ccircle cx='37' cy='47' r='1'/%3E%3Ccircle cx='47' cy='47' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+        }
+
+        .metric-change {
+            display: inline-flex;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 2px 6px;
+            border-radius: 12px;
+        }
+
+        .metric-change.up {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .metric-change.down {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .metric-change.flat {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .insight-item {
+            border-left: 4px solid var(--dify-primary);
+            background: var(--dify-active);
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 12px;
+        }
+
+        .insight-item.warning {
+            border-left-color: #f59e0b;
+            background: #fef3c7;
+        }
+
+        .insight-item.success {
+            border-left-color: #10b981;
+            background: #dcfce7;
+        }
+
+        .insight-item.info {
+            border-left-color: #3b82f6;
+            background: #dbeafe;
+        }
+
+        .tab-container {
+            border-bottom: 1px solid var(--dify-border);
+        }
+
+        .tab-item {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+            color: var(--dify-text-secondary);
+        }
+
+        .tab-item:hover {
+            color: var(--dify-primary);
+            background: var(--dify-hover);
+        }
+
+        .tab-item.active {
+            color: var(--dify-primary);
+            border-bottom-color: var(--dify-primary);
+            background: var(--dify-active);
+        }
+
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid var(--dify-border);
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 4px;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--dify-primary);
+            background: var(--dify-hover);
+        }
+
+        .filter-chip.active {
+            background: var(--dify-primary);
+            color: white;
+            border-color: var(--dify-primary);
+        }
+
+        .progress-ring {
+            width: 120px;
+            height: 120px;
+            position: relative;
+        }
+
+        .progress-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+        }
+
+        .progress-ring .bg {
+            stroke: #e5e7eb;
+        }
+
+        .progress-ring .progress {
+            stroke: var(--dify-primary);
+            stroke-dasharray: 283;
+            stroke-dashoffset: 113;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .progress-ring .center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 3% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 95%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--dify-border);
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="p-6">
+        <!-- 页面标题和控制区 -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">决策洞察趋势分析</h1>
+                    <p class="text-gray-600 mt-1">基于AI智能体运营数据的深度分析与预测洞察</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <select class="text-sm border border-gray-300 rounded px-3 py-2" id="analysisScope">
+                        <option value="all">全部产品</option>
+                        <option value="aiaas">赞同智能体即服务</option>
+                        <option value="acr">赞同智能代码守护</option>
+                        <option value="lui">LUI大语言模型</option>
+                        <option value="anti-fraud">AI反诈引擎</option>
+                    </select>
+                    <select class="text-sm border border-gray-300 rounded px-3 py-2" id="timeRange">
+                        <option value="7d">近7天</option>
+                        <option value="30d" selected>近30天</option>
+                        <option value="90d">近3个月</option>
+                        <option value="1y">近1年</option>
+                    </select>
+                    <button class="dify-btn px-4 py-2 border text-gray-700 text-sm" onclick="exportAnalysis()">导出分析</button>
+                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm" onclick="refreshAnalysis()">刷新数据</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 核心趋势指标 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="dify-card trend-card positive p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-white text-opacity-80 text-sm">用户增长率</div>
+                        <div class="text-3xl font-bold mt-2" id="user-growth">+23.5%</div>
+                        <div class="metric-change up mt-2">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"></path>
+                            </svg>
+                            较上月 +5.2%
+                        </div>
+                    </div>
+                    <div class="text-white text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card trend-card positive p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-white text-opacity-80 text-sm">活跃度指数</div>
+                        <div class="text-3xl font-bold mt-2" id="activity-index">87.2</div>
+                        <div class="metric-change up mt-2">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"></path>
+                            </svg>
+                            较上月 +12.3
+                        </div>
+                    </div>
+                    <div class="text-white text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card trend-card negative p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-white text-opacity-80 text-sm">平均响应时间</div>
+                        <div class="text-3xl font-bold mt-2" id="response-time">234ms</div>
+                        <div class="metric-change down mt-2">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z"></path>
+                            </svg>
+                            较上月 +18ms
+                        </div>
+                    </div>
+                    <div class="text-white text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card trend-card neutral p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-white text-opacity-80 text-sm">收入增长</div>
+                        <div class="text-3xl font-bold mt-2" id="revenue-growth">¥245万</div>
+                        <div class="metric-change up mt-2">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"></path>
+                            </svg>
+                            较上月 +15.8%
+                        </div>
+                    </div>
+                    <div class="text-white text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 多维度分析标签页 -->
+        <div class="dify-card mb-8">
+            <div class="tab-container">
+                <div class="flex">
+                    <div class="tab-item active" data-tab="usage">使用趋势分析</div>
+                    <div class="tab-item" data-tab="performance">性能趋势分析</div>
+                    <div class="tab-item" data-tab="business">业务价值分析</div>
+                    <div class="tab-item" data-tab="prediction">预测洞察</div>
+                </div>
+            </div>
+
+            <!-- 使用趋势分析 -->
+            <div class="tab-content active" id="usage-tab">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- 主要趋势图表 -->
+                        <div class="lg:col-span-2">
+                            <div class="mb-4">
+                                <h3 class="text-lg font-medium text-gray-800 mb-2">用户使用趋势</h3>
+                                <div class="flex flex-wrap gap-2">
+                                    <div class="filter-chip active" data-metric="daily-users">日活用户</div>
+                                    <div class="filter-chip" data-metric="sessions">会话数量</div>
+                                    <div class="filter-chip" data-metric="requests">API请求</div>
+                                    <div class="filter-chip" data-metric="tokens">Token消耗</div>
+                                </div>
+                            </div>
+                            <div class="chart-container large">
+                                <div class="chart-mock">
+                                    <div class="text-center z-10">
+                                        <svg class="w-16 h-16 mx-auto mb-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 12l3-3 3 3 4-4"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21H3V3"></path>
+                                        </svg>
+                                        <div class="text-lg font-medium">用户使用趋势图表</div>
+                                        <div class="text-sm opacity-75">30天数据变化曲线</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 关键指标 -->
+                        <div class="space-y-4">
+                            <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                <div class="text-blue-800 font-medium mb-2">峰值使用时段</div>
+                                <div class="text-2xl font-bold text-blue-600">14:00-16:00</div>
+                                <div class="text-sm text-blue-600 mt-1">平均并发: 1,247 用户</div>
+                            </div>
+
+                            <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                                <div class="text-green-800 font-medium mb-2">增长最快功能</div>
+                                <div class="text-2xl font-bold text-green-600">代码生成</div>
+                                <div class="text-sm text-green-600 mt-1">使用量增长: +45%</div>
+                            </div>
+
+                            <div class="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                                <div class="text-purple-800 font-medium mb-2">用户留存率</div>
+                                <div class="progress-ring">
+                                    <svg>
+                                        <circle class="bg" cx="60" cy="60" r="45"></circle>
+                                        <circle class="progress" cx="60" cy="60" r="45"></circle>
+                                    </svg>
+                                    <div class="center">
+                                        <div class="text-2xl font-bold text-purple-600">78%</div>
+                                        <div class="text-xs text-purple-500">7日留存</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                                <div class="text-orange-800 font-medium mb-2">平均会话时长</div>
+                                <div class="text-2xl font-bold text-orange-600">12.5分钟</div>
+                                <div class="text-sm text-orange-600 mt-1">较上月 +2.3分钟</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 详细数据表格 -->
+                    <div class="mt-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-lg font-medium text-gray-800">产品使用详情</h4>
+                            <button class="text-sm text-blue-600 hover:text-blue-800" onclick="viewDetailedData('usage')">查看完整数据</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="text-left p-3 font-medium text-gray-700">产品名称</th>
+                                        <th class="text-left p-3 font-medium text-gray-700">日活用户</th>
+                                        <th class="text-left p-3 font-medium text-gray-700">使用频次</th>
+                                        <th class="text-left p-3 font-medium text-gray-700">增长率</th>
+                                        <th class="text-left p-3 font-medium text-gray-700">趋势</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="p-3">赞同智能体即服务(AAaaS)</td>
+                                        <td class="p-3 font-medium">2,847</td>
+                                        <td class="p-3">15.2次/用户</td>
+                                        <td class="p-3"><span class="metric-change up">+23.5%</span></td>
+                                        <td class="p-3">
+                                            <div class="w-20 h-6 bg-green-100 rounded flex items-center justify-center">
+                                                <div class="text-xs text-green-600">📈 上升</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3">赞同智能代码守护(ACR)</td>
+                                        <td class="p-3 font-medium">1,523</td>
+                                        <td class="p-3">8.7次/用户</td>
+                                        <td class="p-3"><span class="metric-change up">+18.2%</span></td>
+                                        <td class="p-3">
+                                            <div class="w-20 h-6 bg-green-100 rounded flex items-center justify-center">
+                                                <div class="text-xs text-green-600">📈 上升</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3">LUI大语言模型用户界面</td>
+                                        <td class="p-3 font-medium">3,156</td>
+                                        <td class="p-3">22.1次/用户</td>
+                                        <td class="p-3"><span class="metric-change up">+31.7%</span></td>
+                                        <td class="p-3">
+                                            <div class="w-20 h-6 bg-green-100 rounded flex items-center justify-center">
+                                                <div class="text-xs text-green-600">📈 强劲</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3">AI反诈引擎</td>
+                                        <td class="p-3 font-medium">856</td>
+                                        <td class="p-3">5.3次/用户</td>
+                                        <td class="p-3"><span class="metric-change flat">+2.1%</span></td>
+                                        <td class="p-3">
+                                            <div class="w-20 h-6 bg-gray-100 rounded flex items-center justify-center">
+                                                <div class="text-xs text-gray-600">📊 平稳</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 性能趋势分析 -->
+            <div class="tab-content" id="performance-tab">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">响应时间趋势</h3>
+                            <div class="chart-container">
+                                <div class="chart-mock">
+                                    <div class="text-center z-10">
+                                        <svg class="w-12 h-12 mx-auto mb-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>响应时间变化曲线</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <div class="text-lg font-bold text-blue-600">234ms</div>
+                                    <div class="text-xs text-gray-500">平均响应</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-bold text-green-600">156ms</div>
+                                    <div class="text-xs text-gray-500">最快响应</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-bold text-orange-600">512ms</div>
+                                    <div class="text-xs text-gray-500">最慢响应</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">系统负载分析</h3>
+                            <div class="chart-container">
+                                <div class="chart-mock">
+                                    <div class="text-center z-10">
+                                        <svg class="w-12 h-12 mx-auto mb-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                        </svg>
+                                        <div>CPU/内存使用率</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 space-y-3">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>CPU使用率</span>
+                                        <span class="font-medium">68%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 68%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>内存使用率</span>
+                                        <span class="font-medium">72%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 72%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>网络带宽</span>
+                                        <span class="font-medium">45%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-purple-500 h-2 rounded-full" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 性能优化建议 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-800 mb-4">性能瓶颈识别</h4>
+                            <div class="space-y-3">
+                                <div class="insight-item warning">
+                                    <div class="font-medium text-yellow-800">数据库查询优化</div>
+                                    <div class="text-sm text-yellow-700 mt-1">检测到部分慢查询，平均耗时350ms，建议优化索引</div>
+                                </div>
+                                <div class="insight-item info">
+                                    <div class="font-medium text-blue-800">缓存命中率</div>
+                                    <div class="text-sm text-blue-700 mt-1">Redis缓存命中率82%，可进一步优化缓存策略</div>
+                                </div>
+                                <div class="insight-item success">
+                                    <div class="font-medium text-green-800">CDN加速效果</div>
+                                    <div class="text-sm text-green-700 mt-1">静态资源加载速度提升65%，效果显著</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-800 mb-4">容量规划建议</h4>
+                            <div class="space-y-4">
+                                <div class="p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium text-gray-800">服务器扩容</span>
+                                        <span class="dify-tag bg-orange-50 text-orange-600">建议</span>
+                                    </div>
+                                    <div class="text-sm text-gray-600">预计3个月内需增加2台应用服务器</div>
+                                </div>
+                                
+                                <div class="p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium text-gray-800">数据库优化</span>
+                                        <span class="dify-tag bg-red-50 text-red-600">紧急</span>
+                                    </div>
+                                    <div class="text-sm text-gray-600">建议升级数据库实例，当前I/O瓶颈明显</div>
+                                </div>
+                                
+                                <div class="p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium text-gray-800">存储扩容</span>
+                                        <span class="dify-tag bg-blue-50 text-blue-600">计划中</span>
+                                    </div>
+                                    <div class="text-sm text-gray-600">日志存储空间预计6个月内达到80%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 业务价值分析 -->
+            <div class="tab-content" id="business-tab">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <!-- ROI分析 -->
+                        <div class="lg:col-span-2">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">投资回报率(ROI)分析</h3>
+                            <div class="chart-container large">
+                                <div class="chart-mock">
+                                    <div class="text-center z-10">
+                                        <svg class="w-16 h-16 mx-auto mb-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                        </svg>
+                                        <div class="text-lg font-medium">ROI趋势与成本效益分析</div>
+                                        <div class="text-sm opacity-75">投入产出比变化曲线</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-4 gap-4 text-center">
+                                <div>
+                                    <div class="text-xl font-bold text-green-600">325%</div>
+                                    <div class="text-xs text-gray-500">总体ROI</div>
+                                </div>
+                                <div>
+                                    <div class="text-xl font-bold text-blue-600">¥245万</div>
+                                    <div class="text-xs text-gray-500">月收入</div>
+                                </div>
+                                <div>
+                                    <div class="text-xl font-bold text-purple-600">¥78万</div>
+                                    <div class="text-xs text-gray-500">月成本</div>
+                                </div>
+                                <div>
+                                    <div class="text-xl font-bold text-orange-600">¥167万</div>
+                                    <div class="text-xs text-gray-500">净利润</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 关键业务指标 -->
+                        <div class="space-y-4">
+                            <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <div class="text-green-800 font-medium mb-2">客户满意度</div>
+                                <div class="text-3xl font-bold text-green-600">92.5%</div>
+                                <div class="text-sm text-green-600 mt-1">较上月 +3.2%</div>
+                            </div>
+
+                            <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div class="text-blue-800 font-medium mb-2">客户生命周期价值</div>
+                                <div class="text-3xl font-bold text-blue-600">¥15.2万</div>
+                                <div class="text-sm text-blue-600 mt-1">平均LTV</div>
+                            </div>
+
+                            <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                                <div class="text-purple-800 font-medium mb-2">获客成本</div>
+                                <div class="text-3xl font-bold text-purple-600">¥2,350</div>
+                                <div class="text-sm text-purple-600 mt-1">单个客户CAC</div>
+                            </div>
+
+                            <div class="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                                <div class="text-orange-800 font-medium mb-2">月度增长率</div>
+                                <div class="text-3xl font-bold text-orange-600">28.7%</div>
+                                <div class="text-sm text-orange-600 mt-1">MRR增长</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 价值创造分析 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-800 mb-4">价值创造来源</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-4 border rounded-lg">
+                                    <div>
+                                        <div class="font-medium text-gray-800">效率提升</div>
+                                        <div class="text-sm text-gray-600">自动化流程减少人工成本</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-lg font-bold text-green-600">¥98万</div>
+                                        <div class="text-sm text-gray-500">年度节省</div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between p-4 border rounded-lg">
+                                    <div>
+                                        <div class="font-medium text-gray-800">质量改善</div>
+                                        <div class="text-sm text-gray-600">减少错误和重做成本</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-lg font-bold text-blue-600">¥67万</div>
+                                        <div class="text-sm text-gray-500">避免损失</div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between p-4 border rounded-lg">
+                                    <div>
+                                        <div class="font-medium text-gray-800">创新收入</div>
+                                        <div class="text-sm text-gray-600">新产品和服务收入</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-lg font-bold text-purple-600">¥156万</div>
+                                        <div class="text-sm text-gray-500">新增收入</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-800 mb-4">业务影响评估</h4>
+                            <div class="space-y-4">
+                                <div class="insight-item success">
+                                    <div class="font-medium text-green-800">流程自动化成效</div>
+                                    <div class="text-sm text-green-700 mt-1">重复性任务自动化率达到85%，员工工作效率提升40%</div>
+                                </div>
+
+                                <div class="insight-item info">
+                                    <div class="font-medium text-blue-800">决策支持优化</div>
+                                    <div class="text-sm text-blue-700 mt-1">AI辅助决策准确率提升至93%，决策时间缩短60%</div>
+                                </div>
+
+                                <div class="insight-item warning">
+                                    <div class="font-medium text-yellow-800">客户体验提升</div>
+                                    <div class="text-sm text-yellow-700 mt-1">客户问题解决时间平均缩短45%，满意度持续上升</div>
+                                </div>
+
+                                <div class="p-4 bg-gray-50 border rounded-lg">
+                                    <div class="font-medium text-gray-800 mb-2">总体业务影响</div>
+                                    <div class="grid grid-cols-2 gap-4 text-center">
+                                        <div>
+                                            <div class="text-lg font-bold text-green-600">+38%</div>
+                                            <div class="text-xs text-gray-500">营收增长</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-bold text-blue-600">-22%</div>
+                                            <div class="text-xs text-gray-500">运营成本</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预测洞察 -->
+            <div class="tab-content" id="prediction-tab">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <!-- 增长预测 -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">增长趋势预测</h3>
+                            <div class="chart-container">
+                                <div class="chart-mock">
+                                    <div class="text-center z-10">
+                                        <svg class="w-12 h-12 mx-auto mb-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                        </svg>
+                                        <div>未来6个月增长预测</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <div class="text-lg font-bold text-green-600">+45%</div>
+                                    <div class="text-xs text-gray-500">用户增长</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-bold text-blue-600">+38%</div>
+                                    <div class="text-xs text-gray-500">收入增长</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-bold text-purple-600">+52%</div>
+                                    <div class="text-xs text-gray-500">使用量增长</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 风险预警 -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">风险预警分析</h3>
+                            <div class="space-y-3">
+                                <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                                    <div class="flex items-start">
+                                        <svg class="w-5 h-5 text-red-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.866-.833-2.598 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                        </svg>
+                                        <div>
+                                            <div class="font-medium text-red-800">容量瓶颈风险</div>
+                                            <div class="text-sm text-red-700 mt-1">预计3个月内服务器负载将达到临界值</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <div class="flex items-start">
+                                        <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.866-.833-2.598 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                        </svg>
+                                        <div>
+                                            <div class="font-medium text-yellow-800">成本上升趋势</div>
+                                            <div class="text-sm text-yellow-700 mt-1">AI计算成本预计季度增长15%</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-start">
+                                        <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>
+                                            <div class="font-medium text-blue-800">技术升级需求</div>
+                                            <div class="text-sm text-blue-700 mt-1">建议6个月内升级AI模型以保持竞争力</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 智能洞察和建议 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- 机会识别 -->
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-800 mb-4">机会识别</h4>
+                            <div class="space-y-3">
+                                <div class="insight-item success">
+                                    <div class="font-medium text-green-800">新市场机会</div>
+                                    <div class="text-sm text-green-700 mt-1">教育行业对AI代码审查需求增长200%</div>
+                                </div>
+
+                                <div class="insight-item info">
+                                    <div class="font-medium text-blue-800">产品优化机会</div>
+                                    <div class="text-sm text-blue-700 mt-1">多语言支持将带来30%用户增长</div>
+                                </div>
+
+                                <div class="insight-item warning">
+                                    <div class="font-medium text-yellow-800">合作机会</div>
+                                    <div class="text-sm text-yellow-700 mt-1">建议与云服务商深度合作降低成本</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 战略建议 -->
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-800 mb-4">战略建议</h4>
+                            <div class="space-y-4">
+                                <div class="p-4 border border-green-200 bg-green-50 rounded-lg">
+                                    <div class="font-medium text-green-800 mb-2">短期建议 (1-3个月)</div>
+                                    <ul class="text-sm text-green-700 space-y-1">
+                                        <li>• 扩容服务器资源</li>
+                                        <li>• 优化核心算法性能</li>
+                                        <li>• 加强客户成功团队</li>
+                                    </ul>
+                                </div>
+
+                                <div class="p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                                    <div class="font-medium text-blue-800 mb-2">中期建议 (3-6个月)</div>
+                                    <ul class="text-sm text-blue-700 space-y-1">
+                                        <li>• 开拓新行业市场</li>
+                                        <li>• 研发新产品功能</li>
+                                        <li>• 建立合作伙伴生态</li>
+                                    </ul>
+                                </div>
+
+                                <div class="p-4 border border-purple-200 bg-purple-50 rounded-lg">
+                                    <div class="font-medium text-purple-800 mb-2">长期建议 (6-12个月)</div>
+                                    <ul class="text-sm text-purple-700 space-y-1">
+                                        <li>• 国际市场拓展</li>
+                                        <li>• 技术平台升级</li>
+                                        <li>• 生态系统建设</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 关键指标预测 -->
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-800 mb-4">关键指标预测</h4>
+                            <div class="space-y-4">
+                                <div class="p-4 border rounded-lg">
+                                    <div class="text-sm text-gray-600 mb-1">用户规模</div>
+                                    <div class="flex items-end space-x-2">
+                                        <span class="text-xl font-bold text-gray-800">12,500</span>
+                                        <span class="text-sm text-green-600">↗ +45%</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">预测6个月后</div>
+                                </div>
+
+                                <div class="p-4 border rounded-lg">
+                                    <div class="text-sm text-gray-600 mb-1">月收入</div>
+                                    <div class="flex items-end space-x-2">
+                                        <span class="text-xl font-bold text-gray-800">¥385万</span>
+                                        <span class="text-sm text-green-600">↗ +38%</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">预测6个月后</div>
+                                </div>
+
+                                <div class="p-4 border rounded-lg">
+                                    <div class="text-sm text-gray-600 mb-1">市场份额</div>
+                                    <div class="flex items-end space-x-2">
+                                        <span class="text-xl font-bold text-gray-800">15.2%</span>
+                                        <span class="text-sm text-green-600">↗ +4.8%</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">预测行业排名</div>
+                                </div>
+
+                                <div class="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+                                    <div class="text-sm font-medium text-blue-800 mb-1">置信度</div>
+                                    <div class="flex items-center">
+                                        <div class="flex-1 bg-blue-200 rounded-full h-2 mr-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: 87%"></div>
+                                        </div>
+                                        <span class="text-sm font-bold text-blue-600">87%</span>
+                                    </div>
+                                    <div class="text-xs text-blue-600 mt-1">基于历史数据和市场分析</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 智能洞察摘要 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 核心洞察 -->
+            <div class="dify-card">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-lg font-medium text-gray-800">核心洞察摘要</h3>
+                    <p class="text-sm text-gray-600 mt-1">基于AI分析生成的关键发现</p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="insight-item success">
+                            <div class="font-medium text-green-800">用户增长强劲</div>
+                            <div class="text-sm text-green-700 mt-1">月活用户增长23.5%，超出预期8.3%，主要来源于代码生成功能的病毒式传播</div>
+                        </div>
+
+                        <div class="insight-item info">
+                            <div class="font-medium text-blue-800">产品价值凸显</div>
+                            <div class="text-sm text-blue-700 mt-1">用户平均会话时长增加2.3分钟，表明产品粘性和价值认知不断提升</div>
+                        </div>
+
+                        <div class="insight-item warning">
+                            <div class="font-medium text-yellow-800">性能压力显现</div>
+                            <div class="text-sm text-yellow-700 mt-1">平均响应时间增加18ms，需要关注系统扩容和性能优化</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 行动建议 -->
+            <div class="dify-card">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-lg font-medium text-gray-800">行动建议</h3>
+                    <p class="text-sm text-gray-600 mt-1">基于趋势分析的可执行建议</p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="p-4 border-l-4 border-red-500 bg-red-50">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full">1</span>
+                                </div>
+                                <div class="ml-3">
+                                    <div class="font-medium text-red-800">紧急扩容</div>
+                                    <div class="text-sm text-red-700 mt-1">立即增加2台应用服务器，预计可缓解30%性能压力</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 border-l-4 border-yellow-500 bg-yellow-50">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 bg-yellow-500 text-white text-xs font-bold rounded-full">2</span>
+                                </div>
+                                <div class="ml-3">
+                                    <div class="font-medium text-yellow-800">功能优化</div>
+                                    <div class="text-sm text-yellow-700 mt-1">优化代码生成算法，目标提升20%响应速度</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 border-l-4 border-blue-500 bg-blue-50">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 bg-blue-500 text-white text-xs font-bold rounded-full">3</span>
+                                </div>
+                                <div class="ml-3">
+                                    <div class="font-medium text-blue-800">市场拓展</div>
+                                    <div class="text-sm text-blue-700 mt-1">重点开拓教育和金融行业，预期带来40%新增用户</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 border-l-4 border-green-500 bg-green-50">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 bg-green-500 text-white text-xs font-bold rounded-full">4</span>
+                                </div>
+                                <div class="ml-3">
+                                    <div class="font-medium text-green-800">产品迭代</div>
+                                    <div class="text-sm text-green-700 mt-1">基于用户反馈开发多语言支持功能</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详细数据模态框 -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title" class="text-lg font-medium text-gray-800">详细数据</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentTab = 'usage';
+        let currentTimeRange = '30d';
+        let currentScope = 'all';
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEventListeners();
+            updateAnalysisData();
+        });
+
+        // 初始化事件监听
+        function initializeEventListeners() {
+            // 标签页切换
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+
+            // 筛选器变更
+            document.getElementById('timeRange').addEventListener('change', function() {
+                currentTimeRange = this.value;
+                updateAnalysisData();
+            });
+
+            document.getElementById('analysisScope').addEventListener('change', function() {
+                currentScope = this.value;
+                updateAnalysisData();
+            });
+
+            // 指标筛选
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    const metric = this.getAttribute('data-metric');
+                    selectMetric(metric);
+                });
+            });
+        }
+
+        // 切换标签页
+        function switchTab(tabId) {
+            // 更新标签页状态
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+
+            // 切换内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+                content.style.display = 'none';
+            });
+            const targetContent = document.getElementById(`${tabId}-tab`);
+            targetContent.classList.add('active');
+            targetContent.style.display = 'block';
+
+            currentTab = tabId;
+            showNotification(`已切换到${getTabName(tabId)}`, 'info');
+        }
+
+        // 获取标签页名称
+        function getTabName(tabId) {
+            const names = {
+                'usage': '使用趋势分析',
+                'performance': '性能趋势分析',
+                'business': '业务价值分析',
+                'prediction': '预测洞察'
+            };
+            return names[tabId] || '';
+        }
+
+        // 选择指标
+        function selectMetric(metric) {
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            document.querySelector(`[data-metric="${metric}"]`).classList.add('active');
+            
+            showNotification(`已切换到${getMetricName(metric)}视图`, 'info');
+        }
+
+        // 获取指标名称
+        function getMetricName(metric) {
+            const names = {
+                'daily-users': '日活用户',
+                'sessions': '会话数量',
+                'requests': 'API请求',
+                'tokens': 'Token消耗'
+            };
+            return names[metric] || '';
+        }
+
+        // 更新分析数据
+        function updateAnalysisData() {
+            showNotification('正在更新分析数据...', 'info');
+            
+            // 模拟数据更新
+            setTimeout(() => {
+                // 更新核心指标
+                updateCoreMetrics();
+                showNotification('数据更新完成', 'success');
+            }, 1500);
+        }
+
+        // 更新核心指标
+        function updateCoreMetrics() {
+            const metrics = {
+                'user-growth': generateRandomChange(15, 35, '%'),
+                'activity-index': generateRandomValue(75, 95, 1),
+                'response-time': generateRandomValue(180, 280, 0) + 'ms',
+                'revenue-growth': '¥' + generateRandomValue(200, 300, 0) + '万'
+            };
+
+            Object.keys(metrics).forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = metrics[id];
+                }
+            });
+        }
+
+        // 生成随机数值
+        function generateRandomValue(min, max, decimals = 0) {
+            const value = Math.random() * (max - min) + min;
+            return decimals > 0 ? value.toFixed(decimals) : Math.floor(value);
+        }
+
+        // 生成随机变化
+        function generateRandomChange(min, max, suffix = '') {
+            const value = generateRandomValue(min, max, 1);
+            return `+${value}${suffix}`;
+        }
+
+        // 通知函数
+        function showNotification(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-100 border-green-400 text-green-700',
+                warning: 'bg-yellow-100 border-yellow-400 text-yellow-700',
+                error: 'bg-red-100 border-red-400 text-red-700',
+                info: 'bg-blue-100 border-blue-400 text-blue-700'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 ${colors[type]} px-4 py-3 rounded border z-50 shadow-lg`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // 导出分析
+        function exportAnalysis() {
+            showNotification('正在生成趋势分析报告...', 'info');
+            setTimeout(() => {
+                showNotification('分析报告已导出到下载目录', 'success');
+            }, 2000);
+        }
+
+        // 刷新分析
+        function refreshAnalysis() {
+            updateAnalysisData();
+        }
+
+        // 查看详细数据
+        function viewDetailedData(type) {
+            const contents = {
+                'usage': `
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="chart-mock" style="height: 200px;">
+                                <div>详细使用量趋势图</div>
+                            </div>
+                            <div class="chart-mock" style="height: 200px;">
+                                <div>功能使用分布图</div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm border-collapse border border-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="border border-gray-200 p-3 text-left">日期</th>
+                                        <th class="border border-gray-200 p-3 text-left">日活用户</th>
+                                        <th class="border border-gray-200 p-3 text-left">会话数</th>
+                                        <th class="border border-gray-200 p-3 text-left">API调用</th>
+                                        <th class="border border-gray-200 p-3 text-left">增长率</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td class="border border-gray-200 p-3">2025-06-01</td><td class="border border-gray-200 p-3">3,247</td><td class="border border-gray-200 p-3">12,850</td><td class="border border-gray-200 p-3">45,230</td><td class="border border-gray-200 p-3 text-green-600">+5.2%</td></tr>
+                                    <tr><td class="border border-gray-200 p-3">2025-05-31</td><td class="border border-gray-200 p-3">3,087</td><td class="border border-gray-200 p-3">12,104</td><td class="border border-gray-200 p-3">42,851</td><td class="border border-gray-200 p-3 text-green-600">+3.8%</td></tr>
+                                    <tr><td class="border border-gray-200 p-3">2025-05-30</td><td class="border border-gray-200 p-3">2,973</td><td class="border border-gray-200 p-3">11,692</td><td class="border border-gray-200 p-3">41,205</td><td class="border border-gray-200 p-3 text-green-600">+4.1%</td></tr>
+                                    <tr><td class="border border-gray-200 p-3">2025-05-29</td><td class="border border-gray-200 p-3">2,856</td><td class="border border-gray-200 p-3">11,244</td><td class="border border-gray-200 p-3">39,587</td><td class="border border-gray-200 p-3 text-green-600">+2.9%</td></tr>
+                                    <tr><td class="border border-gray-200 p-3">2025-05-28</td><td class="border border-gray-200 p-3">2,775</td><td class="border border-gray-200 p-3">10,900</td><td class="border border-gray-200 p-3">38,462</td><td class="border border-gray-200 p-3 text-green-600">+6.3%</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="p-4 bg-blue-50 rounded-lg">
+                            <h4 class="font-medium text-blue-800 mb-2">数据洞察</h4>
+                            <ul class="text-sm text-blue-700 space-y-1">
+                                <li>• 工作日使用量明显高于周末，平均高出35%</li>
+                                <li>• 代码生成功能占总使用量的42%，是最受欢迎的功能</li>
+                                <li>• 新用户7日留存率达到78%，高于行业平均水平</li>
+                                <li>• API调用峰值出现在每日14:00-16:00时段</li>
+                            </ul>
+                        </div>
+                    </div>
+                `
+            };
+
+            showModal('使用趋势详细数据', contents[type] || '<p>暂无详细数据</p>');
+        }
+
+        // 显示模态框
+        function showModal(title, content) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').innerHTML = content;
+            document.getElementById('details-modal').style.display = 'block';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('details-modal').style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('details-modal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // 初始化显示第一个标签页
+        document.addEventListener('DOMContentLoaded', function() {
+            // 隐藏所有非激活的标签页内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                if (!content.classList.contains('active')) {
+                    content.style.display = 'none';
+                }
+            });
+        });
+
+        // 模拟实时数据更新
+        setInterval(() => {
+            if (Math.random() > 0.7) { // 30% 概率更新
+                updateCoreMetrics();
+            }
+        }, 30000); // 每30秒检查一次
+    </script>
+</body>
+</html>

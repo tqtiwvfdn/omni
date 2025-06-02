@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI反诈引擎监控运营 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --dify-sidebar-bg: #F9FAFB;
+            --dify-border: #E5E7EB;
+            --dify-hover: #F3F4F6;
+            --dify-active: #EBF2FF;
+            --dify-text-primary: #1F2937;
+            --dify-text-secondary: #6B7280;
+            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--dify-text-primary);
+        }
+
+        .dify-card {
+            border-radius: 12px;
+            border: 1px solid var(--dify-border);
+            box-shadow: var(--dify-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .dify-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .dify-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dify-tag {
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .metric-card.danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .metric-card.success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .metric-card.warning {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .chart-container {
+            height: 300px;
+            background: #f8fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            position: relative;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-high {
+            background-color: #EF4444;
+            animation: pulse 2s infinite;
+        }
+
+        .status-medium {
+            background-color: #F59E0B;
+            animation: pulse 2s infinite;
+        }
+
+        .status-low {
+            background-color: #10B981;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .timeline-item {
+            border-left: 2px solid var(--dify-border);
+            padding-left: 16px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -5px;
+            top: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--dify-primary);
+        }
+
+        .timeline-item.high::before {
+            background: #EF4444;
+        }
+
+        .timeline-item.medium::before {
+            background: #F59E0B;
+        }
+
+        .risk-level-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 auto;
+        }
+
+        .risk-low {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .risk-medium {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .risk-high {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--dify-border);
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .chart-mock {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(45deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0369a1;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="p-6">
+        <!-- 页面标题 -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">AI反诈引擎监控运营</h1>
+                    <p class="text-gray-600 mt-1">实时监控反诈引擎运行状态，分析防护效果和业务指标</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <select class="text-sm border border-gray-300 rounded px-3 py-2" id="timeRange">
+                        <option value="today">今日</option>
+                        <option value="week">近7天</option>
+                        <option value="month" selected>近30天</option>
+                        <option value="quarter">近3个月</option>
+                    </select>
+                    <button class="dify-btn px-4 py-2 border text-gray-700 text-sm" onclick="exportReport()">导出报告</button>
+                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm" onclick="refreshData()">刷新数据</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第一行：核心指标概览 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="dify-card metric-card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-white text-opacity-80 text-sm">今日检测次数</div>
+                        <div class="text-3xl font-bold mt-2" id="detection-count">1,247</div>
+                        <div class="text-white text-opacity-70 text-xs mt-1">↑ 12% 较昨日</div>
+                    </div>
+                    <div class="text-white text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card metric-card danger p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-white text-opacity-80 text-sm">风险拦截数量</div>
+                        <div class="text-3xl font-bold mt-2" id="risk-blocks">23</div>
+                        <div class="text-white text-opacity-70 text-xs mt-1">↑ 5 较昨日</div>
+                    </div>
+                    <div class="text-white text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card metric-card success p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-white text-opacity-80 text-sm">检测准确率</div>
+                        <div class="text-3xl font-bold mt-2" id="accuracy-rate">96.8%</div>
+                        <div class="text-white text-opacity-70 text-xs mt-1">→ 稳定</div>
+                    </div>
+                    <div class="text-white text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dify-card metric-card warning p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-white text-opacity-80 text-sm">避免损失金额</div>
+                        <div class="text-3xl font-bold mt-2" id="saved-amount">¥235万</div>
+                        <div class="text-white text-opacity-70 text-xs mt-1">↑ 18% 本月</div>
+                    </div>
+                    <div class="text-white text-opacity-60">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第二行：趋势分析和实时监控 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- 检测趋势分析 -->
+            <div class="dify-card bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800">检测趋势分析</h3>
+                            <p class="text-sm text-gray-600 mt-1">近30天的检测和拦截趋势</p>
+                        </div>
+                        <button class="text-sm text-blue-600 hover:text-blue-800" onclick="viewTrendDetails()">查看详情</button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="chart-mock mb-4">
+                        <div class="text-center">
+                            <svg class="w-16 h-16 mx-auto mb-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            <div>检测量和拦截率趋势图表</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-lg font-semibold text-green-600">+12%</div>
+                            <div class="text-xs text-gray-500">检测量增长</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-semibold text-red-600">+18%</div>
+                            <div class="text-xs text-gray-500">拦截率上升</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-semibold text-blue-600">-5%</div>
+                            <div class="text-xs text-gray-500">误报率下降</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 实时风险监控 -->
+            <div class="dify-card bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800">实时风险监控</h3>
+                            <p class="text-sm text-gray-600 mt-1">当前风险等级和系统状态</p>
+                        </div>
+                        <span class="dify-tag bg-green-50 text-green-600">系统正常</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="text-center mb-6">
+                        <div class="risk-level-circle risk-low mb-4" id="risk-level">
+                            低
+                        </div>
+                        <div class="text-lg font-medium text-gray-800">当前风险等级</div>
+                        <div class="text-sm text-gray-500">系统运行正常，无重大风险</div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <span class="status-indicator status-low"></span>
+                                <span class="text-sm text-gray-700">AI换脸检测</span>
+                            </div>
+                            <span class="text-sm font-medium text-green-600">正常</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <span class="status-indicator status-medium"></span>
+                                <span class="text-sm text-gray-700">语义分析</span>
+                            </div>
+                            <span class="text-sm font-medium text-yellow-600">告警</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <span class="status-indicator status-low"></span>
+                                <span class="text-sm text-gray-700">行为检测</span>
+                            </div>
+                            <span class="text-sm font-medium text-green-600">正常</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第三行：风险事件分析和防护效果 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- 风险事件实时流 -->
+            <div class="dify-card bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800">风险事件实时流</h3>
+                            <p class="text-sm text-gray-600 mt-1">最近检测到的风险事件</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <select class="text-sm border border-gray-300 rounded px-2 py-1" id="risk-filter">
+                                <option value="all">全部风险</option>
+                                <option value="high">高风险</option>
+                                <option value="medium">中风险</option>
+                                <option value="low">低风险</option>
+                            </select>
+                            <button class="text-sm text-blue-600 hover:text-blue-800" onclick="viewAllEvents()">查看全部</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4 max-h-80 overflow-y-auto" id="risk-events">
+                        <div class="timeline-item high">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-800">检测到AI换脸攻击</div>
+                                    <div class="text-sm text-gray-600">客户端IP: 192.168.1.105 | 风险评分: 95</div>
+                                    <div class="text-xs text-gray-500 mt-1">2025-06-01 14:23:15</div>
+                                </div>
+                                <span class="dify-tag bg-red-50 text-red-600">高风险</span>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item medium">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-800">可疑诈骗话术识别</div>
+                                    <div class="text-sm text-gray-600">会话ID: 7892341 | 风险评分: 72</div>
+                                    <div class="text-xs text-gray-500 mt-1">2025-06-01 14:18:42</div>
+                                </div>
+                                <span class="dify-tag bg-yellow-50 text-yellow-600">中风险</span>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-800">虚假场景背景检测</div>
+                                    <div class="text-sm text-gray-600">客户端IP: 10.0.2.156 | 风险评分: 45</div>
+                                    <div class="text-xs text-gray-500 mt-1">2025-06-01 14:15:28</div>
+                                </div>
+                                <span class="dify-tag bg-gray-50 text-gray-600">低风险</span>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item high">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-800">异常转账行为识别</div>
+                                    <div class="text-sm text-gray-600">用户ID: u_98765 | 风险评分: 88</div>
+                                    <div class="text-xs text-gray-500 mt-1">2025-06-01 14:12:03</div>
+                                </div>
+                                <span class="dify-tag bg-red-50 text-red-600">高风险</span>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item medium">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-800">威胁手势动作检测</div>
+                                    <div class="text-sm text-gray-600">会话ID: 7892156 | 风险评分: 68</div>
+                                    <div class="text-xs text-gray-500 mt-1">2025-06-01 14:08:17</div>
+                                </div>
+                                <span class="dify-tag bg-yellow-50 text-yellow-600">中风险</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 防护效果统计 -->
+            <div class="dify-card bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800">防护效果统计</h3>
+                            <p class="text-sm text-gray-600 mt-1">本月防护成效总结</p>
+                        </div>
+                        <button class="text-sm text-blue-600 hover:text-blue-800" onclick="viewProtectionDetails()">详细报告</button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="text-center mb-6">
+                        <div class="text-4xl font-bold text-red-600 mb-2">156</div>
+                        <div class="text-sm text-gray-600">本月拦截攻击</div>
+                        <div class="text-xs text-green-600 mt-1">↑ 23% 环比增长</div>
+                    </div>
+
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-gray-600">AI换脸攻击</span>
+                                <span class="font-medium">67 (43%)</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-red-500 h-2 rounded-full" style="width: 43%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-gray-600">诈骗话术</span>
+                                <span class="font-medium">45 (29%)</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 29%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-gray-600">虚假场景</span>
+                                <span class="font-medium">32 (21%)</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-500 h-2 rounded-full" style="width: 21%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-gray-600">威胁行为</span>
+                                <span class="font-medium">12 (7%)</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-purple-500 h-2 rounded-full" style="width: 7%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-100 text-center">
+                        <div class="text-sm text-gray-600 mb-1">预估避免损失</div>
+                        <div class="text-2xl font-bold text-green-600">¥ 2.35M</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第四行：业务影响分析和系统性能 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- 业务影响分析 -->
+            <div class="dify-card bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-lg font-medium text-gray-800">业务影响分析</h3>
+                    <p class="text-sm text-gray-600 mt-1">反诈引擎对业务指标的影响评估</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div class="text-center p-4 bg-green-50 rounded-lg">
+                            <div class="text-2xl font-bold text-green-600 mb-1">+5.2%</div>
+                            <div class="text-sm text-gray-600">用户信任度</div>
+                        </div>
+                        <div class="text-center p-4 bg-blue-50 rounded-lg">
+                            <div class="text-2xl font-bold text-blue-600 mb-1">-89%</div>
+                            <div class="text-sm text-gray-600">诈骗成功率</div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="text-sm text-gray-600">客户投诉率</span>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-green-600">-12%</span>
+                                <svg class="w-4 h-4 ml-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7-7m0 0l-7 7m7-7v18"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="text-sm text-gray-600">交易成功率</span>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-green-600">+3.1%</span>
+                                <svg class="w-4 h-4 ml-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="text-sm text-gray-600">用户活跃度</span>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-green-600">+8.7%</span>
+                                <svg class="w-4 h-4 ml-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="text-sm text-gray-600">处理时长</span>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-green-600">-45%</span>
+                                <svg class="w-4 h-4 ml-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7-7m0 0l-7 7m7-7v18"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统性能监控 -->
+            <div class="dify-card bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-lg font-medium text-gray-800">系统性能监控</h3>
+                    <p class="text-sm text-gray-600 mt-1">引擎运行性能和资源使用情况</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                            <div class="text-2xl font-semibold text-blue-600 mb-1">156ms</div>
+                            <div class="text-sm text-gray-600">平均响应时间</div>
+                            <div class="text-xs text-green-600 mt-1">↓ 8% 优化</div>
+                        </div>
+
+                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                            <div class="text-2xl font-semibold text-purple-600 mb-1">99.7%</div>
+                            <div class="text-sm text-gray-600">系统可用性</div>
+                            <div class="text-xs text-green-600 mt-1">→ 稳定</div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span>CPU使用率</span>
+                                <span class="font-medium">68%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-500 h-2 rounded-full" style="width: 68%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span>GPU使用率</span>
+                                <span class="font-medium">72%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 72%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span>内存使用率</span>
+                                <span class="font-medium">45%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 45%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span>存储使用率</span>
+                                <span class="font-medium">33%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-purple-500 h-2 rounded-full" style="width: 33%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <button class="w-full dify-btn px-4 py-2 border text-gray-700 text-sm" onclick="viewPerformanceDetails()">
+                            查看性能详情
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第五行：快速操作和报警设置 -->
+        <div class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 快速操作 -->
+            <div class="dify-card bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-lg font-medium text-gray-800">快速操作</h3>
+                    <p class="text-sm text-gray-600 mt-1">常用的运营操作</p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-3">
+                        <button class="w-full dify-btn px-4 py-3 bg-blue-600 text-white text-left" onclick="generateDailyReport()">
+                            生成日报告
+                        </button>
+                        <button class="w-full dify-btn px-4 py-3 border text-gray-700 text-left" onclick="adjustThreshold()">
+                            调整阈值
+                        </button>
+                        <button class="w-full dify-btn px-4 py-3 border text-gray-700 text-left" onclick="whitelistManagement()">
+                            白名单管理
+                        </button>
+                        <button class="w-full dify-btn px-4 py-3 border text-gray-700 text-left" onclick="emergencySettings()">
+                            应急设置
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 告警配置 -->
+            <div class="dify-card bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-lg font-medium text-gray-800">告警配置</h3>
+                    <p class="text-sm text-gray-600 mt-1">设置监控告警规则</p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="p-3 border border-gray-200 rounded">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium">高风险告警</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="text-xs text-gray-500">风险评分 > 80 时告警</div>
+                        </div>
+
+                        <div class="p-3 border border-gray-200 rounded">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium">性能告警</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="text-xs text-gray-500">响应时间 > 500ms 时告警</div>
+                        </div>
+
+                        <div class="p-3 border border-gray-200 rounded">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium">异常流量告警</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="text-xs text-gray-500">检测量异常增长时告警</div>
+                        </div>
+
+                        <button class="w-full dify-btn px-4 py-2 border text-gray-700 text-sm" onclick="configureAlerts()">
+                            详细配置
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 运营建议 -->
+            <div class="dify-card bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-lg font-medium text-gray-800">运营建议</h3>
+                    <p class="text-sm text-gray-600 mt-1">基于数据分析的优化建议</p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="p-3 bg-blue-50 border border-blue-200 rounded">
+                            <div class="flex items-start">
+                                <svg class="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <div class="text-sm font-medium text-blue-800">优化建议</div>
+                                    <div class="text-xs text-blue-600 mt-1">建议调整语义分析敏感度，可减少5%误报率</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-green-50 border border-green-200 rounded">
+                            <div class="flex items-start">
+                                <svg class="w-4 h-4 text-green-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <div class="text-sm font-medium text-green-800">良好表现</div>
+                                    <div class="text-xs text-green-600 mt-1">AI换脸检测模块表现优秀，准确率达98.2%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                            <div class="flex items-start">
+                                <svg class="w-4 h-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.866-.833-2.598 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                                <div>
+                                    <div class="text-sm font-medium text-yellow-800">注意事项</div>
+                                    <div class="text-xs text-yellow-600 mt-1">检测到新型诈骗话术增加，建议更新词库</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情查看模态框 -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title" class="text-lg font-medium text-gray-800">详细信息</h3>
+                <span class="close" onclick="closeDetailsModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEventListeners();
+            updateRealTimeData();
+            setInterval(updateRealTimeData, 30000); // 每30秒更新一次数据
+        });
+
+        // 初始化事件监听
+        function initializeEventListeners() {
+            // 时间范围变更
+            document.getElementById('timeRange').addEventListener('change', function() {
+                updateDataByTimeRange(this.value);
+            });
+
+            // 风险过滤
+            document.getElementById('risk-filter').addEventListener('change', function() {
+                filterRiskEvents(this.value);
+            });
+        }
+
+        // 通知函数
+        function showNotification(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-100 border-green-400 text-green-700',
+                warning: 'bg-yellow-100 border-yellow-400 text-yellow-700',
+                error: 'bg-red-100 border-red-400 text-red-700',
+                info: 'bg-blue-100 border-blue-400 text-blue-700'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 ${colors[type]} px-4 py-3 rounded border z-50 shadow-lg`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // 更新实时数据
+        function updateRealTimeData() {
+            // 模拟数据更新
+            const detectionCount = document.getElementById('detection-count');
+            const riskBlocks = document.getElementById('risk-blocks');
+            const accuracyRate = document.getElementById('accuracy-rate');
+            const savedAmount = document.getElementById('saved-amount');
+
+            // 模拟数据变化
+            detectionCount.textContent = Math.floor(Math.random() * 100) + 1200;
+            riskBlocks.textContent = Math.floor(Math.random() * 10) + 20;
+            accuracyRate.textContent = (96 + Math.random() * 2).toFixed(1) + '%';
+            savedAmount.textContent = '¥' + (220 + Math.floor(Math.random() * 30)) + '万';
+        }
+
+        // 根据时间范围更新数据
+        function updateDataByTimeRange(range) {
+            showNotification(`正在加载${range === 'today' ? '今日' : range === 'week' ? '近7天' : range === 'month' ? '近30天' : '近3个月'}数据...`, 'info');
+            
+            setTimeout(() => {
+                showNotification('数据更新完成', 'success');
+                updateRealTimeData();
+            }, 1000);
+        }
+
+        // 过滤风险事件
+        function filterRiskEvents(level) {
+            const events = document.querySelectorAll('#risk-events .timeline-item');
+            
+            events.forEach(event => {
+                if (level === 'all') {
+                    event.style.display = 'block';
+                } else if (level === 'high' && event.classList.contains('high')) {
+                    event.style.display = 'block';
+                } else if (level === 'medium' && event.classList.contains('medium')) {
+                    event.style.display = 'block';
+                } else if (level === 'low' && !event.classList.contains('high') && !event.classList.contains('medium')) {
+                    event.style.display = 'block';
+                } else {
+                    event.style.display = 'none';
+                }
+            });
+        }
+
+        // 刷新数据
+        function refreshData() {
+            showNotification('正在刷新数据...', 'info');
+            updateRealTimeData();
+            setTimeout(() => {
+                showNotification('数据刷新完成', 'success');
+            }, 1000);
+        }
+
+        // 导出报告
+        function exportReport() {
+            showNotification('正在生成报告...', 'info');
+            setTimeout(() => {
+                showNotification('报告已导出到下载目录', 'success');
+            }, 2000);
+        }
+
+        // 查看趋势详情
+        function viewTrendDetails() {
+            showDetailsModal('趋势分析详情', `
+                <div class="space-y-4">
+                    <div class="chart-mock">
+                        <div>详细趋势图表 - 过去30天检测量和拦截率变化</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="text-center p-4 bg-gray-50 rounded">
+                            <div class="text-xl font-bold text-blue-600">38,472</div>
+                            <div class="text-sm text-gray-600">总检测次数</div>
+                        </div>
+                        <div class="text-center p-4 bg-gray-50 rounded">
+                            <div class="text-xl font-bold text-red-600">1,156</div>
+                            <div class="text-sm text-gray-600">总拦截次数</div>
+                        </div>
+                        <div class="text-center p-4 bg-gray-50 rounded">
+                            <div class="text-xl font-bold text-green-600">3.0%</div>
+                            <div class="text-sm text-gray-600">拦截率</div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        // 查看所有事件
+        function viewAllEvents() {
+            showDetailsModal('全部风险事件', `
+                <div class="space-y-4 max-h-96 overflow-y-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-sm text-gray-600">今日共检测到 45 个风险事件</span>
+                        <button class="dify-btn px-3 py-1 bg-blue-600 text-white text-sm">导出列表</button>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="p-3 border border-red-200 bg-red-50 rounded">
+                            <div class="font-medium text-red-800">高风险事件 (12个)</div>
+                            <div class="text-sm text-red-600 mt-1">AI换脸攻击、异常转账等</div>
+                        </div>
+                        <div class="p-3 border border-yellow-200 bg-yellow-50 rounded">
+                            <div class="font-medium text-yellow-800">中风险事件 (18个)</div>
+                            <div class="text-sm text-yellow-600 mt-1">可疑话术、威胁手势等</div>
+                        </div>
+                        <div class="p-3 border border-gray-200 bg-gray-50 rounded">
+                            <div class="font-medium text-gray-800">低风险事件 (15个)</div>
+                            <div class="text-sm text-gray-600 mt-1">虚假背景、轻微异常等</div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        // 查看防护详情
+        function viewProtectionDetails() {
+            showDetailsModal('防护效果详细报告', `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-4 bg-green-50 rounded">
+                            <div class="text-2xl font-bold text-green-600">¥ 2,350,000</div>
+                            <div class="text-sm text-gray-600">预估避免损失</div>
+                        </div>
+                        <div class="text-center p-4 bg-blue-50 rounded">
+                            <div class="text-2xl font-bold text-blue-600">156</div>
+                            <div class="text-sm text-gray-600">成功拦截次数</div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-gray-800">按攻击类型分析：</h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                <span>AI换脸攻击</span>
+                                <div class="text-right">
+                                    <div class="font-medium">67次</div>
+                                    <div class="text-sm text-gray-500">避免损失 ¥128万</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                <span>诈骗话术识别</span>
+                                <div class="text-right">
+                                    <div class="font-medium">45次</div>
+                                    <div class="text-sm text-gray-500">避免损失 ¥68万</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                <span>虚假场景检测</span>
+                                <div class="text-right">
+                                    <div class="font-medium">32次</div>
+                                    <div class="text-sm text-gray-500">避免损失 ¥28万</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        // 查看性能详情
+        function viewPerformanceDetails() {
+            showDetailsModal('系统性能详细监控', `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="chart-mock">
+                            <div>CPU使用率趋势图</div>
+                        </div>
+                        <div class="chart-mock">
+                            <div>内存使用率趋势图</div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-gray-800">性能指标详情：</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-3 border rounded">
+                                <div class="text-sm text-gray-600">平均响应时间</div>
+                                <div class="text-xl font-bold text-blue-600">156ms</div>
+                                <div class="text-xs text-green-600">比昨日改善 8%</div>
+                            </div>
+                            <div class="p-3 border rounded">
+                                <div class="text-sm text-gray-600">峰值响应时间</div>
+                                <div class="text-xl font-bold text-orange-600">342ms</div>
+                                <div class="text-xs text-gray-500">今日最高值</div>
+                            </div>
+                            <div class="p-3 border rounded">
+                                <div class="text-sm text-gray-600">并发处理能力</div>
+                                <div class="text-xl font-bold text-purple-600">1,200</div>
+                                <div class="text-xs text-gray-500">请求/秒</div>
+                            </div>
+                            <div class="p-3 border rounded">
+                                <div class="text-sm text-gray-600">错误率</div>
+                                <div class="text-xl font-bold text-green-600">0.02%</div>
+                                <div class="text-xs text-green-600">低于阈值</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        // 生成日报告
+        function generateDailyReport() {
+            showNotification('正在生成今日运营报告...', 'info');
+            setTimeout(() => {
+                showNotification('日报告生成完成，已发送至邮箱', 'success');
+            }, 2000);
+        }
+
+        // 调整阈值
+        function adjustThreshold() {
+            showDetailsModal('阈值调整', `
+                <div class="space-y-4">
+                    <div class="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.866-.833-2.598 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                            <div>
+                                <div class="font-medium text-yellow-800">注意</div>
+                                <div class="text-sm text-yellow-700">调整阈值将立即影响检测效果，请谨慎操作</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">风险评分阈值</label>
+                            <input type="range" min="0" max="100" value="75" class="w-full" id="risk-threshold-modal">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>0 (宽松)</span>
+                                <span id="risk-value-modal">75</span>
+                                <span>100 (严格)</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">响应时间阈值 (ms)</label>
+                            <input type="number" value="200" class="w-full border border-gray-300 rounded px-3 py-2" id="response-threshold">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">检测敏感度</label>
+                            <select class="w-full border border-gray-300 rounded px-3 py-2">
+                                <option>高敏感度</option>
+                                <option selected>标准敏感度</option>
+                                <option>低敏感度</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white" onclick="saveThreshold()">应用设置</button>
+                        <button class="dify-btn px-4 py-2 border text-gray-700" onclick="closeDetailsModal()">取消</button>
+                    </div>
+                </div>
+            `);
+            
+            // 绑定滑块事件
+            setTimeout(() => {
+                const slider = document.getElementById('risk-threshold-modal');
+                const valueDisplay = document.getElementById('risk-value-modal');
+                if (slider && valueDisplay) {
+                    slider.addEventListener('input', function() {
+                        valueDisplay.textContent = this.value;
+                    });
+                }
+            }, 100);
+        }
+
+        // 保存阈值设置
+        function saveThreshold() {
+            showNotification('阈值设置已保存并生效', 'success');
+            closeDetailsModal();
+        }
+
+        // 白名单管理
+        function whitelistManagement() {
+            showDetailsModal('白名单管理', `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-medium text-gray-800">当前白名单 (12个)</h4>
+                        <button class="dify-btn px-3 py-2 bg-blue-600 text-white text-sm" onclick="addWhitelist()">添加白名单</button>
+                    </div>
+                    
+                    <div class="space-y-2 max-h-60 overflow-y-auto">
+                        <div class="flex items-center justify-between p-3 border rounded">
+                            <div>
+                                <div class="font-medium">192.168.1.100</div>
+                                <div class="text-sm text-gray-500">内部测试IP</div>
+                            </div>
+                            <button class="text-red-600 hover:text-red-800 text-sm" onclick="removeWhitelist(this)">移除</button>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 border rounded">
+                            <div>
+                                <div class="font-medium">user_12345</div>
+                                <div class="text-sm text-gray-500">VIP客户账号</div>
+                            </div>
+                            <button class="text-red-600 hover:text-red-800 text-sm" onclick="removeWhitelist(this)">移除</button>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 border rounded">
+                            <div>
+                                <div class="font-medium">admin@bank.com</div>
+                                <div class="text-sm text-gray-500">管理员邮箱</div>
+                            </div>
+                            <button class="text-red-600 hover:text-red-800 text-sm" onclick="removeWhitelist(this)">移除</button>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        // 添加白名单
+        function addWhitelist() {
+            const value = prompt('请输入要添加到白名单的IP、用户ID或邮箱:');
+            if (value) {
+                showNotification(`已添加 "${value}" 到白名单`, 'success');
+            }
+        }
+
+        // 移除白名单
+        function removeWhitelist(button) {
+            if (confirm('确定要移除这个白名单项吗？')) {
+                button.closest('.flex').remove();
+                showNotification('白名单项已移除', 'success');
+            }
+        }
+
+        // 应急设置
+        function emergencySettings() {
+            showDetailsModal('应急设置', `
+                <div class="space-y-4">
+                    <div class="p-4 bg-red-50 border border-red-200 rounded">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-red-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.866-.833-2.598 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                            <div>
+                                <div class="font-medium text-red-800">紧急模式</div>
+                                <div class="text-sm text-red-700">启用后将最大化检测严格度，可能影响正常业务</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-3 border rounded">
+                            <div>
+                                <div class="font-medium text-gray-800">紧急模式</div>
+                                <div class="text-sm text-gray-600">启用最高级别检测</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="emergency-mode">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 border rounded">
+                            <div>
+                                <div class="font-medium text-gray-800">自动拦截</div>
+                                <div class="text-sm text-gray-600">检测到风险立即拦截</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 border rounded">
+                            <div>
+                                <div class="font-medium text-gray-800">实时告警</div>
+                                <div class="text-sm text-gray-600">所有风险事件立即通知</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 pt-4">
+                        <button class="dify-btn px-4 py-2 bg-red-600 text-white" onclick="enableEmergencyMode()">启用紧急模式</button>
+                        <button class="dify-btn px-4 py-2 border text-gray-700" onclick="closeDetailsModal()">取消</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        // 启用紧急模式
+        function enableEmergencyMode() {
+            if (confirm('确定要启用紧急模式吗？这将显著提高检测严格度。')) {
+                showNotification('紧急模式已启用', 'warning');
+                closeDetailsModal();
+            }
+        }
+
+        // 配置告警
+        function configureAlerts() {
+            showDetailsModal('告警规则配置', `
+                <div class="space-y-4">
+                    <div class="space-y-4">
+                        <div class="p-4 border rounded">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-800">风险评分告警</h4>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">阈值</label>
+                                    <input type="number" value="80" class="w-full border rounded px-2 py-1 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">通知方式</label>
+                                    <select class="w-full border rounded px-2 py-1 text-sm">
+                                        <option>邮箱+短信</option>
+                                        <option>仅邮箱</option>
+                                        <option>仅短信</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 border rounded">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-800">性能告警</h4>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">响应时间 (ms)</label>
+                                    <input type="number" value="500" class="w-full border rounded px-2 py-1 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">CPU使用率 (%)</label>
+                                    <input type="number" value="85" class="w-full border rounded px-2 py-1 text-sm">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 border rounded">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-800">业务异常告警</h4>
+                                <label class="toggle-switch">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">检测量异常增长 (%)</label>
+                                    <input type="number" value="50" class="w-full border rounded px-2 py-1 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">误报率阈值 (%)</label>
+                                    <input type="number" value="10" class="w-full border rounded px-2 py-1 text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button class="dify-btn px-4 py-2 bg-blue-600 text-white" onclick="saveAlertConfig()">保存配置</button>
+                        <button class="dify-btn px-4 py-2 border text-gray-700" onclick="closeDetailsModal()">取消</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        // 保存告警配置
+        function saveAlertConfig() {
+            showNotification('告警配置已保存', 'success');
+            closeDetailsModal();
+        }
+
+        // 显示详情模态框
+        function showDetailsModal(title, content) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').innerHTML = content;
+            document.getElementById('details-modal').style.display = 'block';
+        }
+
+        // 关闭详情模态框
+        function closeDetailsModal() {
+            document.getElementById('details-modal').style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('details-modal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // 切换开关样式（与运维侧保持一致）
+        const toggleSwitchStyle = `
+            .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 48px;
+                height: 24px;
+            }
+
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: .4s;
+                border-radius: 24px;
+            }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 18px;
+                width: 18px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+            input:checked + .slider {
+                background-color: var(--dify-primary);
+            }
+
+            input:checked + .slider:before {
+                transform: translateX(24px);
+            }
+        `;
+
+        // 添加样式到页面
+        const style = document.createElement('style');
+        style.textContent = toggleSwitchStyle;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
