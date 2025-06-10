@@ -3,129 +3,489 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>提示词模版管理/开发 - 银行AI中台管理系统</title>
+    <title>提示词工程 - 智言银行后台管理端</title>
     <script src="/console/style/tailwindcss.3.0.23.js"></script>
     <style>
         :root {
             --dify-primary: #2970FF;
             --dify-primary-light: #EBF2FF;
-            --dify-sidebar-bg: #F9FAFB;
-            --dify-border: #E5E7EB;
-            --dify-hover: #F3F4F6;
-            --dify-active: #EBF2FF;
-            --dify-text-primary: #1F2937;
-            --dify-text-secondary: #6B7280;
-            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --liquid-glass-bg: rgba(255, 255, 255, 0.1);
+            --liquid-glass-border: rgba(255, 255, 255, 0.2);
+            --liquid-glass-strong: rgba(255, 255, 255, 0.15);
+            --liquid-glass-subtle: rgba(255, 255, 255, 0.05);
+            --liquid-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --liquid-text-primary: rgba(255, 255, 255, 0.9);
+            --liquid-text-secondary: rgba(0, 0, 0, 0.7);
+            --liquid-text-tertiary: rgba(255, 255, 255, 0.5);
         }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
-            color: var(--dify-text-primary);
+            /* background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 25%, #1d4ed8 50%, #2563eb 75%, #3b82f6 100%); */
+            min-height: 100vh;
+            color: var(--liquid-text-primary);
         }
+
+        /* Liquid Glass Effects */
+        .liquid-glass {
+            background: var(--liquid-glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--liquid-glass-border);
+            box-shadow: var(--liquid-shadow);
+        }
+
+        .liquid-glass-strong {
+            background: var(--liquid-glass-strong);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .liquid-glass-subtle {
+            background: var(--liquid-glass-subtle);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Specular Highlight Effect */
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+
+        .specular-highlight > * {
+            position: relative;
+            z-index: 2;
+        }
+
         .dify-card {
             border-radius: 12px;
-            border: 1px solid var(--dify-border);
-            box-shadow: var(--dify-shadow);
             transition: all 0.3s ease;
         }
+
         .dify-btn {
             border-radius: 8px;
             font-weight: 500;
             transition: all 0.2s ease;
         }
+
         .dify-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
-        .template-card {
+
+        .dify-card bg-gray-50 {
             transition: all 0.3s ease;
+            cursor: pointer;
         }
-        .template-card:hover {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-color: var(--dify-primary);
+
+        .dify-card bg-gray-50:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
+
         .tag {
-            @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
         }
+
         .tag-blue {
-            @apply bg-blue-100 text-blue-800;
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
         }
+
         .tag-green {
-            @apply bg-green-100 text-green-800;
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.3);
         }
+
+        .tag-orange {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fdba74;
+            border: 1px solid rgba(251, 146, 60, 0.3);
+        }
+
         .tag-gray {
-            @apply bg-gray-100 text-gray-800;
+            background: rgba(156, 163, 175, 0.2);
+            color: #d1d5db;
+            border: 1px solid rgba(156, 163, 175, 0.3);
         }
+
         .prompt-editor {
-            min-height: 150px;
+            min-height: 200px;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
         }
+
         .variable-tag {
-            @apply inline-block px-2 py-1 mx-1 bg-blue-50 text-blue-700 rounded text-sm;
+            display: inline-block;
+            padding: 2px 8px;
+            margin: 0 2px;
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border-radius: 4px;
+            font-size: 12px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
         }
+
         .sidebar-nav {
-            width: 200px;
+            width: 280px;
             flex-shrink: 0;
         }
+
         .main-content {
             flex: 1;
             min-width: 0;
         }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            margin: 4px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--liquid-text-secondary);
+        }
+
+        .category-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--liquid-text-primary);
+        }
+
+        .category-item.active {
+            background: rgba(41, 112, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(41, 112, 255, 0.3);
+        }
+
+        .template-item {
+            padding: 8px 12px;
+            margin: 2px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--liquid-text-tertiary);
+            font-size: 14px;
+        }
+
+        .template-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--liquid-text-secondary);
+        }
+
+        .template-item.active {
+            background: rgba(41, 112, 255, 0.15);
+            color: var(--liquid-text-primary);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            width: 90vw;
+            max-width: 1200px;
+            height: 80vh;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 16px;
+            box-shadow: var(--liquid-shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-container {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0 24px;
+            flex-shrink: 0;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--liquid-text-secondary);
+            background: transparent;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            margin-right: 4px;
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--liquid-text-primary);
+        }
+
+        .tab-button.active {
+            background: rgba(41, 112, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(41, 112, 255, 0.3);
+            border-bottom: none;
+        }
+
+        .tab-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .debug-console {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 16px;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            padding: 2px 0;
+        }
+
+        .log-info { color: #60a5fa; }
+        .log-success { color: #34d399; }
+        .log-warning { color: #fbbf24; }
+        .log-error { color: #f87171; }
+
+        .optimization-metric {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--liquid-text-secondary);
+            margin-top: 4px;
+        }
+
+        .version-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .version-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .version-item.active {
+            background: rgba(41, 112, 255, 0.2);
+            border: 1px solid rgba(41, 112, 255, 0.3);
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Import Modal Styles */
+        .import-modal {
+            width: 500px;
+            max-width: 90vw;
+            height: auto;
+        }
+
+        .drop-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: rgba(41, 112, 255, 0.8);
+            background: rgba(41, 112, 255, 0.1);
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex h-screen">
         <!-- Left Sidebar -->
-        <div class="sidebar-nav bg-white border-r border-gray-200">
+        <div class="sidebar-nav liquid-glass border-r border-white/20">
             <div class="p-4">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">提示词模版</h2>
-                <nav class="space-y-1">
-                    <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 hover:text-gray-900">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                        </svg>
-                        所有模版
-                    </a>
-                    <a href="#" class="bg-blue-50 text-blue-700 flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l6 6m0 0l-6 6m6-6H9"></path>
-                        </svg>
-                        银行业务
-                    </a>
-                    <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 hover:text-gray-900">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        客服场景
-                    </a>
-                    <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 hover:text-gray-900">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m-4-8h8"></path>
-                        </svg>
-                        营销场景
-                    </a>
-                    <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 hover:text-gray-900">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        风险控制
-                    </a>
-                </nav>
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">提示词工程</h2>
+                
+                <!-- Categories -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-medium text-gray-800/60 mb-3 px-4">分类</h3>
+                    <nav class="space-y-1">
+                        <div class="category-item active specular-highlight" data-category="banking">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l6 6m0 0l-6 6m6-6H9"></path>
+                            </svg>
+                            银行业务
+                            <span class="ml-auto text-xs bg-blue-500/20 px-2 py-1 rounded-full">12</span>
+                        </div>
+                        <div class="category-item specular-highlight" data-category="service">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                            客服场景
+                            <span class="ml-auto text-xs bg-green-500/20 px-2 py-1 rounded-full">8</span>
+                        </div>
+                        <div class="category-item specular-highlight" data-category="marketing">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m-4-8h8"></path>
+                            </svg>
+                            营销场景
+                            <span class="ml-auto text-xs bg-purple-500/20 px-2 py-1 rounded-full">6</span>
+                        </div>
+                        <div class="category-item specular-highlight" data-category="risk">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            风险控制
+                            <span class="ml-auto text-xs bg-red-500/20 px-2 py-1 rounded-full">4</span>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Template List for Selected Category -->
+                <div style="display: none;">
+                    <h3 class="text-sm font-medium text-gray-800/60 mb-3 px-4">银行业务 (12)</h3>
+                    <div class="space-y-1" id="template-list">
+                        <div class="template-item specular-highlight" data-template="banking_transfer_001">
+                            银行转账业务咨询
+                        </div>
+                        <div class="template-item specular-highlight" data-template="credit_card_apply_001">
+                            信用卡申请流程介绍
+                        </div>
+                        <div class="template-item specular-highlight" data-template="loan_consultation_001">
+                            贷款业务咨询
+                        </div>
+                        <div class="template-item specular-highlight" data-template="account_opening_001">
+                            开户流程指导
+                        </div>
+                        <div class="template-item specular-highlight" data-template="investment_advisory_001">
+                            理财投资咨询
+                        </div>
+                        <div class="template-item specular-highlight" data-template="payment_issue_001">
+                            支付问题处理
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content flex flex-col">
             <!-- Header -->
-            <div class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+            <div class="h-16 liquid-glass border-b border-white/20 flex items-center justify-between px-6">
                 <div>
-                    <h1 class="text-lg font-semibold text-gray-800">银行业务提示词模版</h1>
-                    <p class="text-sm text-gray-500 mt-1">管理和开发银行场景专用的提示词模版</p>
+                    <h1 class="text-lg font-semibold text-gray-800">银行业务提示词</h1>
+                    <p class="text-sm text-gray-800/70 mt-1">管理和优化银行场景专用的提示词模版</p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <button class="dify-btn px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
+                    <button id="import-btn" class="dify-btn px-4 py-2 text-sm text-gray-800/80 liquid-glass hover:text-gray-800 specular-highlight">
                         导入模版
                     </button>
-                    <button class="dify-btn px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700">
+                    <button id="create-btn" class="dify-btn px-4 py-2 text-sm text-white bg-blue-600/80 hover:bg-blue-700/80 specular-highlight">
                         新建模版
                     </button>
                 </div>
@@ -133,199 +493,177 @@
 
             <!-- Content Area -->
             <div class="flex-1 overflow-auto p-6">
-                <!-- Template List -->
-                <div class="space-y-4 mb-8">
+                <!-- Template Cards Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" id="template-cards">
                     <!-- Template Card 1 -->
-                    <div class="template-card dify-card bg-white p-4 flex items-center justify-between">
-                        <div class="flex items-start space-x-4">
-                            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div onclick="openTemplateModal('new');" class="dify-card bg-gray-50 liquid-glass p-6 specular-highlight" data-template="banking_transfer_001">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                                 </svg>
                             </div>
-                            <div>
-                                <div class="flex items-center space-x-2 mb-1">
-                                    <h3 class="text-base font-medium text-gray-900">银行转账业务咨询</h3>
-                                    <span class="tag tag-blue">银行业务</span>
-                                    <span class="tag tag-green">已发布</span>
-                                </div>
-                                <p class="text-sm text-gray-500 mb-2">处理用户关于国内外转账、跨行转账相关的咨询问题，包括手续费、到账时间等</p>
-                                <div class="flex items-center space-x-4 text-xs text-gray-400">
-                                    <span>使用次数: 256</span>
-                                    <span>最后更新: 2024-05-08</span>
-                                    <span>变量: <span class="variable-tag">{{customer_name}}</span><span class="variable-tag">{{transfer_amount}}</span></span>
-                                </div>
+                            <div class="flex space-x-1">
+                                <span class="tag tag-green">已发布</span>
+                                <span class="tag tag-blue">v2.1.3</span>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <button class="p-2 text-gray-400 hover:text-gray-600 rounded">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                                </svg>
-                            </button>
-                            <button class="p-2 text-gray-400 hover:text-gray-600 rounded">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                </svg>
-                            </button>
-                            <button class="p-2 text-gray-400 hover:text-red-600 rounded">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                            </button>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">银行转账业务咨询</h3>
+                        <p class="text-sm text-gray-800/70 mb-4">处理用户关于国内外转账、跨行转账相关的咨询问题，包括手续费、到账时间等</p>
+                        <div class="flex items-center justify-between text-xs text-gray-800/50">
+                            <span>使用: 256次</span>
+                            <span>更新: 2024-05-08</span>
+                        </div>
+                        <div class="mt-3 flex flex-wrap gap-1">
+                            <span class="variable-tag">{{customer_name}}</span>
+                            <span class="variable-tag">{{transfer_amount}}</span>
                         </div>
                     </div>
 
                     <!-- Template Card 2 -->
-                    <div class="template-card dify-card bg-white p-4 flex items-center justify-between">
-                        <div class="flex items-start space-x-4">
-                            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m-4-8h8"></path>
+                    <div onclick="openTemplateModal('new');" class="dify-card bg-gray-50 liquid-glass p-6 specular-highlight" data-template="credit_card_apply_001">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                                 </svg>
                             </div>
-                            <div>
-                                <div class="flex items-center space-x-2 mb-1">
-                                    <h3 class="text-base font-medium text-gray-900">信用卡申请流程介绍</h3>
-                                    <span class="tag tag-blue">银行业务</span>
-                                    <span class="tag tag-green">已发布</span>
-                                </div>
-                                <p class="text-sm text-gray-500 mb-2">为用户介绍信用卡申请条件、所需材料、办理流程和审核时间</p>
-                                <div class="flex items-center space-x-4 text-xs text-gray-400">
-                                    <span>使用次数: 189</span>
-                                    <span>最后更新: 2024-05-07</span>
-                                    <span>变量: <span class="variable-tag">{{card_type}}</span><span class="variable-tag">{{income_requirement}}</span></span>
-                                </div>
+                            <div class="flex space-x-1">
+                                <span class="tag tag-green">已发布</span>
+                                <span class="tag tag-blue">v1.8.2</span>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <button class="p-2 text-gray-400 hover:text-gray-600 rounded">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                                </svg>
-                            </button>
-                            <button class="p-2 text-gray-400 hover:text-gray-600 rounded">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                </svg>
-                            </button>
-                            <button class="p-2 text-gray-400 hover:text-red-600 rounded">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                            </button>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">信用卡申请流程介绍</h3>
+                        <p class="text-sm text-gray-800/70 mb-4">为用户介绍信用卡申请条件、所需材料、办理流程和审核时间</p>
+                        <div class="flex items-center justify-between text-xs text-gray-800/50">
+                            <span>使用: 189次</span>
+                            <span>更新: 2024-05-07</span>
+                        </div>
+                        <div class="mt-3 flex flex-wrap gap-1">
+                            <span class="variable-tag">{{card_type}}</span>
+                            <span class="variable-tag">{{income_requirement}}</span>
                         </div>
                     </div>
 
                     <!-- Template Card 3 -->
-                    <div class="template-card dify-card bg-white p-4 flex items-center justify-between">
-                        <div class="flex items-start space-x-4">
-                            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    <div onclick="openTemplateModal('new');" class="dify-card bg-gray-50 liquid-glass p-6 specular-highlight" data-template="loan_consultation_001">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m-4-8h8"></path>
                                 </svg>
                             </div>
-                            <div>
-                                <div class="flex items-center space-x-2 mb-1">
-                                    <h3 class="text-base font-medium text-gray-900">风险提醒和安全防范</h3>
-                                    <span class="tag tag-blue">银行业务</span>
-                                    <span class="tag tag-gray">草稿</span>
-                                </div>
-                                <p class="text-sm text-gray-500 mb-2">提醒用户注意电信诈骗、网络钓鱼等金融风险，提供安全防范指导</p>
-                                <div class="flex items-center space-x-4 text-xs text-gray-400">
-                                    <span>使用次数: 0</span>
-                                    <span>最后更新: 2024-05-09</span>
-                                    <span>变量: <span class="variable-tag">{{warning_type}}</span><span class="variable-tag">{{safety_tips}}</span></span>
-                                </div>
+                            <div class="flex space-x-1">
+                                <span class="tag tag-orange">测试中</span>
+                                <span class="tag tag-blue">v0.9.1</span>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <button class="p-2 text-gray-400 hover:text-gray-600 rounded">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                                </svg>
-                            </button>
-                            <button class="p-2 text-gray-400 hover:text-gray-600 rounded">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                </svg>
-                            </button>
-                            <button class="p-2 text-gray-400 hover:text-red-600 rounded">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                            </button>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">贷款业务咨询</h3>
+                        <p class="text-sm text-gray-800/70 mb-4">处理个人和企业贷款申请、利率查询、还款方式等相关咨询</p>
+                        <div class="flex items-center justify-between text-xs text-gray-800/50">
+                            <span>使用: 45次</span>
+                            <span>更新: 2024-05-09</span>
+                        </div>
+                        <div class="mt-3 flex flex-wrap gap-1">
+                            <span class="variable-tag">{{loan_type}}</span>
+                            <span class="variable-tag">{{loan_amount}}</span>
+                            <span class="variable-tag">{{interest_rate}}</span>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Template Editor -->
-                <div class="dify-card bg-white p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-medium text-gray-800">编辑模版: 银行转账业务咨询</h2>
-                        <div class="flex items-center space-x-2">
-                            <button class="dify-btn px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
-                                预览
-                            </button>
-                            <button class="dify-btn px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700">
-                                保存
-                            </button>
-                        </div>
+    <!-- Template Edit Modal -->
+    <div class="modal-overlay" id="template-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-gray-800" id="modal-title">编辑提示词模版</h2>
+                    <button class="p-2 text-gray-800/60 hover:text-gray-800 rounded-lg specular-highlight" onclick="closeModal()">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Tab Navigation -->
+                <div class="tab-container">
+                    <div class="flex space-x-0">
+                        <button class="tab-button active" data-tab="edit">编辑</button>
+                        <button class="tab-button" data-tab="debug">调试</button>
+                        <button class="tab-button" data-tab="optimize">AI优化</button>
+                        <button class="tab-button" data-tab="versions">版本</button>
                     </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                </div>
+                
+                <!-- Tab Contents -->
+                <div class="tab-content active" id="edit-tab">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Left Panel - Template Settings -->
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">模版名称</label>
-                                <input type="text" value="银行转账业务咨询" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <label class="block text-sm font-medium text-gray-800/80 mb-2">模版名称</label>
+                                <input type="text" id="template-name" value="银行转账业务咨询" class="w-full px-4 py-3 liquid-glass-subtle border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 text-gray-800 placeholder-white/50">
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">分类</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                                    <option>银行业务</option>
-                                    <option>客服场景</option>
-                                    <option>营销场景</option>
-                                    <option>风险控制</option>
+                                <label class="block text-sm font-medium text-gray-800/80 mb-2">分类</label>
+                                <select id="template-category" class="w-full px-4 py-3 liquid-glass-subtle border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 text-gray-800">
+                                    <option value="banking">银行业务</option>
+                                    <option value="service">客服场景</option>
+                                    <option value="marketing">营销场景</option>
+                                    <option value="risk">风险控制</option>
                                 </select>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
-                                <textarea rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="模版用途描述...">处理用户关于国内外转账、跨行转账相关的咨询问题，包括手续费、到账时间等</textarea>
+                                <label class="block text-sm font-medium text-gray-800/80 mb-2">描述</label>
+                                <textarea id="template-description" rows="2" class="w-full px-4 py-3 liquid-glass-subtle border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 text-gray-800 placeholder-white/50" placeholder="模版用途描述...">处理用户关于国内外转账、跨行转账相关的咨询问题，包括手续费、到账时间等</textarea>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">变量设置</label>
-                                <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-800/80 mb-2">变量设置</label>
+                                <div class="space-y-3" id="variables-container">
                                     <div class="flex items-center space-x-2">
-                                        <input type="text" value="customer_name" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md">
-                                        <input type="text" value="客户姓名" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md">
-                                        <button class="p-2 text-gray-400 hover:text-red-600">
+                                        <input type="text" value="customer_name" class="flex-1 px-3 py-2 text-sm liquid-glass-subtle border border-white/20 rounded-lg text-gray-800 placeholder-white/50">
+                                        <input type="text" value="客户姓名" class="flex-1 px-3 py-2 text-sm liquid-glass-subtle border border-white/20 rounded-lg text-gray-800 placeholder-white/50">
+                                        <button class="p-2 text-gray-800/60 hover:text-red-400 specular-highlight" onclick="removeVariable(this)">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                             </svg>
                                         </button>
                                     </div>
                                     <div class="flex items-center space-x-2">
-                                        <input type="text" value="transfer_amount" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md">
-                                        <input type="text" value="转账金额" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md">
-                                        <button class="p-2 text-gray-400 hover:text-red-600">
+                                        <input type="text" value="transfer_amount" class="flex-1 px-3 py-2 text-sm liquid-glass-subtle border border-white/20 rounded-lg text-gray-800 placeholder-white/50">
+                                        <input type="text" value="转账金额" class="flex-1 px-3 py-2 text-sm liquid-glass-subtle border border-white/20 rounded-lg text-gray-800 placeholder-white/50">
+                                        <button class="p-2 text-gray-800/60 hover:text-red-400 specular-highlight" onclick="removeVariable(this)">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                             </svg>
                                         </button>
                                     </div>
-                                    <button class="text-sm text-blue-600 hover:text-blue-800">+ 添加变量</button>
                                 </div>
+                                <button class="text-sm text-blue-400 hover:text-blue-300 specular-highlight mt-2" onclick="addVariable()">+ 添加变量</button>
+                            </div>
+
+                            <div class="flex space-x-3 pt-4">
+                                <button class="dify-btn px-4 py-2 text-sm text-gray-800/80 liquid-glass-subtle hover:text-gray-800 specular-highlight">
+                                    预览
+                                </button>
+                                <button class="dify-btn px-4 py-2 text-sm text-white bg-blue-600/80 hover:bg-blue-700/80 specular-highlight">
+                                    保存
+                                </button>
                             </div>
                         </div>
                         
                         <!-- Right Panel - Prompt Editor -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">提示词内容</label>
-                            <textarea class="prompt-editor w-full h-64 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 font-mono text-sm" placeholder="请输入提示词内容...">你是一位专业的银行客服，负责回答用户关于转账业务的咨询。
+                            <label class="block text-sm font-medium text-gray-800/80 mb-2">提示词内容</label>
+                            <textarea id="prompt-content" class="prompt-editor w-full h-96 px-4 py-3 liquid-glass-subtle border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 text-gray-800 placeholder-white/50" placeholder="请输入提示词内容...">你是一位专业的银行客服，负责回答用户关于转账业务的咨询。
 
 客户信息：
 - 姓名：{{customer_name}}
@@ -342,20 +680,858 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="tab-content" id="debug-tab">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Test Input -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">测试输入</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-800/80 mb-2">测试参数</label>
+                                    <div class="space-y-2">
+                                        <input type="text" placeholder="customer_name: 张三" class="w-full px-4 py-2 liquid-glass-subtle border border-white/20 rounded-lg text-gray-800 placeholder-white/50">
+                                        <input type="text" placeholder="transfer_amount: 5000" class="w-full px-4 py-2 liquid-glass-subtle border border-white/20 rounded-lg text-gray-800 placeholder-white/50">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-800/80 mb-2">测试消息</label>
+                                    <textarea rows="3" class="w-full px-4 py-3 liquid-glass-subtle border border-white/20 rounded-lg text-gray-800 placeholder-white/50" placeholder="输入测试消息...">我想要转账5000元到朋友账户，请问手续费是多少？</textarea>
+                                </div>
+                                
+                                <button id="test-btn" class="w-full dify-btn px-4 py-3 text-sm text-gray-800 bg-green-600/80 hover:bg-green-700/80 specular-highlight">
+                                    开始测试
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Test Results -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">测试结果</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-800/80 mb-2">AI回复</label>
+                                    <div id="test-result" class="liquid-glass-subtle border border-white/20 rounded-lg p-4 min-h-[120px] text-gray-800/90">
+                                        点击"开始测试"查看AI回复结果
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="optimization-metric">
+                                        <div class="metric-value text-green-400" id="accuracy-metric">--</div>
+                                        <div class="metric-label">准确率</div>
+                                    </div>
+                                    <div class="optimization-metric">
+                                        <div class="metric-value text-blue-400" id="response-time-metric">--</div>
+                                        <div class="metric-label">响应时间</div>
+                                    </div>
+                                    <div class="optimization-metric">
+                                        <div class="metric-value text-yellow-400" id="quality-metric">--</div>
+                                        <div class="metric-label">质量评分</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Debug Console -->
+                    <div class="mt-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">调试日志</h3>
+                        <div class="debug-console" id="debug-console">
+                            <div class="log-entry log-info">[系统] 等待开始测试...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="optimize-tab">
+                    <div class="space-y-6">
+                        <!-- AI Optimization Section -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Original Prompt -->
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-800 mb-4">当前提示词</h3>
+                                <div class="liquid-glass-subtle border border-white/20 rounded-lg p-4 h-64 overflow-y-auto">
+                                    <pre class="text-sm text-gray-800/80 whitespace-pre-wrap font-mono" id="original-prompt">你是一位专业的银行客服，负责回答用户关于转账业务的咨询。
+
+客户信息：
+- 姓名：{{customer_name}}
+- 转账金额：{{transfer_amount}}
+
+请按照以下要求回答：
+1. 态度友好、专业
+2. 提供准确的手续费信息
+3. 说明预计到账时间
+4. 提醒相关注意事项
+
+示例回答：
+"您好{{customer_name}}，感谢您咨询我们银行的转账业务。关于您想转账{{transfer_amount}}元的事宜，我很乐意为您说明..."</pre>
+                                </div>
+                            </div>
+
+                            <!-- Optimized Prompt -->
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-800 mb-4">AI优化后提示词</h3>
+                                <div class="liquid-glass-subtle border border-white/20 rounded-lg p-4 h-64 overflow-y-auto">
+                                    <div id="optimized-prompt-container" class="text-sm text-gray-800/60 flex items-center justify-center h-full">
+                                        点击"开始AI优化"查看优化结果
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Optimization Controls -->
+                        <div class="liquid-glass-subtle border border-white/20 rounded-lg p-6">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">优化设置</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-800/80 mb-2">优化重点</label>
+                                    <select id="optimization-focus" class="w-full px-4 py-3 liquid-glass-subtle border border-white/20 rounded-lg text-gray-800">
+                                        <option value="clarity">提升指令清晰度</option>
+                                        <option value="structure">优化结构组织</option>
+                                        <option value="examples">改进示例质量</option>
+                                        <option value="context">增强上下文理解</option>
+                                        <option value="professional">提升专业表达</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-800/80 mb-2">优化强度</label>
+                                    <select id="optimization-intensity" class="w-full px-4 py-3 liquid-glass-subtle border border-white/20 rounded-lg text-gray-800">
+                                        <option value="light">轻度优化</option>
+                                        <option value="moderate" selected>中度优化</option>
+                                        <option value="deep">深度优化</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-800/80 mb-2">模型类型</label>
+                                    <select id="target-model" class="w-full px-4 py-3 liquid-glass-subtle border border-white/20 rounded-lg text-gray-800">
+                                        <option value="gpt4">GPT-4 系列</option>
+                                        <option value="claude">Claude 系列</option>
+                                        <option value="gemini">Gemini 系列</option>
+                                        <option value="qwen">通义千问</option>
+                                        <option value="baichuan">百川大模型</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm text-gray-800/70">
+                                    AI将分析并重写提示词，让大模型更好理解和执行指令
+                                </div>
+                                <button id="optimize-btn" class="dify-btn px-6 py-3 text-sm text-gray-800 bg-purple-600/80 hover:bg-purple-700/80 specular-highlight">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                    开始AI优化
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Optimization Results and Comparison -->
+                        <div id="optimization-results" class="hidden">
+                            <div class="liquid-glass-subtle border border-white/20 rounded-lg p-6">
+                                <h3 class="text-lg font-medium text-gray-800 mb-4">优化分析</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Improvements -->
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-800/80 mb-3">主要改进点</h4>
+                                        <div class="space-y-3" id="improvements-list">
+                                            <!-- Will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Quality Metrics -->
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-800/80 mb-3">质量评估</h4>
+                                        <div class="space-y-3">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm text-gray-800/70">指令清晰度</span>
+                                                <div class="flex items-center space-x-2">
+                                                    <span class="text-xs text-gray-800/50">75%</span>
+                                                    <div class="w-2 h-2 rounded-full bg-yellow-400"></div>
+                                                    <span class="text-xs text-gray-800/50">→</span>
+                                                    <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                                                    <span class="text-xs text-green-400">92%</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm text-gray-800/70">结构完整性</span>
+                                                <div class="flex items-center space-x-2">
+                                                    <span class="text-xs text-gray-800/50">68%</span>
+                                                    <div class="w-2 h-2 rounded-full bg-orange-400"></div>
+                                                    <span class="text-xs text-gray-800/50">→</span>
+                                                    <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                                                    <span class="text-xs text-green-400">88%</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm text-gray-800/70">示例质量</span>
+                                                <div class="flex items-center space-x-2">
+                                                    <span class="text-xs text-gray-800/50">70%</span>
+                                                    <div class="w-2 h-2 rounded-full bg-yellow-400"></div>
+                                                    <span class="text-xs text-gray-800/50">→</span>
+                                                    <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                                                    <span class="text-xs text-green-400">95%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-white/10">
+                                    <button class="dify-btn px-4 py-2 text-sm text-gray-800/80 liquid-glass-subtle hover:text-gray-800 specular-highlight">
+                                        重新优化
+                                    </button>
+                                    <button id="apply-optimization-btn" class="dify-btn px-4 py-2 text-sm text-gray-800 bg-green-600/80 hover:bg-green-700/80 specular-highlight">
+                                        应用优化结果
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Optimization History -->
+                        <div class="liquid-glass-subtle border border-white/20 rounded-lg p-6">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">优化历史</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 liquid-glass-subtle border border-white/10 rounded-lg">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-800">优化 #003 - 结构重组</div>
+                                        <div class="text-xs text-gray-800/70 mt-1">2024-05-08 14:32 · 指令清晰度 +17%, 示例质量 +25%</div>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="text-xs text-blue-400 hover:text-blue-300">查看</button>
+                                        <button class="text-xs text-blue-400 hover:text-blue-300">恢复</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 liquid-glass-subtle border border-white/10 rounded-lg">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-800">优化 #002 - 专业术语优化</div>
+                                        <div class="text-xs text-gray-800/70 mt-1">2024-05-05 09:15 · 专业性 +12%, 准确性 +8%</div>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="text-xs text-blue-400 hover:text-blue-300">查看</button>
+                                        <button class="text-xs text-blue-400 hover:text-blue-300">恢复</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 liquid-glass-subtle border border-white/10 rounded-lg">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-800">优化 #001 - 初始优化</div>
+                                        <div class="text-xs text-gray-800/70 mt-1">2024-05-01 16:20 · 整体结构调整</div>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="text-xs text-blue-400 hover:text-blue-300">查看</button>
+                                        <button class="text-xs text-blue-400 hover:text-blue-300">恢复</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="versions-tab">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Version List -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">版本历史</h3>
+                            <div class="space-y-2">
+                                <div class="version-item liquid-glass-subtle border border-white/20 rounded-lg active">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium text-gray-800">v2.1.3</span>
+                                        <span class="tag tag-green">当前</span>
+                                    </div>
+                                    <div class="text-sm text-gray-800/70">优化转账金额限制说明</div>
+                                    <div class="text-xs text-gray-800/50 mt-1">2024-05-08 14:30</div>
+                                </div>
+                                
+                                <div class="version-item liquid-glass-subtle border border-white/20 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium text-gray-800">v2.1.2</span>
+                                        <span class="tag tag-gray">历史</span>
+                                    </div>
+                                    <div class="text-sm text-gray-800/70">修复手续费计算逻辑</div>
+                                    <div class="text-xs text-gray-800/50 mt-1">2024-05-05 09:15</div>
+                                </div>
+                                
+                                <div class="version-item liquid-glass-subtle border border-white/20 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium text-gray-800">v2.1.1</span>
+                                        <span class="tag tag-gray">历史</span>
+                                    </div>
+                                    <div class="text-sm text-gray-800/70">增加跨境转账支持</div>
+                                    <div class="text-xs text-gray-800/50 mt-1">2024-05-01 16:45</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Version Comparison -->
+                        <div class="lg:col-span-2">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">版本对比</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-800/80 mb-2">v2.1.2 (左侧)</h4>
+                                    <div class="liquid-glass-subtle border border-white/20 rounded-lg p-4 text-sm font-mono text-gray-800/80 h-64 overflow-y-auto">
+你是一位专业的银行客服，负责回答用户关于转账业务的咨询。
+
+客户信息：
+- 姓名：{{customer_name}}
+- 转账金额：{{transfer_amount}}
+
+请按照以下要求回答：
+1. 态度友好、专业
+2. 提供准确的手续费信息
+3. 说明预计到账时间
+
+示例回答：
+"您好{{customer_name}}，感谢您咨询..."
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-800/80 mb-2">v2.1.3 (右侧)</h4>
+                                    <div class="liquid-glass-subtle border border-white/20 rounded-lg p-4 text-sm font-mono text-gray-800/80 h-64 overflow-y-auto">
+你是一位专业的银行客服，负责回答用户关于转账业务的咨询。
+
+客户信息：
+- 姓名：{{customer_name}}
+- 转账金额：{{transfer_amount}}
+
+请按照以下要求回答：
+1. 态度友好、专业
+2. 提供准确的手续费信息
+3. 说明预计到账时间
+<span class="text-green-400">4. 提醒相关注意事项
+5. 说明转账限额规定</span>
+
+示例回答：
+"您好{{customer_name}}，感谢您咨询..."
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-center mt-6">
+                                <div class="flex space-x-3">
+                                    <button class="dify-btn px-4 py-2 text-sm text-gray-800/80 liquid-glass-subtle hover:text-gray-800 specular-highlight">
+                                        回滚到此版本
+                                    </button>
+                                    <button class="dify-btn px-4 py-2 text-sm text-white bg-blue-600/80 hover:bg-blue-700/80 specular-highlight">
+                                        基于此版本创建分支
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="import-modal">
+        <div class="modal-content import-modal">
+            <div class="modal-header">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-gray-800">导入提示词模版</h2>
+                    <button class="p-2 text-gray-800/60 hover:text-gray-800 rounded-lg specular-highlight" onclick="closeImportModal()">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="drop-zone" id="drop-zone">
+                    <svg class="w-12 h-12 mx-auto mb-4 text-gray-800/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                    </svg>
+                    <div class="text-gray-800/80 mb-2">拖拽文件到此处或点击选择文件</div>
+                    <div class="text-sm text-gray-800/60">支持 .json, .txt, .csv 格式</div>
+                    <input type="file" id="file-input" class="hidden" accept=".json,.txt,.csv">
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button class="dify-btn px-4 py-2 text-sm text-gray-800/80 liquid-glass-subtle hover:text-gray-800 specular-highlight" onclick="closeImportModal()">
+                        取消
+                    </button>
+                    <button id="import-confirm-btn" class="dify-btn px-4 py-2 text-sm text-white bg-blue-600/80 hover:bg-blue-700/80 specular-highlight" disabled>
+                        确认导入
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Simple interactions
-        document.addEventListener('DOMContentLoaded', function() {
-            // Template card hover effects
-            const templateCards = document.querySelectorAll('.template-card');
-            templateCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    // Highlight selected template (optional)
+        // Global variables
+        let currentTemplate = null;
+        let debugInterval = null;
+
+        // Category switching
+        const categoryItems = document.querySelectorAll('.category-item');
+        const templateItems = document.querySelectorAll('.template-item');
+
+        categoryItems.forEach(item => {
+            item.addEventListener('click', function() {
+                categoryItems.forEach(cat => cat.classList.remove('active'));
+                this.classList.add('active');
+                
+                const category = this.getAttribute('data-category');
+                updateTemplateList(category);
+                updateTemplateCards(category);
+            });
+        });
+
+        // Template list item clicking
+        templateItems.forEach(item => {
+            item.addEventListener('click', function() {
+                templateItems.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                const templateId = this.getAttribute('data-template');
+                highlightTemplateCard(templateId);
+            });
+        });
+
+        // Template card clicking to open modal
+        document.addEventListener('click', function(e) {
+            const templateCard = e.target.closest('.dify-card bg-gray-50');
+            if (templateCard) {
+                const templateId = templateCard.getAttribute('data-template');
+                openTemplateModal(templateId);
+            }
+        });
+
+        // Tab switching in modal
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetTab = this.getAttribute('data-tab');
+                
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(`${targetTab}-tab`).classList.add('active');
+                
+                // Sync original prompt when switching to optimize tab
+                if (targetTab === 'optimize') {
+                    syncOriginalPrompt();
+                }
+            });
+        });
+
+        // Import button functionality
+        document.getElementById('import-btn').addEventListener('click', function() {
+            document.getElementById('import-modal').classList.add('show');
+        });
+
+        // Create button functionality
+        document.getElementById('create-btn').addEventListener('click', function() {
+            openTemplateModal('new');
+        });
+
+        // Test button functionality
+        document.getElementById('test-btn').addEventListener('click', function() {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<span class="loading-spinner"></span> 测试中...';
+            btn.disabled = true;
+            
+            startDebugTest();
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 3000);
+        });
+
+        // Optimize button functionality
+        document.getElementById('optimize-btn').addEventListener('click', function() {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<span class="loading-spinner"></span> AI优化中...';
+            btn.disabled = true;
+            
+            // Simulate AI optimization process
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showOptimizedPrompt();
+            }, 4000);
+        });
+
+        // File upload functionality
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const importConfirmBtn = document.getElementById('import-confirm-btn');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFileSelect(e.dataTransfer.files[0]);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFileSelect(e.target.files[0]);
+        });
+
+        // Functions
+        function updateTemplateList(category) {
+            const templates = {
+                banking: [
+                    { id: 'banking_transfer_001', name: '银行转账业务咨询' },
+                    { id: 'credit_card_apply_001', name: '信用卡申请流程介绍' },
+                    { id: 'loan_consultation_001', name: '贷款业务咨询' },
+                    { id: 'account_opening_001', name: '开户流程指导' },
+                    { id: 'investment_advisory_001', name: '理财投资咨询' },
+                    { id: 'payment_issue_001', name: '支付问题处理' }
+                ],
+                service: [
+                    { id: 'customer_complaint_001', name: '客户投诉处理' },
+                    { id: 'service_inquiry_001', name: '服务咨询回复' }
+                ],
+                marketing: [
+                    { id: 'product_promotion_001', name: '产品推广介绍' },
+                    { id: 'cross_sell_001', name: '交叉销售引导' }
+                ],
+                risk: [
+                    { id: 'fraud_warning_001', name: '诈骗防范提醒' },
+                    { id: 'risk_assessment_001', name: '风险评估指导' }
+                ]
+            };
+
+            const templateList = document.getElementById('template-list');
+            const categoryTemplates = templates[category] || [];
+            
+            templateList.innerHTML = categoryTemplates.map(template => 
+                `<div class="template-item specular-highlight" data-template="${template.id}">
+                    ${template.name}
+                </div>`
+            ).join('');
+
+            // Re-bind event listeners
+            templateList.querySelectorAll('.template-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    templateList.querySelectorAll('.template-item').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const templateId = this.getAttribute('data-template');
+                    highlightTemplateCard(templateId);
                 });
             });
+        }
+
+        function updateTemplateCards(category) {
+            // This would typically fetch data from API
+            // For demo, we'll just show/hide existing cards
+            console.log('Updating template cards for category:', category);
+        }
+
+        function highlightTemplateCard(templateId) {
+            document.querySelectorAll('.dify-card bg-gray-50').forEach(card => {
+                card.classList.remove('ring-2', 'ring-blue-500');
+            });
+            
+            const targetCard = document.querySelector(`[data-template="${templateId}"]`);
+            if (targetCard) {
+                targetCard.classList.add('ring-2', 'ring-blue-500');
+            }
+        }
+
+        function openTemplateModal(templateId) {
+            currentTemplate = templateId;
+            document.getElementById('template-modal').classList.add('show');
+            
+            if (templateId === 'new') {
+                document.getElementById('modal-title').textContent = '新建提示词模版';
+                clearForm();
+            } else {
+                document.getElementById('modal-title').textContent = '编辑提示词模版';
+                loadTemplateData(templateId);
+            }
+            
+            // Sync original prompt display
+            setTimeout(syncOriginalPrompt, 100);
+        }
+
+        function closeModal() {
+            document.getElementById('template-modal').classList.remove('show');
+            currentTemplate = null;
+            if (debugInterval) {
+                clearInterval(debugInterval);
+                debugInterval = null;
+            }
+        }
+
+        function closeImportModal() {
+            document.getElementById('import-modal').classList.remove('show');
+            document.getElementById('file-input').value = '';
+            importConfirmBtn.disabled = true;
+        }
+
+        function clearForm() {
+            document.getElementById('template-name').value = '';
+            document.getElementById('template-description').value = '';
+            document.getElementById('prompt-content').value = '';
+        }
+
+        function loadTemplateData(templateId) {
+            // This would typically fetch data from API
+            // For demo, we'll use static data
+            console.log('Loading template data for:', templateId);
+        }
+
+        function addVariable() {
+            const container = document.getElementById('variables-container');
+            const newVariable = document.createElement('div');
+            newVariable.className = 'flex items-center space-x-2';
+            newVariable.innerHTML = `
+                <input type="text" placeholder="变量名" class="flex-1 px-3 py-2 text-sm liquid-glass-subtle border border-white/20 rounded-lg text-gray-800 placeholder-white/50">
+                <input type="text" placeholder="显示名称" class="flex-1 px-3 py-2 text-sm liquid-glass-subtle border border-white/20 rounded-lg text-gray-800 placeholder-white/50">
+                <button class="p-2 text-gray-800/60 hover:text-red-400 specular-highlight" onclick="removeVariable(this)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            `;
+            container.appendChild(newVariable);
+        }
+
+        function removeVariable(button) {
+            button.closest('.flex').remove();
+        }
+
+        function startDebugTest() {
+            const console = document.getElementById('debug-console');
+            const resultDiv = document.getElementById('test-result');
+            
+            console.innerHTML = '';
+            
+            const logs = [
+                { time: 0, type: 'info', message: '开始处理提示词模版...' },
+                { time: 500, type: 'info', message: '变量替换: customer_name -> 张三' },
+                { time: 800, type: 'info', message: '变量替换: transfer_amount -> 5000' },
+                { time: 1200, type: 'success', message: '模版处理完成' },
+                { time: 1500, type: 'info', message: '调用AI模型: gpt-4' },
+                { time: 2800, type: 'success', message: 'AI回复生成完成' },
+                { time: 3000, type: 'info', message: '质量评估: 87% 准确率' }
+            ];
+
+            logs.forEach(log => {
+                setTimeout(() => {
+                    addLogEntry(log.type, log.message);
+                }, log.time);
+            });
+
+            setTimeout(() => {
+                resultDiv.innerHTML = `您好张三，感谢您咨询我们银行的转账业务。关于您想转账5000元的事宜，我很乐意为您说明：
+
+<br><br>关于手续费：
+- 同行转账：免费
+- 跨行转账：手续费为2-10元，具体根据转账金额计算
+- 5000元跨行转账手续费为5元
+
+<br><br>到账时间：
+- 实时到账（工作日9:00-17:00）
+- 次日到账（其他时间）`;
+
+                document.getElementById('accuracy-metric').textContent = '87%';
+                document.getElementById('response-time-metric').textContent = '1.2s';
+                document.getElementById('quality-metric').textContent = 'A+';
+            }, 3000);
+        }
+
+        function addLogEntry(type, message) {
+            const console = document.getElementById('debug-console');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleString('zh-CN', {hour12: false});
+            entry.textContent = `[${timestamp}] ${message}`;
+            console.appendChild(entry);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function syncOriginalPrompt() {
+            const promptContent = document.getElementById('prompt-content').value;
+            const originalPromptDisplay = document.getElementById('original-prompt');
+            if (originalPromptDisplay) {
+                originalPromptDisplay.textContent = promptContent || '暂无提示词内容';
+            }
+        }
+
+        function showOptimizedPrompt() {
+            const optimizedContainer = document.getElementById('optimized-prompt-container');
+            const resultsSection = document.getElementById('optimization-results');
+            const improvementsList = document.getElementById('improvements-list');
+            
+            // Show optimized prompt
+            optimizedContainer.innerHTML = `
+                <pre class="text-sm text-gray-800/80 whitespace-pre-wrap font-mono">你是一名专业的银行业务顾问，专门协助客户处理转账相关业务咨询。
+
+## 客户信息
+- 客户姓名：{{customer_name}}
+- 转账金额：{{transfer_amount}}
+
+## 回复指南
+请严格按照以下结构回复客户：
+
+### 1. 专业问候与确认
+首先确认客户身份和转账需求
+
+### 2. 手续费详细说明
+- 同行转账：免收手续费
+- 跨行转账：按金额阶梯收费
+  * 1万元以下：5元/笔
+  * 1-5万元：10元/笔
+  * 5万元以上：15元/笔
+
+### 3. 到账时间说明
+- 工作日9:00-17:00：实时到账
+- 其他时间：次日上午到账
+- 大额转账（>5万）：需要人工审核，2-4小时到账
+
+### 4. 安全提醒（必须包含）
+- 核实收款人信息
+- 注意防范电信诈骗
+- 保管好交易凭证
+
+### 5. 后续服务
+提供相关业务咨询和办理指引
+
+## 回复示例
+"尊敬的{{customer_name}}先生/女士，您好！
+
+感谢您选择我们银行的转账服务。关于您咨询的{{transfer_amount}}元转账业务，我为您详细说明：
+
+[按照上述结构完成回复...]
+
+如还有其他疑问，我很乐意为您详细解答。"</pre>
+            `;
+            
+            // Show improvements
+            improvementsList.innerHTML = `
+                <div class="liquid-glass-subtle border border-green-500/30 rounded-lg p-3">
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-4 h-4 text-green-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <div class="text-sm font-medium text-green-400">结构化指令</div>
+                            <div class="text-xs text-gray-800/70 mt-1">使用清晰的分级标题，让模型更好理解回复结构</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="liquid-glass-subtle border border-blue-500/30 rounded-lg p-3">
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-4 h-4 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <div class="text-sm font-medium text-blue-400">具体化信息</div>
+                            <div class="text-xs text-gray-800/70 mt-1">提供具体的手续费标准和时间节点，减少模糊表达</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="liquid-glass-subtle border border-purple-500/30 rounded-lg p-3">
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-4 h-4 text-purple-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        <div>
+                            <div class="text-sm font-medium text-purple-400">强制安全提醒</div>
+                            <div class="text-xs text-gray-800/70 mt-1">添加必须包含的安全提醒，确保合规性</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="liquid-glass-subtle border border-yellow-500/30 rounded-lg p-3">
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-4 h-4 text-yellow-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v6a2 2 0 01-2 2h-3l-4 4z"></path>
+                        </svg>
+                        <div>
+                            <div class="text-sm font-medium text-yellow-400">改进示例模板</div>
+                            <div class="text-xs text-gray-800/70 mt-1">提供更完整的回复示例框架，指导模型生成</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Show results section
+            resultsSection.classList.remove('hidden');
+            
+            // Add apply optimization event
+            document.getElementById('apply-optimization-btn').addEventListener('click', function() {
+                // Copy optimized prompt to main editor
+                const optimizedPrompt = optimizedContainer.querySelector('pre').textContent;
+                document.getElementById('prompt-content').value = optimizedPrompt;
+                
+                // Show success message
+                const successMsg = document.createElement('div');
+                successMsg.className = 'fixed top-4 right-4 bg-green-600/90 text-gray-800 px-4 py-2 rounded-lg shadow-lg z-50';
+                successMsg.textContent = '优化结果已应用到编辑器';
+                document.body.appendChild(successMsg);
+                
+                setTimeout(() => {
+                    successMsg.remove();
+                }, 3000);
+                
+                // Switch to edit tab
+                document.querySelector('[data-tab="edit"]').click();
+            });
+        }
+
+        function handleFileSelect(file) {
+            if (file) {
+                const fileName = file.name;
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                
+                dropZone.innerHTML = `
+                    <svg class="w-8 h-8 mx-auto mb-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="text-gray-800/80 mb-1">${fileName}</div>
+                    <div class="text-sm text-gray-800/60">${fileSize} MB</div>
+                `;
+                
+                importConfirmBtn.disabled = false;
+            }
+        }
+
+        // Initialize
+        updateTemplateList('banking');
+
+        // Monitor prompt content changes
+        document.getElementById('prompt-content').addEventListener('input', function() {
+            // Update original prompt display in real-time when on optimize tab
+            const optimizeTab = document.getElementById('optimize-tab');
+            if (optimizeTab.classList.contains('active')) {
+                syncOriginalPrompt();
+            }
+        });
+
+        // Close modals when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('show');
+            }
         });
     </script>
 </body>
