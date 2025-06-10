@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>业务流程规则管理 - 银行AI中台管理系统</title>
+    <title>复合意图编排 - 银行AI中台管理系统</title>
     <script src="/console/style/tailwindcss.3.0.23.js"></script>
     <style>
         :root {
@@ -55,6 +55,31 @@
             background-color: #FEF2F2;
             color: #DC2626;
         }
+        .status-draft {
+            background-color: #F3F4F6;
+            color: #6B7280;
+        }
+        
+        .complexity-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .complexity-simple {
+            background-color: #DCFCE7;
+            color: #15803D;
+        }
+        .complexity-medium {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+        .complexity-complex {
+            background-color: #FEE2E2;
+            color: #B91C1C;
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -62,30 +87,51 @@
         <!-- Header -->
         <div class="flex items-center justify-between mb-6">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-800">业务流程规则管理</h1>
-                <p class="text-sm text-gray-500 mt-1">管理和配置银行业务流程</p>
+                <h1 class="text-2xl font-semibold text-gray-800">复合意图编排</h1>
+                <p class="text-sm text-gray-500 mt-1">通过组合多个原子意图，构建完整的银行业务流程</p>
             </div>
             <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
-                新建业务流程
+                新建复合意图
             </button>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">全部复合意图</div>
+                <div class="text-2xl font-semibold mt-1">15</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">已上线</div>
+                <div class="text-2xl font-semibold mt-1 text-green-600">12</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">测试中</div>
+                <div class="text-2xl font-semibold mt-1 text-yellow-600">2</div>
+            </div>
+            <div class="dify-card bg-white p-4">
+                <div class="text-sm text-gray-500">草稿</div>
+                <div class="text-2xl font-semibold mt-1 text-gray-600">1</div>
+            </div>
         </div>
 
         <!-- Filters and Search -->
         <div class="dify-card bg-white p-4 mb-6">
             <div class="flex items-center space-x-4">
                 <div class="flex-1">
-                    <input type="text" placeholder="搜索流程名称..." 
+                    <input type="text" placeholder="搜索复合意图名称..." 
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm">
                 </div>
                 <div class="w-48">
                     <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm bg-white">
                         <option>所有业务领域</option>
                         <option>转账汇款</option>
+                        <option>账户管理</option>
                         <option>理财投资</option>
-                        <option>信用卡</option>
+                        <option>信用卡业务</option>
                         <option>客服支持</option>
                     </select>
                 </div>
@@ -94,20 +140,23 @@
                         <option>所有状态</option>
                         <option>已上线</option>
                         <option>测试中</option>
+                        <option>草稿</option>
                         <option>已下线</option>
                     </select>
                 </div>
             </div>
         </div>
 
-        <!-- Flow List Table -->
+        <!-- Composite Intent List Table -->
         <div class="dify-card bg-white overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">流程名称</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">复合意图名称</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">业务领域</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">包含原子意图</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">复杂度</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">版本</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最后修改</th>
@@ -115,21 +164,31 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        <!-- Individual Transfer Flow -->
+                        <!-- Personal Transfer Composite Intent -->
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
                                         <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
                                         </svg>
                                     </div>
                                     <div class="ml-3">
-                                        <div class="text-sm font-medium text-gray-900">个人转账流程</div>
+                                        <div class="text-sm font-medium text-gray-900">个人转账编排</div>
+                                        <div class="text-xs text-gray-500">标准个人转账业务流程</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">转账汇款</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-xs text-gray-500">
+                                    <div>身份验证 → 查询余额 → 转账确认 → 执行转账</div>
+                                    <div class="text-blue-600 mt-1">共 4 个原子意图</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="complexity-badge complexity-simple">简单</span>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="status-badge status-online">已上线</span>
                             </td>
@@ -142,21 +201,31 @@
                             </td>
                         </tr>
 
-                        <!-- Corporate Transfer Flow -->
+                        <!-- Corporate Transfer Composite Intent -->
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                                        <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                         </svg>
                                     </div>
                                     <div class="ml-3">
-                                        <div class="text-sm font-medium text-gray-900">企业转账流程</div>
+                                        <div class="text-sm font-medium text-gray-900">企业转账编排</div>
+                                        <div class="text-xs text-gray-500">企业对公转账业务流程</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">转账汇款</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-xs text-gray-500">
+                                    <div>身份验证 → 权限验证 → 查询余额 → 风险评估 → 转账确认 → 执行转账</div>
+                                    <div class="text-blue-600 mt-1">共 6 个原子意图</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="complexity-badge complexity-medium">中等</span>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="status-badge status-online">已上线</span>
                             </td>
@@ -169,21 +238,31 @@
                             </td>
                         </tr>
 
-                        <!-- Cross-border Transfer Flow -->
+                        <!-- Cross-border Transfer Composite Intent -->
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                                        <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-orange-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m0 0a9 9 0 01-9-9m9 9v-9m9-9a9 9 0 00-9 9m9 0a9 9 0 01-9 9m0 0a9 9 0 01-9-9"></path>
                                         </svg>
                                     </div>
                                     <div class="ml-3">
-                                        <div class="text-sm font-medium text-gray-900">跨境转账流程</div>
+                                        <div class="text-sm font-medium text-gray-900">跨境汇款编排</div>
+                                        <div class="text-xs text-gray-500">国际汇款业务流程</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">转账汇款</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-xs text-gray-500">
+                                    <div>身份验证 → 外汇额度查询 → 汇率查询 → 反洗钱检查 → 转账确认 → 执行转账 → 通知服务</div>
+                                    <div class="text-blue-600 mt-1">共 7 个原子意图</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="complexity-badge complexity-complex">复杂</span>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="status-badge status-testing">测试中</span>
                             </td>
@@ -196,21 +275,31 @@
                             </td>
                         </tr>
 
-                        <!-- Investment Product Flow -->
+                        <!-- Investment Purchase Composite Intent -->
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
-                                        <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m-4-8h8"></path>
                                         </svg>
                                     </div>
                                     <div class="ml-3">
-                                        <div class="text-sm font-medium text-gray-900">理财产品购买流程</div>
+                                        <div class="text-sm font-medium text-gray-900">理财投资编排</div>
+                                        <div class="text-xs text-gray-500">理财产品购买流程</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">理财投资</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-xs text-gray-500">
+                                    <div>身份验证 → 风险评估 → 产品介绍 → 投资确认 → 资金冻结 → 执行购买</div>
+                                    <div class="text-blue-600 mt-1">共 6 个原子意图</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="complexity-badge complexity-medium">中等</span>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="status-badge status-online">已上线</span>
                             </td>
@@ -223,21 +312,31 @@
                             </td>
                         </tr>
 
-                        <!-- Credit Card Payment Flow -->
+                        <!-- Credit Card Payment Composite Intent -->
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                                        <svg class="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 002 2z"></path>
                                         </svg>
                                     </div>
                                     <div class="ml-3">
-                                        <div class="text-sm font-medium text-gray-900">信用卡还款流程</div>
+                                        <div class="text-sm font-medium text-gray-900">信用卡还款编排</div>
+                                        <div class="text-xs text-gray-500">信用卡账单还款流程</div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">信用卡</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">信用卡业务</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-xs text-gray-500">
+                                    <div>身份验证 → 账单查询 → 还款确认 → 执行还款 → 更新账户</div>
+                                    <div class="text-blue-600 mt-1">共 5 个原子意图</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="complexity-badge complexity-simple">简单</span>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="status-badge status-online">已上线</span>
                             </td>
@@ -249,6 +348,80 @@
                                 <a href="#" class="text-blue-600 hover:text-blue-900">发布</a>
                             </td>
                         </tr>
+
+                        <!-- Account Unlock Composite Intent -->
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">账户解锁编排</div>
+                                        <div class="text-xs text-gray-500">冻结账户恢复流程</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">账户管理</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-xs text-gray-500">
+                                    <div>身份验证 → 冻结原因查询 → 材料上传 → 人工审核 → 执行解锁 → 通知服务</div>
+                                    <div class="text-blue-600 mt-1">共 6 个原子意图</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="complexity-badge complexity-medium">中等</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-badge status-testing">测试中</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">v1.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-05</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">复制</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900">发布</a>
+                            </td>
+                        </tr>
+
+                        <!-- Smart Customer Service Composite Intent -->
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">智能客服编排</div>
+                                        <div class="text-xs text-gray-500">多轮对话客服流程</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">客服支持</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-xs text-gray-500">
+                                    <div>意图识别 → 身份验证 → 业务查询 → 问题解答 → 满意度评价</div>
+                                    <div class="text-blue-600 mt-1">共 5 个原子意图</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="complexity-badge complexity-simple">简单</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-badge status-draft">草稿</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">v0.1</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-10</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">编辑</a>
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">复制</a>
+                                <a href="#" class="text-green-600 hover:text-green-900">发布</a>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -256,7 +429,7 @@
             <!-- Pagination -->
             <div class="px-6 py-4 flex items-center justify-between border-t border-gray-200">
                 <div class="text-sm text-gray-500">
-                    显示 <span class="font-medium">1</span> 到 <span class="font-medium">5</span> 共 <span class="font-medium">8</span> 条
+                    显示 <span class="font-medium">1</span> 到 <span class="font-medium">8</span> 共 <span class="font-medium">15</span> 条
                 </div>
                 <div class="flex items-center space-x-2">
                     <button class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50 disabled:opacity-50" disabled>
@@ -280,7 +453,7 @@
         <!-- Modal Header -->
         <div class="border-b border-gray-200 flex justify-between items-center">
             <div class="flex items-center">
-                <h3 class="text-lg font-medium text-gray-900">流程开发</h3>
+                <h3 class="text-lg font-medium text-gray-900">复合意图编排器</h3>
             </div>
             <button class="text-gray-400 hover:text-gray-500" onclick="hideEditDialog()">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -291,11 +464,11 @@
             </button>
         </div>
         <iframe src="/development/dynamic-orchestration/dynamic-orchestration-dialog.html"
-            style="height: 800px;width: 1000px;border:none;outline: 0;"></iframe>
+            style="height: 800px;width: 1200px;border:none;outline: 0;"></iframe>
         <!-- Modal Footer -->
         <div class="border-t border-gray-200 flex justify-end">
-            <button onclick="hideEditDialog()"
-                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+            <button  onclick="hideEditDialog()"
+                class="mt-6 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
                 关闭
             </button>
         </div>
@@ -307,32 +480,29 @@
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 const action = this.textContent.trim();
-                const flowName = this.closest('tr').querySelector('.text-sm.font-medium').textContent;
+                const intentName = this.closest('tr').querySelector('.text-sm.font-medium').textContent;
                 
                 if (action === '编辑') {
                     showEditDialog();
-                    console.log(`编辑流程: ${flowName}`);
-                    // 这里可以跳转到流程编辑界面
+                    console.log(`编辑复合意图: ${intentName}`);
                 } else if (action === '复制') {
-                    console.log(`复制流程: ${flowName}`);
+                    console.log(`复制复合意图: ${intentName}`);
                 } else if (action === '发布') {
-                    console.log(`发布流程: ${flowName}`);
+                    console.log(`发布复合意图: ${intentName}`);
                 }
             });
         });
 
-        // Add handler for new flow button
+        // Add handler for new composite intent button
         document.querySelector('.dify-btn').addEventListener('click', function() {
             showEditDialog();
-            console.log('新建业务流程');
-            // 这里可以跳转到流程创建界面
+            console.log('新建复合意图');
         });
 
-
-        window.showEditDialog=function(){
+        window.showEditDialog = function(){
             document.getElementById('editDialog').showModal();
         }
-        window.hideEditDialog=function(){
+        window.hideEditDialog = function(){
             document.getElementById('editDialog').close();
         }
     </script>

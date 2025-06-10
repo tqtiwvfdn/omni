@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LUI卡片信息管理（卡片管理与开发）</title>
+    <title>LUI卡片组件管理 - 银行AI中台管理系统</title>
     <script src="/console/style/tailwindcss.3.0.23.js"></script>
     <style>
         :root {
@@ -26,552 +26,769 @@
             position: relative;
             cursor: pointer;
             transition: all 0.2s ease;
-            padding: 8px 12px;
-            color: #666;
-            border-bottom: 2px solid transparent;
+            padding: 12px 16px;
+            color: #6B7280;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
         }
         .tab-item:hover {
-            color: #333;
+            color: #374151;
+            background-color: #F9FAFB;
         }
         .tab-item.active {
-            color: #00A3A3;
-            border-bottom-color: #00A3A3;
+            color: #2970FF;
+            border-bottom-color: #2970FF;
+            background-color: #EBF2FF;
         }
         
         .card-component {
-            border: 1px solid #eee;
-            border-radius: 8px;
-            padding: 12px;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 16px;
             cursor: pointer;
             transition: all 0.2s ease;
-            background: #fafafa;
+            background: white;
+            position: relative;
+            overflow: hidden;
         }
         .card-component:hover {
-            border-color: #00A3A3;
-            background: #f5f5f5;
+            border-color: #2970FF;
+            box-shadow: 0 4px 6px rgba(41, 112, 255, 0.1);
+            transform: translateY(-2px);
         }
         
-        .card-icon {
-            width: 40px;
-            height: 40px;
+        .card-preview {
+            width: 100%;
+            height: 120px;
+            background: #F3F4F6;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-preview.blue {
+            background: linear-gradient(135deg, #EBF2FF 0%, #D1E7FF 100%);
+        }
+        .card-preview.green {
+            background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+        }
+        .card-preview.orange {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        }
+        .card-preview.purple {
+            background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+        }
+        .card-preview.red {
+            background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+        }
+        
+        .mobile-mockup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            background: white;
             border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 8px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-            padding: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 24px;
         }
         
-        .modal-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        .modal-content {
-            background: white;
-            border-radius: 8px;
-            width: 1200px;
-            max-height: 90vh;
-            overflow: hidden;
-            display: flex;
-        }
-        
-        .modal-sidebar {
-            width: 300px;
-            border-right: 1px solid #e5e7eb;
-            overflow-y: auto;
-            background: #fafafa;
-        }
-        
-        .modal-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-        
-        .component-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 12px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .component-item:hover {
-            border-color: #00A3A3;
-            background: #f9f9f9;
-        }
-        
-        .component-icon {
-            width: 32px;
-            height: 32px;
-            margin-bottom: 6px;
-        }
-        
-        .toggle-switch {
-            display: inline-flex;
-            align-items: center;
-            position: relative;
-            width: 36px;
-            height: 20px;
-            background-color: #e5e7eb;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        
-        .toggle-switch.active {
-            background-color: #10B981;
-        }
-        
-        .toggle-switch::after {
-            content: '';
+        .version-badge {
+            display: none;
             position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 16px;
-            height: 16px;
-            background: white;
-            border-radius: 8px;
-            transition: transform 0.2s;
+            top: 12px;
+            right: 12px;
+            background: #10B981;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 500;
         }
         
-        .toggle-switch.active::after {
-            transform: translateX(16px);
+        .version-badge.draft {
+            background: #6B7280;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .status-dot.published {
+            background: #10B981;
+        }
+        .status-dot.draft {
+            background: #6B7280;
+        }
+        .status-dot.testing {
+            background: #F59E0B;
         }
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Main Container -->
-    <div><!-- <div class="container mx-auto p-6"> -->
+    <div class="container mx-auto p-6">
         
-        <!-- Header -->
+        <!-- Version Control Header -->
+        <div class="bg-white rounded-lg shadow-sm mb-6 p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-800">LUI卡片组件管理</h1>
+                    <p class="text-sm text-gray-500 mt-1">管理银行业务中的LUI交互卡片组件</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">组件库版本:</span>
+                        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm" onchange="switchVersion(this.value)">
+                            <option value="v3.2.1">v3.2.1 (当前)</option>
+                            <option value="v3.2.0">v3.2.0</option>
+                            <option value="v3.1.8">v3.1.8</option>
+                        </select>
+                        <!-- <button onclick="showVersionManager()" class="text-blue-600 hover:text-blue-800 text-sm">管理版本</button> -->
+                        <!-- <button onclick="publishVersion()" class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700">发布版本</button> -->
+                    </div>
+                        <div class="flex items-center justify-between text-xs text-gray-400">
+                    <span>更新时间：2025-04-18</span>
+                    <!-- <span>使用次数：892</span> -->
+                </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Category Tabs and Search -->
         <div class="bg-white rounded-lg shadow-sm mb-6">
             <div class="border-b border-gray-200">
-                <nav class="flex">
-                    <button class="tab-item">默认分类</button>
-                    <button class="tab-item">网点相关组件</button>
-                    <button class="tab-item">cpt_1</button>
-                    <button class="tab-item">信用卡</button>
-                    <button class="tab-item">电票缴费</button>
-                    <button class="tab-item">fund</button>
-                    <button class="tab-item">首页相关组件</button>
-                    <button class="tab-item">生活缴费</button>
-                    <button class="tab-item">payManage</button>
-                    <button class="tab-item">paymentDetails</button>
-                    <button class="tab-item">扫码支付</button>
-                    <button class="tab-item">限额设置</button>
-                    <button class="tab-item active">转账相关组件</button>
+                <nav class="flex overflow-x-auto">
+                    <button class="tab-item" data-category="all">全部组件</button>
+                    <button class="tab-item" data-category="query">查询类卡片</button>
+                    <button class="tab-item" data-category="interactive">交互类卡片</button>
+                    <button class="tab-item" data-category="display">展示类卡片</button>
+                    <button class="tab-item" data-category="form">表单类卡片</button>
+                    <button class="tab-item" data-category="result">结果类卡片</button>
+                    <button class="tab-item active" data-category="transfer">转账相关卡片</button>
                 </nav>
             </div>
             
-            <div class="p-4 flex justify-between items-center">
-                <div>
-                    <button class="bg-teal-600 text-white px-4 py-2 rounded text-sm flex items-center hover:bg-teal-700">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        新建业务组件
-                    </button>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <input type="text" placeholder="搜索" class="px-3 py-2 border border-gray-300 rounded text-sm w-64">
-                    <button class="p-2 text-gray-500 hover:text-gray-700">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="p-4 flex justify-end">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <input type="text" placeholder="搜索卡片组件..." class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-64 pr-10">
+                        <svg class="w-4 h-4 absolute right-3 top-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
-                    </button>
+                    </div>
+                    <!-- <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <option>所有状态</option>
+                        <option>已发布</option>
+                        <option>测试中</option>
+                        <option>草稿</option>
+                    </select> -->
                 </div>
             </div>
         </div>
         
         <!-- Cards Grid -->
         <div class="card-grid">
-            <!-- Card 1 -->
-            <div class="card-component bg-white">
-                <div class="flex justify-end mb-2">
-                    <button class="text-gray-400 hover:text-gray-600">•••</button>
-                </div>
-                <div class="flex justify-center mb-3">
-                    <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                        <div class="w-12 h-12 bg-gray-300 rounded"></div>
+            <!-- Transfer Confirmation Card -->
+            <div class="card-component" onclick="showCardDetails('transfer-confirm')">
+                <div class="version-badge">v2.1</div>
+                <div class="card-preview blue">
+                    <div class="mobile-mockup">
+                        <div class="text-xs text-gray-600 mb-1">转账确认信息</div>
+                        <div class="text-sm font-bold mb-1">转账金额 (人民币元)</div>
+                        <div class="text-xl font-bold text-gray-900 mb-2">1,000.00</div>
+                        <div class="space-y-1 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">收款人姓名</span>
+                                <span class="font-medium">李四海</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">收款账号</span>
+                                <span>6222 ******* 5522</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">收款银行</span>
+                                <span>赞同银行</span>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-gray-200">
+                            <div class="bg-blue-500 text-white text-xs py-1.5 px-3 rounded-lg text-center font-medium">确认</div>
+                        </div>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-center">bankCardRadioList [银行卡选列表]</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium">TransferConfirmCard</h3>
+                    <!-- <div class="flex items-center text-xs text-gray-500">
+                        <span class="status-dot published"></span>
+                        已发布
+                    </div> -->
+                </div>
+                <p class="text-xs text-gray-500 mb-3">转账确认信息卡片</p>
+                <!-- <div class="flex items-center justify-between text-xs text-gray-400">
+                    <span>更新时间：2025-04-20</span>
+                    <span>使用次数：1,234</span>
+                </div> -->
             </div>
-            
-            <!-- Card 2 -->
-            <div class="card-component bg-white">
-                <div class="flex justify-end mb-2">
-                    <button class="text-gray-400 hover:text-gray-600">•••</button>
-                </div>
-                <div class="flex justify-center mb-3">
-                    <div class="w-16 h-16 bg-red-50 rounded flex items-center justify-center">
-                        <div class="w-12 h-12 bg-red-100 rounded"></div>
+
+            <!-- Payee Selection Card -->
+            <div class="card-component" onclick="showCardDetails('payee-select')">
+                <div class="version-badge">v1.8</div>
+                <div class="card-preview green">
+                    <div class="mobile-mockup">
+                        <div class="text-xs text-gray-600 mb-2">请选择收款人信息</div>
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-6 h-6 bg-blue-500 rounded-full mr-2 text-xs text-white flex items-center justify-center font-medium">李</div>
+                                    <div>
+                                        <div class="text-xs font-medium">李四海</div>
+                                        <div class="text-xs text-gray-500">6222 ****** 2901</div>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded">选择</div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-6 h-6 bg-green-500 rounded-full mr-2 text-xs text-white flex items-center justify-center font-medium">张</div>
+                                    <div>
+                                        <div class="text-xs font-medium">张丰盛</div>
+                                        <div class="text-xs text-gray-500">6222 ****** 2901</div>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded">选择</div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-6 h-6 bg-purple-500 rounded-full mr-2 text-xs text-white flex items-center justify-center font-medium">陈</div>
+                                    <div>
+                                        <div class="text-xs font-medium">陈晓</div>
+                                        <div class="text-xs text-gray-500">6222 ****** 2901</div>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded">选择</div>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-1 text-center">
+                            <div class="text-xs text-blue-500">查看更多 ></div>
+                        </div>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-center">choose_payment_card [选择付款卡]</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium">PayeeSelectCard</h3>
+                    <!-- <div class="flex items-center text-xs text-gray-500">
+                        <span class="status-dot published"></span>
+                        已发布
+                    </div> -->
+                </div>
+                <p class="text-xs text-gray-500 mb-3">收款人选择列表卡片</p>
+                <!-- <div class="flex items-center justify-between text-xs text-gray-400">
+                    <span>更新时间：2025-04-18</span>
+                    <span>使用次数：892</span>
+                </div> -->
             </div>
-            
-            <!-- Card 3 -->
-            <div class="card-component bg-white">
-                <div class="flex justify-end mb-2">
-                    <button class="text-gray-400 hover:text-gray-600">•••</button>
-                </div>
-                <div class="flex justify-center mb-3">
-                    <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                        <div class="w-8 h-8 bg-gray-300 rounded"></div>
+
+            <!-- Transaction Result Card -->
+            <div class="card-component" onclick="showCardDetails('transaction-result')">
+                <div class="version-badge">v1.5</div>
+                <div class="card-preview orange">
+                    <div class="mobile-mockup">
+                        <div class="text-center">
+                            <div class="text-xs text-gray-600 mb-1">转账结果</div>
+                            <div class="w-8 h-8 bg-green-500 rounded-full mx-auto mb-2 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <div class="text-sm font-bold mb-1">交易成功</div>
+                            <div class="text-xs text-gray-600 mb-2">向李四海 (2901) 转账1,000.00元</div>
+                            <div class="flex justify-center space-x-2">
+                                <div class="text-xs text-blue-500 px-2 py-1 border border-blue-200 rounded">查看详情</div>
+                                <div class="text-xs text-blue-500 px-2 py-1 border border-blue-200 rounded">下载凭证</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-center">img_cell_list [图片单元格]</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium">TransactionResultCard</h3>
+                    <!-- <div class="flex items-center text-xs text-gray-500">
+                        <span class="status-dot published"></span>
+                        已发布
+                    </div> -->
+                </div>
+                <p class="text-xs text-gray-500 mb-3">交易结果展示卡片</p>
+                <!-- <div class="flex items-center justify-between text-xs text-gray-400">
+                    <span>更新时间：2025-04-15</span>
+                    <span>使用次数：2,156</span>
+                </div> -->
             </div>
-            
-            <!-- Card 4 -->
-            <div class="card-component bg-white">
-                <div class="flex justify-end mb-2">
-                    <button class="text-gray-400 hover:text-gray-600">•••</button>
-                </div>
-                <div class="flex justify-center mb-3">
-                    <div class="w-16 h-16 bg-red-50 rounded flex items-center justify-center">
-                        <div class="w-12 h-12 bg-red-100 rounded"></div>
+
+            <!-- Currency Exchange Card -->
+            <div class="card-component" onclick="showCardDetails('currency-exchange')">
+                <div class="version-badge">v1.2</div>
+                <div class="card-preview purple">
+                    <div class="mobile-mockup">
+                        <div class="text-xs text-gray-600 mb-1">预约换汇</div>
+                        <div class="text-xs font-medium mb-2">请选择币种</div>
+                        <div class="grid grid-cols-3 gap-1 mb-2">
+                            <div class="text-center bg-white border border-gray-200 rounded p-1">
+                                <div class="text-xs mb-1">🇺🇸</div>
+                                <div class="text-xs font-medium">美元 USD</div>
+                                <div class="text-xs text-blue-500 mt-1">选择</div>
+                            </div>
+                            <div class="text-center bg-white border border-gray-200 rounded p-1">
+                                <div class="text-xs mb-1">🇯🇵</div>
+                                <div class="text-xs font-medium">日元 JPY</div>
+                                <div class="text-xs text-blue-500 mt-1">选择</div>
+                            </div>
+                            <div class="text-center bg-white border border-gray-200 rounded p-1">
+                                <div class="text-xs mb-1">🇭🇰</div>
+                                <div class="text-xs font-medium">港币 HKD</div>
+                                <div class="text-xs text-blue-500 mt-1">选择</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-center">letter_cell_list [字母列表]</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium">CurrencyExchangeCard</h3>
+                    <!-- <div class="flex items-center text-xs text-gray-500">
+                        <span class="status-dot published"></span>
+                        已发布
+                    </div> -->
+                </div>
+                <p class="text-xs text-gray-500 mb-3">外币兑换预约卡片</p>
+                <!-- <div class="flex items-center justify-between text-xs text-gray-400">
+                    <span>更新时间：2025-04-12</span>
+                    <span>使用次数：567</span>
+                </div> -->
             </div>
-            
-            <!-- Card 5 -->
-            <div class="card-component bg-white">
-                <div class="flex justify-end mb-2">
-                    <button class="text-gray-400 hover:text-gray-600">•••</button>
-                </div>
-                <div class="flex justify-center mb-3">
-                    <div class="w-16 h-16 bg-blue-50 rounded flex items-center justify-center">
-                        <div class="w-12 h-4 bg-blue-200 rounded"></div>
+
+            <!-- Financial Analysis Card -->
+            <div class="card-component" onclick="showCardDetails('financial-analysis')">
+                <div class="version-badge">v2.0</div>
+                <div class="card-preview red">
+                    <div class="mobile-mockup">
+                        <div class="text-xs text-gray-600 mb-1">基于您的近期消费分析</div>
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center">
+                                <div class="text-xs">01 餐饮支出 vs. 上月</div>
+                                <div class="text-xs text-red-500 font-bold">+30%</div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div class="text-xs">02 重复订阅</div>
+                                <div class="text-xs text-red-500 font-bold">3 items</div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div class="text-xs">03 理财投资</div>
+                                <div class="text-xs text-green-600 font-bold">Higher returns</div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-1 mt-2">
+                            <div class="text-xs px-2 py-1 bg-gray-100 rounded-full">详细分析</div>
+                            <div class="text-xs px-2 py-1 bg-blue-500 text-white rounded-full">优化建议</div>
+                        </div>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-center">selectDate [选择年月日]</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium">FinancialAnalysisCard</h3>
+                    <!-- <div class="flex items-center text-xs text-gray-500">
+                        <span class="status-dot testing"></span>
+                        测试中
+                    </div> -->
+                </div>
+                <p class="text-xs text-gray-500 mb-3">智能财务分析卡片</p>
+                <!-- <div class="flex items-center justify-between text-xs text-gray-400">
+                    <span>更新时间：2025-05-01</span>
+                    <span>使用次数：89</span>
+                </div> -->
             </div>
-            
-            <!-- Card 6 -->
-            <div class="card-component bg-white">
-                <div class="flex justify-end mb-2">
-                    <button class="text-gray-400 hover:text-gray-600">•••</button>
-                </div>
-                <div class="flex justify-center mb-3">
-                    <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                        <div class="text-lg">•••</div>
+
+            <!-- Bill Query Card -->
+            <div class="card-component" onclick="showCardDetails('bill-query')">
+                <div class="version-badge draft">v0.8</div>
+                <div class="card-preview blue">
+                    <div class="mobile-mockup">
+                        <div class="flex items-center mb-2">
+                            <div class="w-6 h-6 bg-blue-500 rounded mr-2 flex items-center justify-center">
+                                <div class="w-2 h-3 bg-white rounded-sm"></div>
+                            </div>
+                            <div class="text-xs font-medium">水费查询</div>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between">
+                                <div class="text-xs text-gray-600">总计金额</div>
+                                <div class="text-sm font-bold">¥392.09</div>
+                            </div>
+                            <div class="flex justify-between">
+                                <div class="text-xs text-gray-600">水费</div>
+                                <div class="text-xs">¥280.20</div>
+                            </div>
+                            <div class="text-xs text-gray-500">第一阶梯0-20立方米：2.5元/立方米；第二阶梯20-30立方米：3.5元/立方米</div>
+                            <div class="flex justify-between">
+                                <div class="text-xs text-gray-600">污水处理费</div>
+                                <div class="text-xs">¥392.09</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-center">transfer_amount [转账金额]</h3>
-            </div>
-            
-            <!-- Card 7 -->
-            <div class="card-component bg-white">
-                <div class="flex justify-end mb-2">
-                    <button class="text-gray-400 hover:text-gray-600">•••</button>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium">BillQueryCard</h3>
+                    <!-- <div class="flex items-center text-xs text-gray-500">
+                        <span class="status-dot draft"></span>
+                        草稿
+                    </div> -->
                 </div>
-                <div class="flex justify-center mb-3">
-                    <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                        <div class="w-8 h-8 bg-gray-300 rounded"></div>
-                    </div>
-                </div>
-                <h3 class="text-sm font-medium text-center">transfer_collapse_list [转账折叠面板]</h3>
-            </div>
-            
-            <!-- Card 8 -->
-            <div class="card-component bg-white">
-                <div class="flex justify-end mb-2">
-                    <button class="text-gray-400 hover:text-gray-600">•••</button>
-                </div>
-                <div class="flex justify-center mb-3">
-                    <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                        <div class="w-8 h-8 bg-gray-300 rounded"></div>
-                    </div>
-                </div>
-                <h3 class="text-sm font-medium text-center">transfer_postscript [转账附言]</h3>
-            </div>
-            
-            <!-- Card 9 -->
-            <div class="card-component bg-white">
-                <div class="flex justify-end mb-2">
-                    <button class="text-gray-400 hover:text-gray-600">•••</button>
-                </div>
-                <div class="flex justify-center mb-3">
-                    <div class="w-16 h-16 bg-green-50 rounded flex items-center justify-center">
-                        <div class="w-8 h-1 bg-green-300 rounded"></div>
-                    </div>
-                </div>
-                <h3 class="text-sm font-medium text-center">withdrawalPassword [取款密码组件]</h3>
+                <p class="text-xs text-gray-500 mb-3">账单查询展示卡片</p>
+                <!-- <div class="flex items-center justify-between text-xs text-gray-400">
+                    <span>更新时间：2025-05-05</span>
+                    <span>使用次数：0</span>
+                </div> -->
             </div>
         </div>
     </div>
     
-    <!-- Modal -->
-    <div class="modal-backdrop hidden" id="cardModal">
-        <div class="modal-content">
-            <!-- Left Sidebar -->
-            <div class="modal-sidebar">
-                <div class="p-4 border-b border-gray-200">
-                    <h3 class="font-medium text-gray-700">基础部件</h3>
-                </div>
-                
-                <div class="p-3">
-                    <div class="relative mb-3">
-                        <input type="text" placeholder="请输入关键字" class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
-                        <svg class="w-4 h-4 absolute right-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                    </div>
-                    
-                    <div class="grid grid-cols-3 gap-2 mb-4">
-                        <div class="component-item">
-                            <div class="component-icon bg-blue-100 rounded flex items-center justify-center">
-                                📅
-                            </div>
-                            <span class="text-xs text-center">日历</span>
-                        </div>
-                        <div class="component-item">
-                            <div class="component-icon bg-blue-100 rounded flex items-center justify-center">
-                                🔘
-                            </div>
-                            <span class="text-xs text-center">时间选择器</span>
-                        </div>
-                        <div class="component-item">
-                            <div class="component-icon bg-blue-100 rounded flex items-center justify-center">
-                                💬
-                            </div>
-                            <span class="text-xs text-center">输入框</span>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <div class="text-xs text-gray-500 px-2">表单组件</div>
-                        <div class="space-y-1">
-                            <div class="px-2 py-1 text-sm hover:bg-gray-100 rounded cursor-pointer">单选框</div>
-                            <div class="px-2 py-1 text-sm hover:bg-gray-100 rounded cursor-pointer">多选框</div>
-                            <div class="px-2 py-1 text-sm hover:bg-gray-100 rounded cursor-pointer">文件上传</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Main Content -->
-            <div class="modal-main">
-                <!-- Tab Bar -->
-                <div class="flex border-b border-gray-200">
-                    <button class="px-4 py-3 text-sm text-gray-600 hover:text-gray-900 border-b-2 border-transparent">属性</button>
-                    <button class="px-4 py-3 text-sm text-gray-600 hover:text-gray-900 border-b-2 border-transparent">样式</button>
-                    <button class="px-4 py-3 text-sm text-gray-600 hover:text-gray-900 border-b-2 border-transparent">数据</button>
-                    <button class="px-4 py-3 text-sm text-blue-600 border-b-2 border-blue-600">绑定</button>
-                    <!-- <button class="px-4 py-3 text-sm text-gray-600 hover:text-gray-900 border-b-2 border-transparent">流程</button>
-                    <button class="px-4 py-3 text-sm text-gray-600 hover:text-gray-900 border-b-2 border-transparent">协议</button> -->
-                </div>
-                
-                <!-- Content -->
-                <div class="flex-1 p-4">
-                    <div class="grid grid-cols-2 gap-4 max-w-2xl">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">全部</label>
-                            <div class="relative">
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded text-sm pr-8 appearance-none">
-                                    <option>${issue.name}</option>
-                                </select>
-                                <svg class="w-4 h-4 absolute right-3 top-2.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+    <!-- Card Details Modal -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 hidden z-50" id="cardModal">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+                <div class="flex">
+                    <!-- Left Sidebar - Card Preview -->
+                    <div class="w-1/3 bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">卡片预览</h3>
+                            <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
-                            </div>
-                        </div>
-                        <div class="flex items-end">
-                            <button class="px-4 py-2 bg-blue-600 text-white rounded text-sm">新建</button>
+                            </button>
                         </div>
                         
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">ID</label>
-                            <div class="px-3 py-2 border border-gray-300 rounded text-sm bg-gray-50">${issue.id}</div>
-                        </div>
-                        <div></div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">标题</label>
-                            <div class="px-3 py-2 border border-gray-300 rounded text-sm bg-gray-50">${issue.name}</div>
-                        </div>
-                        <div></div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">分类</label>
-                            <div class="px-3 py-2 border border-gray-300 rounded text-sm bg-gray-50">${issue.categoryName}</div>
-                        </div>
-                        <div></div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">市场名称</label>
-                            <div class="px-3 py-2 border border-gray-300 rounded text-sm bg-gray-50">${issue.marketProject}</div>
-                        </div>
-                        <div></div>
-                    </div>
-                </div>
-                
-                <!-- Form Preview -->
-                <div class="border-t border-gray-200 p-4">
-                    <div class="bg-gray-50 rounded p-6">
-                        <h3 class="text-lg font-medium mb-4">空循环</h3>
-                        <div class="space-y-3">
-                            <div class="grid grid-cols-3 gap-4 text-sm">
-                                <label class="text-gray-600">创建者</label>
-                                <div class="col-span-2">${issue.creator}</div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 text-sm">
-                                <label class="text-gray-600">处理人</label>
-                                <div class="col-span-2">${issue.handler}</div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 text-sm">
-                                <label class="text-gray-600">抄送人</label>
-                                <div class="col-span-2">${issue.caosong}</div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 text-sm">
-                                <label class="text-gray-600">预计开始</label>
-                                <div class="col-span-2">${issue.start}</div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 text-sm">
-                                <label class="text-gray-600">预计结束</label>
-                                <div class="col-span-2">${issue.end}</div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 text-sm">
-                                <label class="text-gray-600">状态</label>
-                                <div class="col-span-2">${issue.status}</div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 text-sm">
-                                <label class="text-gray-600">内容</label>
-                                <div class="col-span-2">${issue.desc}</div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 text-sm">
-                                <label class="text-gray-600">附件</label>
-                                <div class="col-span-2"></div>
+                        <!-- Mobile Mockup -->
+                        <div class="bg-gray-900 rounded-3xl p-2 mx-auto w-64">
+                            <div class="bg-white rounded-2xl overflow-hidden">
+                                <!-- Status Bar -->
+                                <div class="bg-gray-100 px-4 py-2 flex justify-between items-center text-xs">
+                                    <span>11:10</span>
+                                    <div class="flex items-center space-x-1">
+                                        <span>••••</span>
+                                        <span>📶</span>
+                                        <span>📱</span>
+                                        <span class="bg-gray-800 text-white px-1 rounded">96</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Card Content -->
+                                <div class="bg-gray-50 p-4 min-h-96">
+                                    <div class="flex items-center mb-4">
+                                        <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                        </svg>
+                                        <span class="text-sm text-gray-700">智能助理</span>
+                                    </div>
+                                    
+                                    <div class="text-right mb-3">
+                                        <div class="inline-block bg-white border border-gray-200 rounded-2xl rounded-tr-sm px-4 py-2 text-sm max-w-xs">
+                                            我要转账
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <div class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full inline-block mb-2">
+                                            转账 (1/5)
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-white rounded-xl p-4 mb-4 border border-gray-200">
+                                        <div id="card-preview-content">
+                                            <!-- Dynamic content will be inserted here -->
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center bg-white rounded-full p-3 border border-gray-200">
+                                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                                        </svg>
+                                        <input type="text" placeholder="有什么问题尽管问我" class="flex-1 bg-transparent outline-none text-sm">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Right Panel -->
-            <div class="w-80 border-l border-gray-200 bg-gray-50">
-                <div class="p-4">
-                    <h3 class="font-medium text-gray-700 mb-4">创建者</h3>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">当前输入字段</span>
-                            <select class="px-2 py-1 text-sm border border-gray-300 rounded">
-                                <option>营业_creator</option>
-                            </select>
+                    
+                    <!-- Right Content -->
+                    <div class="flex-1 flex flex-col">
+                        <!-- Header -->
+                        <div class="border-b border-gray-200 p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-xl font-semibold text-gray-800" id="card-title">TransferConfirmCard</h2>
+                                    <p class="text-gray-600 mt-1" id="card-description">转账确认信息卡片</p>
+                                </div>
+                                <!-- <div class="flex items-center space-x-3">
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">已发布</span>
+                                    <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">v2.1</span>
+                                </div> -->
+                            </div>
                         </div>
                         
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">创建者</span>
-                            <span class="text-sm text-gray-600">输入框</span>
+                        <!-- Tabs -->
+                        <div class="border-b border-gray-200">
+                            <nav class="flex">
+                                <button class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600" data-tab="params">参数配置</button>
+                                <button class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="usage">使用文档</button>
+                                <!-- <button class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="stats">使用统计</button> -->
+                            </nav>
                         </div>
                         
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">名称</label>
-                            <input type="text" value="输入框" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                        </div>
-                        
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">输入框长度</span>
-                            <select class="px-2 py-1 text-sm border border-gray-300 rounded">
-                                <option>文字</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">大小</label>
-                            <select class="w-full px-2 py-1 text-sm border border-gray-300 rounded">
-                                <option>默认</option>
-                            </select>
-                        </div>
-                        
-                        <div class="pt-3 border-t border-gray-200">
-                            <div class="space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示显示文字</span>
-                                    <div class="toggle-switch active"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示键盘内容控制键</span>
-                                    <div class="toggle-switch"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示多行内容</span>
-                                    <div class="toggle-switch active"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示字符串（计算）</span>
-                                    <div class="toggle-switch"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示当前线程</span>
-                                    <div class="toggle-switch active"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示已使用流程控制</span>
-                                    <div class="toggle-switch active"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">最多有格式化反应</span>
-                                    <div class="toggle-switch"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示右侧信息描述</span>
-                                    <div class="toggle-switch"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示密码内容限制功能</span>
-                                    <div class="toggle-switch"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示显示字体设计</span>
-                                    <div class="toggle-switch"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示样基本输入组标识组</span>
-                                    <div class="toggle-switch"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示面板解锁示文字</span>
-                                    <div class="toggle-switch"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">输入内容格式设计</span>
-                                    <div class="toggle-switch"></div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">显示大方向</span>
-                                    <div class="toggle-switch"></div>
+                        <!-- Tab Content -->
+                        <div class="flex-1 overflow-y-auto">
+                            <!-- Parameters Tab -->
+                            <div id="params-tab" class="tab-content p-6">
+                                <div class="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-800 mb-4">输入参数</h3>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">amount</label>
+                                                <div class="p-3 bg-gray-50 rounded border">
+                                                    <div class="text-sm text-gray-600">类型: Number</div>
+                                                    <div class="text-sm text-gray-600">描述: 转账金额</div>
+                                                    <div class="text-sm text-gray-600">必填: 是</div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">payeeName</label>
+                                                <div class="p-3 bg-gray-50 rounded border">
+                                                    <div class="text-sm text-gray-600">类型: String</div>
+                                                    <div class="text-sm text-gray-600">描述: 收款人姓名</div>
+                                                    <div class="text-sm text-gray-600">必填: 是</div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">payeeAccount</label>
+                                                <div class="p-3 bg-gray-50 rounded border">
+                                                    <div class="text-sm text-gray-600">类型: String</div>
+                                                    <div class="text-sm text-gray-600">描述: 收款人账号</div>
+                                                    <div class="text-sm text-gray-600">必填: 是</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-800 mb-4">输出事件</h3>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">onConfirm</label>
+                                                <div class="p-3 bg-blue-50 rounded border border-blue-200">
+                                                    <div class="text-sm text-blue-700">用户点击确认按钮时触发</div>
+                                                    <div class="text-sm text-blue-600 mt-1">返回: 确认后的表单数据</div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">onCancel</label>
+                                                <div class="p-3 bg-gray-50 rounded border">
+                                                    <div class="text-sm text-gray-600">用户点击取消按钮时触发</div>
+                                                    <div class="text-sm text-gray-600 mt-1">返回: 取消操作信号</div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">onEdit</label>
+                                                <div class="p-3 bg-gray-50 rounded border">
+                                                    <div class="text-sm text-gray-600">用户点击修改按钮时触发</div>
+                                                    <div class="text-sm text-gray-600 mt-1">返回: 需要修改的字段名</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div class="mt-4 flex space-x-2">
-                                <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm">右</button>
-                                <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm">左</button>
-                                <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm">上</button>
-                                <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm">下</button>
+                            <!-- Usage Documentation Tab -->
+                            <div id="usage-tab" class="tab-content p-6 hidden">
+                                <h3 class="text-lg font-medium text-gray-800 mb-6">使用文档</h3>
+                                
+                                <div class="space-y-6">
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 mb-3">组件描述</h4>
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <p class="text-sm text-gray-700">
+                                                TransferConfirmCard 是一个用于银行转账确认的LUI交互卡片组件。
+                                                该组件提供完整的转账信息展示，包括金额、收款人信息、付款账户信息等，
+                                                并提供确认、取消、修改等交互操作。
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 mb-3">使用场景</h4>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="bg-blue-50 rounded-lg p-4">
+                                                <div class="font-medium text-blue-800 mb-2">个人转账流程</div>
+                                                <div class="text-sm text-blue-700">
+                                                    在个人转账的最终确认环节使用，展示完整的转账信息供用户确认
+                                                </div>
+                                            </div>
+                                            <div class="bg-green-50 rounded-lg p-4">
+                                                <div class="font-medium text-green-800 mb-2">企业转账流程</div>
+                                                <div class="text-sm text-green-700">
+                                                    在企业对公转账中使用，支持更多的审批和风险控制信息展示
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 mb-3">代码示例</h4>
+                                        <div class="bg-gray-900 rounded-lg p-4 text-sm text-gray-300 font-mono">
+                                            <div class="text-green-400">// 在复合意图中使用</div>
+                                            <div class="mt-2">
+                                                <span class="text-blue-400">const</span> transferIntent = <span class="text-yellow-400">{</span><br>
+                                                &nbsp;&nbsp;<span class="text-red-400">component</span>: <span class="text-green-300">'TransferConfirmCard'</span>,<br>
+                                                &nbsp;&nbsp;<span class="text-red-400">props</span>: <span class="text-yellow-400">{</span><br>
+                                                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-400">amount</span>: <span class="text-green-300">1000.00</span>,<br>
+                                                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-400">payeeName</span>: <span class="text-green-300">'李四海'</span>,<br>
+                                                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-400">payeeAccount</span>: <span class="text-green-300">'6222219020095522901'</span><br>
+                                                &nbsp;&nbsp;<span class="text-yellow-400">}</span>,<br>
+                                                &nbsp;&nbsp;<span class="text-red-400">events</span>: <span class="text-yellow-400">{</span><br>
+                                                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-400">onConfirm</span>: <span class="text-blue-400">handleConfirm</span>,<br>
+                                                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-400">onCancel</span>: <span class="text-blue-400">handleCancel</span><br>
+                                                &nbsp;&nbsp;<span class="text-yellow-400">}</span><br>
+                                                <span class="text-yellow-400">}</span>;
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 mb-3">注意事项</h4>
+                                        <div class="space-y-2">
+                                            <div class="flex items-start">
+                                                <div class="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3"></div>
+                                                <div class="text-sm text-gray-700">金额参数必须为数字类型，组件内部会自动格式化显示</div>
+                                            </div>
+                                            <div class="flex items-start">
+                                                <div class="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3"></div>
+                                                <div class="text-sm text-gray-700">账号信息会自动进行脱敏处理，确保安全性</div>
+                                            </div>
+                                            <div class="flex items-start">
+                                                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></div>
+                                                <div class="text-sm text-gray-700">支持多种安全验证方式，可通过配置选择</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Statistics Tab -->
+                            <div id="stats-tab" class="tab-content p-6 hidden">
+                                <h3 class="text-lg font-medium text-gray-800 mb-6">使用统计</h3>
+                                
+                                <div class="grid grid-cols-3 gap-6 mb-8">
+                                    <div class="bg-blue-50 rounded-lg p-4">
+                                        <div class="text-2xl font-bold text-blue-600">1,234</div>
+                                        <div class="text-sm text-gray-600">总使用次数</div>
+                                        <div class="text-xs text-green-600 mt-1">↗ +12% 本月</div>
+                                    </div>
+                                    <div class="bg-green-50 rounded-lg p-4">
+                                        <div class="text-2xl font-bold text-green-600">89%</div>
+                                        <div class="text-sm text-gray-600">成功率</div>
+                                        <div class="text-xs text-green-600 mt-1">↗ +3% 本月</div>
+                                    </div>
+                                    <div class="bg-orange-50 rounded-lg p-4">
+                                        <div class="text-2xl font-bold text-orange-600">2.3s</div>
+                                        <div class="text-sm text-gray-600">平均响应时间</div>
+                                        <div class="text-xs text-red-600 mt-1">↗ +0.2s 本月</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-6">
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 mb-3">每日使用趋势 (最近7天)</h4>
+                                        <div class="h-40 bg-gray-50 rounded-lg border flex items-center justify-center">
+                                            <div class="text-center text-gray-500">
+                                                <svg class="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                                </svg>
+                                                <div class="text-sm">使用趋势图表</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 mb-3">热门使用场景</h4>
+                                        <div class="space-y-3">
+                                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                                <div>
+                                                    <div class="font-medium text-gray-800">个人转账确认</div>
+                                                    <div class="text-sm text-gray-600">个人用户转账最终确认环节</div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <div class="text-lg font-bold text-blue-600">987</div>
+                                                    <div class="text-xs text-gray-500">次使用</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                                <div>
+                                                    <div class="font-medium text-gray-800">企业转账确认</div>
+                                                    <div class="text-sm text-gray-600">企业对公转账确认</div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <div class="text-lg font-bold text-blue-600">247</div>
+                                                    <div class="text-xs text-gray-500">次使用</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 mb-3">错误日志</h4>
+                                        <div class="space-y-2">
+                                            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="text-red-800 font-medium">参数验证失败</div>
+                                                    <div class="text-red-600 text-xs">3次 • 今日</div>
+                                                </div>
+                                                <div class="text-red-600 mt-1">amount参数类型错误，期望Number类型</div>
+                                            </div>
+                                            <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="text-yellow-800 font-medium">渲染超时</div>
+                                                    <div class="text-yellow-600 text-xs">1次 • 昨日</div>
+                                                </div>
+                                                <div class="text-yellow-600 mt-1">组件加载时间超过5秒</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div class="border-t border-gray-200 p-6">
+                            <div class="flex justify-end space-x-3">
+                                <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                                    关闭
+                                </button>
+                                <button class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                                    编辑卡片
+                                </button>
+                                <!-- <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                    发布版本
+                                </button> -->
                             </div>
                         </div>
                     </div>
@@ -581,30 +798,325 @@
     </div>
     
     <script>
-        // Show modal when clicking the new card button
-        document.querySelector('.bg-teal-600').addEventListener('click', function() {
-            document.getElementById('cardModal').classList.remove('hidden');
+        // Category tab switching
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                
+                // Update tab active state
+                document.querySelectorAll('.tab-item').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Filter cards based on category
+                filterCardsByCategory(category);
+                
+                console.log('切换到分类:', category);
+            });
         });
+        
+        // Filter cards by category
+        function filterCardsByCategory(category) {
+            const allCards = document.querySelectorAll('.card-component');
+            
+            if (category === 'all') {
+                // Show all cards
+                allCards.forEach(card => {
+                    card.style.display = 'block';
+                });
+            } else {
+                // For demo purposes, show/hide cards based on category
+                // In real implementation, this would filter based on actual card categories
+                allCards.forEach((card, index) => {
+                    if (category === 'transfer') {
+                        // Show all cards for transfer category (default)
+                        card.style.display = 'block';
+                    } else if (category === 'query') {
+                        // Show only query-related cards
+                        card.style.display = index < 2 ? 'block' : 'none';
+                    } else if (category === 'interactive') {
+                        // Show only interactive cards
+                        card.style.display = index % 2 === 0 ? 'block' : 'none';
+                    } else if (category === 'display') {
+                        // Show only display cards
+                        card.style.display = index % 3 === 0 ? 'block' : 'none';
+                    } else if (category === 'form') {
+                        // Show only form cards
+                        card.style.display = index === 1 || index === 3 ? 'block' : 'none';
+                    } else if (category === 'result') {
+                        // Show only result cards
+                        card.style.display = index === 2 || index === 4 ? 'block' : 'none';
+                    } else {
+                        // Hide all cards for other categories
+                        card.style.display = 'none';
+                    }
+                });
+            }
+        }
+        
+        // Tab switching in modal
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetTab = this.dataset.tab;
+                
+                // Update tab buttons
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('border-blue-600', 'text-blue-600');
+                    b.classList.add('border-transparent', 'text-gray-500');
+                });
+                this.classList.add('border-blue-600', 'text-blue-600');
+                this.classList.remove('border-transparent', 'text-gray-500');
+                
+                // Update tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(targetTab + '-tab').classList.remove('hidden');
+            });
+        });
+        
+        // Global version management functions
+        function switchVersion(version) {
+            console.log('切换到组件库版本:', version);
+            // 这里可以实现版本切换逻辑
+            // 例如重新加载组件列表、更新组件预览等
+        }
+        
+        function showVersionManager() {
+            // 显示版本管理器模态框
+            const versionModal = document.createElement('div');
+            versionModal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+            versionModal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[80vh] overflow-hidden">
+                    <div class="border-b border-gray-200 p-6">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-semibold text-gray-800">LUI组件库版本管理</h2>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6 max-h-96 overflow-y-auto">
+                        <div class="space-y-4">
+                            <div class="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center">
+                                        <span class="font-medium text-blue-800">v3.2.1</span>
+                                        <span class="ml-3 px-2 py-1 bg-blue-600 text-white rounded text-xs">当前版本</span>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-800 text-sm">下载</button>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-700 mb-2">新增智能财务分析卡片，优化转账确认卡片交互</div>
+                                <div class="text-xs text-gray-500">发布时间: 2025-05-10 10:30 • 发布人: 张架构师 • 包含 36 个组件</div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center">
+                                        <span class="font-medium text-gray-800">v3.2.0</span>
+                                        <span class="ml-3 px-2 py-1 bg-gray-500 text-white rounded text-xs">历史版本</span>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="text-gray-600 hover:text-gray-800 text-sm">回滚</button>
+                                        <button class="text-gray-600 hover:text-gray-800 text-sm">下载</button>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-700 mb-2">修复收款人选择卡片的显示问题，新增外币兑换卡片</div>
+                                <div class="text-xs text-gray-500">发布时间: 2025-04-20 14:30 • 发布人: 李产品 • 包含 34 个组件</div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center">
+                                        <span class="font-medium text-gray-800">v3.1.8</span>
+                                        <span class="ml-3 px-2 py-1 bg-gray-500 text-white rounded text-xs">历史版本</span>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="text-gray-600 hover:text-gray-800 text-sm">回滚</button>
+                                        <button class="text-gray-600 hover:text-gray-800 text-sm">下载</button>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-700 mb-2">优化转账结果卡片样式，增强移动端适配</div>
+                                <div class="text-xs text-gray-500">发布时间: 2025-03-15 09:15 • 发布人: 王前端 • 包含 32 个组件</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-200 p-6">
+                        <div class="flex justify-end">
+                            <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 mr-3">
+                                关闭
+                            </button>
+                            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                创建新版本
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(versionModal);
+        }
+        
+        function publishVersion() {
+            // 发布新版本
+            const publishModal = document.createElement('div');
+            publishModal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+            publishModal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl">
+                    <div class="border-b border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-800">发布新版本</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">版本号</label>
+                                <input type="text" value="v3.2.2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">版本说明</label>
+                                <textarea rows="4" placeholder="请描述本次版本的主要更新内容..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">发布类型</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                    <option>正式发布</option>
+                                    <option>预发布</option>
+                                    <option>测试版本</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-200 p-6">
+                        <div class="flex justify-end space-x-3">
+                            <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                                取消
+                            </button>
+                            <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                发布版本
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(publishModal);
+        }
+        
+        // Card details data
+        const cardData = {
+            'transfer-confirm': {
+                title: 'TransferConfirmCard',
+                description: '转账确认信息卡片',
+                preview: `
+                    <div class="text-sm text-gray-600 mb-3">确认转账信息</div>
+                    <div class="text-lg font-medium mb-2">转账金额 (人民币元)</div>
+                    <div class="text-3xl font-bold mb-4 text-gray-900">1,000.00</div>
+                    <div class="space-y-3 mb-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">收款人姓名</span>
+                            <span class="font-medium">李四海</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">收款账号</span>
+                            <span>6222 2190 2009 5522 901</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">收款银行</span>
+                            <span>赞同银行</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">付款账号</span>
+                            <span>3109 ******* 0988</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">转账费用</span>
+                            <span>免费</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">转账方式</span>
+                            <span>实时</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">安全工具</span>
+                            <span class="text-blue-500 flex items-center">
+                                手机交易码 
+                                <span class="text-sm ml-2 underline cursor-pointer">更改</span>
+                            </span>
+                        </div>
+                    </div>
+                    <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-medium transition-colors">
+                        确认
+                    </button>
+                `
+            },
+            'payee-select': {
+                title: 'PayeeSelectCard',
+                description: '收款人选择列表卡片',
+                preview: `
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-lg font-medium">请选择收款人信息</div>
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="space-y-3 max-h-80 overflow-y-auto">
+                        ${[
+                            {name: '李四海', account: '6222 ****** 2901', bank: '赞同银行', tags: ['父亲']},
+                            {name: '张丰盛', account: '6222 ****** 2901', bank: '赞同银行', tags: ['母亲']}, 
+                            {name: '陈晓', account: '6222 ****** 2901', bank: '赞同银行', tags: ['母亲', '信用卡']},
+                            {name: '李明', account: '6222 ****** 2901', bank: '赞同银行', tags: ['朋友']},
+                            {name: '随思思', account: '6222 ****** 2901', bank: '赞同银行', tags: ['女儿']},
+                            {name: '何松鸣', account: '6222 ****** 2901', bank: '赞同银行', tags: ['房东']},
+                            {name: '陈志明', account: '6222 ****** 2901', bank: '赞同银行', tags: ['老爸']},
+                            {name: '吴卓恩', account: '6222 ****** 2901', bank: '赞同银行', tags: []}
+                        ].map((person, index) => `
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors cursor-pointer">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium mr-3">
+                                        ${person.name[0]}
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center">
+                                            <span class="font-medium mr-2">${person.name}</span>
+                                            ${person.tags.map(tag => `<span class="text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded mr-1">${tag}</span>`).join('')}
+                                        </div>
+                                        <div class="text-sm text-gray-500">${person.account} | ${person.bank}</div>
+                                    </div>
+                                </div>
+                                <button class="text-blue-500 text-sm font-medium bg-blue-50 px-3 py-1 rounded hover:bg-blue-100 transition-colors">选择</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="mt-4 text-center">
+                        <button class="text-blue-500 text-sm">查看更多 ></button>
+                    </div>
+                `
+            }
+        };
+        
+        function showCardDetails(cardId) {
+            const modal = document.getElementById('cardModal');
+            const data = cardData[cardId] || cardData['transfer-confirm'];
+            
+            document.getElementById('card-title').textContent = data.title;
+            document.getElementById('card-description').textContent = data.description;
+            document.getElementById('card-preview-content').innerHTML = data.preview;
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function closeModal() {
+            document.getElementById('cardModal').classList.add('hidden');
+        }
         
         // Close modal when clicking backdrop
         document.getElementById('cardModal').addEventListener('click', function(e) {
             if (e.target === this) {
-                this.classList.add('hidden');
+                closeModal();
             }
-        });
-        
-        // Card click simulation
-        document.querySelectorAll('.card-component').forEach(card => {
-            card.addEventListener('click', function() {
-                document.getElementById('cardModal').classList.remove('hidden');
-            });
-        });
-        
-        // Toggle switches
-        document.querySelectorAll('.toggle-switch').forEach(toggle => {
-            toggle.addEventListener('click', function() {
-                this.classList.toggle('active');
-            });
         });
     </script>
 </body>

@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>私域分类管理 - 银行AI中台管理系统</title>
+    <title>提示词护盾 - 银行AI中台管理系统</title>
     <script src="/console/style/tailwindcss.3.0.23.js"></script>
     <style>
         :root {
             --dify-primary: #2970FF;
             --dify-border: #E5E7EB;
             --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --dify-sidebar-bg: #F9FAFB;
         }
         .dify-card {
             border-radius: 8px;
@@ -20,20 +21,42 @@
             border-radius: 6px;
             transition: all 0.2s ease;
         }
-        .category-card {
+        .tree-node {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 6px;
             transition: all 0.2s ease;
+            margin: 2px 0;
         }
-        .category-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .tree-node:hover {
+            background-color: #F3F4F6;
         }
-        .tag-item {
+        .tree-node.active {
+            background-color: var(--dify-primary);
+            color: white;
+        }
+        .tree-node.parent {
+            font-weight: 500;
+        }
+        .tree-children {
+            margin-left: 20px;
+            border-left: 1px solid #E5E7EB;
+            padding-left: 12px;
+        }
+        .category-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
             display: inline-block;
-            margin: 2px;
-            padding: 2px 8px;
-            background: #f3f4f6;
-            border-radius: 4px;
-            font-size: 12px;
+        }
+        .expand-icon {
+            width: 12px;
+            height: 12px;
+            margin-right: 6px;
+            transition: transform 0.2s ease;
+        }
+        .expand-icon.expanded {
+            transform: rotate(90deg);
         }
         .modal {
             display: none;
@@ -54,35 +77,33 @@
             max-height: 90vh;
             overflow-y: auto;
         }
-        .view-toggle button.active {
-            background-color: #2970FF;
-            color: white;
-        }
+        .risk-level-high { color: #DC2626; }
+        .risk-level-medium { color: #D97706; }
+        .risk-level-low { color: #059669; }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     <div class="container mx-auto px-4 py-6">
         <!-- Header -->
         <div class="mb-6">
             <h1 class="text-2xl font-semibold text-gray-800 mb-2">提示词护盾</h1>
-            <!-- <div class="flex items-center text-sm text-gray-500">
-                <a href="#" class="hover:text-blue-600">AI安全护盾</a>
-                <span class="mx-2">></span>
-                <span>私域分类</span>
-            </div> -->
+            <div class="flex items-center justify-between">
+                <p class="text-gray-600">通过分类管理和规则配置，保护AI系统免受恶意输入攻击</p>
+                <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm" id="global-config">全局配置</button>
+            </div>
         </div>
 
         <!-- Stats Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <!-- <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div class="dify-card bg-white p-4">
                 <div class="text-sm text-gray-500">分类总数</div>
-                <div class="text-xl font-semibold mt-1">12</div>
-                <div class="text-xs text-gray-400 mt-1">已激活 10 个</div>
+                <div class="text-xl font-semibold mt-1">6</div>
+                <div class="text-xs text-gray-400 mt-1">已激活 5 个</div>
             </div>
             <div class="dify-card bg-white p-4">
-                <div class="text-sm text-gray-500">关联规则总数</div>
+                <div class="text-sm text-gray-500">规则总数</div>
                 <div class="text-xl font-semibold mt-1">85</div>
-                <div class="text-xs text-gray-400 mt-1">包含输入输出规则</div>
+                <div class="text-xs text-gray-400 mt-1">包含所有分类规则</div>
             </div>
             <div class="dify-card bg-white p-4">
                 <div class="text-sm text-gray-500">今日触发次数</div>
@@ -94,319 +115,333 @@
                 <div class="text-xl font-semibold mt-1">98.5%</div>
                 <div class="text-xs text-gray-400 mt-1">安全防护有效</div>
             </div>
-        </div>
+        </div> -->
 
-        <!-- View Controls -->
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center">
-                <h2 class="text-lg font-medium text-gray-900 mr-4">分类列表</h2>
-                <div class="view-toggle flex rounded-lg border border-gray-300">
-                    <button class="px-4 py-2 active" id="card-view">卡片视图</button>
-                    <button class="px-4 py-2" id="table-view">表格视图</button>
-                </div>
-            </div>
-            <div class="flex space-x-2">
-                <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm" id="add-category">添加分类</button>
-                <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm" id="test-rules">测试规则</button>
-            </div>
-        </div>
-
-        <!-- Card View -->
-        <div id="card-view-content">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Category Cards... (Same as before) -->
-                <div class="category-card dify-card bg-white">
-                    <div class="p-4">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                    </svg>
-                                </div>
-                                <div class="ml-3">
-                                    <h3 class="font-medium text-gray-900">政治敏感</h3>
-                                    <p class="text-xs text-gray-500">POLITICAL_SENSITIVE</p>
-                                </div>
-                            </div>
-                            <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">高危</span>
-                        </div>
-                        <div class="text-sm text-gray-600 mb-3">
-                            包含政治人物、历史事件、意识形态等敏感话题
-                        </div>
-                        <div class="flex flex-wrap mb-3">
-                            <span class="tag-item">15个关键词</span>
-                            <span class="tag-item">8个话题</span>
-                            <span class="tag-item">3个正则</span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <div class="text-gray-500">
-                                <span class="text-green-700">●</span> 已启用
-                            </div>
-                            <button class="text-blue-600 hover:text-blue-900 configure-rule" data-category="political">配置规则</button>
-                        </div>
+        <!-- Main Content: Left sidebar + Right content -->
+        <div class="grid grid-cols-12 gap-6">
+            <!-- Left Sidebar: Category Tree -->
+            <div class="col-span-3">
+                <div class="dify-card bg-white p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-medium text-gray-900">分类管理</h3>
+                        <button class="dify-btn px-3 py-1 bg-blue-600 text-white text-xs" id="add-category">添加</button>
                     </div>
-                </div>
+                    
+                    <div class="tree-container">
+                        <!-- 政治敏感分类 -->
+                        <div class="tree-node parent active" data-category="political">
+                            <svg class="expand-icon expanded" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                            <svg class="category-icon risk-level-high" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                            政治敏感 (8)
+                        </div>
+                        <div class="tree-children">
+                            <div class="tree-node" data-rule="political-person">政治人物识别</div>
+                            <div class="tree-node" data-rule="political-event">历史事件检测</div>
+                            <div class="tree-node" data-rule="political-stance">政治立场过滤</div>
+                        </div>
 
-                <div class="category-card dify-card bg-white">
-                    <div class="p-4">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                    </svg>
-                                </div>
-                                <div class="ml-3">
-                                    <h3 class="font-medium text-gray-900">账户信息</h3>
-                                    <p class="text-xs text-gray-500">ACCOUNT_INFO</p>
-                                </div>
-                            </div>
-                            <span class="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded">高危</span>
+                        <!-- 账户信息分类 -->
+                        <div class="tree-node parent" data-category="account">
+                            <svg class="expand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                            <svg class="category-icon risk-level-high" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            账户信息 (12)
                         </div>
-                        <div class="text-sm text-gray-600 mb-3">
-                            密码、银行卡号、身份证号等账户敏感信息
-                        </div>
-                        <div class="flex flex-wrap mb-3">
-                            <span class="tag-item">25个关键词</span>
-                            <span class="tag-item">12个格式</span>
-                            <span class="tag-item">5个正则</span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <div class="text-gray-500">
-                                <span class="text-green-700">●</span> 已启用
-                            </div>
-                            <button class="text-blue-600 hover:text-blue-900 configure-rule" data-category="account">配置规则</button>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="category-card dify-card bg-white">
-                    <div class="p-4">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                </div>
-                                <div class="ml-3">
-                                    <h3 class="font-medium text-gray-900">系统攻击</h3>
-                                    <p class="text-xs text-gray-500">SYSTEM_ATTACK</p>
-                                </div>
-                            </div>
-                            <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">高危</span>
+                        <!-- 系统攻击分类 -->
+                        <div class="tree-node parent" data-category="attack">
+                            <svg class="expand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                            <svg class="category-icon risk-level-high" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clip-rule="evenodd"></path>
+                            </svg>
+                            系统攻击 (15)
                         </div>
-                        <div class="text-sm text-gray-600 mb-3">
-                            SQL注入、系统命令、恶意代码等攻击行为
+
+                        <!-- 个人隐私分类 -->
+                        <div class="tree-node parent" data-category="privacy">
+                            <svg class="expand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                            <svg class="category-icon risk-level-medium" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"></path>
+                            </svg>
+                            个人隐私 (20)
                         </div>
-                        <div class="flex flex-wrap mb-3">
-                            <span class="tag-item">30个关键词</span>
-                            <span class="tag-item">20个命令</span>
-                            <span class="tag-item">8个正则</span>
+
+                        <!-- 商业机密分类 -->
+                        <div class="tree-node parent" data-category="business">
+                            <svg class="expand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                            <svg class="category-icon risk-level-medium" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                            </svg>
+                            商业机密 (10)
                         </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <div class="text-gray-500">
-                                <span class="text-green-700">●</span> 已启用
-                            </div>
-                            <button class="text-blue-600 hover:text-blue-900 configure-rule" data-category="attack">配置规则</button>
+
+                        <!-- 交易信息分类 -->
+                        <div class="tree-node parent" data-category="transaction">
+                            <svg class="expand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                            <svg class="category-icon risk-level-low" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                            </svg>
+                            交易信息 (20)
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Table View -->
-        <div id="table-view-content" class="hidden dify-card bg-white">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类名称</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类代码</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">权重</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">输入规则</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">输出规则</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">今日触发</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td class="px-6 py-4 text-sm text-gray-900">政治敏感</td>
-                            <td class="px-6 py-4 text-sm text-gray-900 font-mono">POLITICAL_SENSITIVE</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">高</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">严格拦截</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">禁止输出</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">23</td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
-                            </td>
-                            <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
-                                <button class="text-blue-600 hover:text-blue-900 configure-rule" data-category="political">配置</button>
-                                <button class="text-green-600 hover:text-green-900 test-single" data-category="political">测试</button>
-                                <button class="text-red-600 hover:text-red-900">禁用</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 text-sm text-gray-900">账户信息</td>
-                            <td class="px-6 py-4 text-sm text-gray-900 font-mono">ACCOUNT_INFO</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">高</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">验证拦截</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">脱敏输出</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">156</td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
-                            </td>
-                            <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
-                                <button class="text-blue-600 hover:text-blue-900 configure-rule" data-category="account">配置</button>
-                                <button class="text-green-600 hover:text-green-900 test-single" data-category="account">测试</button>
-                                <button class="text-red-600 hover:text-red-900">禁用</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 text-sm text-gray-900">系统攻击</td>
-                            <td class="px-6 py-4 text-sm text-gray-900 font-mono">SYSTEM_ATTACK</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">高</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">立即拦截</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">禁止输出</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">8</td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
-                            </td>
-                            <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
-                                <button class="text-blue-600 hover:text-blue-900 configure-rule" data-category="attack">配置</button>
-                                <button class="text-green-600 hover:text-green-900 test-single" data-category="attack">测试</button>
-                                <button class="text-red-600 hover:text-red-900">禁用</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- Right Content: Rules Table -->
+            <div class="col-span-9">
+                <div class="dify-card bg-white">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900" id="current-category">政治敏感分类规则</h3>
+                                <p class="text-sm text-gray-500 mt-1">管理当前分类下的所有检测规则</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm" id="add-rule">添加规则</button>
+                                <button class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm" id="test-category">测试分类</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">规则名称</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">规则类型</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">匹配方式</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">输出规则</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">今日触发</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="rules-table-body">
+                                <tr>
+                                    <td class="px-6 py-4 text-sm text-gray-900">政治人物识别</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">关键词</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">精确匹配</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">禁止输出</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">23</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 configure-rule" data-rule="political-person">配置</button>
+                                        <button class="text-green-600 hover:text-green-900 test-rule" data-rule="political-person">测试</button>
+                                        <button class="text-red-600 hover:text-red-900">禁用</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 text-sm text-gray-900">历史事件检测</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">正则表达式</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">模糊匹配</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">警告提示</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">8</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 configure-rule" data-rule="political-event">配置</button>
+                                        <button class="text-green-600 hover:text-green-900 test-rule" data-rule="political-event">测试</button>
+                                        <button class="text-red-600 hover:text-red-900">禁用</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 text-sm text-gray-900">政治立场过滤</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">AI识别</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">语义分析</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">拒绝回答</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">12</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 configure-rule" data-rule="political-stance">配置</button>
+                                        <button class="text-green-600 hover:text-green-900 test-rule" data-rule="political-stance">测试</button>
+                                        <button class="text-red-600 hover:text-red-900">禁用</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Add Category Modal -->
-    <div id="add-category-modal" class="modal">
-        <div class="modal-content p-6 w-full max-w-md">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">添加分类</h2>
-            <form id="add-category-form">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">分类名称</label>
-                        <input type="text" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="例：网络安全">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">分类代码</label>
-                        <input type="text" name="code" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="例：CYBER_SECURITY">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">权重等级</label>
-                        <select name="weight" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                            <option value="high">高</option>
-                            <option value="medium">中</option>
-                            <option value="low">低</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
-                        <textarea name="description" class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="3" placeholder="简要描述此分类的用途"></textarea>
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" id="cancel-add" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm">取消</button>
-                    <button type="submit" class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm">确定</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Configure Rules Modal -->
-    <div id="configure-rules-modal" class="modal">
-        <div class="modal-content p-6 w-full max-w-3xl">
-            <h2 class="text-lg font-medium text-gray-900 mb-4" id="configure-modal-title">配置规则 - 政治敏感</h2>
-            <form id="configure-rules-form">
+    <!-- Global Config Modal -->
+    <div id="global-config-modal" class="modal">
+        <div class="modal-content p-6 w-full max-w-2xl">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">全局配置 - 命中规则处理</h2>
+            <form id="global-config-form">
                 <div class="space-y-6">
-                    <div class="grid grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">输入规则</label>
-                            <select name="input-rule" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                                <option>严格拦截</option>
-                                <option>验证拦截</option>
-                                <option>提示警告</option>
-                                <option>验证后允许</option>
-                            </select>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">命中规则处理方式</label>
+                        <select name="hit-action" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <option value="strict">严格拦截 - 立即阻止并记录</option>
+                            <option value="verify">验证拦截 - 需要人工确认</option>
+                            <option value="warn">警告提示 - 提醒用户注意</option>
+                            <option value="log">仅记录 - 允许通过但记录日志</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">设置当检测规则被触发时的全局处理方式</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">风险等级阈值</label>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs text-gray-600 mb-1">高风险</label>
+                                <input type="number" name="high-threshold" value="80" class="w-full px-3 py-2 border border-gray-300 rounded-md" min="0" max="100">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-600 mb-1">中风险</label>
+                                <input type="number" name="medium-threshold" value="50" class="w-full px-3 py-2 border border-gray-300 rounded-md" min="0" max="100">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-600 mb-1">低风险</label>
+                                <input type="number" name="low-threshold" value="20" class="w-full px-3 py-2 border border-gray-300 rounded-md" min="0" max="100">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">输出规则</label>
-                            <select name="output-rule" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                                <option>禁止输出</option>
-                                <option>脱敏输出</option>
-                                <option>部分脱敏</option>
-                                <option>限量输出</option>
-                            </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">自动学习设置</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="auto-learn" checked class="mr-2">
+                                <span class="text-sm text-gray-700">启用自动学习新规则模式</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="user-feedback" checked class="mr-2">
+                                <span class="text-sm text-gray-700">收集用户反馈优化规则</span>
+                            </label>
                         </div>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">关键词列表</label>
-                        <textarea name="keywords" class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="4" placeholder="每行输入一个关键词">政治人物
-历史事件
-意识形态
-政治立场</textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">正则表达式</label>
-                        <textarea name="regex" class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="3" placeholder="输入正则表达式，每行一个">^(习近平|毛泽东).*$
-.*政治.*体制.*</textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">拦截回复模板</label>
-                        <input type="text" name="reply" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="抱歉，涉及政治敏感话题，无法回答。">
-                    </div>
-                    
-                    <div class="flex items-center">
-                        <input type="checkbox" id="enable-rule" name="enabled" checked class="mr-2">
-                        <label for="enable-rule" class="text-sm text-gray-700">启用此规则</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">通知设置</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="email-notify" class="mr-2">
+                                <span class="text-sm text-gray-700">高风险事件邮件通知</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="sms-notify" class="mr-2">
+                                <span class="text-sm text-gray-700">紧急事件短信通知</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" id="cancel-configure" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm">取消</button>
+                    <button type="button" id="cancel-global-config" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm">取消</button>
                     <button type="submit" class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm">保存配置</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Test Rules Modal -->
-    <div id="test-rules-modal" class="modal">
+    <!-- Add/Edit Rule Modal -->
+    <div id="rule-modal" class="modal">
+        <div class="modal-content p-6 w-full max-w-3xl">
+            <h2 class="text-lg font-medium text-gray-900 mb-4" id="rule-modal-title">添加规则</h2>
+            <form id="rule-form">
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">规则名称</label>
+                            <input type="text" name="rule-name" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="例：银行卡号检测">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">规则类型</label>
+                            <select name="rule-type" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <option value="keyword">关键词匹配</option>
+                                <option value="regex">正则表达式</option>
+                                <option value="ai">AI语义识别</option>
+                                <option value="format">格式检测</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">匹配方式</label>
+                            <select name="match-type" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <option value="exact">精确匹配</option>
+                                <option value="fuzzy">模糊匹配</option>
+                                <option value="semantic">语义分析</option>
+                                <option value="pattern">模式识别</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">输出规则</label>
+                            <select name="output-rule" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <option value="block">禁止输出</option>
+                                <option value="mask">脱敏输出</option>
+                                <option value="warn">警告提示</option>
+                                <option value="refuse">拒绝回答</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">规则内容</label>
+                        <textarea name="rule-content" class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="4" placeholder="输入关键词、正则表达式或其他规则内容，每行一个"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">拦截回复模板</label>
+                        <input type="text" name="block-message" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="抱歉，您的输入包含敏感内容，无法处理。">
+                    </div>
+                    
+                    <div class="flex items-center space-x-6">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="enabled" checked class="mr-2">
+                            <span class="text-sm text-gray-700">启用此规则</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="case-sensitive" class="mr-2">
+                            <span class="text-sm text-gray-700">区分大小写</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-rule" class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm">取消</button>
+                    <button type="submit" class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm">保存规则</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Test Modal -->
+    <div id="test-modal" class="modal">
         <div class="modal-content p-6 w-full max-w-2xl">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">测试分类规则</h2>
+            <h2 class="text-lg font-medium text-gray-900 mb-4" id="test-modal-title">测试规则</h2>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">选择测试分类</label>
-                    <select id="test-category" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                        <option value="all">全部分类</option>
-                        <option value="political">政治敏感</option>
-                        <option value="account">账户信息</option>
-                        <option value="attack">系统攻击</option>
-                        <option value="privacy">个人隐私</option>
-                        <option value="transaction">交易信息</option>
-                        <option value="business">商业机密</option>
-                    </select>
-                </div>
-                
-                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">测试文本</label>
-                    <textarea id="test-text" class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="4" placeholder="输入需要测试的文本...">请告诉我习近平的银行账户密码</textarea>
+                    <textarea id="test-input" class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="4" placeholder="输入需要测试的文本..."></textarea>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">测试结果</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">检测结果</label>
                     <div id="test-result" class="h-32 border border-gray-300 rounded-md p-3 bg-gray-50 overflow-y-auto">
                         <div class="text-sm text-gray-500">点击"开始测试"查看结果</div>
                     </div>
@@ -421,106 +456,171 @@
     </div>
 
     <script>
-        // View Toggle
-        document.getElementById('card-view').addEventListener('click', function() {
-            document.getElementById('card-view-content').style.display = 'block';
-            document.getElementById('table-view-content').style.display = 'none';
-            this.classList.add('active');
-            document.getElementById('table-view').classList.remove('active');
-        });
+        // Category data structure
+        const categoryData = {
+            political: {
+                name: '政治敏感',
+                rules: [
+                    { name: '政治人物识别', type: '关键词', match: '精确匹配', output: '禁止输出', hits: 23 },
+                    { name: '历史事件检测', type: '正则表达式', match: '模糊匹配', output: '警告提示', hits: 8 },
+                    { name: '政治立场过滤', type: 'AI识别', match: '语义分析', output: '拒绝回答', hits: 12 }
+                ]
+            },
+            account: {
+                name: '账户信息',
+                rules: [
+                    { name: '银行卡号检测', type: '正则表达式', match: '格式匹配', output: '脱敏输出', hits: 45 },
+                    { name: '身份证号识别', type: '格式检测', match: '精确匹配', output: '禁止输出', hits: 32 },
+                    { name: '密码相关词汇', type: '关键词', match: '模糊匹配', output: '警告提示', hits: 78 }
+                ]
+            },
+            attack: {
+                name: '系统攻击',
+                rules: [
+                    { name: 'SQL注入检测', type: '正则表达式', match: '模式识别', output: '禁止输出', hits: 5 },
+                    { name: '系统命令过滤', type: '关键词', match: '精确匹配', output: '禁止输出', hits: 2 },
+                    { name: '恶意脚本检测', type: 'AI识别', match: '语义分析', output: '拒绝回答', hits: 1 }
+                ]
+            }
+        };
 
-        document.getElementById('table-view').addEventListener('click', function() {
-            document.getElementById('card-view-content').style.display = 'none';
-            document.getElementById('table-view-content').style.display = 'block';
-            this.classList.add('active');
-            document.getElementById('card-view').classList.remove('active');
-        });
-
-        // Add Category Modal
-        document.getElementById('add-category').addEventListener('click', function() {
-            document.getElementById('add-category-modal').classList.add('show');
-        });
-
-        document.getElementById('cancel-add').addEventListener('click', function() {
-            document.getElementById('add-category-modal').classList.remove('show');
-        });
-
-        // Configure Rules Modal
-        document.querySelectorAll('.configure-rule').forEach(button => {
-            button.addEventListener('click', function() {
+        // Tree node click handlers
+        document.querySelectorAll('.tree-node.parent').forEach(node => {
+            node.addEventListener('click', function() {
                 const category = this.getAttribute('data-category');
-                document.getElementById('configure-modal-title').textContent = `配置规则 - ${getCategoryName(category)}`;
-                document.getElementById('configure-rules-modal').classList.add('show');
+                
+                // Update active state
+                document.querySelectorAll('.tree-node.parent').forEach(n => n.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Toggle expand icon
+                const icon = this.querySelector('.expand-icon');
+                const children = this.nextElementSibling;
+                
+                if (children && children.classList.contains('tree-children')) {
+                    if (icon.classList.contains('expanded')) {
+                        icon.classList.remove('expanded');
+                        children.style.display = 'none';
+                    } else {
+                        icon.classList.add('expanded');
+                        children.style.display = 'block';
+                    }
+                }
+                
+                // Load category rules
+                loadCategoryRules(category);
             });
         });
 
-        document.getElementById('cancel-configure').addEventListener('click', function() {
-            document.getElementById('configure-rules-modal').classList.remove('show');
-        });
+        // Load category rules
+        function loadCategoryRules(category) {
+            const data = categoryData[category];
+            if (!data) return;
+            
+            document.getElementById('current-category').textContent = data.name + '分类规则';
+            
+            const tbody = document.getElementById('rules-table-body');
+            tbody.innerHTML = data.rules.map(rule => `
+                <tr>
+                    <td class="px-6 py-4 text-sm text-gray-900">${rule.name}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${rule.type}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${rule.match}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${rule.output}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${rule.hits}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">启用</span>
+                    </td>
+                    <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                        <button class="text-blue-600 hover:text-blue-900 configure-rule">配置</button>
+                        <button class="text-green-600 hover:text-green-900 test-rule">测试</button>
+                        <button class="text-red-600 hover:text-red-900">禁用</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Re-bind event listeners for new buttons
+            bindRuleButtonEvents();
+        }
 
-        // Test Rules Modal
-        document.getElementById('test-rules').addEventListener('click', function() {
-            document.getElementById('test-rules-modal').classList.add('show');
-        });
-
-        document.querySelectorAll('.test-single').forEach(button => {
-            button.addEventListener('click', function() {
-                const category = this.getAttribute('data-category');
-                document.getElementById('test-category').value = category;
-                document.getElementById('test-rules-modal').classList.add('show');
+        // Bind rule button events
+        function bindRuleButtonEvents() {
+            document.querySelectorAll('.configure-rule').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('rule-modal-title').textContent = '配置规则';
+                    document.getElementById('rule-modal').classList.add('show');
+                });
             });
+            
+            document.querySelectorAll('.test-rule').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('test-modal-title').textContent = '测试单条规则';
+                    document.getElementById('test-modal').classList.add('show');
+                });
+            });
+        }
+
+        // Global config modal
+        document.getElementById('global-config').addEventListener('click', () => {
+            document.getElementById('global-config-modal').classList.add('show');
         });
 
-        document.getElementById('close-test').addEventListener('click', function() {
-            document.getElementById('test-rules-modal').classList.remove('show');
+        document.getElementById('cancel-global-config').addEventListener('click', () => {
+            document.getElementById('global-config-modal').classList.remove('show');
+        });
+
+        // Add rule modal
+        document.getElementById('add-rule').addEventListener('click', () => {
+            document.getElementById('rule-modal-title').textContent = '添加规则';
+            document.getElementById('rule-modal').classList.add('show');
+        });
+
+        document.getElementById('cancel-rule').addEventListener('click', () => {
+            document.getElementById('rule-modal').classList.remove('show');
+        });
+
+        // Test category modal
+        document.getElementById('test-category').addEventListener('click', () => {
+            document.getElementById('test-modal-title').textContent = '测试分类规则';
+            document.getElementById('test-modal').classList.add('show');
+        });
+
+        document.getElementById('close-test').addEventListener('click', () => {
+            document.getElementById('test-modal').classList.remove('show');
         });
 
         // Test functionality
-        document.getElementById('start-test').addEventListener('click', function() {
-            const text = document.getElementById('test-text').value;
-            const category = document.getElementById('test-category').value;
-            const resultDiv = document.getElementById('test-result');
+        document.getElementById('start-test').addEventListener('click', () => {
+            const input = document.getElementById('test-input').value;
+            const result = document.getElementById('test-result');
             
-            // Simulate test results
-            resultDiv.innerHTML = `
-                <div class="space-y-2">
-                    <div class="text-sm">
-                        <span class="text-red-600">●</span> 匹配分类: 政治敏感
-                    </div>
-                    <div class="text-sm">
-                        <span class="text-red-600">●</span> 匹配分类: 账户信息
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        处理方式: 严格拦截
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        触发关键词: 习近平, 银行账户, 密码
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        情绪分数: 0.95 (高风险)
-                    </div>
+            // Simulate test result
+            result.innerHTML = `
+                <div class="space-y-2 text-sm">
+                    <div class="text-red-600">● 匹配规则: 政治人物识别</div>
+                    <div class="text-orange-600">● 匹配规则: 敏感词汇检测</div>
+                    <div class="text-gray-600">风险等级: 高风险</div>
+                    <div class="text-gray-600">处理方式: 禁止输出</div>
+                    <div class="text-gray-600">建议操作: 拦截并记录</div>
                 </div>
             `;
         });
-
-        // Helper function
-        function getCategoryName(category) {
-            const names = {
-                'political': '政治敏感',
-                'account': '账户信息',
-                'attack': '系统攻击',
-                'privacy': '个人隐私',
-                'transaction': '交易信息',
-                'business': '商业机密'
-            };
-            return names[category] || '未知分类';
-        }
 
         // Close modals on outside click
         window.addEventListener('click', function(e) {
             if (e.target.classList.contains('modal')) {
                 e.target.classList.remove('show');
             }
+        });
+
+        // Initialize with first category expanded
+        document.addEventListener('DOMContentLoaded', () => {
+            const firstCategory = document.querySelector('[data-category="political"]');
+            const children = firstCategory.nextElementSibling;
+            if (children) children.style.display = 'block';
+            
+            // Load initial rules
+            loadCategoryRules('political');
+            bindRuleButtonEvents();
         });
     </script>
 </body>
