@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>写作助手 - 赞同科技数字员工</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f0f2f5 0%, #e8ecf0 50%, #f5f7fa 100%); */
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.9); */
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+        
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+        
+        .wizard-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+        }
+        
+        .wizard-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .wizard-card.selected {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(59, 130, 246, 0.05);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.2);
+        }
+        
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+        
+        .step-item {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-right: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .step-number.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .step-number.completed {
+            background: #10b981;
+            color: white;
+        }
+        
+        .step-number.pending {
+            background: rgba(156, 163, 175, 0.2);
+            color: #6b7280;
+        }
+        
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: rgba(156, 163, 175, 0.2);
+            margin: 0 16px;
+        }
+        
+        .step-line.completed {
+            background: #10b981;
+        }
+        
+        .floating-button {
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .floating-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .text-area {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .text-area:focus {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .upload-area {
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            background: rgba(59, 130, 246, 0.02);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        .upload-area.dragover {
+            border-color: rgba(59, 130, 246, 0.7);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .file-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .result-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+        
+        .toolbar-button {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .toolbar-button:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(156, 163, 175, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #3b82f6;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-8px);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- 写作助手主容器 -->
+    <div class="flex-1 flex flex-col w-full overflow-hidden">
+        <!-- 助手头部 -->
+        <div class="liquid-glass-strong rounded-t-lg p-6 flex items-center justify-between">
+            <div class="flex items-center">
+                <img src="https://aihelper-zx.awebide.com/assets/avatar5-C2g2g9ln.png" 
+                     alt="写作助手" class="w-12 h-12 rounded-full mr-4 object-cover">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">您好，我是AI写作助手</h3>
+                    <p class="text-sm text-gray-500">工号A0005 · 让文字表达更加专业规范</p>
+                </div>
+            </div>
+            <button onclick="resetWizard()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
+                重新开始
+            </button>
+        </div>
+        
+        <!-- 主内容区域 -->
+        <div class="flex-1 liquid-glass-strong rounded-b-lg p-6 overflow-y-auto">
+            <!-- 步骤指示器 -->
+            <div class="step-indicator">
+                <div class="step-item">
+                    <div id="step-1" class="step-number active">1</div>
+                    <span class="text-sm font-medium text-gray-700">选择类型</span>
+                </div>
+                <div id="line-1" class="step-line"></div>
+                <div class="step-item">
+                    <div id="step-2" class="step-number pending">2</div>
+                    <span class="text-sm font-medium text-gray-700">选择模版</span>
+                </div>
+                <div id="line-2" class="step-line"></div>
+                <div class="step-item">
+                    <div id="step-3" class="step-number pending">3</div>
+                    <span class="text-sm font-medium text-gray-700">设定内容</span>
+                </div>
+                <div id="line-3" class="step-line"></div>
+                <div class="step-item">
+                    <div id="step-4" class="step-number pending">4</div>
+                    <span class="text-sm font-medium text-gray-700">生成结果</span>
+                </div>
+            </div>
+            
+            <!-- 步骤1: 选择写作类型 -->
+            <div id="step-content-1" class="step-content">
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">选择写作类型</h3>
+                    <p class="text-gray-600">请选择您要撰写的文档类型，我将为您提供专业的模版和写作建议</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="wizard-card specular-highlight" onclick="selectWritingType('news')">
+                        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                            <span class="text-blue-600 text-xl">📰</span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">新闻稿</h4>
+                        <p class="text-sm text-gray-600 mb-3">企业新闻、产品发布、重要事件等对外宣传稿件</p>
+                        <div class="text-xs text-blue-600">适用：产品发布、业绩公告、重大事件</div>
+                    </div>
+                    
+                    <div class="wizard-card specular-highlight" onclick="selectWritingType('esg')">
+                        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                            <span class="text-green-600 text-xl">🌱</span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">ESG报告</h4>
+                        <p class="text-sm text-gray-600 mb-3">环境、社会责任、公司治理等可持续发展报告</p>
+                        <div class="text-xs text-green-600">适用：年度ESG、社会责任、可持续发展</div>
+                    </div>
+                    
+                    <div class="wizard-card specular-highlight" onclick="selectWritingType('cooperation')">
+                        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+                            <span class="text-purple-600 text-xl">🤝</span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">合作方案</h4>
+                        <p class="text-sm text-gray-600 mb-3">项目合作、战略联盟、业务协同等方案文档</p>
+                        <div class="text-xs text-purple-600">适用：项目提案、合作协议、战略规划</div>
+                    </div>
+                    
+                    <div class="wizard-card specular-highlight" onclick="selectWritingType('report')">
+                        <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
+                            <span class="text-orange-600 text-xl">📊</span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">工作总结</h4>
+                        <p class="text-sm text-gray-600 mb-3">部门总结、项目回顾、年度汇报等内部文档</p>
+                        <div class="text-xs text-orange-600">适用：月度总结、项目复盘、年度汇报</div>
+                    </div>
+                    
+                    <div class="wizard-card specular-highlight" onclick="selectWritingType('proposal')">
+                        <div class="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center mb-4">
+                            <span class="text-cyan-600 text-xl">💡</span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">项目提案</h4>
+                        <p class="text-sm text-gray-600 mb-3">新项目立项、投资建议、创新方案等提案文档</p>
+                        <div class="text-xs text-cyan-600">适用：项目立项、投资分析、创新提案</div>
+                    </div>
+                    
+                    <div class="wizard-card specular-highlight" onclick="selectWritingType('contract')">
+                        <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mb-4">
+                            <span class="text-red-600 text-xl">📋</span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">合同协议</h4>
+                        <p class="text-sm text-gray-600 mb-3">商务合同、服务协议、保密协议等法务文档</p>
+                        <div class="text-xs text-red-600">适用：商务合同、服务协议、法务文档</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 步骤2: 选择模版 -->
+            <div id="step-content-2" class="step-content hidden">
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">选择模版风格</h3>
+                    <p class="text-gray-600">根据您选择的<span id="selected-type-name" class="font-medium text-blue-600"></span>，为您推荐以下专业模版</p>
+                </div>
+                
+                <div id="template-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 模版将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <!-- 步骤3: 设定内容 -->
+            <div id="step-content-3" class="step-content hidden">
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">设定写作内容</h3>
+                    <p class="text-gray-600">请填写详细信息，我将根据您的要求生成专业文档</p>
+                </div>
+                
+                <div class="space-y-6">
+                    <!-- 主题和要求 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">📝 主题和基本要求</label>
+                        <div class="space-y-3">
+                            <input type="text" id="document-title" placeholder="请输入文档标题..." 
+                                   class="w-full p-3 text-area" style="min-height: auto;">
+                            <textarea id="document-requirements" placeholder="请详细描述您的写作要求、目标受众、核心观点等..." 
+                                      class="w-full text-area"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- 参考材料上传 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">📎 参考材料（可选）</label>
+                        <div class="upload-area" id="upload-area" 
+                             onclick="document.getElementById('file-input').click()">
+                            <div class="text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <p class="text-gray-600 font-medium">点击上传参考文档</p>
+                                <p class="text-sm text-gray-500 mt-1">支持 PDF、Word、PPT、Excel 等格式</p>
+                            </div>
+                        </div>
+                        <input type="file" id="file-input" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt" class="hidden">
+                        
+                        <div id="file-list" class="file-list mt-4 hidden">
+                            <div class="text-sm font-medium text-gray-700 mb-2">已上传文件：</div>
+                            <div id="uploaded-files"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 高级设置 -->
+                    <div class="liquid-glass rounded-xl p-4">
+                        <h4 class="font-medium text-gray-800 mb-3">⚙️ 高级设置</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-gray-600 mb-2">文档长度</label>
+                                <select id="document-length" class="w-full p-2 border border-gray-200 rounded-lg bg-white">
+                                    <option value="short">简短（500-1000字）</option>
+                                    <option value="medium" selected>中等（1000-3000字）</option>
+                                    <option value="long">详细（3000-5000字）</option>
+                                    <option value="comprehensive">全面（5000字以上）</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-600 mb-2">语言风格</label>
+                                <select id="writing-style" class="w-full p-2 border border-gray-200 rounded-lg bg-white">
+                                    <option value="formal" selected>正式商务</option>
+                                    <option value="professional">专业技术</option>
+                                    <option value="friendly">亲和友好</option>
+                                    <option value="creative">创新生动</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between mt-8">
+                    <button onclick="prevStep()" class="liquid-glass floating-button rounded-lg px-6 py-3 text-gray-700 font-medium specular-highlight">
+                        上一步
+                    </button>
+                    <button onclick="nextStep()" class="bg-blue-500 text-white rounded-lg px-6 py-3 font-medium hover:bg-blue-600 transition-colors floating-button">
+                        开始生成
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 步骤4: 生成结果 -->
+            <div id="step-content-4" class="step-content hidden">
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">正在生成您的专业文档</h3>
+                    <p class="text-gray-600">AI正在分析您的需求，整合参考材料，撰写高质量内容...</p>
+                </div>
+                
+                <!-- 生成进度 -->
+                <div id="generation-progress" class="mb-8">
+                    <div class="progress-bar mb-4">
+                        <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="flex items-center justify-center text-sm text-gray-600">
+                        <div class="typing-indicator mr-2">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                        <span id="progress-text">正在分析写作要求...</span>
+                    </div>
+                </div>
+                
+                <!-- 生成结果 -->
+                <div id="generation-result" class="result-container hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold text-gray-800">生成结果</h4>
+                        <div class="flex gap-2">
+                            <button onclick="optimizeContent('proofread')" class="toolbar-button">
+                                <span class="mr-1">✏️</span>纠错润色
+                            </button>
+                            <button onclick="optimizeContent('expand')" class="toolbar-button">
+                                <span class="mr-1">📝</span>扩写详述
+                            </button>
+                            <button onclick="optimizeContent('translate')" class="toolbar-button">
+                                <span class="mr-1">🌐</span>翻译
+                            </button>
+                            <button onclick="exportContent()" class="toolbar-button">
+                                <span class="mr-1">💾</span>导出
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="generated-content" class="prose max-w-none bg-white rounded-lg p-6 min-h-96 border border-gray-200">
+                        <!-- 生成的内容将显示在这里 -->
+                    </div>
+                    
+                    <div class="flex justify-between mt-6">
+                        <button onclick="regenerateContent()" class="liquid-glass floating-button rounded-lg px-6 py-3 text-gray-700 font-medium specular-highlight">
+                            重新生成
+                        </button>
+                        <button onclick="resetWizard()" class="bg-green-500 text-white rounded-lg px-6 py-3 font-medium hover:bg-green-600 transition-colors floating-button">
+                            创建新文档
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let selectedType = null;
+        let selectedTemplate = null;
+        let uploadedFiles = [];
+
+        // 写作类型配置
+        const writingTypes = {
+            'news': {
+                name: '新闻稿',
+                templates: [
+                    {
+                        id: 'news-corporate',
+                        name: '企业新闻模版',
+                        description: '适用于企业重大事件、业绩发布、战略公告',
+                        features: ['标准新闻结构', '权威性语言', '事实导向']
+                    },
+                    {
+                        id: 'news-product',
+                        name: '产品发布模版',
+                        description: '适用于新产品、新服务、新功能发布',
+                        features: ['产品亮点突出', '用户价值导向', '技术特色说明']
+                    },
+                    {
+                        id: 'news-event',
+                        name: '活动事件模版',
+                        description: '适用于重要活动、会议、庆典等事件报道',
+                        features: ['现场感描述', '参与者视角', '影响力分析']
+                    }
+                ]
+            },
+            'esg': {
+                name: 'ESG报告',
+                templates: [
+                    {
+                        id: 'esg-annual',
+                        name: '年度ESG报告',
+                        description: '全面的年度可持续发展报告',
+                        features: ['三大支柱完整', '数据图表丰富', '国际标准对标']
+                    },
+                    {
+                        id: 'esg-environmental',
+                        name: '环境责任报告',
+                        description: '专注环境保护和绿色发展',
+                        features: ['环境指标重点', '减排成果展示', '绿色创新案例']
+                    },
+                    {
+                        id: 'esg-social',
+                        name: '社会责任报告',
+                        description: '关注社会价值和员工关怀',
+                        features: ['社会贡献量化', '员工发展关注', '社区影响分析']
+                    }
+                ]
+            },
+            'cooperation': {
+                name: '合作方案',
+                templates: [
+                    {
+                        id: 'coop-strategic',
+                        name: '战略合作方案',
+                        description: '长期战略联盟和深度合作',
+                        features: ['战略高度分析', '长期价值规划', '风险评估完整']
+                    },
+                    {
+                        id: 'coop-project',
+                        name: '项目合作方案',
+                        description: '具体项目的合作实施方案',
+                        features: ['项目目标明确', '执行计划详细', '成果预期具体']
+                    },
+                    {
+                        id: 'coop-business',
+                        name: '业务协同方案',
+                        description: '业务层面的协作和整合',
+                        features: ['业务流程优化', '资源共享机制', '协同效应分析']
+                    }
+                ]
+            },
+            'report': {
+                name: '工作总结',
+                templates: [
+                    {
+                        id: 'report-monthly',
+                        name: '月度工作总结',
+                        description: '月度工作回顾和下月计划',
+                        features: ['工作完成情况', '问题解决方案', '下期工作计划']
+                    },
+                    {
+                        id: 'report-project',
+                        name: '项目总结报告',
+                        description: '项目完成情况和经验总结',
+                        features: ['项目成果展示', '经验教训总结', '改进建议提出']
+                    },
+                    {
+                        id: 'report-annual',
+                        name: '年度工作汇报',
+                        description: '全年工作综合性总结汇报',
+                        features: ['全年成就梳理', '数据支撑完整', '发展规划清晰']
+                    }
+                ]
+            },
+            'proposal': {
+                name: '项目提案',
+                templates: [
+                    {
+                        id: 'proposal-investment',
+                        name: '投资项目提案',
+                        description: '投资决策和资金申请提案',
+                        features: ['投资回报分析', '风险评估详细', '财务模型清晰']
+                    },
+                    {
+                        id: 'proposal-innovation',
+                        name: '创新项目提案',
+                        description: '新技术、新模式的创新提案',
+                        features: ['创新点突出', '技术路径清晰', '市场前景分析']
+                    },
+                    {
+                        id: 'proposal-improvement',
+                        name: '改进优化提案',
+                        description: '现有业务流程改进提案',
+                        features: ['现状问题分析', '改进方案具体', '效果预期量化']
+                    }
+                ]
+            },
+            'contract': {
+                name: '合同协议',
+                templates: [
+                    {
+                        id: 'contract-service',
+                        name: '服务合同模版',
+                        description: '各类服务提供合同协议',
+                        features: ['服务条款明确', '责任界定清晰', '法律条款完备']
+                    },
+                    {
+                        id: 'contract-supply',
+                        name: '供应合同模版',
+                        description: '供应商采购合同协议',
+                        features: ['供应标准详细', '质量要求明确', '交付条款具体']
+                    },
+                    {
+                        id: 'contract-nda',
+                        name: '保密协议模版',
+                        description: '商业机密保护协议',
+                        features: ['保密范围界定', '违约责任明确', '期限条件合理']
+                    }
+                ]
+            }
+        };
+
+        // 选择写作类型
+        function selectWritingType(type) {
+            selectedType = type;
+            
+            // 更新选中状态
+            document.querySelectorAll('.wizard-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // 延迟进入下一步
+            setTimeout(() => {
+                nextStep();
+            }, 500);
+        }
+
+        // 选择模版
+        function selectTemplate(templateId) {
+            selectedTemplate = templateId;
+            
+            // 更新选中状态
+            document.querySelectorAll('#template-grid .wizard-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // 延迟进入下一步
+            setTimeout(() => {
+                nextStep();
+            }, 500);
+        }
+
+        // 下一步
+        function nextStep() {
+            if (currentStep === 1 && !selectedType) {
+                return;
+            }
+            
+            if (currentStep === 2 && !selectedTemplate) {
+                return;
+            }
+            
+            if (currentStep === 3) {
+                const title = document.getElementById('document-title').value.trim();
+                const requirements = document.getElementById('document-requirements').value.trim();
+                
+                if (!title || !requirements) {
+                    alert('请填写文档标题和基本要求');
+                    return;
+                }
+                
+                startGeneration();
+                return;
+            }
+            
+            // 隐藏当前步骤
+            document.getElementById(`step-content-${currentStep}`).classList.add('hidden');
+            document.getElementById(`step-${currentStep}`).classList.remove('active');
+            document.getElementById(`step-${currentStep}`).classList.add('completed');
+            
+            if (currentStep > 1) {
+                document.getElementById(`line-${currentStep - 1}`).classList.add('completed');
+            }
+            
+            currentStep++;
+            
+            // 显示下一步骤
+            document.getElementById(`step-content-${currentStep}`).classList.remove('hidden');
+            document.getElementById(`step-${currentStep}`).classList.add('active');
+            
+            // 如果是模版选择步骤，生成模版选项
+            if (currentStep === 2) {
+                generateTemplateOptions();
+            }
+        }
+
+        // 上一步
+        function prevStep() {
+            if (currentStep <= 1) return;
+            
+            // 隐藏当前步骤
+            document.getElementById(`step-content-${currentStep}`).classList.add('hidden');
+            document.getElementById(`step-${currentStep}`).classList.remove('active');
+            document.getElementById(`step-${currentStep}`).classList.add('pending');
+            
+            if (currentStep > 1) {
+                document.getElementById(`line-${currentStep - 1}`).classList.remove('completed');
+            }
+            
+            currentStep--;
+            
+            // 显示上一步骤
+            document.getElementById(`step-content-${currentStep}`).classList.remove('hidden');
+            document.getElementById(`step-${currentStep}`).classList.remove('completed');
+            document.getElementById(`step-${currentStep}`).classList.add('active');
+        }
+
+        // 生成模版选项
+        function generateTemplateOptions() {
+            const typeConfig = writingTypes[selectedType];
+            document.getElementById('selected-type-name').textContent = typeConfig.name;
+            
+            const templateGrid = document.getElementById('template-grid');
+            templateGrid.innerHTML = '';
+            
+            typeConfig.templates.forEach(template => {
+                const templateCard = document.createElement('div');
+                templateCard.className = 'wizard-card specular-highlight';
+                templateCard.onclick = () => selectTemplate(template.id);
+                
+                templateCard.innerHTML = `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-2">${template.name}</h4>
+                        <p class="text-sm text-gray-600 mb-3">${template.description}</p>
+                        <div class="flex flex-wrap gap-2">
+                            ${template.features.map(feature => 
+                                `<span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">${feature}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500">点击选择此模版</div>
+                `;
+                
+                templateGrid.appendChild(templateCard);
+            });
+        }
+
+        // 文件上传处理
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                if (!uploadedFiles.some(f => f.name === file.name)) {
+                    uploadedFiles.push(file);
+                }
+            });
+            updateFileList();
+        });
+
+        // 更新文件列表
+        function updateFileList() {
+            const fileList = document.getElementById('file-list');
+            const uploadedFilesDiv = document.getElementById('uploaded-files');
+            
+            if (uploadedFiles.length > 0) {
+                fileList.classList.remove('hidden');
+                uploadedFilesDiv.innerHTML = '';
+                
+                uploadedFiles.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <div class="flex-1 flex items-center">
+                            <span class="mr-2">${getFileIcon(file.name)}</span>
+                            <span class="text-sm text-gray-700">${file.name}</span>
+                            <span class="text-xs text-gray-500 ml-2">(${formatFileSize(file.size)})</span>
+                        </div>
+                        <button onclick="removeFile(${index})" class="text-red-500 hover:text-red-700 ml-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    `;
+                    uploadedFilesDiv.appendChild(fileItem);
+                });
+            } else {
+                fileList.classList.add('hidden');
+            }
+        }
+
+        // 移除文件
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        // 获取文件图标
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const iconMap = {
+                'pdf': '📄',
+                'doc': '📝',
+                'docx': '📝',
+                'ppt': '📊',
+                'pptx': '📊',
+                'xls': '📈',
+                'xlsx': '📈',
+                'txt': '📄',
+                'default': '📎'
+            };
+            return iconMap[ext] || iconMap['default'];
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 开始生成
+        function startGeneration() {
+            currentStep = 4;
+            document.getElementById('step-content-3').classList.add('hidden');
+            document.getElementById('step-content-4').classList.remove('hidden');
+            
+            // 更新步骤指示器
+            document.getElementById('step-3').classList.remove('active');
+            document.getElementById('step-3').classList.add('completed');
+            document.getElementById('line-3').classList.add('completed');
+            document.getElementById('step-4').classList.add('active');
+            
+            // 模拟生成过程
+            simulateGeneration();
+        }
+
+        // 模拟生成过程
+        function simulateGeneration() {
+            const progressSteps = [
+                { progress: 15, text: '正在分析写作要求...' },
+                { progress: 30, text: '正在处理参考材料...' },
+                { progress: 50, text: '正在生成文档结构...' },
+                { progress: 70, text: '正在撰写核心内容...' },
+                { progress: 85, text: '正在优化语言表达...' },
+                { progress: 100, text: '生成完成！' }
+            ];
+            
+            let currentProgressIndex = 0;
+            
+            const progressInterval = setInterval(() => {
+                if (currentProgressIndex < progressSteps.length) {
+                    const step = progressSteps[currentProgressIndex];
+                    document.getElementById('progress-fill').style.width = step.progress + '%';
+                    document.getElementById('progress-text').textContent = step.text;
+                    currentProgressIndex++;
+                } else {
+                    clearInterval(progressInterval);
+                    showGenerationResult();
+                }
+            }, 1000);
+        }
+
+        // 显示生成结果
+        function showGenerationResult() {
+            document.getElementById('generation-progress').classList.add('hidden');
+            document.getElementById('generation-result').classList.remove('hidden');
+            
+            // 生成示例内容
+            const title = document.getElementById('document-title').value;
+            const requirements = document.getElementById('document-requirements').value;
+            const typeConfig = writingTypes[selectedType];
+            
+            const sampleContent = generateSampleContent(title, requirements, typeConfig.name);
+            document.getElementById('generated-content').innerHTML = sampleContent;
+        }
+
+        // 生成示例内容
+        function generateSampleContent(title, requirements, typeName) {
+            // 这里可以根据不同类型生成不同的示例内容
+            return `
+                <h1 class="text-lg font-bold text-gray-800 mb-4">${title}</h1>
+                
+                <div class="mb-6">
+                    <p class="text-gray-600 leading-relaxed">
+                        基于您的要求"${requirements}"，我已为您生成了专业的${typeName}文档。
+                        本文档采用行业标准格式，确保内容专业性和可读性。
+                    </p>
+                </div>
+                
+                <h2 class="text-xl font-semibold text-gray-800 mb-3">主要内容概要</h2>
+                <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                    <ul class="space-y-2 text-gray-700">
+                        <li>• 核心观点阐述清晰，逻辑结构完整</li>
+                        <li>• 关键信息准确提取，数据支撑充分</li>
+                        <li>• 语言表达专业规范，符合商务标准</li>
+                        <li>• 格式排版整齐，便于阅读和传播</li>
+                    </ul>
+                </div>
+                
+                <h2 class="text-xl font-semibold text-gray-800 mb-3">详细内容</h2>
+                <div class="prose max-w-none">
+                    <p class="mb-4">
+                        在当前快速发展的市场环境中，${title}具有重要的战略意义。
+                        通过深入分析市场趋势和用户需求，我们制定了全面的实施方案。
+                    </p>
+                    
+                    <h3 class="text-lg font-medium text-gray-800 mt-6 mb-3">核心要点</h3>
+                    <p class="mb-4">
+                        本方案的核心在于平衡创新与稳健发展，确保在推进新举措的同时，
+                        维护现有业务的稳定运行。我们将采用分阶段实施的策略，
+                        最大化降低风险，同时确保预期目标的实现。
+                    </p>
+                    
+                    <h3 class="text-lg font-medium text-gray-800 mt-6 mb-3">实施建议</h3>
+                    <p class="mb-4">
+                        建议分三个阶段推进：第一阶段为基础准备阶段，
+                        重点完善基础设施和团队建设；第二阶段为试点实施阶段，
+                        在控制范围内验证方案可行性；第三阶段为全面推广阶段，
+                        基于试点经验进行规模化实施。
+                    </p>
+                    
+                    <div class="bg-green-50 p-4 rounded-lg mt-6">
+                        <h4 class="font-medium text-green-800 mb-2">预期成果</h4>
+                        <p class="text-green-700 text-sm">
+                            通过本方案的实施，预计将显著提升运营效率，
+                            增强市场竞争力，为企业可持续发展奠定坚实基础。
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 内容优化
+        function optimizeContent(type) {
+            const contentDiv = document.getElementById('generated-content');
+            let message = '';
+            
+            switch(type) {
+                case 'proofread':
+                    message = '正在进行纠错润色，检查语法、标点、措辞...';
+                    break;
+                case 'expand':
+                    message = '正在扩写内容，增加详细说明和案例...';
+                    break;
+                case 'translate':
+                    message = '正在翻译为英文版本...';
+                    break;
+            }
+            
+            // 显示处理状态
+            const originalContent = contentDiv.innerHTML;
+            contentDiv.innerHTML = `
+                <div class="flex items-center justify-center py-12">
+                    <div class="text-center">
+                        <div class="typing-indicator mb-4">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                        <p class="text-gray-600">${message}</p>
+                    </div>
+                </div>
+            `;
+            
+            // 模拟处理过程
+            setTimeout(() => {
+                contentDiv.innerHTML = originalContent;
+                
+                // 添加优化标记
+                const optimizationBadge = document.createElement('div');
+                optimizationBadge.className = 'bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full inline-block mb-4';
+                optimizationBadge.textContent = `已${type === 'proofread' ? '纠错润色' : type === 'expand' ? '扩写优化' : '翻译处理'}`;
+                contentDiv.insertBefore(optimizationBadge, contentDiv.firstChild);
+            }, 2000);
+        }
+
+        // 重新生成
+        function regenerateContent() {
+            document.getElementById('generation-result').classList.add('hidden');
+            document.getElementById('generation-progress').classList.remove('hidden');
+            
+            // 重置进度
+            document.getElementById('progress-fill').style.width = '0%';
+            document.getElementById('progress-text').textContent = '正在重新生成内容...';
+            
+            setTimeout(() => {
+                simulateGeneration();
+            }, 500);
+        }
+
+        // 导出内容
+        function exportContent() {
+            const content = document.getElementById('generated-content').innerText;
+            const title = document.getElementById('document-title').value || '未命名文档';
+            
+            // 创建并下载文件
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 重置向导
+        function resetWizard() {
+            currentStep = 1;
+            selectedType = null;
+            selectedTemplate = null;
+            uploadedFiles = [];
+            
+            // 重置步骤指示器
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById(`step-${i}`);
+                const content = document.getElementById(`step-content-${i}`);
+                
+                step.classList.remove('active', 'completed');
+                step.classList.add('pending');
+                content.classList.add('hidden');
+                
+                if (i > 1) {
+                    document.getElementById(`line-${i-1}`).classList.remove('completed');
+                }
+            }
+            
+            // 激活第一步
+            document.getElementById('step-1').classList.remove('pending');
+            document.getElementById('step-1').classList.add('active');
+            document.getElementById('step-content-1').classList.remove('hidden');
+            
+            // 清除选中状态
+            document.querySelectorAll('.wizard-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // 清空表单
+            document.getElementById('document-title').value = '';
+            document.getElementById('document-requirements').value = '';
+            document.getElementById('document-length').value = 'medium';
+            document.getElementById('writing-style').value = 'formal';
+            updateFileList();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('写作助手已加载完成');
+            
+            // 拖拽上传功能
+            const uploadArea = document.getElementById('upload-area');
+            
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                
+                const files = Array.from(e.dataTransfer.files);
+                files.forEach(file => {
+                    if (!uploadedFiles.some(f => f.name === file.name)) {
+                        uploadedFiles.push(file);
+                    }
+                });
+                updateFileList();
+            });
+        });
+    </script>
+</body>
+</html>

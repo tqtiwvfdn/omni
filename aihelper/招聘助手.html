@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招聘助手 - 赞同科技数字员工</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f0f2f5 0%, #e8ecf0 50%, #f5f7fa 100%); */
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.9); */
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+        
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+        
+        .upload-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .upload-card:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-2px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+        }
+        
+        .upload-card.dragover {
+            border-color: rgba(34, 197, 94, 0.5);
+            background: rgba(34, 197, 94, 0.05);
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        
+        .resume-item {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .resume-item:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .resume-item.selected {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        .message-bubble {
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            border-radius: 18px 18px 4px 18px;
+        }
+        
+        .assistant-message {
+            background: rgba(255, 255, 255, 0.95);
+            color: #374151;
+            margin-right: auto;
+            border-radius: 18px 18px 18px 4px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px 18px 18px 4px;
+            margin-right: auto;
+            max-width: 85%;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
+        .floating-button {
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .floating-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .chat-input {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 12px 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-input:focus {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Toast 提示样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            min-width: 300px;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success {
+            border-left: 4px solid #10b981;
+        }
+        
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .toast.info {
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .message-actions {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+            color: #6b7280;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: #374151;
+        }
+        
+        .action-btn.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: #1d4ed8;
+        }
+        
+        .action-btn.like.active {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #059669;
+        }
+        
+        .action-btn.dislike.active {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #dc2626;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        .match-score {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .match-score.high {
+            background: rgba(34, 197, 94, 0.1);
+            color: #059669;
+        }
+        
+        .match-score.medium {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+        }
+        
+        .match-score.low {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- 聊天界面 -->
+    <div class="flex-1 flex flex-col w-full overflow-hidden">
+        <!-- 聊天头部 -->
+        <div class="liquid-glass-strong rounded-t-lg p-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <img src="https://aihelper-zx.awebide.com/assets/avatar4-D_BQUnaE.png" 
+                     alt="招聘助手" class="w-12 h-12 rounded-full mr-4 object-cover">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">您好，我是AI招聘助手</h3>
+                    <p class="text-sm text-gray-500">工号A0004 · 智能简历解析、快速筛选候选人</p>
+                </div>
+            </div>
+            <button onclick="resetSession()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
+                重新开始
+            </button>
+        </div>
+        
+        <!-- 消息区域 -->
+        <div id="messages-container" class="flex-1 liquid-glass-strong p-6 overflow-y-auto">
+            <!-- 助手介绍消息 -->
+            <div class="message-bubble assistant-message p-4 mb-6">
+                <div class="prose prose-sm max-w-none text-gray-700 mb-4">
+                    <p class="mb-3">我能够智能解析简历、快速筛选候选人、生成面试问题，并提供面试评估建议，让招聘工作更加高效精准。</p>
+                    <p class="mb-3">我支持<span class="font-semibold text-blue-600">简历自动解析</span>、<span class="font-semibold text-blue-600">智能标签匹配</span>和<span class="font-semibold text-blue-600">候选人评估</span>。</p>
+                    <p class="text-sm text-gray-600">💡 <strong>核心功能：</strong>简历解析与标签化、按关键词筛选、面试问题生成、候选人资质评估</p>
+                </div>
+                <p class="text-gray-700 font-medium">请选择您要进行的操作：</p>
+            </div>
+            
+            <!-- 功能选择卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <!-- 上传简历卡片 -->
+                <div class="upload-card specular-highlight" onclick="showUploadInterface()">
+                    <div class="text-4xl mb-4">📄</div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">上传简历到知识库</h3>
+                    <p class="text-gray-600 text-sm mb-4">支持PDF、Word、图片格式<br>自动解析候选人信息</p>
+                    <div class="inline-flex items-center text-blue-600 text-sm font-medium">
+                        <span>点击上传</span>
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                    </div>
+                </div>
+                
+                <!-- 职位匹配卡片 -->
+                <div class="feature-card specular-highlight" onclick="showPositionMatching()">
+                    <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-4">
+                        <span class="text-white text-lg">🎯</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">职位匹配分析</h3>
+                    <p class="text-gray-600 text-sm">根据职位要求<br>智能推荐合适候选人</p>
+                </div>
+                
+                <!-- 简历分析卡片 -->
+                <div class="feature-card specular-highlight" onclick="showResumeAnalysis()">
+                    <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-4">
+                        <span class="text-white text-lg">📊</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">简历深度分析</h3>
+                    <p class="text-gray-600 text-sm">详细分析候选人<br>技能、经验和匹配度</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 输入区域 -->
+        <div class="liquid-glass-strong rounded-b-lg p-4">
+            <div class="flex items-end space-x-3">
+                <div class="flex-1">
+                    <input type="text" 
+                           id="message-input"
+                           placeholder="或者直接告诉我您的招聘需求..."
+                           class="w-full chat-input"
+                           onkeypress="if(event.key==='Enter') sendMessage()">
+                </div>
+                <button onclick="sendMessage()" 
+                        class="liquid-glass floating-button rounded-lg p-3 specular-highlight bg-blue-500 text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+                <button onclick="showResumeLibrary()" 
+                        class="liquid-glass floating-button rounded-lg p-3 specular-highlight text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isTyping = false;
+        let resumeLibrary = [
+            {
+                id: 'resume_001',
+                name: '张三',
+                fileName: '张三_高级Java开发工程师.pdf',
+                uploadTime: '2024-12-10',
+                position: 'Java开发工程师',
+                experience: '5年',
+                education: '本科',
+                skills: ['Java', 'Spring', 'MySQL', 'Redis', 'Docker'],
+                tags: ['后端开发', '分布式系统', '高并发', '微服务'],
+                score: 92,
+                summary: '5年Java开发经验，精通Spring生态，有大型分布式系统开发经验'
+            },
+            {
+                id: 'resume_002',
+                name: '李四',
+                fileName: '李四_前端开发工程师.pdf',
+                uploadTime: '2024-12-09',
+                position: '前端开发工程师',
+                experience: '3年',
+                education: '本科',
+                skills: ['Vue', 'React', 'TypeScript', 'Node.js', 'Webpack'],
+                tags: ['前端开发', 'UI/UX', '移动端', '小程序'],
+                score: 85,
+                summary: '3年前端开发经验，熟练掌握Vue/React，有移动端开发经验'
+            },
+            {
+                id: 'resume_003',
+                name: '王五',
+                fileName: '王五_产品经理.pdf',
+                uploadTime: '2024-12-08',
+                position: '产品经理',
+                experience: '4年',
+                education: '硕士',
+                skills: ['产品设计', '用户研究', '数据分析', 'Axure', 'Figma'],
+                tags: ['产品管理', '用户体验', '数据驱动', 'B端产品'],
+                score: 88,
+                summary: '4年产品经验，主导过多个B端产品从0到1，擅长用户体验设计'
+            }
+        ];
+
+        // Toast提示函数
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <div class="mr-3">
+                        ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-800">${message}</div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-gray-500 hover:text-gray-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 添加消息
+        function addMessage(sender, content, showActions = true) {
+            const container = document.getElementById('messages-container');
+            const messageDiv = document.createElement('div');
+            const messageId = 'msg_' + Date.now();
+            messageDiv.className = `message-bubble ${sender}-message p-4 mb-4`;
+            messageDiv.id = messageId;
+            
+            if (sender === 'assistant') {
+                let messageHTML = `<div class="prose prose-sm max-w-none">${content}</div>`;
+                
+                // 只在需要时添加交互按钮（去掉编辑和辅助）
+                if (showActions) {
+                    messageHTML += `
+                        <div class="message-actions">
+                            <button class="action-btn like" onclick="likeMessage('${messageId}')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L9 9m5 1v10M4 12v8a2 2 0 002 2h2m-6-10V9a2 2 0 012-2h2m2 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                </svg>
+                                <span>赞</span>
+                            </button>
+                            <button class="action-btn dislike" onclick="dislikeMessage('${messageId}')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018c.163 0 .326.02.485.06L17 4m-7 10v2a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L15 15M10 14l-2-2m6-6v8a2 2 0 01-2 2h-2m6-10V4a2 2 0 00-2-2h-2m-6 5a2 2 0 00-2-2H4a2 2 0 00-2 2m10 9l-2-2-4 4"></path>
+                                </svg>
+                                <span>踩</span>
+                            </button>
+                        </div>`;
+                }
+                
+                messageDiv.innerHTML = messageHTML;
+            } else {
+                messageDiv.textContent = content;
+            }
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 显示上传界面
+        function showUploadInterface() {
+            const uploadHTML = `
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                <strong>简历上传功能</strong><br>
+                                支持PDF、Word、图片格式，自动解析候选人姓名、职位、技能、经验等信息，准确率达95%以上。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="upload-card mb-4" id="upload-area">
+                    <div class="text-4xl mb-4">📤</div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">拖拽或点击上传简历</h3>
+                    <p class="text-gray-600 text-sm mb-4">支持 PDF、DOC、DOCX、JPG、PNG 格式<br>单个文件不超过10MB</p>
+                    <button onclick="triggerFileUpload()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        选择文件
+                    </button>
+                    <input type="file" id="file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="display: none;" onchange="handleFileUpload(event)">
+                </div>
+                
+                <div class="text-sm text-gray-500">
+                    💡 上传后的简历将自动解析并添加到知识库，您可以随时进行检索和分析。
+                </div>`;
+            
+            addMessage('assistant', uploadHTML, false);
+            
+            // 设置拖拽事件
+            setupDragAndDrop();
+        }
+
+        // 设置拖拽上传
+        function setupDragAndDrop() {
+            const uploadArea = document.getElementById('upload-area');
+            if (!uploadArea) return;
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload({ target: { files } });
+                }
+            });
+        }
+
+        // 触发文件选择
+        function triggerFileUpload() {
+            document.getElementById('file-input').click();
+        }
+
+        // 处理文件上传
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 验证文件类型
+            const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+            if (!allowedTypes.includes(file.type)) {
+                showToast('不支持的文件格式，请上传PDF、Word或图片文件', 'error');
+                return;
+            }
+            
+            // 验证文件大小
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('文件大小不能超过10MB', 'error');
+                return;
+            }
+            
+            // 显示上传进度
+            showUploadProgress(file.name);
+            
+            // 模拟上传和解析过程
+            setTimeout(() => {
+                simulateResumeAnalysis(file.name);
+            }, 2000);
+        }
+
+        // 显示上传进度
+        function showUploadProgress(fileName) {
+            const progressHTML = `
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                    <div class="flex items-center mb-3">
+                        <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        <span class="text-sm font-medium text-gray-700">正在上传: ${fileName}</span>
+                    </div>
+                    <div class="progress-bar mb-2">
+                        <div class="progress-fill" style="width: 0%" id="upload-progress"></div>
+                    </div>
+                    <div class="text-xs text-gray-500">正在解析简历内容...</div>
+                </div>`;
+            
+            addMessage('assistant', progressHTML, false);
+            
+            // 模拟进度条
+            let progress = 0;
+            const progressBar = document.getElementById('upload-progress');
+            const interval = setInterval(() => {
+                progress += Math.random() * 30;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                }
+                if (progressBar) {
+                    progressBar.style.width = progress + '%';
+                }
+            }, 200);
+        }
+
+        // 模拟简历解析
+        function simulateResumeAnalysis(fileName) {
+            const mockResume = {
+                name: '陈小明',
+                fileName: fileName,
+                position: '数据分析师',
+                experience: '3年',
+                education: '硕士',
+                skills: ['Python', 'SQL', 'Tableau', 'Excel', 'R'],
+                tags: ['数据分析', '机器学习', 'BI报表', '统计建模'],
+                score: 89,
+                summary: '3年数据分析经验，精通Python和SQL，有机器学习项目经验'
+            };
+            
+            const analysisHTML = `
+                <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-green-700">
+                                <strong>简历解析完成！</strong> 成功提取候选人信息并添加到知识库。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg p-4 border border-gray-200 mb-4">
+                    <h4 class="font-semibold text-gray-800 mb-3">📋 解析结果</h4>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div><span class="text-gray-600">姓名：</span><span class="font-medium">${mockResume.name}</span></div>
+                        <div><span class="text-gray-600">目标职位：</span><span class="font-medium">${mockResume.position}</span></div>
+                        <div><span class="text-gray-600">工作经验：</span><span class="font-medium">${mockResume.experience}</span></div>
+                        <div><span class="text-gray-600">学历：</span><span class="font-medium">${mockResume.education}</span></div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-gray-600 text-sm">核心技能：</span>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            ${mockResume.skills.map(skill => 
+                                `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${skill}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-gray-600 text-sm">智能标签：</span>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            ${mockResume.tags.map(tag => 
+                                `<span class="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">${tag}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-sm text-gray-600">
+                    ✅ 解析准确率: 95%<br>
+                    📊 综合评分: ${mockResume.score}分<br>
+                    💡 建议: ${mockResume.summary}
+                </div>`;
+            
+            addMessage('assistant', analysisHTML, true);
+            
+            // 添加到简历库
+            resumeLibrary.push({
+                ...mockResume,
+                id: 'resume_' + Date.now(),
+                uploadTime: new Date().toLocaleDateString()
+            });
+            
+            showToast('简历解析完成，已添加到知识库！', 'success');
+        }
+
+        // 显示职位匹配
+        function showPositionMatching() {
+            const matchingHTML = `
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                    <p class="text-sm text-blue-700">
+                        <strong>职位匹配分析</strong><br>
+                        请输入职位要求，我将从知识库中为您推荐最合适的候选人。
+                    </p>
+                </div>
+                
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                    <h4 class="font-semibold text-gray-800 mb-3">🎯 常用职位模板</h4>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button onclick="matchPosition('Java高级开发工程师：5年以上经验，熟练Spring框架，有分布式系统经验')" 
+                                class="text-left p-3 border rounded-lg hover:bg-gray-50 text-sm">
+                            <strong>Java高级开发工程师</strong><br>
+                            <span class="text-gray-600">5年以上经验，熟练Spring框架，有分布式系统经验</span>
+                        </button>
+                        <button onclick="matchPosition('产品经理：3年以上经验，有B端产品经验，熟悉用户体验设计')" 
+                                class="text-left p-3 border rounded-lg hover:bg-gray-50 text-sm">
+                            <strong>产品经理</strong><br>
+                            <span class="text-gray-600">3年以上经验，有B端产品经验，熟悉用户体验设计</span>
+                        </button>
+                        <button onclick="matchPosition('数据分析师：熟练Python/SQL，有机器学习经验，统计学背景优先')" 
+                                class="text-left p-3 border rounded-lg hover:bg-gray-50 text-sm">
+                            <strong>数据分析师</strong><br>
+                            <span class="text-gray-600">熟练Python/SQL，有机器学习经验，统计学背景优先</span>
+                        </button>
+                    </div>
+                </div>`;
+            
+            addMessage('assistant', matchingHTML, false);
+        }
+
+        // 职位匹配分析
+        function matchPosition(requirement) {
+            addMessage('user', `请帮我匹配职位：${requirement}`);
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                
+                // 根据要求匹配简历
+                const matches = resumeLibrary.filter(resume => {
+                    if (requirement.includes('Java') || requirement.includes('开发')) {
+                        return resume.skills.some(skill => ['Java', 'Spring'].includes(skill));
+                    } else if (requirement.includes('产品')) {
+                        return resume.position.includes('产品');
+                    } else if (requirement.includes('数据') || requirement.includes('分析')) {
+                        return resume.skills.some(skill => ['Python', 'SQL'].includes(skill));
+                    }
+                    return false;
+                }).sort((a, b) => b.score - a.score);
+                
+                let resultHTML = `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-2">🎯 匹配结果</h4>
+                        <p class="text-sm text-gray-600">从知识库中找到 ${matches.length} 位匹配的候选人：</p>
+                    </div>`;
+                
+                if (matches.length > 0) {
+                    matches.forEach((resume, index) => {
+                        const matchClass = resume.score >= 90 ? 'high' : resume.score >= 70 ? 'medium' : 'low';
+                        resultHTML += `
+                            <div class="resume-item mb-3" onclick="analyzeResume('${resume.id}')">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h5 class="font-medium text-gray-800">${resume.name}</h5>
+                                        <p class="text-sm text-gray-600">${resume.position} · ${resume.experience}</p>
+                                    </div>
+                                    <span class="match-score ${matchClass}">${resume.score}分</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mb-2">${resume.summary}</p>
+                                <div class="flex flex-wrap gap-1">
+                                    ${resume.skills.slice(0, 4).map(skill => 
+                                        `<span class="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">${skill}</span>`
+                                    ).join('')}
+                                    ${resume.skills.length > 4 ? `<span class="text-xs text-gray-500">+${resume.skills.length - 4}更多</span>` : ''}
+                                </div>
+                            </div>`;
+                    });
+                    
+                    resultHTML += `
+                        <div class="text-sm text-gray-500 mt-4">
+                            💡 点击任意候选人查看详细分析报告
+                        </div>`;
+                } else {
+                    resultHTML += `
+                        <div class="text-center py-8 text-gray-500">
+                            <div class="text-4xl mb-2">🔍</div>
+                            <p>暂未找到匹配的候选人</p>
+                            <p class="text-sm">建议调整职位要求或上传更多简历</p>
+                        </div>`;
+                }
+                
+                addMessage('assistant', resultHTML, true);
+            }, 1500);
+        }
+
+        // 显示简历分析
+        function showResumeAnalysis() {
+            if (resumeLibrary.length === 0) {
+                addMessage('assistant', `
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="text-4xl mb-2">📄</div>
+                        <p class="mb-2">知识库中暂无简历</p>
+                        <p class="text-sm">请先上传简历再进行分析</p>
+                    </div>`, false);
+                return;
+            }
+            
+            let libraryHTML = `
+                <div class="mb-4">
+                    <h4 class="font-semibold text-gray-800 mb-2">📚 简历知识库</h4>
+                    <p class="text-sm text-gray-600">选择要分析的简历：</p>
+                </div>`;
+            
+            resumeLibrary.forEach(resume => {
+                const matchClass = resume.score >= 90 ? 'high' : resume.score >= 70 ? 'medium' : 'low';
+                libraryHTML += `
+                    <div class="resume-item mb-3" onclick="analyzeResume('${resume.id}')">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h5 class="font-medium text-gray-800">${resume.name}</h5>
+                                <p class="text-sm text-gray-600">${resume.position} · ${resume.experience} · ${resume.education}</p>
+                                <p class="text-xs text-gray-500">上传时间: ${resume.uploadTime}</p>
+                            </div>
+                            <span class="match-score ${matchClass}">${resume.score}分</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1">
+                            ${resume.skills.slice(0, 5).map(skill => 
+                                `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${skill}</span>`
+                            ).join('')}
+                        </div>
+                    </div>`;
+            });
+            
+            addMessage('assistant', libraryHTML, false);
+        }
+
+        // 分析具体简历
+        function analyzeResume(resumeId) {
+            const resume = resumeLibrary.find(r => r.id === resumeId);
+            if (!resume) return;
+            
+            addMessage('user', `请分析 ${resume.name} 的简历`);
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                
+                const analysisHTML = `
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-2">📊 ${resume.name} - 简历深度分析</h4>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="bg-white rounded-lg p-4 border">
+                            <h5 class="font-medium text-gray-800 mb-3">基本信息</h5>
+                            <div class="space-y-2 text-sm">
+                                <div><span class="text-gray-600">姓名：</span>${resume.name}</div>
+                                <div><span class="text-gray-600">目标职位：</span>${resume.position}</div>
+                                <div><span class="text-gray-600">工作经验：</span>${resume.experience}</div>
+                                <div><span class="text-gray-600">学历背景：</span>${resume.education}</div>
+                                <div><span class="text-gray-600">文件名：</span>${resume.fileName}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-4 border">
+                            <h5 class="font-medium text-gray-800 mb-3">综合评估</h5>
+                            <div class="mb-3">
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>综合评分</span>
+                                    <span class="font-medium">${resume.score}/100</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${resume.score}%"></div>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                ${resume.summary}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 border mb-4">
+                        <h5 class="font-medium text-gray-800 mb-3">技能矩阵</h5>
+                        <div class="grid grid-cols-2 gap-2">
+                            ${resume.skills.map(skill => `
+                                <div class="flex justify-between items-center py-1">
+                                    <span class="text-sm">${skill}</span>
+                                    <div class="flex">
+                                        ${Array(5).fill().map((_, i) => 
+                                            `<div class="w-2 h-2 rounded-full ${i < Math.floor(Math.random() * 3) + 3 ? 'bg-blue-500' : 'bg-gray-200'} ml-1"></div>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 border mb-4">
+                        <h5 class="font-medium text-gray-800 mb-3">智能标签分析</h5>
+                        <div class="flex flex-wrap gap-2">
+                            ${resume.tags.map(tag => 
+                                `<span class="inline-block bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full">${tag}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                        <h5 class="font-medium text-gray-800 mb-2">💡 面试建议</h5>
+                        <div class="text-sm text-gray-700 space-y-1">
+                            <p>• 重点询问${resume.skills[0]}相关项目经验和技术深度</p>
+                            <p>• 考察在${resume.tags[0]}方面的实际应用能力</p>
+                            <p>• 了解职业规划和学习能力</p>
+                            <p>• 评估团队协作和沟通表达能力</p>
+                        </div>
+                    </div>`;
+                
+                addMessage('assistant', analysisHTML, true);
+            }, 2000);
+        }
+
+        // 显示简历库
+        function showResumeLibrary() {
+            addMessage('user', '查看简历知识库');
+            showResumeAnalysis();
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || isTyping) return;
+            
+            addMessage('user', message);
+            input.value = '';
+            
+            // 处理用户消息
+            handleUserMessage(message);
+        }
+
+        // 处理用户消息
+        function handleUserMessage(message) {
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                
+                let response = '';
+                
+                if (message.includes('上传') || message.includes('简历')) {
+                    showUploadInterface();
+                    return;
+                } else if (message.includes('匹配') || message.includes('推荐') || message.includes('职位')) {
+                    showPositionMatching();
+                    return;
+                } else if (message.includes('分析') || message.includes('查看')) {
+                    showResumeAnalysis();
+                    return;
+                } else {
+                    response = `我理解您的需求。作为招聘助手，我可以帮您：
+
+<div class="mt-3 space-y-2">
+<div class="p-3 bg-blue-50 rounded-lg">
+📄 <strong>上传简历</strong> - 自动解析候选人信息，准确率95%+
+</div>
+<div class="p-3 bg-green-50 rounded-lg">
+🎯 <strong>职位匹配</strong> - 根据岗位要求智能推荐合适候选人
+</div>
+<div class="p-3 bg-purple-50 rounded-lg">
+📊 <strong>简历分析</strong> - 深度分析候选人技能和匹配度
+</div>
+</div>
+
+<div class="mt-4 text-sm text-gray-600">
+💡 目前知识库中有 ${resumeLibrary.length} 份简历，您可以直接点击上方功能卡片开始操作。
+</div>`;
+                }
+                
+                addMessage('assistant', response, true);
+            }, 1000);
+        }
+
+        // 显示打字指示器
+        function showTypingIndicator() {
+            isTyping = true;
+            const container = document.getElementById('messages-container');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'typing-indicator mb-4';
+            typingDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <span class="ml-2 text-sm text-gray-500">招聘助手正在分析...</span>
+            `;
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 隐藏打字指示器
+        function hideTypingIndicator() {
+            isTyping = false;
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        // 点赞消息
+        function likeMessage(messageId) {
+            const btn = document.querySelector(`#${messageId} .action-btn.like`);
+            const dislikeBtn = document.querySelector(`#${messageId} .action-btn.dislike`);
+            
+            btn.classList.toggle('active');
+            dislikeBtn.classList.remove('active');
+            
+            if (btn.classList.contains('active')) {
+                showToast('感谢您的反馈！这将帮助我们改进招聘分析质量', 'success');
+            } else {
+                showToast('已取消点赞', 'info');
+            }
+        }
+
+        // 点踩消息
+        function dislikeMessage(messageId) {
+            const btn = document.querySelector(`#${messageId} .action-btn.dislike`);
+            const likeBtn = document.querySelector(`#${messageId} .action-btn.like`);
+            
+            btn.classList.toggle('active');
+            likeBtn.classList.remove('active');
+            
+            if (btn.classList.contains('active')) {
+                showToast('我们已记录您的反馈，会持续优化分析算法', 'info');
+            } else {
+                showToast('已取消反馈', 'info');
+            }
+        }
+
+        // 重置会话
+        function resetSession() {
+            document.getElementById('messages-container').innerHTML = `
+                <!-- 助手介绍消息 -->
+                <div class="message-bubble assistant-message p-4 mb-6">
+                    <div class="prose prose-sm max-w-none text-gray-700 mb-4">
+                        <p class="mb-3">我能够智能解析简历、快速筛选候选人、生成面试问题，并提供面试评估建议，让招聘工作更加高效精准。</p>
+                        <p class="mb-3">我支持<span class="font-semibold text-blue-600">简历自动解析</span>（准确率95%+）、<span class="font-semibold text-blue-600">智能标签匹配</span>和<span class="font-semibold text-blue-600">候选人评估</span>。</p>
+                        <p class="text-sm text-gray-600">💡 <strong>核心功能：</strong>简历解析与标签化、按关键词筛选、面试问题生成、候选人资质评估</p>
+                    </div>
+                    <p class="text-gray-700 font-medium">请选择您要进行的操作：</p>
+                </div>
+                
+                <!-- 功能选择卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <!-- 上传简历卡片 -->
+                    <div class="upload-card specular-highlight" onclick="showUploadInterface()">
+                        <div class="text-4xl mb-4">📄</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">上传简历到知识库</h3>
+                        <p class="text-gray-600 text-sm mb-4">支持PDF、Word、图片格式<br>自动解析候选人信息</p>
+                        <div class="inline-flex items-center text-blue-600 text-sm font-medium">
+                            <span>点击上传</span>
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- 职位匹配卡片 -->
+                    <div class="feature-card specular-highlight" onclick="showPositionMatching()">
+                        <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-4">
+                            <span class="text-white text-lg">🎯</span>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">职位匹配分析</h3>
+                        <p class="text-gray-600 text-sm">根据职位要求<br>智能推荐合适候选人</p>
+                    </div>
+                    
+                    <!-- 简历分析卡片 -->
+                    <div class="feature-card specular-highlight" onclick="showResumeAnalysis()">
+                        <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-4">
+                            <span class="text-white text-lg">📊</span>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">简历深度分析</h3>
+                        <p class="text-gray-600 text-sm">详细分析候选人<br>技能、经验和匹配度</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('招聘助手已加载完成');
+        });
+    </script>
+</body>
+</html>
