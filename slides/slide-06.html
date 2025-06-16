@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新一代RAG - 深度检索+深度思考</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        /* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'); */
+        
+        body {
+            font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .traditional-card {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-left: 4px solid #ef4444;
+        }
+        
+        .modern-card {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-left: 4px solid #22c55e;
+        }
+        
+        .flow-arrow {
+            position: relative;
+        }
+        
+        .flow-arrow::after {
+            content: '→';
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            color: #06b6d4;
+            font-weight: bold;
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        .tech-badge {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-block;
+            margin: 4px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .icon-bg {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #ef4444 0%, #f97316 50%, #22c55e 100%);
+            height: 6px;
+            border-radius: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 85%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            animation: slideIn 2s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { width: 0%; }
+            to { width: 85%; }
+        }
+        
+        .floating-icon {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center mb-4">
+                <div class="icon-bg w-16 h-16 rounded-full flex items-center justify-center mr-4 floating-icon">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">新一代RAG</h1>
+                    <p class="text-xl text-cyan-600 font-semibold">深度检索 + 深度思考</p>
+                </div>
+            </div>
+            <p class="text-lg text-gray-600 max-w-4xl mx-auto">展示RAG技术的重大进化，从简单检索到智能推理的跨越式发展</p>
+        </div>
+
+        <!-- Main Comparison Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <!-- Traditional RAG Limitations -->
+            <div class="traditional-card p-6 rounded-xl card-shadow">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-red-700">传统RAG局限</h3>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <span class="text-red-500 font-bold text-lg mr-2">❌</span>
+                        <div>
+                            <p class="font-semibold text-red-700">检索不准确</p>
+                            <p class="text-sm text-red-600">关键词匹配局限</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <span class="text-red-500 font-bold text-lg mr-2">❌</span>
+                        <div>
+                            <p class="font-semibold text-red-700">思考不深入</p>
+                            <p class="text-sm text-red-600">简单拼接回答</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <span class="text-red-500 font-bold text-lg mr-2">❌</span>
+                        <div>
+                            <p class="font-semibold text-red-700">推理不连贯</p>
+                            <p class="text-sm text-red-600">缺乏逻辑链条</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modern RAG Innovation -->
+            <div class="modern-card p-6 rounded-xl card-shadow">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-green-700">深度RAG创新</h3>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <span class="text-green-500 font-bold text-lg mr-2">✅</span>
+                        <div>
+                            <p class="font-semibold text-green-700">语义理解检索</p>
+                            <p class="text-sm text-green-600">意图推理 + 多跳关联</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <span class="text-green-500 font-bold text-lg mr-2">✅</span>
+                        <div>
+                            <p class="font-semibold text-green-700">逻辑推演思考</p>
+                            <p class="text-sm text-green-600">证据链 + 反思验证</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <span class="text-green-500 font-bold text-lg mr-2">✅</span>
+                        <div>
+                            <p class="font-semibold text-green-700">智能结构化输出</p>
+                            <p class="text-sm text-green-600">可解释性 + 置信度</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deep RAG Process Flow -->
+        <div class="bg-white rounded-xl p-8 card-shadow mb-12">
+            <h3 class="text-2xl font-bold text-center text-gray-800 mb-8">深度RAG工作流程</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Step 1: Deep Retrieval -->
+                <div class="text-center flow-arrow">
+                    <div class="icon-bg w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse-slow">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <h4 class="text-lg font-bold text-cyan-700 mb-2">🔍 深度检索</h4>
+                    <p class="text-sm text-gray-600">语义理解 + 意图推理 + 多跳关联</p>
+                </div>
+
+                <!-- Step 2: Deep Thinking -->
+                <div class="text-center flow-arrow">
+                    <div class="icon-bg w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse-slow" style="animation-delay: 1s;">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </div>
+                    <h4 class="text-lg font-bold text-cyan-700 mb-2">🧠 深度思考</h4>
+                    <p class="text-sm text-gray-600">逻辑推演 + 证据链 + 反思验证</p>
+                </div>
+
+                <!-- Step 3: Smart Output -->
+                <div class="text-center">
+                    <div class="icon-bg w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse-slow" style="animation-delay: 2s;">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h4 class="text-lg font-bold text-cyan-700 mb-2">💡 智能输出</h4>
+                    <p class="text-sm text-gray-600">结构化推理 + 可解释性 + 置信度</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Technologies and Results -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Key Technologies -->
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <svg class="w-6 h-6 text-cyan-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.78 0-2.678-2.153-1.415-3.414l5-5A2 2 0 009 9.172V5L8 4z"></path>
+                    </svg>
+                    关键技术突破
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="tech-badge">混合检索</div>
+                        <p class="text-sm text-gray-600 mt-1">稠密+稀疏+图谱检索</p>
+                    </div>
+                    
+                    <div>
+                        <div class="tech-badge">思维链推理</div>
+                        <p class="text-sm text-gray-600 mt-1">CoT推理+自我反思</p>
+                    </div>
+                    
+                    <div>
+                        <div class="tech-badge">多轮对话优化</div>
+                        <p class="text-sm text-gray-600 mt-1">渐进式深入理解</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Application Results -->
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <svg class="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    应用效果提升
+                </h3>
+                
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700">准确率提升</span>
+                            <span class="text-sm font-bold text-green-600">60% → 85%+</span>
+                        </div>
+                        <div class="progress-bar"></div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-cyan-50 to-green-50 p-4 rounded-lg">
+                        <p class="text-lg font-bold text-gray-800 text-center">核心价值</p>
+                        <p class="text-sm text-gray-600 text-center mt-2">
+                            从"检索+拼接"到"理解+推理"的质变升级
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-12 text-center text-sm text-gray-500">
+            <div class="flex items-center justify-between">
+                <p>Copyright. 2025©赞同科技股份有限公司</p>
+                <div class="flex items-center space-x-4">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2306b6d4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E" alt="Logo" class="w-6 h-6">
+                    <span class="text-cyan-600 font-semibold">赞同科技</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate progress bars on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // Observe all cards
+            document.querySelectorAll('.card-shadow').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.6s ease-out';
+                observer.observe(card);
+            });
+
+            // Add hover effects to tech badges
+            document.querySelectorAll('.tech-badge').forEach(badge => {
+                badge.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05)';
+                    this.style.transition = 'transform 0.2s ease';
+                });
+                
+                badge.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

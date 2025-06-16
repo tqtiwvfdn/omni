@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent进阶 - 从工具调用到自主决策</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        /* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'); */
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%);
+        }
+        
+        .card-gradient {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+            backdrop-filter: blur(10px);
+        }
+        
+        .progress-line {
+            background: linear-gradient(90deg, #10b981 0%, #06b6d4 50%, #3b82f6 100%);
+            height: 4px;
+            border-radius: 2px;
+        }
+        
+        .level-card {
+            transition: all 0.3s ease;
+        }
+        
+        .level-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .tech-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .tech-card:hover {
+            border-left-color: #10b981;
+            transform: translateX(4px);
+        }
+        
+        .flow-step {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .flow-step:hover {
+            transform: scale(1.05);
+        }
+        
+        .flow-arrow {
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #06b6d4;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .icon-bounce {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40%, 43% {
+                transform: translateY(-8px);
+            }
+            70% {
+                transform: translateY(-4px);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="container mx-auto px-8 py-8">
+        <!-- 页眉 -->
+        <div class="text-center mb-8 fade-in">
+            <div class="flex items-center justify-center mb-4">
+                <div class="w-12 h-12 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-xl flex items-center justify-center mr-4">
+                    <span class="text-white text-2xl font-bold">07</span>
+                </div>
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
+                    Agent进阶 - 从工具调用到自主决策
+                </h1>
+            </div>
+            <p class="text-gray-600 text-lg">展示智能体的能力跃升</p>
+        </div>
+
+        <!-- 能力进化路径 -->
+        <div class="mb-12 fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                <span class="mr-3">🚀</span>能力进化路径
+            </h2>
+            <div class="relative">
+                <div class="progress-line mb-8"></div>
+                <div class="grid grid-cols-4 gap-6">
+                    <div class="level-card card-gradient rounded-xl p-6 text-center border border-gray-200">
+                        <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl">🔧</span>
+                        </div>
+                        <h3 class="font-bold text-emerald-600 mb-2">L1</h3>
+                        <p class="text-sm text-gray-700">简单工具调用</p>
+                    </div>
+                    <div class="level-card card-gradient rounded-xl p-6 text-center border border-gray-200">
+                        <div class="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl">⚙️</span>
+                        </div>
+                        <h3 class="font-bold text-cyan-600 mb-2">L2</h3>
+                        <p class="text-sm text-gray-700">工作流执行</p>
+                    </div>
+                    <div class="level-card card-gradient rounded-xl p-6 text-center border border-gray-200">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl">🎯</span>
+                        </div>
+                        <h3 class="font-bold text-blue-600 mb-2">L3</h3>
+                        <p class="text-sm text-gray-700">自主任务规划</p>
+                    </div>
+                    <div class="level-card card-gradient rounded-xl p-6 text-center border border-gray-200">
+                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl icon-bounce">💡</span>
+                        </div>
+                        <h3 class="font-bold text-purple-600 mb-2">L4</h3>
+                        <p class="text-sm text-gray-700">创新问题解决</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8">
+            <!-- 核心技术突破 -->
+            <div class="fade-in">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <span class="mr-3">⚡</span>核心技术突破
+                </h2>
+                <div class="space-y-4">
+                    <div class="tech-card card-gradient rounded-xl p-6 border border-gray-200">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="text-xl">🎯</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">目标分解</h3>
+                                <p class="text-gray-600 text-sm">复杂任务自动拆解</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tech-card card-gradient rounded-xl p-6 border border-gray-200">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="text-xl">🔄</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">动态规划</h3>
+                                <p class="text-gray-600 text-sm">实时调整执行策略</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tech-card card-gradient rounded-xl p-6 border border-gray-200">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="text-xl">🤔</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">自我反思</h3>
+                                <p class="text-gray-600 text-sm">执行效果评估和优化</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tech-card card-gradient rounded-xl p-6 border border-gray-200">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="text-xl">🧠</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">知识迁移</h3>
+                                <p class="text-gray-600 text-sm">跨领域经验复用</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 实际案例：智能投研助手 -->
+            <div class="fade-in">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <span class="mr-3">📊</span>实际案例：智能投研助手
+                </h2>
+                <div class="space-y-4">
+                    <!-- 输入 -->
+                    <div class="flow-step card-gradient rounded-xl p-4 border border-gray-200 relative">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span class="text-lg">📝</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800">接收输入</h4>
+                                <p class="text-sm text-gray-600">"分析XX公司投资价值"</p>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                    </div>
+                    
+                    <!-- 自主规划 -->
+                    <div class="flow-step card-gradient rounded-xl p-4 border border-gray-200 relative">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <span class="text-lg">🎯</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800">自主规划</h4>
+                                <p class="text-sm text-gray-600">财务分析+行业对比+风险评估</p>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                    </div>
+                    
+                    <!-- 调用工具 -->
+                    <div class="flow-step card-gradient rounded-xl p-4 border border-gray-200 relative">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                                <span class="text-lg">🔧</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800">调用工具</h4>
+                                <p class="text-sm text-gray-600">数据API+报告生成+图表制作</p>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                    </div>
+                    
+                    <!-- 输出结果 -->
+                    <div class="flow-step card-gradient rounded-xl p-4 border border-gray-200">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <span class="text-lg">📋</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800">输出结果</h4>
+                                <p class="text-sm text-gray-600">结构化投研报告+投资建议+风险提示</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="mt-12 text-center text-gray-500 text-sm">
+            <p>Copyright. 2025© | Agent进阶：智能体能力跃升的四个关键层级</p>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach((element, index) => {
+                element.style.animationDelay = `${index * 0.2}s`;
+            });
+
+            // 鼠标悬停效果
+            const levelCards = document.querySelectorAll('.level-card');
+            levelCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // 技术卡片点击效果
+            const techCards = document.querySelectorAll('.tech-card');
+            techCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    this.style.transform = 'translateX(8px) scale(1.02)';
+                    setTimeout(() => {
+                        this.style.transform = 'translateX(4px)';
+                    }, 150);
+                });
+            });
+
+            // 流程步骤点击效果
+            const flowSteps = document.querySelectorAll('.flow-step');
+            flowSteps.forEach((step, index) => {
+                step.addEventListener('click', function() {
+                    this.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(255,255,255,0.9) 100%)';
+                    setTimeout(() => {
+                        this.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%)';
+                    }, 1000);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
