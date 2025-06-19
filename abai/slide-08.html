@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>业务影响与风险评估</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%); */
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+        }
+
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .risk-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .risk-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .risk-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ef4444, #f97316, #eab308);
+        }
+
+        .risk-high::before {
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+        }
+
+        .risk-medium::before {
+            background: linear-gradient(90deg, #ea580c, #f97316);
+        }
+
+        .risk-warning::before {
+            background: linear-gradient(90deg, #ca8a04, #eab308);
+        }
+
+        .impact-metric {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .impact-metric:hover {
+            background: rgba(239, 68, 68, 0.15);
+            transform: scale(1.02);
+        }
+
+        .case-study {
+            background: rgba(239, 68, 68, 0.05);
+            border-left: 4px solid #ef4444;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        .warning-icon {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #dc2626;
+            line-height: 1;
+        }
+
+        .trend-arrow {
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .trend-down {
+            color: #dc2626;
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div>
+        <!-- 页面标题 -->
+        <div class="text-center mb-8 fade-in">
+            <div class="flex items-center justify-center mb-4">
+                <div class="warning-icon text-4xl mr-3">⚠️</div>
+                <h1 class="text-4xl font-bold text-gray-800">业务影响与风险评估</h1>
+            </div>
+            <p class="text-lg text-gray-600">当前ABX5技术挑战对业务造成的多层次影响分析</p>
+        </div>
+
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 左侧：风险分析 -->
+            <div class="space-y-6">
+                <!-- 客户满意度风险 -->
+                <div class="risk-card risk-high fade-in">
+                    <div class="flex items-start space-x-4">
+                        <div class="text-2xl">😟</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-800 mb-3">客户满意度风险</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                                    <span class="text-gray-700">客户现场问题解决周期过长，技术支持成本增加</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                                    <span class="text-gray-700">产品稳定性和可维护性受到客户质疑</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                                    <span class="text-gray-700">开发调试困难影响项目交付质量</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 真实案例 -->
+                            <div class="case-study mt-4">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="text-sm font-semibold text-red-700">📋 实际案例</span>
+                                </div>
+                                <p class="text-sm text-gray-700">
+                                    <strong>广发AB5信创项目</strong>：客户反馈问题解决周期过长，
+                                    影响品牌信誉。实际上某些问题只需要1天甚至2行代码就能解决，
+                                    但由于技术栈复杂性导致问题定位困难。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 市场竞争力风险 -->
+                <div class="risk-card risk-medium fade-in">
+                    <div class="flex items-start space-x-4">
+                        <div class="text-2xl">📉</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-800 mb-3">市场竞争力下降风险</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
+                                    <span class="text-gray-700">缺乏统一的智能柜面解决方案，无法形成差异化优势</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
+                                    <span class="text-gray-700">技术债务累积，平台团队疲于应对基础问题</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
+                                    <span class="text-gray-700">面对AI时代客户需求，产品形态升级滞后</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 人才与成本风险 -->
+                <div class="risk-card risk-warning fade-in">
+                    <div class="flex items-start space-x-4">
+                        <div class="text-2xl">👥</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-800 mb-3">人才流失与成本上升风险</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                                    <span class="text-gray-700">技术壁垒过高，一线开发人员学习成本大</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                                    <span class="text-gray-700">平台专家资源有限，形成人力瓶颈</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                                    <span class="text-gray-700">长期依赖少数专家，团队可持续发展受限</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：影响图示和恶性循环 -->
+            <div class="space-y-6">
+                <!-- 恶性循环示意图 -->
+                <div class="liquid-glass rounded-2xl p-6 fade-in">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">
+                        🔄 技术债务恶性循环
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                                <div class="text-gray-700">技术债务累积，基础问题增多</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-center">
+                            <div class="text-2xl text-red-500">⬇️</div>
+                        </div>
+                        
+                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                                <div class="text-gray-700">一线问题增加，依赖平台解决</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-center">
+                            <div class="text-2xl text-orange-500">⬇️</div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                                <div class="text-gray-700">平台团队疲于应付，无法创新</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-center">
+                            <div class="text-2xl text-yellow-500">⬇️</div>
+                        </div>
+                        
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
+                                <div class="text-gray-700">技术封闭问题加剧，循环恶化</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 市场风险信号 -->
+                <div class="liquid-glass rounded-2xl p-6 fade-in">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">
+                        📊 市场风险信号
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-semibold text-gray-800">浦发银行需求转向</div>
+                                    <div class="text-sm text-gray-600">从信创方案转向智能化方案</div>
+                                </div>
+                                <div class="text-2xl">🚨</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-semibold text-gray-800">东莞银行主动咨询</div>
+                                    <div class="text-sm text-gray-600">询问AI赋能柜面方案</div>
+                                </div>
+                                <div class="text-2xl">💬</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-yellow-50 to-red-50 border border-yellow-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-semibold text-gray-800">技术代差风险</div>
+                                    <div class="text-sm text-gray-600">可能导致订单流失</div>
+                                </div>
+                                <div class="text-2xl">⚡</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部风险总结 -->
+        <div class="mt-8 liquid-glass rounded-2xl p-6 text-center fade-in">
+            <div class="max-w-4xl mx-auto">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">
+                    🎯 核心风险：时间窗口稍纵即逝
+                </h3>
+                <p class="text-lg text-gray-700 leading-relaxed">
+                    在AI重塑金融服务的关键时期，<strong class="text-blue-600">技术适配性问题</strong>正在成为战略执行的最大瓶颈。
+                    客户需求已经转向智能化，竞争对手在加速布局，我们必须<strong class="text-green-600">将技术现代化作为战略投资</strong>来看待。
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.fade-in');
+            elements.forEach((element, index) => {
+                setTimeout(() => {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(20px)';
+                    element.style.transition = 'all 0.8s ease-out';
+                    
+                    setTimeout(() => {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

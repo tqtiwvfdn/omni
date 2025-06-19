@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置与稳定性挑战</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%); */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .problem-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .problem-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .problem-card:hover::before {
+            left: 100%;
+        }
+
+        .problem-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .problem-number {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .impact-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+        }
+
+        .business-impact {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 3px 12px rgba(220, 38, 38, 0.4);
+        }
+
+        .section-title {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .code-snippet {
+            background: rgba(17, 24, 39, 0.95);
+            color: #f9fafb;
+            padding: 16px;
+            border-radius: 12px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            border: 1px solid rgba(75, 85, 99, 0.5);
+            overflow-x: auto;
+        }
+
+        .highlight-red {
+            color: #fca5a5;
+            font-weight: bold;
+        }
+
+        .highlight-yellow {
+            color: #fde047;
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .fade-in:nth-child(1) { animation-delay: 0.1s; }
+        .fade-in:nth-child(2) { animation-delay: 0.2s; }
+        .fade-in:nth-child(3) { animation-delay: 0.3s; }
+        .fade-in:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .image-container {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            border: 2px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .image-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
+            padding: 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="">
+        <!-- 页面标题 -->
+        <div class="glass-card rounded-2xl p-8 mb-8 fade-in">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center">
+                    <span class="text-white font-bold text-xl">⚠️</span>
+                </div>
+                <div>
+                    <h1 class="section-title">配置与稳定性挑战</h1>
+                    <p class="text-gray-600 text-lg">开发配置能力不足与系统稳定性问题分析</p>
+                </div>
+            </div>
+            
+            <div class="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-400 p-4 rounded-lg">
+                <p class="text-red-800 font-medium">🚨 核心问题：配置复杂性和错误定位困难直接影响AI助手的快速开发和部署能力</p>
+            </div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 左侧：问题详细分析 -->
+            <div class="space-y-6">
+                <!-- 问题6：配置能力不足 -->
+                <div class="problem-card rounded-xl p-6 fade-in">
+                    <div class="flex items-start space-x-4 mb-4">
+                        <div class="problem-number">6</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">配置能力不足影响开发灵活性</h3>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="impact-badge">开发效率</span>
+                                <span class="impact-badge">联调困难</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-red-800 mb-2">🔧 技术现状</h4>
+                            <ul class="text-red-700 space-y-1 text-sm">
+                                <li>• <span class="font-medium">ab.config.js不支持proxy配置</span>，本地开发联调困难</li>
+                                <li>• <span class="font-medium">打包配置修改不生效</span>，缺乏详细文档支持</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-orange-800 mb-2">📊 影响分析</h4>
+                            <p class="text-orange-700 text-sm">开发环境搭建复杂，多服务联调困难，影响AI服务集成效率</p>
+                        </div>
+                        
+                        <!-- <div class="business-impact inline-block">
+                            AI能力集成周期延长，无法快速响应客户定制化需求
+                        </div> -->
+                    </div>
+                </div>
+
+                <!-- 问题7：国际化功能配置混乱 -->
+                <div class="problem-card rounded-xl p-6 fade-in">
+                    <div class="flex items-start space-x-4 mb-4">
+                        <div class="problem-number">7</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">国际化功能配置混乱</h3>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="impact-badge">全球化</span>
+                                <span class="impact-badge">配置冲突</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-red-800 mb-2">🌐 技术现状</h4>
+                            <p class="text-red-700 text-sm">框架内置国际化功能缺失，但依赖中又安装了相关包，配置混乱</p>
+                        </div>
+                        
+                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-orange-800 mb-2">📊 影响分析</h4>
+                            <p class="text-orange-700 text-sm">国际化实施困难，影响产品海外市场扩展能力</p>
+                        </div>
+                        
+                        <div class="business-impact inline-block">
+                            限制了AB产品的全球化战略执行
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 问题8：错误定位困难 -->
+                <div class="problem-card rounded-xl p-6 fade-in">
+                    <div class="flex items-start space-x-4 mb-4">
+                        <div class="problem-number">8</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">错误定位困难影响问题响应</h3>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="impact-badge">稳定性</span>
+                                <span class="impact-badge">维护成本</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-red-800 mb-2">🐛 技术现状</h4>
+                            <p class="text-red-700 text-sm">系统报错时难以快速定位问题源头，调试过程繁琐</p>
+                        </div>
+                        
+                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-orange-800 mb-2">📊 影响分析</h4>
+                            <p class="text-orange-700 text-sm">客户现场问题解决周期长，技术支持成本高</p>
+                        </div>
+                        
+                        <div class="business-impact inline-block">
+                            客户满意度下降，如广发项目问题解决周期过长的案例重现
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：问题截图展示 -->
+            <div class="space-y-6">
+                <!-- 配置问题示例 -->
+                <div class="glass-card rounded-xl p-6 fade-in">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">⚙️ 配置文件复杂性展示</h3>
+                    <div class="code-snippet mb-4">
+                        <div class="text-gray-400 text-xs mb-2">// ab.config.js 配置示例</div>
+                        <div>module.exports = {</div>
+                        <div class="ml-4">dev: {</div>
+                        <div class="ml-8 highlight-red">// proxy 配置不被支持</div>
+                        <div class="ml-8 highlight-red">// proxy: { ... } ❌</div>
+                        <div class="ml-4">},</div>
+                        <div class="ml-4">build: {</div>
+                        <div class="ml-8 highlight-red">// 修改不生效，缺乏文档</div>
+                        <div class="ml-8 highlight-yellow">outputDir: 'dist' // 🤔</div>
+                        <div class="ml-4">}</div>
+                        <div>}</div>
+                    </div>
+                    <p class="text-gray-600 text-sm">开发者需要通过复杂的配置文件进行环境设置，但关键功能缺失</p>
+                </div>
+
+                <!-- 错误定位困难截图 -->
+                <div class="glass-card rounded-xl p-6 fade-in">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">🐛 错误定位困难案例</h3>
+                    <div class="image-container">
+                        <img src="https://zhiyan.awebide.com/abai/img/%E9%97%AE%E9%A2%988.png" alt="错误定位困难截图" class="w-full">
+                        <div class="image-caption">
+                            ⚠️ 系统报错信息不明确，开发者难以快速定位问题根源
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 影响统计 -->
+                <div class="glass-card rounded-xl p-6 fade-in">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">📈 量化影响评估</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                            <span class="font-medium text-red-800">问题解决周期延长</span>
+                            <span class="font-bold text-red-600">3-5倍</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                            <span class="font-medium text-orange-800">技术支持成本增加</span>
+                            <span class="font-bold text-orange-600">200%+</span>
+                        </div>
+                        <!-- <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                            <span class="font-medium text-yellow-800">AI集成开发效率</span>
+                            <span class="font-bold text-yellow-600">-40%</span>
+                        </div> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部总结 -->
+        <!-- <div class="glass-card rounded-2xl p-6 mt-8 fade-in">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 p-4 rounded-lg">
+                <h4 class="font-bold text-blue-900 mb-2">💡 对AI战略的直接影响</h4>
+                <p class="text-blue-800">配置复杂性和错误定位困难直接阻碍了12个AI助手的快速开发和部署，技术栈的稳定性问题成为AI能力落地的关键瓶颈。</p>
+            </div>
+        </div> -->
+    </div>
+</body>
+</html>
