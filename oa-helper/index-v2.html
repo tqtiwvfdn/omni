@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OA智能助手</title>
+    <link rel="manifest" href="/manifest.json">
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <script src="/oa-helper/script/timestamp.js?v=3"></script>
+    <style>
+        /* Liquid Glass Design System */
+        html,body{
+            overflow: hidden;
+        }
+        body {
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .liquid-glass-strong {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .liquid-glass-subtle {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+
+        .floating-button {
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .floating-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .ai-message {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.7);
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-container {
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .message-bubble {
+                max-width: 90%;
+            }
+
+            .chat-container {
+                height: calc(100vh - 180px);
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .stream-cursor::after {
+            content: '|';
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            50% {
+                opacity: 1;
+            }
+
+            51%,
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* 信息卡片样式 */
+        .user-info-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 8px 0;
+        }
+
+        .project-info-card {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 8px 0;
+        }
+
+        .wechat-info-card {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 8px 0;
+        }
+
+        .error-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 127, 0.1) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Indicator -->
+    <div id="loading-indicator"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="liquid-glass rounded-2xl p-8 text-center">
+            <div class="loading mx-auto mb-4"></div>
+            <p class="text-white">正在初始化...</p>
+        </div>
+    </div>
+
+    <!-- Main Chat Interface -->
+    <div id="chat-interface" class="h-screen flex flex-col">
+        <!-- Header -->
+        <header class="liquid-glass p-4 specular-highlight">
+            <div class="flex items-center justify-between max-w-6xl mx-auto">
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-white font-semibold">OA智能助手</h1>
+                        <p class="text-white/70 text-sm">您好，<span id="user-name"></span></p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div id="connection-status" class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span class="text-white/70 text-sm">已连接</span>
+                    </div>
+                    <button id="clear-chat"
+                        class="liquid-glass-subtle rounded-lg p-2 text-white hover:bg-white/10 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Messages -->
+        <main class="flex-1 p-4 overflow-hidden">
+            <div class="max-w-4xl mx-auto h-full flex flex-col">
+                <div id="chat-messages" class="chat-container flex-1 space-y-4 mb-4">
+                    <!-- Welcome message -->
+                    <div class="flex justify-start">
+                        <div class="message-bubble ai-message rounded-2xl p-4">
+                            <p class="text-white">您好！我是OA智能助手，可以帮您查询人员信息、报工情况和发送企业微信消息。</p>
+                            <p class="text-white/80 text-sm mt-2">例如：</p>
+                            <ul class="text-white/80 text-sm mt-1 space-y-1">
+                                <li>• "帮我查一下张三的电话"</li>
+                                <li>• "他的报工情况"（支持代词指代）</li>
+                                <li>• "把我的报工情况发到企业微信"</li>
+                                <li>• "发消息给张三说明天开会"</li>
+                                <li>• "把李四的电话发给王五"</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="liquid-glass rounded-2xl p-4 specular-highlight">
+                    <div class="flex space-x-3">
+                        <div class="flex-1 relative">
+                            <input id="chat-input" type="text" placeholder="请输入您的问题..."
+                                class="w-full liquid-glass-subtle rounded-xl p-3 text-white placeholder-white/50 border-0 focus:ring-2 focus:ring-white/30 focus:outline-none pr-12">
+                            <button id="voice-btn"
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                        <button id="send-btn"
+                            class="liquid-glass-strong floating-button rounded-xl px-6 py-3 text-white font-medium specular-highlight">
+                            发送
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class OAAssistant {
+            constructor() {
+                this.token = '';
+                this.currentUser = '';
+                this.apiBase = window.location.origin;
+                this.ollamaBase = 'https://aom.awebide.com';
+                this.isStreaming = false;
+                this.conversationHistory = [];
+
+                this.initEventListeners();
+                this.autoLogin();
+            }
+
+            initEventListeners() {
+                document.getElementById('send-btn').addEventListener('click', this.sendMessage.bind(this));
+                document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !this.isStreaming) this.sendMessage();
+                });
+                document.getElementById('clear-chat').addEventListener('click', this.clearChat.bind(this));
+            }
+
+            async autoLogin() {
+                this.showLoading(true);
+
+                try {
+                    const response = await fetch('./login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: 'A3805',
+                            password: 'user101@'
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.obj && data.obj.access_token) {
+                        this.token = data.obj.access_token;
+                    }
+
+                    this.currentUser = window.localStorage.getItem('userName');
+
+                    localStorage.setItem('oaToken', this.token);
+
+                    document.getElementById('user-name').textContent = this.currentUser;
+                    this.updateConnectionStatus(true);
+
+                    console.log('自动登录成功');
+                } catch (error) {
+                    console.error('Auto login error:', error);
+                    this.updateConnectionStatus(false);
+                    this.addMessage('系统', '自动登录失败，部分功能可能不可用。', 'ai');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            updateConnectionStatus(connected) {
+                const statusEl = document.getElementById('connection-status');
+                const dot = statusEl.querySelector('div');
+                const text = statusEl.querySelector('span');
+
+                if (connected) {
+                    dot.className = 'w-2 h-2 bg-green-400 rounded-full';
+                    text.textContent = '已连接';
+                } else {
+                    dot.className = 'w-2 h-2 bg-red-400 rounded-full';
+                    text.textContent = '连接失败';
+                }
+            }
+
+            async sendMessage() {
+                if (this.isStreaming) return;
+
+                const input = document.getElementById('chat-input');
+                const message = input.value.trim();
+
+                if (!message) return;
+
+                input.value = '';
+                this.addMessage('我', message, 'user');
+
+                this.conversationHistory.push({
+                    role: 'user',
+                    content: message
+                });
+
+                this.isStreaming = true;
+
+                try {
+                    // 第一步：AI分析意图和提取参数
+                    const intent = await this.analyzeIntent(message);
+                    console.log('意图分析结果:', intent);
+
+                    // 第二步：根据意图调用相应的接口
+                    let apiData = null;
+                    if (intent.needsApiCall) {
+                        apiData = await this.callOAAPI(intent);
+                    }
+
+                    // 第三步：AI总结并流式返回结果
+                    await this.generateStreamResponse(message, intent, apiData);
+
+                } catch (error) {
+                    console.error('Message processing error:', error);
+                    this.addMessage('系统', '抱歉，处理您的请求时出现了错误，请稍后重试。', 'ai');
+                } finally {
+                    this.isStreaming = false;
+                }
+            }
+
+            async analyzeIntent(message) {
+                try {
+                    const userName = localStorage.getItem('userName') || '';
+                    const currentDate = new Date();
+                    const dateString = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月${currentDate.getDate()}日`;
+
+                    const messages = [
+                        {
+                            role: 'system',
+                            content: `你是OA系统意图分析专家。直接返回JSON，无需解释。
+
+当前时间：${dateString}
+当前用户：${userName}（当用户说"我"时，指的就是这个用户）
+
+输出格式：
+{
+  "intent": "user_info_query" | "project_query" | "send_wechat" | "query_and_send" | "general_chat",
+  "needsApiCall": true/false,
+  "userName": "目标用户名或工号",
+  "queryField": "电话|职级|成本|邮箱|部门|全部",
+  "timePeriod": "YYYYMM格式，如202406",
+  "message": "要发送的消息内容",
+  "sendToUser": "接收消息的用户",
+  "explanation": "意图解释"
+}
+
+规则：
+- 询问个人基本信息、人员信息→"user_info_query", needsApiCall: true
+- 询问报工/项目→"project_query", needsApiCall: true, 根据当前时间和用户描述计算timePeriod
+- 查询信息并发送给某人→"query_and_send", needsApiCall: true, 先查询后发送
+- 直接发送消息、通知→"send_wechat", needsApiCall: true, 提取message和userName
+- 其他对话→"general_chat", needsApiCall: false
+
+时间计算示例：
+- "本月"→202406（当前月）
+- "上月"→202405（上一月）
+- "去年4月"→202304
+- "2023年3月"→202303
+
+示例：
+输入："张三电话"
+输出：{"intent":"user_info_query","needsApiCall":true,"userName":"张三","queryField":"电话","explanation":"查询张三的电话号码"}
+
+输入："我去年4月的报工情况"
+输出：{"intent":"project_query","needsApiCall":true,"userName":"${userName}","timePeriod":"202304","explanation":"查询${userName}去年4月的报工情况"}
+
+输入："发消息给李四说明天开会"
+输出：{"intent":"send_wechat","needsApiCall":true,"userName":"李四","message":"明天开会","explanation":"发送消息给李四"}
+
+输入："把张三的电话发给李四"
+输出：{"intent":"query_and_send","needsApiCall":true,"userName":"张三","queryField":"电话","sendToUser":"李四","explanation":"查询张三的电话并发送给李四"}
+
+只返回JSON！`
+                        },
+                        {
+                            role: 'user',
+                            content: message
+                        }
+                    ];
+
+                    console.log('发送意图分析请求:', messages);
+
+                    const response = await fetch(`${this.ollamaBase}/v1/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: 'Qwen3-32B',
+                            messages: messages,
+                            stream: false,
+                            temperature: 0.3,
+                            max_tokens: 500,
+                            top_p: 0.95,
+                            "chat_template_kwargs": { "enable_thinking": false }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API请求失败: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('API返回数据:', data);
+
+                    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                        throw new Error('API返回数据格式错误');
+                    }
+
+                    const content = data.choices[0].message.content;
+                    console.log('AI回复内容:', content);
+
+                    try {
+                        // 清理可能的思考内容
+                        const cleanedContent = this.cleanThinkingContent(content);
+                        const intent = JSON.parse(cleanedContent);
+                        console.log('解析后的意图:', intent);
+                        return intent;
+                    } catch (e) {
+                        console.error('JSON解析失败:', content);
+                        // 如果解析失败，尝试提取JSON片段
+                        const jsonMatch = content.match(/\{[^}]*\}/);
+                        if (jsonMatch) {
+                            try {
+                                return JSON.parse(jsonMatch[0]);
+                            } catch (e2) {
+                                console.error('提取JSON失败:', jsonMatch[0]);
+                            }
+                        }
+                        return { intent: 'general_chat', needsApiCall: false, explanation: '解析失败，默认为一般对话' };
+                    }
+                } catch (error) {
+                    console.error('Intent analysis error:', error);
+                    // Fallback: 使用规则匹配
+                    return this.fallbackIntentAnalysis(message);
+                }
+            }
+
+            // 清理模型输出中的思考内容
+            cleanThinkingContent(content) {
+                if (!content || typeof content !== 'string') {
+                    return '{"intent": "general_chat", "needsApiCall": false, "explanation": "无效内容"}';
+                }
+
+                // 移除常见的思考标记和内容
+                let cleaned = content
+                    .replace(/^.*?思考[：:].*/gm, '')
+                    .replace(/^.*?分析[：:].*/gm, '')
+                    .replace(/^.*?让我.*/gm, '')
+                    .replace(/<think>.*?<\/think>/gs, '')
+                    .replace(/^首先.*$/gm, '')
+                    .replace(/^然后.*$/gm, '')
+                    .replace(/^根据.*$/gm, '')
+                    .replace(/^我需要.*$/gm, '')
+                    .trim();
+
+                // 提取JSON部分
+                const jsonMatch = cleaned.match(/\{.*\}/s);
+                if (jsonMatch) {
+                    return jsonMatch[0];
+                }
+
+                // 如果没有找到完整JSON，尝试构建基本结构
+                if (cleaned.includes('user_info_query') || cleaned.includes('电话') || cleaned.includes('职级')) {
+                    return '{"intent": "user_info_query", "needsApiCall": true, "userName": "", "queryField": "全部", "explanation": "人员信息查询"}';
+                }
+                if (cleaned.includes('project_query') || cleaned.includes('报工') || cleaned.includes('项目')) {
+                    return '{"intent": "project_query", "needsApiCall": true, "userName": "", "timePeriod": "202406", "explanation": "项目报工查询"}';
+                }
+                if (cleaned.includes('send_wechat') || cleaned.includes('发消息') || cleaned.includes('通知')) {
+                    return '{"intent": "send_wechat", "needsApiCall": true, "userName": "", "message": "", "explanation": "发送企业微信消息"}';
+                }
+                if (cleaned.includes('query_and_send') || (cleaned.includes('查询') && cleaned.includes('发送')) || cleaned.includes('发到')) {
+                    // 判断是否是报工情况
+                    if (cleaned.includes('报工') || cleaned.includes('项目')) {
+                        return '{"intent": "query_and_send", "needsApiCall": true, "userName": "", "queryField": "报工情况", "timePeriod": "202406", "sendToUser": "", "explanation": "查询报工情况并发送"}';
+                    } else {
+                        return '{"intent": "query_and_send", "needsApiCall": true, "userName": "", "queryField": "全部", "sendToUser": "", "explanation": "查询信息并发送"}';
+                    }
+                }
+
+                return '{"intent": "general_chat", "needsApiCall": false, "explanation": "一般对话"}';
+            }
+
+            // 备用意图分析（基于规则匹配）
+            fallbackIntentAnalysis(message) {
+                const userName = localStorage.getItem('userName') || '';
+                const processedMessage = message.toLowerCase();
+
+                // 尝试从对话历史中解析代词指代
+                let resolvedUserName = userName;
+                const recentHistory = this.conversationHistory.slice(-4);
+
+                // 查找最近提到的人名
+                for (let i = recentHistory.length - 1; i >= 0; i--) {
+                    const content = recentHistory[i].content;
+                    const nameMatch = content.match(/([a-zA-Z0-9]+|[\u4e00-\u9fa5]{2,4})/g);
+                    if (nameMatch) {
+                        const foundName = nameMatch.find(name =>
+                            name !== '帮' && name !== '查' && name !== '一下' && name !== '的' &&
+                            name !== '我' && name !== '你' && name !== '他' && name !== '她' &&
+                            name.length >= 2
+                        );
+                        if (foundName && foundName !== userName) {
+                            resolvedUserName = foundName;
+                            break;
+                        }
+                    }
+                }
+
+                // 关键词定义
+                const userInfoKeywords = ['电话', '手机', '职级', '成本', '邮箱', '部门', '联系方式'];
+                const projectKeywords = ['报工', '项目', '工作日', '工时'];
+                const wechatKeywords = ['发消息', '通知', '告诉', '发送', '说'];
+                const queryAndSendKeywords = ['发给', '告诉', '转发', '把.*发给', '把.*告诉', '发到', '发送到'];
+
+                // 提取用户名
+                const namePattern = /([a-zA-Z0-9]+|[\u4e00-\u9fa5]{2,4})/g;
+                const names = message.match(namePattern) || [];
+
+                // 检查是否包含代词，如果包含则使用解析出的用户名
+                if (processedMessage.includes('他') || processedMessage.includes('她') || processedMessage.includes('它')) {
+                    // 使用从历史中解析的用户名
+                } else {
+                    // 正常提取用户名
+                    const extractedName = names.find(name =>
+                        name !== '帮' && name !== '查' && name !== '一下' && name !== '的' &&
+                        !userInfoKeywords.includes(name) && !projectKeywords.includes(name) &&
+                        !wechatKeywords.includes(name)
+                    );
+                    if (extractedName) {
+                        resolvedUserName = extractedName;
+                    }
+                }
+
+                // 检查是否是发送报工情况的模式
+                const projectSendMatch = message.match(/(把|将)?(我的?|他的?|她的?|.+?的?)?(报工|项目)(情况|信息)?(发给|发到|发送到|告诉)(.+)/);
+                if (projectSendMatch) {
+                    const sendToUser = projectSendMatch[6].trim();
+                    const currentDate = new Date();
+                    const currentYear = currentDate.getFullYear();
+                    const currentMonth = currentDate.getMonth() + 1;
+                    const timePeriod = `${currentYear}${currentMonth.toString().padStart(2, '0')}`;
+
+                    return {
+                        intent: 'query_and_send',
+                        needsApiCall: true,
+                        userName: resolvedUserName,
+                        queryField: '报工情况',
+                        timePeriod: timePeriod,
+                        sendToUser: sendToUser,
+                        explanation: `查询${resolvedUserName}的报工情况并发送给${sendToUser}`
+                    };
+                }
+
+                // 检查是否是查询并发送个人信息的模式
+                const queryAndSendMatch = message.match(/(把|将)?(.+?)(的)?(电话|手机|职级|成本|邮箱|部门|联系方式)(发给|告诉|转发给)(.+)/);
+                if (queryAndSendMatch) {
+                    const targetUser = queryAndSendMatch[2].trim();
+                    const queryField = queryAndSendMatch[4];
+                    const sendToUser = queryAndSendMatch[6].trim();
+
+                    return {
+                        intent: 'query_and_send',
+                        needsApiCall: true,
+                        userName: targetUser === '他' || targetUser === '她' ? resolvedUserName : targetUser,
+                        queryField: queryField,
+                        sendToUser: sendToUser,
+                        explanation: `查询${targetUser}的${queryField}并发送给${sendToUser}`
+                    };
+                }
+
+                // 意图判断
+                if (wechatKeywords.some(keyword => processedMessage.includes(keyword))) {
+                    // 提取消息内容
+                    const messageMatch = message.match(/说(.+)|通知(.+)|告诉(.+)/);
+                    const messageContent = messageMatch ? (messageMatch[1] || messageMatch[2] || messageMatch[3]).trim() : '';
+
+                    return {
+                        intent: 'send_wechat',
+                        needsApiCall: true,
+                        userName: resolvedUserName,
+                        message: messageContent,
+                        explanation: `发送消息给${resolvedUserName}`
+                    };
+                } else if (userInfoKeywords.some(keyword => processedMessage.includes(keyword))) {
+                    const queryField = userInfoKeywords.find(keyword => processedMessage.includes(keyword)) || '全部';
+                    return {
+                        intent: 'user_info_query',
+                        needsApiCall: true,
+                        userName: resolvedUserName,
+                        queryField: queryField,
+                        explanation: `查询${resolvedUserName}的${queryField}信息`
+                    };
+                } else if (projectKeywords.some(keyword => processedMessage.includes(keyword))) {
+                    // 简单的时间处理
+                    const currentDate = new Date();
+                    const currentYear = currentDate.getFullYear();
+                    const currentMonth = currentDate.getMonth() + 1;
+                    let timePeriod = `${currentYear}${currentMonth.toString().padStart(2, '0')}`;
+
+                    if (processedMessage.includes('上月')) {
+                        const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+                        const lastYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+                        timePeriod = `${lastYear}${lastMonth.toString().padStart(2, '0')}`;
+                    }
+
+                    return {
+                        intent: 'project_query',
+                        needsApiCall: true,
+                        userName: resolvedUserName,
+                        timePeriod: timePeriod,
+                        explanation: `查询${resolvedUserName}的报工情况`
+                    };
+                } else {
+                    return {
+                        intent: 'general_chat',
+                        needsApiCall: false,
+                        explanation: '一般对话'
+                    };
+                }
+            }
+
+            async callOAAPI(intent) {
+                try {
+                    console.log('调用OA API，意图:', intent);
+
+                    if (intent.intent === 'user_info_query') {
+                        return await this.searchUser(intent.userName);
+                    } else if (intent.intent === 'project_query') {
+                        const userInfo = await this.searchUser(intent.userName);
+                        if (userInfo.length > 0) {
+                            const projectData = await this.queryProjects(userInfo[0].id, intent.timePeriod);
+                            return { userInfo: userInfo[0], projectData };
+                        }
+                    } else if (intent.intent === 'send_wechat') {
+                        const result = await this.sendWechatMessage(intent.userName, intent.message);
+                        return { wechatResult: result };
+                    } else if (intent.intent === 'query_and_send') {
+                        // 先查询用户信息
+                        const userInfo = await this.searchUser(intent.userName);
+                        if (userInfo.length > 0) {
+                            const user = userInfo[0];
+                            let queryResult = '';
+                            let messageToSend = '';
+
+                            // 判断查询类型：报工情况 vs 个人信息
+                            if (intent.queryField === '报工情况') {
+                                // 查询报工项目数据
+                                const projectData = await this.queryProjects(user.id, intent.timePeriod || '202406');
+                                const projects = projectData.data?.userBgtList || [];
+                                const totalDays = projects.reduce((sum, p) => sum + parseFloat(p.DL_WORKDAYS || 0), 0);
+
+                                // 构造报工情况消息
+                                if (projects.length > 0) {
+                                    const projectDetails = projects.map(p =>
+                                        `• ${p.S_BGTNAME}: ${p.DL_WORKDAYS}天 (负责人: ${p.S_BGTOWNER})`
+                                    ).join('\n');
+
+                                    messageToSend = `${user.realName}的报工情况：
+总工作天数: ${totalDays.toFixed(1)}天
+项目总数: ${projects.length}个
+
+项目详情:
+${projectDetails}`;
+                                } else {
+                                    messageToSend = `${user.realName}的报工情况：暂无报工记录`;
+                                }
+
+                                queryResult = { userInfo: user, projectData, totalDays, projects };
+                            } else {
+                                // 查询个人基本信息
+                                if (intent.queryField === '电话') {
+                                    queryResult = user.mobile || '未设置';
+                                } else if (intent.queryField === '职级') {
+                                    queryResult = user.rank || '未设置';
+                                } else if (intent.queryField === '成本') {
+                                    queryResult = user.standardCost || '未设置';
+                                } else if (intent.queryField === '邮箱') {
+                                    queryResult = user.email || '未设置';
+                                } else if (intent.queryField === '部门') {
+                                    queryResult = user.orgName || '未设置';
+                                } else {
+                                    // 全部个人信息
+                                    queryResult = `姓名: ${user.realName}, 工号: ${user.accountId}, 部门: ${user.orgName || '未设置'}, 电话: ${user.mobile || '未设置'}, 邮箱: ${user.email || '未设置'}, 职级: ${user.rank || '未设置'}, 成本: ${user.standardCost || '未设置'}`;
+                                }
+
+                                // 构造个人信息消息
+                                messageToSend = `${user.realName}的${intent.queryField}: ${queryResult}`;
+                            }
+
+                            // 发送到企业微信
+                            const wechatResult = await this.sendWechatMessage(intent.sendToUser, messageToSend);
+
+                            return {
+                                userInfo: user,
+                                queryResult,
+                                messageToSend,
+                                wechatResult,
+                                queryType: intent.queryField
+                            };
+                        }
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('API call error:', error);
+                    return null;
+                }
+            }
+
+            async sendWechatMessage(userName, message) {
+                try {
+                    console.log('发送企业微信消息:', { userName, message });
+                    userName = window.localStorage.getItem('userName');
+
+                    const response = await fetch('/workchat/message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            "userId": localStorage.getItem('userName'),
+                            "message": message,
+                            "domain": 'www.awebide.com',
+                            "method": "send-message"
+                        })
+                    })
+                    
+                    if (!response.ok) {
+                        throw new Error(`企业微信接口请求失败: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('企业微信发送结果:', result);
+                    return result;
+                } catch (error) {
+                    console.error('Send wechat message error:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+
+            async generateStreamResponse(originalMessage, intent, apiData) {
+                try {
+                    let contextPrompt = '';
+
+                    if (intent.needsApiCall && apiData) {
+                        if (intent.intent === 'user_info_query') {
+                            const user = apiData[0];
+                            contextPrompt = `用户询问: ${originalMessage}
+                            
+查询到的用户信息:
+- 姓名: ${user.realName}
+- 工号: ${user.accountId}
+- 部门: ${user.orgName || '未设置'}
+- 电话: ${user.mobile || '未设置'}
+- 邮箱: ${user.email || '未设置'}
+- 职级: ${user.rank || '未设置'}
+- 成本: ${user.standardCost || '未设置'}
+
+请根据用户的具体询问，友好地回答用户的问题。如果用户询问特定字段，重点回答该字段信息。注意涉及到数字请原样输出。`;
+
+                        } else if (intent.intent === 'project_query') {
+                            const { userInfo, projectData } = apiData;
+                            const projects = projectData.data?.userBgtList || [];
+                            const totalDays = projects.reduce((sum, p) => sum + parseFloat(p.DL_WORKDAYS || 0), 0);
+
+                            contextPrompt = `用户询问: ${originalMessage}
+                            
+查询到的报工信息:
+- 用户: ${userInfo.realName} (${userInfo.accountId})
+- 查询时间: ${intent.timePeriod}
+- 项目总数: ${projects.length}个
+- 总工作天数: ${totalDays.toFixed(1)}天
+
+项目详情:
+${projects.map(p => `- ${p.S_BGTNAME}: ${p.DL_WORKDAYS}天 (负责人: ${p.S_BGTOWNER})`).join('\n')}
+
+请用友好的语气总结这些报工信息，突出重点数据。注意涉及到数字请原样输出。`;
+
+                        } else if (intent.intent === 'send_wechat') {
+                            const { wechatResult } = apiData;
+                            contextPrompt = `用户询问: ${originalMessage}
+                            
+企业微信发送结果:
+- 接收人: ${intent.userName}
+- 消息内容: ${intent.message}
+- 发送状态: ${wechatResult.success ? '成功' : '失败'}
+${wechatResult.error ? `- 错误信息: ${wechatResult.error}` : ''}
+
+请友好地告知用户发送结果。`;
+
+                        } else if (intent.intent === 'query_and_send') {
+                            const { userInfo, queryResult, messageToSend, wechatResult, queryType } = apiData;
+
+                            if (queryType === '报工情况') {
+                                // 报工情况的显示
+                                const { totalDays, projects } = queryResult;
+                                contextPrompt = `用户询问: ${originalMessage}
+                            
+查询并发送报工情况结果:
+- 查询对象: ${userInfo.realName} (${userInfo.accountId})
+- 查询类型: 报工情况
+- 项目总数: ${projects.length}个
+- 总工作天数: ${totalDays.toFixed(1)}天
+- 发送给: ${intent.sendToUser}
+- 发送状态: ${wechatResult.success ? '成功' : '失败'}
+${wechatResult.error ? `- 错误信息: ${wechatResult.error}` : ''}
+
+项目详情:
+${projects.map(p => `- ${p.S_BGTNAME}: ${p.DL_WORKDAYS}天 (负责人: ${p.S_BGTOWNER})`).join('\n')}
+
+请友好地告知用户查询和发送的完整结果。`;
+                            } else {
+                                // 个人信息的显示
+                                contextPrompt = `用户询问: ${originalMessage}
+                            
+查询并发送结果:
+- 查询对象: ${userInfo.realName} (${userInfo.accountId})
+- 查询字段: ${intent.queryField}
+- 查询结果: ${queryResult}
+- 发送给: ${intent.sendToUser}
+- 发送内容: ${messageToSend}
+- 发送状态: ${wechatResult.success ? '成功' : '失败'}
+${wechatResult.error ? `- 错误信息: ${wechatResult.error}` : ''}
+
+请友好地告知用户查询和发送的完整结果。`;
+                            }
+                        }
+                    } else {
+                        contextPrompt = `用户消息: ${originalMessage}
+                        
+这是一个一般性对话，请作为OA智能助手友好地回复用户。保持简洁专业。`;
+                    }
+
+                    const messages = [
+                        {
+                            role: 'system',
+                            content: '你是OA智能助手，请根据提供的信息友好地回复用户。回复要简洁明了，突出重点信息。'
+                        },
+                        ...this.conversationHistory.slice(-6),
+                        {
+                            role: 'user',
+                            content: contextPrompt
+                        }
+                    ];
+
+                    console.log('发送流式回复请求:', messages);
+
+                    const response = await fetch(`${this.ollamaBase}/v1/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: 'Qwen3-32B',
+                            messages: messages,
+                            stream: true,
+                            temperature: 0.7,
+                            max_tokens: 1000,
+                            top_p: 0.95,
+                            "chat_template_kwargs": { "enable_thinking": false }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`流式请求失败: ${response.status}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let aiResponse = '';
+
+                    const messageEl = this.addMessage('系统', '', 'ai');
+                    const contentEl = messageEl.querySelector('.message-content');
+                    contentEl.classList.add('stream-cursor');
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n').filter(line => line.trim() && line.startsWith('data: '));
+
+                        for (const line of lines) {
+                            const jsonStr = line.replace('data: ', '');
+                            if (jsonStr === '[DONE]') continue;
+
+                            try {
+                                const data = JSON.parse(jsonStr);
+                                if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+                                    const content = data.choices[0].delta.content;
+                                    aiResponse += content;
+                                    contentEl.textContent = aiResponse;
+                                    this.scrollToBottom();
+                                }
+                            } catch (e) {
+                                console.log('Stream parse error:', e, jsonStr);
+                            }
+                        }
+                    }
+
+                    contentEl.classList.remove('stream-cursor');
+
+                    this.conversationHistory.push({
+                        role: 'assistant',
+                        content: aiResponse
+                    });
+
+                    if (this.conversationHistory.length > 10) {
+                        this.conversationHistory = this.conversationHistory.slice(-10);
+                    }
+
+                } catch (error) {
+                    console.error('Stream response error:', error);
+                    this.addMessage('系统', '抱歉，生成回复时出现错误。', 'ai');
+                }
+            }
+
+            async searchUser(searchKey) {
+                try {
+                    const response = await fetch('/api/rpcServer/afa4j/3/auth/A02009', {
+                        method: 'POST',
+                        headers: this.getHeaders(),
+                        body: JSON.stringify({
+                            searchKey: searchKey,
+                            orgCode: null,
+                            orgId: null,
+                            status: 1
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.data && data.data.record) {
+                        const users = [];
+                        for (const user of data.data.record) {
+                            try {
+                                const detailResponse = await fetch('/api/rpcServer/afa4j/3/hrNew/HRSP00003', {
+                                    method: 'POST',
+                                    headers: this.getHeaders(),
+                                    body: JSON.stringify({ PRMEMBER_S_USERID: user.id })
+                                });
+                                const detail = await detailResponse.json();
+
+                                users.push({
+                                    ...user,
+                                    rank: detail.data?.rank || '-',
+                                    standardCost: detail.data?.standardCost || '-'
+                                });
+                            } catch (e) {
+                                users.push(user);
+                            }
+                        }
+                        return users;
+                    }
+                    return [];
+
+                } catch (error) {
+                    console.error('Search user error:', error);
+                    return [];
+                }
+            }
+
+            async queryProjects(userId, timePeriod) {
+                try {
+                    // timePeriod 已经是 YYYYMM 格式，如 "202406"
+                    const year = parseInt(timePeriod.substring(0, 4));
+                    const month = parseInt(timePeriod.substring(4, 6));
+                    const lastDay = new Date(year, month, 0).getDate();
+
+                    const response = await fetch('/api/rpcServer/afa4j/3/saleNew/SACP01036', {
+                        method: 'POST',
+                        headers: this.getHeaders(),
+                        body: JSON.stringify({
+                            reload: true,
+                            userId: userId,
+                            startDate: `${timePeriod}01`,
+                            endDate: `${timePeriod}${lastDay}`
+                        })
+                    });
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Query projects error:', error);
+                    return { data: { userBgtList: [] } };
+                }
+            }
+
+            addMessage(sender, content, type) {
+                const messagesContainer = document.getElementById('chat-messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `flex ${type === 'user' ? 'justify-end' : 'justify-start'} fade-in`;
+
+                const bubbleClass = type === 'user' ? 'user-message' : 'ai-message';
+                messageDiv.innerHTML = `
+                    <div class="message-bubble ${bubbleClass} rounded-2xl p-4 max-w-md md:max-w-2xl">
+                        <div class="message-content text-white">${content}</div>
+                    </div>
+                `;
+
+                messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+                return messageDiv;
+            }
+
+            scrollToBottom() {
+                const container = document.getElementById('chat-messages');
+                container.scrollTop = container.scrollHeight;
+            }
+
+            clearChat() {
+                this.conversationHistory = [];
+
+                const messagesContainer = document.getElementById('chat-messages');
+                messagesContainer.innerHTML = `
+                    <div class="flex justify-start">
+                        <div class="message-bubble ai-message rounded-2xl p-4">
+                            <p class="text-white">您好！我是OA智能助手，可以帮您查询人员信息、报工情况和发送企业微信消息。</p>
+                            <p class="text-white/80 text-sm mt-2">例如：</p>
+                            <ul class="text-white/80 text-sm mt-1 space-y-1">
+                                <li>• "帮我查一下张三的电话"</li>
+                                <li>• "他的报工情况"（支持代词指代）</li>
+                                <li>• "把我的报工情况发到企业微信"</li>
+                                <li>• "发消息给张三说明天开会"</li>
+                                <li>• "把李四的电话发给王五"</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+
+            showLoading(show) {
+                const indicator = document.getElementById('loading-indicator');
+                if (show) {
+                    indicator.classList.remove('hidden');
+                } else {
+                    indicator.classList.add('hidden');
+                }
+            }
+
+            getHeaders() {
+                const authorization = `bearer ${this.token}`;
+                const changeNo = 'q8EPXtTdIQEqtqlKppjC7V3';
+                const timestamp = new Date().getTime();
+
+                return {
+                    Accept: "application/json, text/plain, */*",
+                    "authorization": authorization,
+                    'channel-code': 'C000001',
+                    'channel-no': changeNo,
+                    'channel-time': timestamp,
+                    "timestamp": window.Timestamp(authorization, timestamp, changeNo),
+                    "content-type": "application/json;charset=UTF-8",
+                    "x-requested-with": "XMLHttpRequest"
+                };
+            }
+        }
+
+        // Initialize the assistant when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.oaAssistant = new OAAssistant();
+        });
+    </script>
+    <script>
+        (function () {
+            const t = document.createElement('style');
+            const r = Math.floor(Math.random() * 2000 + 1);
+            t.innerHTML = `body{
+                            background-image: url('https://img.infinitynewtab.com/wallpaper/${r}.jpg');
+                            background-repeat: no-repeat;
+                            background-size: cover;
+                        }`
+            document.body.append(t);
+        }())
+    </script>
+</body>
+
+</html>
