@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能费用监控演示</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f0f2f5 0%, #e8ecf0 50%, #f5f7fa 100%); */
+            backdrop-filter: blur(25px);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+        }
+
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.5); */
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-fill {
+            transition: stroke-dashoffset 0.5s ease-in-out;
+        }
+
+        .animate-pulse-soft {
+            animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .floating-card {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .typing-effect {
+            border-right: 2px solid #06b6d4;
+            white-space: nowrap;
+            overflow: hidden;
+            animation: typing 3s steps(40) infinite, blink 1s infinite;
+        }
+
+        @keyframes typing {
+            0% { width: 0; }
+            50% { width: 100%; }
+            100% { width: 0; }
+        }
+
+        @keyframes blink {
+            0%, 50% { border-color: #06b6d4; }
+            51%, 100% { border-color: transparent; }
+        }
+
+        .data-flow {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .data-flow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.3), transparent);
+            animation: data-flow 2s linear infinite;
+        }
+
+        @keyframes data-flow {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .warning-glow {
+            box-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
+            animation: warning-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes warning-pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(255, 193, 7, 0.5);
+            }
+        }
+
+        .success-glow {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .chart-bar {
+            transition: all 0.5s ease;
+        }
+
+        .chart-bar:hover {
+            transform: scaleY(1.1);
+        }
+    </style>
+</head>
+<body class="p-8">
+    <div class="">
+        <!-- 页面标题 -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold gradient-text mb-4">智能费用监控演示</h1>
+            <p class="text-xl text-gray-600">AI驱动的实时费用管控与智能优化</p>
+            <div class="flex items-center justify-center mt-4 space-x-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse-soft"></div>
+                    <span class="text-sm text-gray-600">MCP实时连接</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse-soft"></div>
+                    <span class="text-sm text-gray-600">LLM智能分析</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-purple-500 rounded-full animate-pulse-soft"></div>
+                    <span class="text-sm text-gray-600">实时预警</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+            <!-- 主监控面板 -->
+            <div class="col-span-8 space-y-6">
+                <!-- 实时费用仪表盘 -->
+                <div class="liquid-glass rounded-2xl p-6 floating-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold text-gray-800 flex items-center">
+                            📊 实时费用监控仪表盘
+                            <span class="ml-3 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">实时同步</span>
+                        </h3>
+                        <div class="text-sm text-gray-500">
+                            🔄 数据更新：<span class="text-green-600">刚刚</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-4 gap-6 mb-8">
+                        <!-- 预算使用率 -->
+                        <div class="text-center">
+                            <div class="relative w-24 h-24 mx-auto mb-3">
+                                <svg class="w-full h-full progress-ring" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" stroke="#e5e7eb" stroke-width="8" fill="none"/>
+                                    <circle cx="50" cy="50" r="40" stroke="#06b6d4" stroke-width="8" fill="none"
+                                            stroke-dasharray="251.2" stroke-dashoffset="62.8" class="progress-ring-fill"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-lg font-bold text-gray-800">75%</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600">预算使用率</p>
+                            <p class="text-xs text-green-600">节省 8.5%</p>
+                        </div>
+
+                        <!-- 实时消费 -->
+                        <div class="text-center">
+                            <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl p-4 mb-2">
+                                <div class="text-2xl font-bold">¥2,847</div>
+                                <div class="text-sm opacity-90">已消费</div>
+                            </div>
+                            <p class="text-xs text-gray-600">较预算节省 ¥153</p>
+                        </div>
+
+                        <!-- 剩余预算 -->
+                        <div class="text-center">
+                            <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl p-4 mb-2">
+                                <div class="text-2xl font-bold">¥1,153</div>
+                                <div class="text-sm opacity-90">剩余预算</div>
+                            </div>
+                            <p class="text-xs text-gray-600">可用天数：2天</p>
+                        </div>
+
+                        <!-- 优化收益 -->
+                        <div class="text-center">
+                            <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl p-4 mb-2">
+                                <div class="text-2xl font-bold">¥341</div>
+                                <div class="text-sm opacity-90">AI优化收益</div>
+                            </div>
+                            <p class="text-xs text-gray-600">较原计划节省</p>
+                        </div>
+                    </div>
+
+                    <!-- 费用明细图表 -->
+                    <div class="bg-white/50 rounded-xl p-4">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">费用结构分析</h4>
+                        <div class="flex items-end space-x-4 h-32">
+                            <div class="flex flex-col items-center">
+                                <div class="chart-bar bg-blue-500 w-12 rounded-t-lg mb-2" style="height: 75%;"></div>
+                                <span class="text-xs text-gray-600">交通</span>
+                                <span class="text-xs font-medium">¥1,250</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="chart-bar bg-green-500 w-12 rounded-t-lg mb-2" style="height: 60%;"></div>
+                                <span class="text-xs text-gray-600">住宿</span>
+                                <span class="text-xs font-medium">¥980</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="chart-bar bg-yellow-500 w-12 rounded-t-lg mb-2" style="height: 25%;"></div>
+                                <span class="text-xs text-gray-600">餐饮</span>
+                                <span class="text-xs font-medium">¥420</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="chart-bar bg-purple-500 w-12 rounded-t-lg mb-2" style="height: 15%;"></div>
+                                <span class="text-xs text-gray-600">其他</span>
+                                <span class="text-xs font-medium">¥197</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MCP实时数据连接展示 -->
+                <div class="liquid-glass rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        🔗 MCP协议实时数据源
+                        <span class="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">实时连接</span>
+                    </h3>
+                    
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="data-flow bg-white/50 rounded-lg p-4 border-l-4 border-blue-500">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">差旅壹号API</span>
+                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-soft"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">订单数据同步</p>
+                            <p class="text-xs text-blue-600">延迟: 120ms</p>
+                        </div>
+                        
+                        <div class="data-flow bg-white/50 rounded-lg p-4 border-l-4 border-green-500">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">AOM预算系统</span>
+                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-soft"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">预算余额实时</p>
+                            <p class="text-xs text-blue-600">延迟: 85ms</p>
+                        </div>
+                        
+                        <div class="data-flow bg-white/50 rounded-lg p-4 border-l-4 border-purple-500">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">银行支付接口</span>
+                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-soft"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">交易流水获取</p>
+                            <p class="text-xs text-blue-600">延迟: 200ms</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧AI分析面板 -->
+            <div class="col-span-4 space-y-6">
+                <!-- LLM智能分析 -->
+                <div class="liquid-glass rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        🧠 LLM智能分析
+                        <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">分析中</span>
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 success-glow">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm">✓</div>
+                                <div>
+                                    <h4 class="font-semibold text-green-800">费用控制良好</h4>
+                                    <p class="text-sm text-green-700">当前消费轨迹符合预期，预算使用合理</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm">💡</div>
+                                <div>
+                                    <h4 class="font-semibold text-blue-800">优化建议</h4>
+                                    <p class="text-sm text-blue-700">建议调整明日餐饮选择，可节省约¥45</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-4 warning-glow">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm">⚠️</div>
+                                <div>
+                                    <h4 class="font-semibold text-yellow-800">潜在风险</h4>
+                                    <p class="text-sm text-yellow-700">检测到异常交易模式，建议人工核查</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 实时预警系统 -->
+                <div class="liquid-glass rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        🚨 智能预警系统
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-red-800">预算超支预警</span>
+                                <span class="text-xs text-red-600">低风险</span>
+                            </div>
+                            <p class="text-xs text-red-700 mt-1">当前趋势下，预计超支概率：15%</p>
+                        </div>
+
+                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-orange-800">价格波动监控</span>
+                                <span class="text-xs text-orange-600">中风险</span>
+                            </div>
+                            <p class="text-xs text-orange-700 mt-1">酒店价格上涨12%，建议提前预订</p>
+                        </div>
+
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-green-800">合规性检查</span>
+                                <span class="text-xs text-green-600">通过</span>
+                            </div>
+                            <p class="text-xs text-green-700 mt-1">所有消费均符合差旅政策要求</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI优化建议 -->
+                <div class="liquid-glass rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">💰 AI优化建议</h3>
+                    
+                    <div class="space-y-3">
+                        <div class="bg-white/70 rounded-lg p-3 border-l-4 border-blue-500">
+                            <h4 class="font-semibold text-blue-800 text-sm">交通优化</h4>
+                            <p class="text-xs text-gray-600">改用高铁+地铁组合，可节省¥120</p>
+                            <button class="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors">
+                                查看详情
+                            </button>
+                        </div>
+
+                        <div class="bg-white/70 rounded-lg p-3 border-l-4 border-green-500">
+                            <h4 class="font-semibold text-green-800 text-sm">住宿优化</h4>
+                            <p class="text-xs text-gray-600">发现同等级酒店优惠，可节省¥85</p>
+                            <button class="mt-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors">
+                                立即切换
+                            </button>
+                        </div>
+
+                        <div class="bg-white/70 rounded-lg p-3 border-l-4 border-purple-500">
+                            <h4 class="font-semibold text-purple-800 text-sm">餐饮优化</h4>
+                            <p class="text-xs text-gray-600">推荐性价比餐厅，可节省¥45</p>
+                            <button class="mt-2 px-3 py-1 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 transition-colors">
+                                查看推荐
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部技术特色说明 -->
+        <div class="mt-8 liquid-glass rounded-2xl p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">🔧 技术特色与优势</h3>
+            <div class="grid grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white text-2xl mx-auto mb-3">
+                        🔗
+                    </div>
+                    <h4 class="font-semibold text-gray-800 mb-2">MCP协议互联</h4>
+                    <p class="text-sm text-gray-600">通过MCP协议实现与外部系统的实时数据交换，延迟低至85ms，确保数据的实时性和准确性</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white text-2xl mx-auto mb-3">
+                        🧠
+                    </div>
+                    <h4 class="font-semibold text-gray-800 mb-2">LLM智能决策</h4>
+                    <p class="text-sm text-gray-600">基于大语言模型的深度分析能力，提供精准的费用预测、异常检测和优化建议，准确率达96%+</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-2xl mx-auto mb-3">
+                        ⚡
+                    </div>
+                    <h4 class="font-semibold text-gray-800 mb-2">实时响应预警</h4>
+                    <p class="text-sm text-gray-600">毫秒级的实时监控和预警系统，能够在异常发生的第一时间进行智能分析和处理建议</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟实时数据更新
+        function updateRealTimeData() {
+            // 模拟进度环更新
+            const progressRing = document.querySelector('.progress-ring-fill');
+            if (progressRing) {
+                const randomProgress = Math.floor(Math.random() * 10) + 70; // 70-80%
+                const circumference = 2 * Math.PI * 40;
+                const offset = circumference - (randomProgress / 100) * circumference;
+                progressRing.style.strokeDashoffset = offset;
+                
+                // 更新百分比显示
+                const progressText = progressRing.parentElement.querySelector('span');
+                if (progressText) {
+                    progressText.textContent = randomProgress + '%';
+                }
+            }
+
+            // 模拟柱状图动态变化
+            const chartBars = document.querySelectorAll('.chart-bar');
+            chartBars.forEach(bar => {
+                const currentHeight = parseInt(bar.style.height);
+                const variation = Math.floor(Math.random() * 10) - 5; // ±5%
+                const newHeight = Math.max(10, Math.min(90, currentHeight + variation));
+                bar.style.height = newHeight + '%';
+            });
+        }
+
+        // 模拟打字效果的AI分析更新
+        function updateAIAnalysis() {
+            const analysisElements = document.querySelectorAll('.typing-effect');
+            analysisElements.forEach(element => {
+                const originalText = element.textContent;
+                element.textContent = '';
+                let i = 0;
+                const typeInterval = setInterval(() => {
+                    element.textContent += originalText.charAt(i);
+                    i++;
+                    if (i >= originalText.length) {
+                        clearInterval(typeInterval);
+                    }
+                }, 50);
+            });
+        }
+
+        // 初始化和定时更新
+        document.addEventListener('DOMContentLoaded', function() {
+            // 每5秒更新一次实时数据
+            setInterval(updateRealTimeData, 5000);
+            
+            // 每10秒更新一次AI分析
+            setInterval(updateAIAnalysis, 10000);
+            
+            // 添加交互效果
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 添加点击反馈
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

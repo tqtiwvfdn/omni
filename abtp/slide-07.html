@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI引擎详细架构</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f0f2f5 0%, #e8ecf0 50%, #f5f7fa 100%); */
+            backdrop-filter: blur(25px);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+        }
+
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.5); */
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+
+        .specular-highlight > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .ai-engine-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-engine-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .ai-engine-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-gradient);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .engine-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 16px;
+            background: var(--accent-gradient);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .tech-tag {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 4px;
+            display: inline-block;
+        }
+
+        .architecture-flow {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 32px;
+            margin: 24px 0;
+        }
+
+        .flow-node {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(6, 182, 212, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .flow-node:hover {
+            border-color: rgba(6, 182, 212, 0.6);
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.2);
+        }
+
+        .flow-arrow {
+            color: #06b6d4;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 8px 0;
+        }
+
+        .mcp-connection {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            text-align: center;
+            margin: 8px;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .capability-meter {
+            background: rgba(229, 231, 235, 0.5);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .capability-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4 0%, #0891b2 100%);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        /* 动画效果 */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slide-up {
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        /* 渐变色定义 */
+        .gradient-1 { --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .gradient-2 { --accent-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .gradient-3 { --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .gradient-4 { --accent-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    </style>
+</head>
+
+<body class="p-8">
+    <!-- 页面标题 -->
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-4 animate-slide-up">🧠 AI引擎详细架构</h1>
+        <p class="text-xl text-gray-600 animate-slide-up">核心AI能力构成 - 基于大语言模型的智能决策体系</p>
+    </div>
+
+    <!-- MCP协议连接架构 -->
+    <div class="architecture-flow liquid-glass specular-highlight mb-8 animate-slide-up">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">🔗 MCP协议驱动的实时数据连接架构</h2>
+        <div class="grid grid-cols-5 gap-4 items-center">
+            <div class="flow-node">
+                <div class="text-2xl mb-2">🌐</div>
+                <div class="font-semibold text-sm">外部数据源</div>
+                <div class="text-xs text-gray-600">供应商API、地理、天气、展会等</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node">
+                <div class="text-2xl mb-2">🔌</div>
+                <div class="font-semibold text-sm">MCP协议层</div>
+                <div class="text-xs text-gray-600">Model Context Protocol</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node">
+                <div class="text-2xl mb-2">🧠</div>
+                <div class="font-semibold text-sm">LLM推理引擎</div>
+                <div class="text-xs text-gray-600">实时智能决策</div>
+            </div>
+        </div>
+        <div class="mt-4 text-center">
+            <div class="mcp-connection">
+                ✨ 动态数据获取 • 实时上下文感知 • 智能决策生成
+            </div>
+        </div>
+    </div>
+
+    <!-- AI引擎集群 -->
+    <div class="grid grid-cols-2 gap-6 mb-8">
+        <!-- 智能推荐引擎 -->
+        <div class="ai-engine-card gradient-1 specular-highlight animate-slide-up">
+            <div class="engine-icon">🎯</div>
+            <h3 class="text-xl font-bold text-gray-800 mb-3">智能推荐引擎</h3>
+            <p class="text-gray-600 mb-4">基于大语言模型的个性化推荐系统</p>
+            
+            <div class="mb-4">
+                <div class="text-sm font-medium text-gray-700 mb-2">核心能力指标</div>
+                <div class="text-xs text-gray-600 mb-1">推荐准确率</div>
+                <div class="capability-meter">
+                    <div class="capability-fill" style="width: 92%"></div>
+                </div>
+                <div class="text-xs text-gray-600 mb-1">响应速度</div>
+                <div class="capability-meter">
+                    <div class="capability-fill" style="width: 95%"></div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <div class="tech-tag">🤖 GPT-4o/Claude-3.5</div>
+                <div class="tech-tag">📊 向量检索</div>
+                <div class="tech-tag">🔄 实时学习</div>
+                <div class="tech-tag">👤 用户画像</div>
+            </div>
+        </div>
+
+        <!-- 价格预测引擎 -->
+        <div class="ai-engine-card gradient-2 specular-highlight animate-slide-up" style="animation-delay: 0.1s;">
+            <div class="engine-icon">💰</div>
+            <h3 class="text-xl font-bold text-gray-800 mb-3">价格预测引擎</h3>
+            <p class="text-gray-600 mb-4">基于LLM的动态定价与趋势预测</p>
+            
+            <div class="mb-4">
+                <div class="text-sm font-medium text-gray-700 mb-2">核心能力指标</div>
+                <div class="text-xs text-gray-600 mb-1">预测准确率</div>
+                <div class="capability-meter">
+                    <div class="capability-fill" style="width: 89%"></div>
+                </div>
+                <div class="text-xs text-gray-600 mb-1">数据覆盖度</div>
+                <div class="capability-meter">
+                    <div class="capability-fill" style="width: 97%"></div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <div class="tech-tag">📈 时序分析</div>
+                <div class="tech-tag">🌍 多源数据</div>
+                <div class="tech-tag">⚡ 实时定价</div>
+                <div class="tech-tag">🔮 趋势预测</div>
+            </div>
+        </div>
+
+        <!-- 异常检测引擎 -->
+        <div class="ai-engine-card gradient-3 specular-highlight animate-slide-up" style="animation-delay: 0.2s;">
+            <div class="engine-icon">🔍</div>
+            <h3 class="text-xl font-bold text-gray-800 mb-3">异常检测引擎</h3>
+            <p class="text-gray-600 mb-4">LLM驱动的智能风控与合规监控</p>
+            
+            <div class="mb-4">
+                <div class="text-sm font-medium text-gray-700 mb-2">核心能力指标</div>
+                <div class="text-xs text-gray-600 mb-1">检测准确率</div>
+                <div class="capability-meter">
+                    <div class="capability-fill" style="width: 96%"></div>
+                </div>
+                <div class="text-xs text-gray-600 mb-1">误报率控制</div>
+                <div class="capability-meter">
+                    <div class="capability-fill" style="width: 93%"></div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <div class="tech-tag">🛡️ 模式识别</div>
+                <div class="tech-tag">⚡ 实时监控</div>
+                <div class="tech-tag">📊 行为分析</div>
+                <div class="tech-tag">🚨 智能告警</div>
+            </div>
+        </div>
+
+        <!-- 决策支持引擎 -->
+        <div class="ai-engine-card gradient-4 specular-highlight animate-slide-up" style="animation-delay: 0.3s;">
+            <div class="engine-icon">📈</div>
+            <h3 class="text-xl font-bold text-gray-800 mb-3">决策支持引擎</h3>
+            <p class="text-gray-600 mb-4">基于LLM的智能分析与策略生成</p>
+            
+            <div class="mb-4">
+                <div class="text-sm font-medium text-gray-700 mb-2">核心能力指标</div>
+                <div class="text-xs text-gray-600 mb-1">决策质量</div>
+                <div class="capability-meter">
+                    <div class="capability-fill" style="width: 91%"></div>
+                </div>
+                <div class="text-xs text-gray-600 mb-1">处理效率</div>
+                <div class="capability-meter">
+                    <div class="capability-fill" style="width: 94%"></div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <div class="tech-tag">🧮 数据洞察</div>
+                <div class="tech-tag">🎯 策略优化</div>
+                <div class="tech-tag">📊 报表生成</div>
+                <div class="tech-tag">🔄 持续学习</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技术特性展示 -->
+    <div class="grid grid-cols-3 gap-6 animate-slide-up" style="animation-delay: 0.4s;">
+        <!-- MCP连接能力 -->
+        <div class="liquid-glass specular-highlight p-6 rounded-2xl">
+            <div class="text-center mb-4">
+                <div class="text-4xl mb-2">🔌</div>
+                <h3 class="text-xl font-bold text-gray-800">MCP连接能力</h3>
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">实时数据源</span>
+                    <span class="text-sm font-bold text-cyan-600">15+</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">连接稳定性</span>
+                    <span class="text-sm font-bold text-cyan-600">99.9%</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">延迟控制</span>
+                    <span class="text-sm font-bold text-cyan-600">&lt;100ms</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- LLM推理能力 -->
+        <div class="liquid-glass specular-highlight p-6 rounded-2xl">
+            <div class="text-center mb-4">
+                <div class="text-4xl mb-2">🧠</div>
+                <h3 class="text-xl font-bold text-gray-800">LLM推理能力</h3>
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">模型规模</span>
+                    <span class="text-sm font-bold text-cyan-600">175B+</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">推理精度</span>
+                    <span class="text-sm font-bold text-cyan-600">94.5%</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">上下文长度</span>
+                    <span class="text-sm font-bold text-cyan-600">128K</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 扩展性能力 -->
+        <div class="liquid-glass specular-highlight p-6 rounded-2xl">
+            <div class="text-center mb-4">
+                <div class="text-4xl mb-2">⚡</div>
+                <h3 class="text-xl font-bold text-gray-800">扩展性能力</h3>
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">并发处理</span>
+                    <span class="text-sm font-bold text-cyan-600">10K+</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">弹性伸缩</span>
+                    <span class="text-sm font-bold text-cyan-600">自动</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">服务可用性</span>
+                    <span class="text-sm font-bold text-cyan-600">99.99%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部关键技术说明 -->
+    <div class="mt-8 liquid-glass specular-highlight p-6 rounded-2xl animate-slide-up" style="animation-delay: 0.5s;">
+        <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">🔧 关键技术优势</h3>
+        <div class="grid grid-cols-2 gap-6">
+            <div>
+                <h4 class="font-semibold text-gray-700 mb-2">📡 MCP协议优势</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li>• 标准化的模型-上下文连接协议</li>
+                    <li>• 动态数据源适配与实时同步</li>
+                    <li>• 高效的上下文管理与传递</li>
+                    <li>• 跨平台兼容性与扩展性</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-semibold text-gray-700 mb-2">🤖 LLM技术优势</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li>• 强大的多模态理解与推理能力</li>
+                    <li>• 基于大规模预训练的泛化能力</li>
+                    <li>• 支持少样本学习与快速适应</li>
+                    <li>• 自然语言交互与人机协作</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            // 添加滚动动画效果
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // 观察所有动画元素
+            document.querySelectorAll('.animate-slide-up').forEach(el => {
+                observer.observe(el);
+            });
+
+            // 能力指标动画
+            setTimeout(() => {
+                document.querySelectorAll('.capability-fill').forEach(fill => {
+                    fill.style.width = fill.style.width;
+                });
+            }, 1000);
+
+            // 添加卡片悬停效果
+            document.querySelectorAll('.ai-engine-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // 脉冲动画效果
+            setInterval(() => {
+                document.querySelectorAll('.mcp-connection').forEach(el => {
+                    el.classList.add('pulse');
+                    setTimeout(() => el.classList.remove('pulse'), 1000);
+                });
+            }, 3000);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI决策引擎工作流程</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f0f2f5 0%, #e8ecf0 50%, #f5f7fa 100%); */
+            backdrop-filter: blur(25px);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.5); */
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .flow-node {
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flow-node:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+        }
+
+        .flow-node::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+
+        .flow-node:hover::before {
+            left: 100%;
+        }
+
+        .flow-node > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .flow-arrow {
+            position: absolute;
+            z-index: 10;
+            color: #06b6d4;
+            font-size: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slide-in {
+            animation: slideInUp 0.6s ease-out forwards;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tech-tag {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 2px;
+            box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+        }
+
+        .mcp-indicator {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .process-step {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .process-step.visible {
+            animation: slideInUp 0.8s ease-out forwards;
+        }
+
+        .llm-badge {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .data-flow-line {
+            stroke: #06b6d4;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+            animation: dash 1s linear infinite;
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: -10; }
+        }
+
+        .connection-point {
+            width: 12px;
+            height: 12px;
+            background: #06b6d4;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.2);
+            animation: pulse-point 2s infinite;
+        }
+
+        @keyframes pulse-point {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.2); }
+            50% { box-shadow: 0 0 0 8px rgba(6, 182, 212, 0.4); }
+        }
+
+        .workflow-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .workflow-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .workflow-container {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .workflow-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body class="p-8">
+    <!-- 页面标题 -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold gradient-text mb-4">AI决策引擎工作流程</h1>
+        <p class="text-xl text-gray-600">智能决策机制 - 从需求理解到方案推荐的完整链路</p>
+    </div>
+
+    <!-- 主流程图 -->
+    <div class="workflow-container mb-16">
+        <!-- 第一行：输入和解析 -->
+        <div class="workflow-row">
+            <!-- 用户需求输入 -->
+            <div class="flow-node liquid-glass-strong rounded-2xl p-6 process-step" data-step="1">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl">👤</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">用户需求输入</h3>
+                    <p class="text-sm text-gray-600 mb-3">多模态输入接收</p>
+                    <div class="space-y-2 text-left">
+                        <div class="text-xs text-gray-700">• 自然语言描述</div>
+                        <div class="text-xs text-gray-700">• 结构化表单</div>
+                        <div class="text-xs text-gray-700">• 语音输入</div>
+                        <div class="text-xs text-gray-700">• 历史偏好</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LLM需求解析 -->
+            <div class="flow-node liquid-glass-strong rounded-2xl p-6 process-step" data-step="2">
+                <div class="llm-badge absolute top-4 right-4">LLM</div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl">🧠</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">智能需求解析</h3>
+                    <p class="text-sm text-gray-600 mb-3">大语言模型理解</p>
+                    <div class="space-y-2 text-left">
+                        <div class="text-xs text-gray-700">• 意图识别</div>
+                        <div class="text-xs text-gray-700">• 实体抽取</div>
+                        <div class="text-xs text-gray-700">• 语义理解</div>
+                        <div class="text-xs text-gray-700">• 上下文分析</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MCP数据获取 -->
+            <div class="flow-node liquid-glass-strong rounded-2xl p-6 process-step" data-step="3">
+                <div class="mcp-indicator">MCP</div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl">🔗</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">外部系统连接</h3>
+                    <p class="text-sm text-gray-600 mb-3">MCP协议动态获取</p>
+                    <div class="space-y-2 text-left">
+                        <div class="text-xs text-gray-700">• 供应商API</div>
+                        <div class="text-xs text-gray-700">• 价格数据</div>
+                        <div class="text-xs text-gray-700">• 实时库存</div>
+                        <div class="text-xs text-gray-700">• 政策规则</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI模型分析 -->
+            <div class="flow-node liquid-glass-strong rounded-2xl p-6 process-step" data-step="4">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl">⚡</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">AI模型分析</h3>
+                    <p class="text-sm text-gray-600 mb-3">多维度智能计算</p>
+                    <div class="space-y-2 text-left">
+                        <div class="text-xs text-gray-700">• 成本优化算法</div>
+                        <div class="text-xs text-gray-700">• 路径规划算法</div>
+                        <div class="text-xs text-gray-700">• 偏好匹配算法</div>
+                        <div class="text-xs text-gray-700">• 风险评估模型</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第二行：生成和输出 -->
+        <div class="workflow-row">
+            <!-- 方案生成 -->
+            <div class="flow-node liquid-glass-strong rounded-2xl p-6 process-step" data-step="5">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl">⚙️</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">方案生成</h3>
+                    <p class="text-sm text-gray-600 mb-3">多样化候选方案</p>
+                    <div class="space-y-2 text-left">
+                        <div class="text-xs text-gray-700">• 行程组合优化</div>
+                        <div class="text-xs text-gray-700">• 供应商搭配</div>
+                        <div class="text-xs text-gray-700">• 时间窗口匹配</div>
+                        <div class="text-xs text-gray-700">• 预算约束检查</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 评分排序 -->
+            <div class="flow-node liquid-glass-strong rounded-2xl p-6 process-step" data-step="6">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl">📊</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">智能评分排序</h3>
+                    <p class="text-sm text-gray-600 mb-3">多因子综合评估</p>
+                    <div class="space-y-2 text-left">
+                        <div class="text-xs text-gray-700">• 成本效益评分</div>
+                        <div class="text-xs text-gray-700">• 用户偏好权重</div>
+                        <div class="text-xs text-gray-700">• 便捷性评估</div>
+                        <div class="text-xs text-gray-700">• 风险系数计算</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 推荐输出 -->
+            <div class="flow-node liquid-glass-strong rounded-2xl p-6 process-step" data-step="7">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl">🎯</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">智能推荐输出</h3>
+                    <p class="text-sm text-gray-600 mb-3">个性化方案推荐</p>
+                    <div class="space-y-2 text-left">
+                        <div class="text-xs text-gray-700">• 最优方案推荐</div>
+                        <div class="text-xs text-gray-700">• 备选方案列表</div>
+                        <div class="text-xs text-gray-700">• 决策依据说明</div>
+                        <div class="text-xs text-gray-700">• 风险提示</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 反馈学习 -->
+            <div class="flow-node liquid-glass-strong rounded-2xl p-6 process-step" data-step="8">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-pink-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl">🔄</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">反馈学习优化</h3>
+                    <p class="text-sm text-gray-600 mb-3">持续改进机制</p>
+                    <div class="space-y-2 text-left">
+                        <div class="text-xs text-gray-700">• 用户行为分析</div>
+                        <div class="text-xs text-gray-700">• 模型参数调优</div>
+                        <div class="text-xs text-gray-700">• 推荐策略更新</div>
+                        <div class="text-xs text-gray-700">• 效果评估反馈</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技术架构说明 -->
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <!-- 核心技术栈 -->
+        <div class="liquid-glass rounded-2xl p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <span class="mr-3">🛠️</span>
+                核心技术栈
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <h4 class="font-semibold text-gray-700 mb-2">大语言模型 (LLM)</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="tech-tag">GPT-4</span>
+                        <span class="tech-tag">Claude-3</span>
+                        <span class="tech-tag">文心一言</span>
+                        <span class="tech-tag">通义千问</span>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-700 mb-2">MCP连接协议</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="tech-tag">Real-time API</span>
+                        <span class="tech-tag">WebSocket</span>
+                        <span class="tech-tag">GraphQL</span>
+                        <span class="tech-tag">RESTful</span>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-700 mb-2">AI算法引擎</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="tech-tag">推荐算法</span>
+                        <span class="tech-tag">优化算法</span>
+                        <span class="tech-tag">强化学习</span>
+                        <span class="tech-tag">深度学习</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据流向说明 -->
+        <div class="liquid-glass rounded-2xl p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <span class="mr-3">📊</span>
+                数据流向说明
+            </h3>
+            <div class="space-y-4">
+                <div class="flex items-start space-x-3">
+                    <div class="connection-point mt-1"></div>
+                    <div>
+                        <h4 class="font-semibold text-gray-700">实时数据获取</h4>
+                        <p class="text-sm text-gray-600">通过MCP协议连接多个外部系统，实时获取最新的价格、库存、政策等信息</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="connection-point mt-1"></div>
+                    <div>
+                        <h4 class="font-semibold text-gray-700">智能数据处理</h4>
+                        <p class="text-sm text-gray-600">LLM模型对多源数据进行语义理解和结构化处理，提取关键信息</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="connection-point mt-1"></div>
+                    <div>
+                        <h4 class="font-semibold text-gray-700">决策链路优化</h4>
+                        <p class="text-sm text-gray-600">基于用户反馈和历史数据，持续优化决策模型和推荐策略</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 性能指标 -->
+    <!-- <div class="max-w-4xl mx-auto liquid-glass rounded-2xl p-8 text-center">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">核心性能指标</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+                <div class="text-3xl font-bold gradient-text mb-2">&lt;100ms</div>
+                <p class="text-sm text-gray-600">决策响应时间</p>
+            </div>
+            <div>
+                <div class="text-3xl font-bold gradient-text mb-2">95%+</div>
+                <p class="text-sm text-gray-600">推荐准确率</p>
+            </div>
+            <div>
+                <div class="text-3xl font-bold gradient-text mb-2">15+</div>
+                <p class="text-sm text-gray-600">外部系统连接</p>
+            </div>
+            <div>
+                <div class="text-3xl font-bold gradient-text mb-2">24/7</div>
+                <p class="text-sm text-gray-600">实时数据同步</p>
+            </div>
+        </div>
+    </div> -->
+
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const steps = document.querySelectorAll('.process-step');
+            
+            // 依次显示流程步骤
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    step.classList.add('visible');
+                }, index * 200);
+            });
+
+            // 添加连接线动画
+            setTimeout(() => {
+                addConnectionLines();
+            }, steps.length * 200 + 500);
+        });
+
+        function addConnectionLines() {
+            const container = document.querySelector('.workflow-container');
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.pointerEvents = 'none';
+            svg.style.zIndex = '1';
+
+            // 创建连接线
+            const connections = [
+                {from: 1, to: 2}, {from: 2, to: 3}, {from: 3, to: 4},
+                {from: 4, to: 5}, {from: 5, to: 6}, {from: 6, to: 7}, {from: 7, to: 8}
+            ];
+
+            connections.forEach(conn => {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('class', 'data-flow-line');
+                // 这里可以根据实际布局计算连接线位置
+                svg.appendChild(line);
+            });
+
+            container.appendChild(svg);
+        }
+
+        // 节点点击交互
+        document.querySelectorAll('.flow-node').forEach(node => {
+            node.addEventListener('click', function() {
+                const step = this.dataset.step;
+                showStepDetails(step);
+            });
+        });
+
+        function showStepDetails(step) {
+            const stepDetails = {
+                1: "用户需求输入：支持自然语言、结构化表单、语音输入等多种方式，智能识别用户的差旅需求和偏好。",
+                2: "智能需求解析：使用大语言模型对用户输入进行深度理解，提取关键信息并转换为标准化的查询参数。",
+                3: "外部系统连接：通过MCP协议实时连接航司、酒店、租车等供应商系统，获取最新的价格和可用性数据。",
+                4: "AI模型分析：运用多种AI算法对获取的数据进行综合分析，考虑成本、时间、偏好等多个维度。",
+                5: "方案生成：基于分析结果生成多个可行的差旅方案，每个方案都包含完整的行程安排和费用明细。",
+                6: "智能评分排序：对生成的方案进行多因子评分，按照用户偏好和优化目标进行智能排序。",
+                7: "智能推荐输出：向用户展示最优推荐方案，并提供详细的决策依据和风险提示。",
+                8: "反馈学习优化：收集用户反馈和使用数据，持续优化模型参数和推荐策略。"
+            };
+
+            alert(stepDetails[step] || "详细信息");
+        }
+    </script>
+</body>
+
+</html>

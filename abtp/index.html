@@ -1,739 +1,641 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能差旅平台架构与流程图</title>
+    <title>AI赋能智能差旅管理平台PPT</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8ecf0 50%, #f5f7fa 100%);
             min-height: 100vh;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
         }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
+
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
-        
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
+
+        .liquid-glass-strong {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
         }
-        
-        .tab-navigation {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 30px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 10px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .tab-btn {
-            padding: 12px 24px;
-            margin: 0 5px;
-            background: transparent;
-            color: white;
-            border: none;
-            border-radius: 10px;
+
+        .slide-nav-btn {
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             cursor: pointer;
-            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 8px;
+        }
+
+        .slide-nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .slide-nav-btn.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.2);
+        }
+
+        .sidebar {
+            width: 320px;
+            transition: width 0.3s ease;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 16px;
+        }
+
+        .slide-number {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
             font-size: 14px;
         }
-        
-        .tab-btn.active {
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(20px);
-        }
-        
-        .tab-btn:hover {
-            background: rgba(255,255,255,0.15);
-        }
-        
-        .diagram-container {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            min-height: 600px;
-        }
-        
-        .tab-content {
+
+        .slide-content {
             display: none;
         }
-        
-        .tab-content.active {
+
+        .slide-content.active {
             display: block;
+            height: 100%;
         }
-        
-        /* 业务流程图样式 */
-        .business-flow {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            height: 500px;
+
+        .progress-bar {
+            height: 4px;
+            background: rgba(6, 182, 212, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
         }
-        
-        .flow-phase {
-            flex: 1;
-            text-align: center;
-            margin: 0 10px;
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4 0%, #0891b2 100%);
+            transition: width 0.3s ease;
+            border-radius: 2px;
         }
-        
-        .phase-title {
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-            color: white;
-            padding: 15px;
-            border-radius: 15px 15px 0 0;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        
-        .phase-content {
-            border: 2px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 15px 15px;
-            padding: 20px;
-            height: 400px;
-            background: #f8f9fa;
-        }
-        
-        .flow-step {
-            background: white;
-            margin: 10px 0;
-            padding: 12px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-left: 4px solid #007bff;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .flow-step:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        }
-        
-        .ai-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #ff4757;
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-weight: bold;
-        }
-        
-        .flow-arrow {
-            color: #666;
-            font-size: 24px;
-            align-self: center;
-        }
-        
-        /* 技术架构图样式 */
-        .architecture {
-            display: grid;
-            grid-template-rows: repeat(5, 1fr);
-            gap: 20px;
-            height: 500px;
-        }
-        
-        .arch-layer {
-            display: flex;
-            align-items: center;
-            background: linear-gradient(90deg, #f1f2f6, #ddd);
-            border-radius: 15px;
-            padding: 15px;
-            position: relative;
-        }
-        
-        .layer-label {
-            min-width: 120px;
-            font-weight: bold;
-            color: #2f3542;
-        }
-        
-        .layer-components {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            flex: 1;
-        }
-        
-        .component {
-            background: white;
-            padding: 8px 16px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            font-size: 12px;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-        
-        .component.ai-enabled {
-            border-color: #ff6b6b;
-            background: linear-gradient(45deg, #fff, #ffebee);
-        }
-        
-        .component:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        /* 功能模块图样式 */
-        .function-modules {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            height: 500px;
-        }
-        
-        .module-card {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
+
+        /* Specular Highlight Effect */
+        .specular-highlight {
             position: relative;
             overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s ease;
         }
-        
-        .module-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-        
-        .module-card::before {
+
+        .specular-highlight::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            transform: rotate(45deg);
-            transition: all 0.6s ease;
-            opacity: 0;
-        }
-        
-        .module-card:hover::before {
-            opacity: 1;
-            top: -100%;
-            left: -100%;
-        }
-        
-        .module-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-        
-        .module-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        
-        .module-features {
-            font-size: 12px;
-            opacity: 0.9;
-            line-height: 1.4;
-        }
-        
-        /* 数据流转图样式 */
-        .data-flow {
-            position: relative;
-            height: 500px;
-            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-            border-radius: 15px;
-            overflow: hidden;
-        }
-        
-        .data-node {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            width: 100px;
-            height: 100px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 3px solid #007bff;
-        }
-        
-        .data-node:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-        }
-        
-        .data-node.ai-node {
-            border-color: #ff6b6b;
-            background: linear-gradient(135deg, #fff, #ffebee);
-        }
-        
-        .node-icon {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-        
-        .node-label {
-            font-size: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
-        
-        .data-flow-line {
-            position: absolute;
-            height: 2px;
-            background: linear-gradient(90deg, #007bff, #28a745);
-            transform-origin: left center;
-        }
-        
-        .flow-animation {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: #ff6b6b;
-            border-radius: 50%;
-            animation: flowMove 3s linear infinite;
-        }
-        
-        @keyframes flowMove {
-            0% { left: 0; opacity: 1; }
-            100% { left: 100%; opacity: 0; }
-        }
-        
-        /* 详情面板样式 */
-        .detail-panel {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            z-index: 1000;
-            max-width: 500px;
-            width: 90%;
-            display: none;
-        }
-        
-        .detail-panel.show {
-            display: block;
-        }
-        
-        .overlay {
-            position: fixed;
             top: 0;
-            left: 0;
+            left: -100%;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-            display: none;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
         }
-        
-        .overlay.show {
-            display: block;
+
+        .specular-highlight:hover::before {
+            left: 100%;
         }
-        
-        .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
+
+        .specular-highlight > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .navigation-controls {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
             border: none;
-            font-size: 24px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            color: #666;
+            transition: all 0.3s ease;
+            font-size: 16px;
         }
-        
-        .close-btn:hover {
-            color: #333;
+
+        .nav-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
         }
-        
-        /* 响应式设计 */
+
+        .nav-button:disabled {
+            background: rgba(156, 163, 175, 0.5);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         @media (max-width: 768px) {
-            .business-flow {
-                flex-direction: column;
-                height: auto;
+            .sidebar {
+                width: 240px;
             }
-            
-            .flow-phase {
-                margin: 10px 0;
-            }
-            
-            .function-modules {
-                grid-template-columns: 1fr;
-            }
-            
-            .architecture {
-                grid-template-rows: auto;
-            }
-            
-            .tab-btn {
-                padding: 8px 16px;
-                font-size: 12px;
+
+            .main-content {
+                margin-left: 8px;
             }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 智能差旅平台架构与流程设计</h1>
-            <p>基于AI赋能的企业差旅管理解决方案</p>
+
+<body class="flex h-screen overflow-hidden">
+    <!-- 左侧边栏 -->
+    <div class="sidebar liquid-glass-strong p-4 flex flex-col m-4 mr-2 rounded-lg specular-highlight">
+        <!-- 头部 Logo -->
+        <div class="flex flex-col items-center mb-6">
+            <div class="w-12 h-12 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center mb-3">
+                <span class="text-white font-bold text-lg">✈️</span>
+            </div>
+            <h1 class="text-lg font-bold text-gray-800 text-center">AI赋能智能差旅管理平台</h1>
+            <p class="text-sm text-gray-600">企业差旅数字化转型解决方案</p>
         </div>
-        
-        <div class="tab-navigation">
-            <button class="tab-btn active" onclick="showTab('business-flow')">🔄 业务流程图</button>
-            <button class="tab-btn" onclick="showTab('architecture')">🏗️ 技术架构图</button>
-            <button class="tab-btn" onclick="showTab('function-modules')">⚡ 功能模块图</button>
-            <button class="tab-btn" onclick="showTab('data-flow')">📊 数据流转图</button>
+
+        <!-- 进度条 -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-600">演示进度</span>
+                <span class="text-sm text-cyan-600 font-medium" id="progress-text">1/16</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 6.25%"></div>
+            </div>
         </div>
-        
-        <div class="diagram-container">
-            <!-- 业务流程图 -->
-            <div id="business-flow" class="tab-content active">
-                <h2 style="text-align: center; margin-bottom: 30px; color: #2f3542;">智能差旅业务流程图</h2>
-                <div class="business-flow">
-                    <div class="flow-phase">
-                        <div class="phase-title">🎯 出差前</div>
-                        <div class="phase-content">
-                            <div class="flow-step" onclick="showDetail('供应商比价', '多家机票、酒店、租车供应商API接入，AI算法自动比价排序，支持价格、时间、服务评分等维度筛选')">
-                                <div class="ai-badge">AI</div>
-                                多供应商智能比价
-                            </div>
-                            <div class="flow-step" onclick="showDetail('行程规划', '用户输入目的地、时间、预算，AI自动规划最优行程，包含交通、住宿、餐饮全链路费用预估')">
-                                <div class="ai-badge">AI</div>
-                                智能行程规划
-                            </div>
-                            <div class="flow-step" onclick="showDetail('预算申请', '与现有AOM系统集成，支持预算查询、占用、释放，增加AI预算合理性检查')">
-                                预算申请与审批
-                            </div>
-                            <div class="flow-step" onclick="showDetail('中转优化', '无直达路线时，AI计算最优中转方案，综合考虑费用、时间、便捷性等因素')">
-                                <div class="ai-badge">AI</div>
-                                中转路线优化
-                            </div>
+
+        <!-- PPT页面导航 -->
+        <div class="flex-1 overflow-y-auto">
+            <h3 class="text-sm font-semibold text-gray-600 mb-4">📖 目录导航</h3>
+            
+            <!-- 第一章：背景 -->
+            <div class="mb-4">
+                <h4 class="text-xs text-gray-500 mb-2 font-medium">第一章：背景</h4>
+                
+                <div class="slide-nav-btn active specular-highlight" data-slide="1">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">01</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">背景与痛点</div>
+                            <div class="text-xs text-gray-500">传统差旅管理挑战</div>
                         </div>
                     </div>
-                    
-                    <div class="flow-arrow">➡️</div>
-                    
-                    <div class="flow-phase">
-                        <div class="phase-title">🛫 出差中</div>
-                        <div class="phase-content">
-                            <div class="flow-step" onclick="showDetail('实时监控', 'GPS轨迹跟踪，实时位置核验，异常行程自动报警，确保出差安全合规')">
-                                <div class="ai-badge">AI</div>
-                                实时行程监控
-                            </div>
-                            <div class="flow-step" onclick="showDetail('临时变更', '改签、换酒店等变更申请，AI自动计算费用影响，实时更新预算和后续行程')">
-                                <div class="ai-badge">AI</div>
-                                临时变更处理
-                            </div>
-                            <div class="flow-step" onclick="showDetail('展会识别', 'AI识别目的地展会信息，自动匹配差标提升规则，动态调整住宿餐饮标准')">
-                                <div class="ai-badge">AI</div>
-                                展会差标智能提升
-                            </div>
-                            <div class="flow-step" onclick="showDetail('超标审批', '实时差标控制，超标自动触发审批流程，移动端快速审批决策')">
-                                移动端超标审批
-                            </div>
+                </div>
+
+                <div class="slide-nav-btn specular-highlight" data-slide="2">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">02</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">调研与思考</div>
+                            <div class="text-xs text-gray-500">行业分析与需求洞察</div>
                         </div>
                     </div>
-                    
-                    <div class="flow-arrow">➡️</div>
-                    
-                    <div class="flow-phase">
-                        <div class="phase-title">📋 出差后</div>
-                        <div class="phase-content">
-                            <div class="flow-step" onclick="showDetail('智能核查', 'AI对比预算vs实际消费，自动标记异常项，智能识别不合规费用')">
-                                <div class="ai-badge">AI</div>
-                                差旅后智能核查
-                            </div>
-                            <div class="flow-step" onclick="showDetail('凭证归集', '自动抓取电子行程单、发票，OCR识别纸质凭证，智能分类管理')">
-                                <div class="ai-badge">AI</div>
-                                电子凭证自动归集
-                            </div>
-                            <div class="flow-step" onclick="showDetail('报销生成', '基于实际消费和凭证，自动生成标准化报销单，一键提交审批')">
-                                <div class="ai-badge">AI</div>
-                                报销单自动生成
-                            </div>
-                            <div class="flow-step" onclick="showDetail('预算核销', '自动核销使用预算，计算剩余额度，支持一键预算归还')">
-                                预算核销与归还
-                            </div>
+                </div>
+
+                <div class="slide-nav-btn specular-highlight" data-slide="3">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">03</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">解决方案概述</div>
+                            <div class="text-xs text-gray-500">AI First设计理念</div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- 技术架构图 -->
-            <div id="architecture" class="tab-content">
-                <h2 style="text-align: center; margin-bottom: 30px; color: #2f3542;">AI赋能技术架构图</h2>
-                <div class="architecture">
-                    <div class="arch-layer">
-                        <div class="layer-label">用户层</div>
-                        <div class="layer-components">
-                            <div class="component">移动端APP</div>
-                            <div class="component">企业微信小程序</div>
-                            <div class="component">Web管理端</div>
-                            <div class="component">H5响应式页面</div>
+
+            <!-- 第二章：技术架构 -->
+            <div class="mb-4">
+                <h4 class="text-xs text-gray-500 mb-2 font-medium">第二章：技术架构</h4>
+                
+                <div class="slide-nav-btn specular-highlight" data-slide="4">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">04</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">AI智能差旅全流程</div>
+                            <div class="text-xs text-gray-500">核心业务流程设计</div>
                         </div>
                     </div>
-                    
-                    <div class="arch-layer">
-                        <div class="layer-label">AI服务层</div>
-                        <div class="layer-components">
-                            <div class="component ai-enabled">智能比价引擎</div>
-                            <div class="component ai-enabled">行程规划算法</div>
-                            <div class="component ai-enabled">异常检测模型</div>
-                            <div class="component ai-enabled">OCR识别服务</div>
-                            <div class="component ai-enabled">NLP凭证分析</div>
-                            <div class="component ai-enabled">推荐算法引擎</div>
+                </div>
+
+                <div class="slide-nav-btn specular-highlight" data-slide="5">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">05</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">AI决策引擎工作流程</div>
+                            <div class="text-xs text-gray-500">智能决策机制</div>
                         </div>
                     </div>
-                    
-                    <div class="arch-layer">
-                        <div class="layer-label">业务服务层</div>
-                        <div class="layer-components">
-                            <div class="component">申请管理服务</div>
-                            <div class="component">预算控制服务</div>
-                            <div class="component">供应商集成服务</div>
-                            <div class="component">审批流程服务</div>
-                            <div class="component">报销单服务</div>
-                            <div class="component">对账结算服务</div>
+                </div>
+
+                <div class="slide-nav-btn specular-highlight" data-slide="6">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">06</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">功能地图与架构图</div>
+                            <div class="text-xs text-gray-500">完整技术架构设计</div>
                         </div>
                     </div>
-                    
-                    <div class="arch-layer">
-                        <div class="layer-label">数据层</div>
-                        <div class="layer-components">
-                            <div class="component">差旅业务数据库</div>
-                            <div class="component ai-enabled">AI训练数据湖</div>
-                            <div class="component">Redis缓存</div>
-                            <div class="component">ElasticSearch</div>
-                            <div class="component">文件存储OSS</div>
-                        </div>
-                    </div>
-                    
-                    <div class="arch-layer">
-                        <div class="layer-label">集成层</div>
-                        <div class="layer-components">
-                            <div class="component">AOM系统</div>
-                            <div class="component">差旅壹号</div>
-                            <div class="component">供应商API网关</div>
-                            <div class="component">财务系统</div>
-                            <div class="component">企业微信API</div>
-                            <div class="component">发票查验API</div>
+                </div>
+
+                <div class="slide-nav-btn specular-highlight" data-slide="7">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">07</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">AI引擎详细架构</div>
+                            <div class="text-xs text-gray-500">核心AI能力构成</div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- 功能模块图 -->
-            <div id="function-modules" class="tab-content">
-                <h2 style="text-align: center; margin-bottom: 30px; color: #2f3542;">核心功能模块图</h2>
-                <div class="function-modules">
-                    <div class="module-card" onclick="showDetail('智能决策模块', '集成AI算法，提供比价推荐、行程优化、异常检测等智能决策能力，支持机器学习持续优化')">
-                        <div class="module-icon">🧠</div>
-                        <div class="module-title">AI智能决策</div>
-                        <div class="module-features">
-                            • 多维度比价算法<br>
-                            • 智能行程规划<br>
-                            • 异常行为检测<br>
-                            • 个性化推荐
+
+            <!-- 第三章：落地方案 -->
+            <div class="mb-4">
+                <h4 class="text-xs text-gray-500 mb-2 font-medium">第三章：落地方案</h4>
+                
+                <div class="slide-nav-btn specular-highlight" data-slide="8">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">08</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">AI智能行程规划演示</div>
+                            <div class="text-xs text-gray-500">智能推荐效果展示</div>
                         </div>
                     </div>
-                    
-                    <div class="module-card" onclick="showDetail('供应商整合', '统一接入多家机票、酒店、租车供应商，实现资源聚合、价格比较、服务评估')">
-                        <div class="module-icon">🔗</div>
-                        <div class="module-title">供应商整合</div>
-                        <div class="module-features">
-                            • 多供应商API集成<br>
-                            • 实时价格同步<br>
-                            • 服务质量评估<br>
-                            • 协议价格管理
+                </div>
+
+                <div class="slide-nav-btn specular-highlight" data-slide="9">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">09</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">实时变更处理演示</div>
+                            <div class="text-xs text-gray-500">智能应急响应能力</div>
                         </div>
                     </div>
-                    
-                    <div class="module-card" onclick="showDetail('预算管控', '与AOM深度集成，实现预算查询、占用、释放、核销全流程管理')">
-                        <div class="module-icon">💰</div>
-                        <div class="module-title">预算管控</div>
-                        <div class="module-features">
-                            • AOM系统集成<br>
-                            • 实时预算查询<br>
-                            • 自动占用释放<br>
-                            • 智能预算分析
+                </div>
+
+                <div class="slide-nav-btn specular-highlight" data-slide="10">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">10</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">智能费用监控演示</div>
+                            <div class="text-xs text-gray-500">实时费用管控展示</div>
                         </div>
                     </div>
-                    
-                    <div class="module-card" onclick="showDetail('流程引擎', '可配置的审批流程，支持多级审批、并行审批、条件路由等复杂场景')">
-                        <div class="module-icon">⚙️</div>
-                        <div class="module-title">流程引擎</div>
-                        <div class="module-features">
-                            • 可视化流程配置<br>
-                            • 多级审批支持<br>
-                            • 移动端审批<br>
-                            • 流程监控分析
-                        </div>
-                    </div>
-                    
-                    <div class="module-card" onclick="showDetail('凭证管理', 'AI自动识别归集各类差旅凭证，支持OCR、分类、验真、存储管理')">
-                        <div class="module-icon">📄</div>
-                        <div class="module-title">智能凭证</div>
-                        <div class="module-features">
-                            • OCR自动识别<br>
-                            • 智能分类归档<br>
-                            • 发票验真查重<br>
-                            • 电子化存储
-                        </div>
-                    </div>
-                    
-                    <div class="module-card" onclick="showDetail('数据分析', '基于差旅大数据的深度分析，提供成本优化、行为分析、趋势预测等洞察')">
-                        <div class="module-icon">📊</div>
-                        <div class="module-title">数据分析</div>
-                        <div class="module-features">
-                            • 差旅成本分析<br>
-                            • 行为模式挖掘<br>
-                            • 趋势预测<br>
-                            • 可视化报表
+                </div>
+
+                <div class="slide-nav-btn specular-highlight" data-slide="11">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">11</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">用户体验优化展示</div>
+                            <div class="text-xs text-gray-500">效率提升量化分析</div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- 数据流转图 -->
-            <div id="data-flow" class="tab-content">
-                <h2 style="text-align: center; margin-bottom: 20px; color: #2f3542;">智能数据流转图</h2>
-                <div class="data-flow">
-                    <!-- 用户端 -->
-                    <div class="data-node" style="top: 50px; left: 50px;" onclick="showDetail('用户端', '移动端APP、小程序、Web端，用户操作入口')">
-                        <div class="node-icon">👤</div>
-                        <div class="node-label">用户端</div>
-                    </div>
-                    
-                    <!-- AI引擎 -->
-                    <div class="data-node ai-node" style="top: 50px; left: 250px;" onclick="showDetail('AI引擎', '智能比价、行程规划、异常检测、OCR识别等AI核心能力')">
-                        <div class="node-icon">🤖</div>
-                        <div class="node-label">AI引擎</div>
-                    </div>
-                    
-                    <!-- 差旅平台 -->
-                    <div class="data-node" style="top: 200px; left: 150px;" onclick="showDetail('差旅平台', '核心业务处理平台，申请管理、预算控制、流程审批')">
-                        <div class="node-icon">🏢</div>
-                        <div class="node-label">差旅平台</div>
-                    </div>
-                    
-                    <!-- 供应商 -->
-                    <div class="data-node" style="top: 50px; left: 450px;" onclick="showDetail('供应商', '机票、酒店、租车等多家供应商API集成')">
-                        <div class="node-icon">✈️</div>
-                        <div class="node-label">供应商</div>
-                    </div>
-                    
-                    <!-- AOM系统 -->
-                    <div class="data-node" style="top: 350px; left: 50px;" onclick="showDetail('AOM系统', '现有企业管理系统，预算管理、员工信息、审批流程')">
-                        <div class="node-icon">🏛️</div>
-                        <div class="node-label">AOM系统</div>
-                    </div>
-                    
-                    <!-- 财务系统 -->
-                    <div class="data-node" style="top: 350px; left: 250px;" onclick="showDetail('财务系统', '报销单处理、财务审核、费用核算')">
-                        <div class="node-icon">💼</div>
-                        <div class="node-label">财务系统</div>
-                    </div>
-                    
-                    <!-- 数据湖 -->
-                    <div class="data-node ai-node" style="top: 350px; left: 450px;" onclick="showDetail('AI数据湖', '存储差旅行为数据，用于机器学习模型训练和优化')">
-                        <div class="node-icon">🗄️</div>
-                        <div class="node-label">AI数据湖</div>
-                    </div>
-                    
-                    <!-- 数据流转线 -->
-                    <div class="data-flow-line" style="top: 100px; left: 150px; width: 100px; transform: rotate(0deg);">
-                        <div class="flow-animation"></div>
-                    </div>
-                    <div class="data-flow-line" style="top: 100px; left: 350px; width: 100px; transform: rotate(0deg);">
-                        <div class="flow-animation"></div>
-                    </div>
-                    <div class="data-flow-line" style="top: 150px; left: 300px; width: 100px; transform: rotate(45deg);">
-                        <div class="flow-animation"></div>
-                    </div>
-                    <div class="data-flow-line" style="top: 250px; left: 200px; width: 100px; transform: rotate(90deg);">
-                        <div class="flow-animation"></div>
+
+            <!-- 第四章：方案优势 -->
+            <div class="mb-4">
+                <h4 class="text-xs text-gray-500 mb-2 font-medium">第四章：方案优势</h4>
+                
+                <div class="slide-nav-btn specular-highlight" data-slide="12">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">12</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">技术领先性优势</div>
+                            <div class="text-xs text-gray-500">AI技术深度应用</div>
+                        </div>
                     </div>
                 </div>
+
+                <div class="slide-nav-btn specular-highlight" data-slide="13">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">13</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">业务价值优势</div>
+                            <div class="text-xs text-gray-500">成本控制与管理提升</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn specular-highlight" data-slide="14">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">14</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">用户体验优势</div>
+                            <div class="text-xs text-gray-500">极致便捷与个性化</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn specular-highlight" data-slide="15">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">15</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">竞争优势分析</div>
+                            <div class="text-xs text-gray-500">差异化价值主张</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第五章：畅想未来 -->
+            <div class="mb-4">
+                <h4 class="text-xs text-gray-500 mb-2 font-medium">第五章：畅想未来</h4>
+                
+                <div class="slide-nav-btn specular-highlight" data-slide="16">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">16</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">技术演进与愿景</div>
+                            <div class="text-xs text-gray-500">构建智能差旅生态</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 版权信息 -->
+        <div class="mt-4 text-center">
+            <p class="text-xs text-muted">Copyright. 2025©赞同科技股份有限公司</p>
+            <p class="text-xs text-gray-400">AI Travel Platform V1.0</p>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content liquid-glass-strong flex flex-col overflow-hidden m-4 ml-2 rounded-lg specular-highlight">
+        <!-- 页面内容容器 -->
+        <div class="flex-1 overflow-y-auto" id="slide-container">
+            
+            <!-- 第1页：背景与痛点 -->
+            <div class="slide-content active" id="slide-1">
+                <iframe src="./slide-01.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第2页：调研与思考 -->
+            <div class="slide-content" id="slide-2">
+                <iframe src="./slide-02.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第3页：解决方案概述 -->
+            <div class="slide-content" id="slide-3">
+                <iframe src="./slide-03.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第4页：AI智能差旅全流程 -->
+            <div class="slide-content" id="slide-4">
+                <iframe src="./slide-04.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第5页：AI决策引擎工作流程 -->
+            <div class="slide-content" id="slide-5">
+                <iframe src="./slide-05.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第6页：功能地图与架构图 -->
+            <div class="slide-content" id="slide-6">
+                <iframe src="./slide-06.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第7页：AI引擎详细架构 -->
+            <div class="slide-content" id="slide-7">
+                <iframe src="./slide-07.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第8页：AI智能行程规划演示 -->
+            <div class="slide-content" id="slide-8">
+                <iframe src="./slide-08.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第9页：实时变更处理演示 -->
+            <div class="slide-content" id="slide-9">
+                <iframe src="./slide-09.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第10页：智能费用监控演示 -->
+            <div class="slide-content" id="slide-10">
+                <iframe src="./slide-10.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第11页：用户体验优化展示 -->
+            <div class="slide-content" id="slide-11">
+                <iframe src="./slide-11.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第12页：技术领先性优势 -->
+            <div class="slide-content" id="slide-12">
+                <iframe src="./slide-12.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第13页：业务价值优势 -->
+            <div class="slide-content" id="slide-13">
+                <iframe src="./slide-13.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第14页：用户体验优势 -->
+            <div class="slide-content" id="slide-14">
+                <iframe src="./slide-14.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第15页：竞争优势分析 -->
+            <div class="slide-content" id="slide-15">
+                <iframe src="./slide-15.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+            <!-- 第16页：技术演进与愿景 -->
+            <div class="slide-content" id="slide-16">
+                <iframe src="./slide-16.html" class="w-full h-full border-0" frameborder="0"></iframe>
+            </div>
+
+        </div>
+
+        <!-- 底部导航控件 -->
+        <div class="p-6 flex items-center justify-between">
+            <div class="navigation-controls">
+                <button class="nav-button" id="prev-btn" onclick="previousSlide()">‹</button>
+                <span class="text-sm text-gray-600 font-medium" id="slide-indicator">第 1 页 / 共 16 页</span>
+                <button class="nav-button" id="next-btn" onclick="nextSlide()">›</button>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button class="px-4 py-2 bg-white/80 backdrop-blur-sm border border-white/30 rounded-lg text-sm text-gray-700 hover:bg-white/90 transition-all"
+                    onclick="toggleFullscreen()">
+                    🔍 全屏模式
+                </button>
+                <!-- <button class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg text-sm hover:from-cyan-600 hover:to-cyan-700 transition-all"
+                    onclick="exportPDF()">
+                    📥 导出PDF
+                </button> -->
             </div>
         </div>
     </div>
-    
-    <!-- 详情面板 -->
-    <div class="overlay" onclick="hideDetail()"></div>
-    <div class="detail-panel">
-        <button class="close-btn" onclick="hideDetail()">×</button>
-        <h3 id="detail-title"></h3>
-        <p id="detail-content"></p>
-    </div>
-    
+
     <script>
-        function showTab(tabId) {
-            // 隐藏所有内容
-            const contents = document.querySelectorAll('.tab-content');
-            contents.forEach(content => content.classList.remove('active'));
+        let currentSlide = 1;
+        const totalSlides = 16;
+
+        // 切换到指定页面
+        function switchToSlide(slideNumber) {
+            // 移除所有活动状态
+            document.querySelectorAll('.slide-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.slide-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 激活当前页面
+            const currentBtn = document.querySelector(`[data-slide="${slideNumber}"]`);
+            const currentContent = document.getElementById(`slide-${slideNumber}`);
             
-            // 移除所有按钮的活动状态
-            const buttons = document.querySelectorAll('.tab-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            
-            // 显示目标内容
-            document.getElementById(tabId).classList.add('active');
-            
-            // 激活对应按钮
-            event.target.classList.add('active');
+            if (currentBtn && currentContent) {
+                currentBtn.classList.add('active');
+                currentContent.classList.add('active');
+                currentSlide = slideNumber;
+
+                // 更新进度
+                updateProgress();
+                updateNavigationState();
+            }
         }
-        
-        function showDetail(title, content) {
-            document.getElementById('detail-title').textContent = title;
-            document.getElementById('detail-content').textContent = content;
-            document.querySelector('.overlay').classList.add('show');
-            document.querySelector('.detail-panel').classList.add('show');
+
+        // 下一页
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                switchToSlide(currentSlide + 1);
+            }
         }
-        
-        function hideDetail() {
-            document.querySelector('.overlay').classList.remove('show');
-            document.querySelector('.detail-panel').classList.remove('show');
+
+        // 上一页
+        function previousSlide() {
+            if (currentSlide > 1) {
+                switchToSlide(currentSlide - 1);
+            }
         }
-        
-        // 添加键盘事件监听
+
+        // 更新进度条
+        function updateProgress() {
+            const progressPercent = (currentSlide / totalSlides) * 100;
+            document.getElementById('progress-fill').style.width = `${progressPercent}%`;
+            document.getElementById('progress-text').textContent = `${currentSlide}/${totalSlides}`;
+            document.getElementById('slide-indicator').textContent = `第 ${currentSlide} 页 / 共 ${totalSlides} 页`;
+        }
+
+        // 更新导航按钮状态
+        function updateNavigationState() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+
+            prevBtn.disabled = currentSlide === 1;
+            nextBtn.disabled = currentSlide === totalSlides;
+        }
+
+        // 全屏模式
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // 导出PDF（模拟功能）
+        function exportPDF() {
+            alert('PDF导出功能开发中，请联系技术支持获取完整版本');
+        }
+
+        // 键盘导航
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                hideDetail();
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    switchToSlide(1);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    switchToSlide(totalSlides);
+                    break;
             }
         });
-        
-        // 自动展示一些提示信息
-        setTimeout(() => {
-            showDetail('💡 使用提示', '点击各个模块和流程节点可以查看详细说明。红色AI标识表示该功能由人工智能赋能，蓝色节点表示与现有系统集成。');
-        }, 2000);
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 绑定侧边栏点击事件
+            document.querySelectorAll('.slide-nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const slideNumber = parseInt(this.dataset.slide);
+                    switchToSlide(slideNumber);
+                });
+            });
+
+            // 初始化状态
+            updateProgress();
+            updateNavigationState();
+
+            // 添加动态背景
+            setTimeout(() => {
+                const style = document.createElement('style');
+                const randomNum = Math.floor(Math.random() * 2000 + 1);
+                style.innerHTML = `
+                    body {
+                        /*background-image: url('https://img.infinitynewtab.com/wallpaper/${randomNum}.jpg');*/
+                        /*background-image: url('/abtp/bg.jpg');*/
+                        background-image:url('https://img.infinitynewtab.com/wallpaper/373.jpg');
+                        background-repeat: no-repeat;
+                        background-size: cover;
+                        background-attachment: fixed;
+                    }
+                `;
+                document.head.appendChild(style);
+            }, 500);
+        });
+
+        // 全局函数供外部调用
+        window.switchToSlide = switchToSlide;
+        window.nextSlide = nextSlide;
+        window.previousSlide = previousSlide;
     </script>
 </body>
+
 </html>

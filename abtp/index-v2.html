@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI赋能智能差旅管理平台 - PPTX生成器</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <script src="/script/pptxgen.bundle.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .generate-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+        
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+        
+        .generate-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .slide-preview {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            background: #f9fafb;
+        }
+        
+        .slide-preview.completed {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass-card rounded-lg p-8 max-w-4xl w-full">
+        <!-- 头部 -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl mb-4">
+                <span class="text-white text-2xl">🚀</span>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">AI赋能智能差旅管理平台</h1>
+            <p class="text-lg text-gray-600">企业差旅数字化转型解决方案 - PPTX生成器</p>
+        </div>
+
+        <!-- PPT内容预览 -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">📋 PPT内容大纲</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <div class="slide-preview" id="slide-1">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">1</span>
+                            <div>
+                                <div class="font-medium text-gray-800">背景与痛点</div>
+                                <div class="text-sm text-gray-600">现状分析与挑战识别</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-preview" id="slide-2">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">2</span>
+                            <div>
+                                <div class="font-medium text-gray-800">调研与思考</div>
+                                <div class="text-sm text-gray-600">行业标杆与需求洞察</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-preview" id="slide-3">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">3</span>
+                            <div>
+                                <div class="font-medium text-gray-800">解决方案</div>
+                                <div class="text-sm text-gray-600">AI驱动的智能化方案</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-preview" id="slide-4">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">4</span>
+                            <div>
+                                <div class="font-medium text-gray-800">AI智能差旅全流程</div>
+                                <div class="text-sm text-gray-600">端到端业务流程设计</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-preview" id="slide-5">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">5</span>
+                            <div>
+                                <div class="font-medium text-gray-800">功能地图</div>
+                                <div class="text-sm text-gray-600">AI赋能功能矩阵</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-preview" id="slide-6">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">6</span>
+                            <div>
+                                <div class="font-medium text-gray-800">系统架构图</div>
+                                <div class="text-sm text-gray-600">技术架构与数据流</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="slide-preview" id="slide-7">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">7</span>
+                            <div>
+                                <div class="font-medium text-gray-800">核心功能演示</div>
+                                <div class="text-sm text-gray-600">AI智能规划与监控</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-preview" id="slide-8">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">8</span>
+                            <div>
+                                <div class="font-medium text-gray-800">用户体验优化</div>
+                                <div class="text-sm text-gray-600">便捷性与准确性提升</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-preview" id="slide-9">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">9</span>
+                            <div>
+                                <div class="font-medium text-gray-800">成本优化效果</div>
+                                <div class="text-sm text-gray-600">ROI分析与效率提升</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-preview" id="slide-10">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">10</span>
+                            <div>
+                                <div class="font-medium text-gray-800">技术与业务优势</div>
+                                <div class="text-sm text-gray-600">领先性与价值创造</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-preview" id="slide-11">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">11</span>
+                            <div>
+                                <div class="font-medium text-gray-800">竞争优势分析</div>
+                                <div class="text-sm text-gray-600">差异化核心能力</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slide-preview" id="slide-12">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">12</span>
+                            <div>
+                                <div class="font-medium text-gray-800">技术演进与愿景</div>
+                                <div class="text-sm text-gray-600">未来发展路线图</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 生成进度 -->
+        <div id="progress-section" class="mb-8 hidden">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">🔄 生成进度</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="text-sm text-gray-600" id="progress-text">准备生成...</div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="text-center">
+            <button id="generate-btn" class="generate-btn" onclick="generatePPTX()">
+                📥 生成并下载 PPTX
+            </button>
+            <p class="text-sm text-gray-500 mt-4">
+                点击按钮将生成完整的PowerPoint演示文稿<br>
+                包含12页精美设计的幻灯片
+            </p>
+        </div>
+
+        <!-- 版权信息 -->
+        <div class="text-center mt-8 pt-6 border-t border-gray-200">
+            <p class="text-xs text-gray-500">Copyright © 2025 赞同科技股份有限公司</p>
+            <p class="text-xs text-gray-400">AI Travel Platform PPTX Generator V1.0</p>
+        </div>
+    </div>
+
+    <script>
+        let isGenerating = false;
+
+        async function generatePPTX() {
+            if (isGenerating) return;
+            
+            isGenerating = true;
+            const btn = document.getElementById('generate-btn');
+            const progressSection = document.getElementById('progress-section');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            
+            // 更新按钮状态
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner"></div>正在生成中...';
+            progressSection.classList.remove('hidden');
+            
+            try {
+                // 创建新的PowerPoint实例
+                let pptx = new PptxGenJS();
+                
+                // 设置PPT属性
+                pptx.author = '赞同科技股份有限公司';
+                pptx.company = '赞同科技股份有限公司';
+                pptx.title = 'AI赋能智能差旅管理平台';
+                pptx.subject = '企业差旅数字化转型解决方案';
+                
+                // 定义主题颜色
+                const colors = {
+                    primary: '3B82F6',
+                    secondary: '64748B', 
+                    success: '10B981',
+                    warning: 'F59E0B',
+                    danger: 'EF4444',
+                    background: 'F8FAFC'
+                };
+
+                // 生成封面页
+                await createCoverSlide(pptx, colors);
+                updateProgress(1, 12, progressFill, progressText, 'slide-1');
+
+                // 生成目录页
+                await createTableOfContentsSlide(pptx, colors);
+                updateProgress(2, 12, progressFill, progressText, 'slide-2');
+
+                // 生成第一章：背景
+                await createBackgroundSlide(pptx, colors);
+                updateProgress(3, 12, progressFill, progressText, 'slide-3');
+
+                await createResearchSlide(pptx, colors);
+                updateProgress(4, 12, progressFill, progressText, 'slide-4');
+
+                await createSolutionSlide(pptx, colors);
+                updateProgress(5, 12, progressFill, progressText, 'slide-5');
+
+                // 生成第二章：技术架构
+                await createArchitectureSlide(pptx, colors);
+                updateProgress(6, 12, progressFill, progressText, 'slide-6');
+
+                await createFunctionMapSlide(pptx, colors);
+                updateProgress(7, 12, progressFill, progressText, 'slide-7');
+
+                await createSystemArchSlide(pptx, colors);
+                updateProgress(8, 12, progressFill, progressText, 'slide-8');
+
+                // 生成第三章：落地方案
+                await createDemoSlide(pptx, colors);
+                updateProgress(9, 12, progressFill, progressText, 'slide-9');
+
+                await createUXSlide(pptx, colors);
+                updateProgress(10, 12, progressFill, progressText, 'slide-10');
+
+                await createCostSlide(pptx, colors);
+                updateProgress(11, 12, progressFill, progressText, 'slide-11');
+
+                // 生成结束页
+                await createConclusionSlide(pptx, colors);
+                updateProgress(12, 12, progressFill, progressText, 'slide-12');
+
+                // 生成并下载文件
+                progressText.textContent = '正在生成文件...';
+                await pptx.writeFile({ fileName: 'AI赋能智能差旅管理平台解决方案.pptx' });
+                
+                progressText.textContent = '✅ 生成完成！文件已开始下载';
+                
+                setTimeout(() => {
+                    resetUI(btn, progressSection);
+                }, 2000);
+                
+            } catch (error) {
+                console.error('生成PPT时出错:', error);
+                progressText.textContent = '❌ 生成失败，请重试';
+                setTimeout(() => {
+                    resetUI(btn, progressSection);
+                }, 2000);
+            }
+        }
+
+        function updateProgress(current, total, progressFill, progressText, slideId) {
+            const percent = (current / total) * 100;
+            progressFill.style.width = `${percent}%`;
+            progressText.textContent = `正在生成第 ${current} 页，共 ${total} 页...`;
+            
+            // 标记当前页面为完成状态
+            const slideElement = document.getElementById(slideId);
+            if (slideElement) {
+                slideElement.classList.add('completed');
+            }
+            
+            return new Promise(resolve => setTimeout(resolve, 300));
+        }
+
+        function resetUI(btn, progressSection) {
+            isGenerating = false;
+            btn.disabled = false;
+            btn.innerHTML = '📥 生成并下载 PPTX';
+            progressSection.classList.add('hidden');
+            
+            // 重置所有页面状态
+            document.querySelectorAll('.slide-preview').forEach(slide => {
+                slide.classList.remove('completed');
+            });
+        }
+
+        // 创建封面页
+        async function createCoverSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            
+            // 设置背景
+            slide.background = { color: colors.background };
+            
+            // 添加标题
+            slide.addText('AI赋能智能差旅管理平台', {
+                x: 1, y: 2, w: 8, h: 1.5,
+                fontSize: 36, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            // 添加副标题
+            slide.addText('企业差旅数字化转型解决方案', {
+                x: 1, y: 3.5, w: 8, h: 0.8,
+                fontSize: 24, color: colors.secondary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            // 添加公司信息
+            slide.addText('赞同科技股份有限公司', {
+                x: 1, y: 6, w: 8, h: 0.6,
+                fontSize: 18, color: colors.secondary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            // 添加日期
+            slide.addText(new Date().toLocaleDateString('zh-CN'), {
+                x: 1, y: 6.8, w: 8, h: 0.4,
+                fontSize: 14, color: colors.secondary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+        }
+
+        // 创建目录页
+        async function createTableOfContentsSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            slide.background = { color: colors.background };
+            
+            slide.addText('目录', {
+                x: 1, y: 0.5, w: 8, h: 1,
+                fontSize: 32, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            const chapters = [
+                '第一章：背景\n• 背景与痛点\n• 调研与思考\n• 解决方案',
+                '第二章：技术架构\n• AI智能差旅全流程\n• 功能地图\n• 系统架构图',
+                '第三章：落地方案\n• 核心功能演示\n• 用户体验优化\n• 成本优化效果',
+                '第四章：方案优势\n• 技术与业务优势\n• 竞争优势分析',
+                '第五章：畅想未来\n• 技术演进与愿景'
+            ];
+            
+            chapters.forEach((chapter, index) => {
+                slide.addText(chapter, {
+                    x: 0.5 + (index % 2) * 4.5, y: 2 + Math.floor(index / 2) * 2,
+                    w: 4, h: 1.5,
+                    fontSize: 14, color: colors.secondary,
+                    align: 'left', fontFace: 'Microsoft YaHei'
+                });
+            });
+        }
+
+        // 创建背景与痛点页
+        async function createBackgroundSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            slide.background = { color: colors.background };
+            
+            slide.addText('背景与痛点', {
+                x: 1, y: 0.5, w: 8, h: 1,
+                fontSize: 32, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            slide.addText('企业差旅管理现状分析与挑战识别', {
+                x: 1, y: 1.3, w: 8, h: 0.5,
+                fontSize: 18, color: colors.secondary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            // 痛点列表
+            const painPoints = [
+                '管理割裂：多平台跳转，用户体验差',
+                '决策盲目：缺乏智能比价和规划建议', 
+                '管控滞后：事后审核，无法事前预防',
+                '效率低下：人工处理，流程冗长',
+                '成本失控：供应商资源单一，议价能力弱'
+            ];
+            
+            painPoints.forEach((point, index) => {
+                slide.addText(`🔴 ${point}`, {
+                    x: 1, y: 2.5 + index * 0.7, w: 8, h: 0.6,
+                    fontSize: 16, color: colors.secondary,
+                    align: 'left', fontFace: 'Microsoft YaHei'
+                });
+            });
+        }
+
+        // 创建调研与思考页
+        async function createResearchSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            slide.background = { color: colors.background };
+            
+            slide.addText('调研与思考', {
+                x: 1, y: 0.5, w: 8, h: 1,
+                fontSize: 32, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            // 添加对比表格
+            const tableData = [
+                ['维度', '传统模式', '标杆企业', '我们的目标'],
+                ['供应商整合', '1-2家', '10+家', '15+家全品类'],
+                ['决策支持', '人工比较', '半智能推荐', 'AI全智能规划'],
+                ['流程效率', '5-7天', '2-3天', '1天内完成'],
+                ['成本优化', '5-10%', '15-20%', '20-25%']
+            ];
+            
+            slide.addTable(tableData, {
+                x: 1, y: 2, w: 8, h: 3,
+                fontSize: 14, fontFace: 'Microsoft YaHei',
+                border: { type: 'solid', color: colors.secondary, pt: 1 },
+                fill: { color: 'FFFFFF' }
+            });
+        }
+
+        // 创建解决方案页
+        async function createSolutionSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            slide.background = { color: colors.background };
+            
+            slide.addText('解决方案', {
+                x: 1, y: 0.5, w: 8, h: 1,
+                fontSize: 32, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            slide.addText('"AI First + 全链路智能化"', {
+                x: 1, y: 1.5, w: 8, h: 0.8,
+                fontSize: 24, bold: true, color: colors.success,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            const solutions = [
+                '🎯 智能决策：AI驱动的最优方案推荐',
+                '⚡ 极致体验：一站式无缝差旅服务',
+                '📊 实时管控：全程可视化费用监控', 
+                '💰 降本增效：智能优化降低15-25%成本',
+                '🛡️ 合规保障：智能风控确保政策合规'
+            ];
+            
+            solutions.forEach((solution, index) => {
+                slide.addText(solution, {
+                    x: 1, y: 3 + index * 0.7, w: 8, h: 0.6,
+                    fontSize: 16, color: colors.secondary,
+                    align: 'left', fontFace: 'Microsoft YaHei'
+                });
+            });
+        }
+
+        // 创建架构流程页
+        async function createArchitectureSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            slide.background = { color: colors.background };
+            
+            slide.addText('AI智能差旅全流程', {
+                x: 1, y: 0.5, w: 8, h: 1,
+                fontSize: 32, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            slide.addText('从需求输入到预算核销的端到端智能化处理', {
+                x: 1, y: 1.3, w: 8, h: 0.5,
+                fontSize: 16, color: colors.secondary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            // 流程步骤
+            const steps = [
+                '差旅需求输入 → AI智能分析 → 多供应商数据获取',
+                '智能比价推荐 → 预算合规检查 → 行程方案生成',
+                '用户确认选择 → 自动预订执行 → 实时行程监控',
+                '变更需求处理 → 费用实时跟踪 → 自动凭证归集',
+                '智能报销生成 → 预算自动核销'
+            ];
+            
+            steps.forEach((step, index) => {
+                slide.addText(step, {
+                    x: 0.5, y: 2.5 + index * 0.8, w: 9, h: 0.6,
+                    fontSize: 14, color: colors.secondary,
+                    align: 'center', fontFace: 'Microsoft YaHei'
+                });
+            });
+        }
+
+        // 创建功能地图页
+        async function createFunctionMapSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            slide.background = { color: colors.background };
+            
+            slide.addText('功能地图', {
+                x: 1, y: 0.5, w: 8, h: 1,
+                fontSize: 32, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            slide.addText('AI赋能功能矩阵', {
+                x: 1, y: 1.3, w: 8, h: 0.5,
+                fontSize: 18, color: colors.secondary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            // 功能模块
+            const modules = [
+                '📊 智能决策中心：供应商智能比价、行程智能规划、预算智能优化',
+                '🎯 个性化服务：用户画像分析、偏好学习引擎、智能推荐系统',
+                '🔄 实时管控中心：行程实时监控、费用实时跟踪、异常实时告警',
+                '🤖 AI助手服务：智能客服、语音助手、智能问答',
+                '📈 数据洞察中心：费用分析报告、趋势预测分析、优化建议输出'
+            ];
+            
+            modules.forEach((module, index) => {
+                slide.addText(module, {
+                    x: 0.5, y: 2.5 + index * 0.8, w: 9, h: 0.7,
+                    fontSize: 14, color: colors.secondary,
+                    align: 'left', fontFace: 'Microsoft YaHei'
+                });
+            });
+        }
+
+        // 创建系统架构页
+        async function createSystemArchSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            slide.background = { color: colors.background };
+            
+            slide.addText('系统架构图', {
+                x: 1, y: 0.5, w: 8, h: 1,
+                fontSize: 32, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            const layers = [
+                '用户交互层：移动端App、Web管理端、语音助手、数据大屏',
+                'API网关层：身份认证、访问控制、流量监控、负载均衡',
+                'AI智能引擎层：推荐引擎、价格预测、异常检测、决策支持',
+                '业务服务层：出差前服务、出差中服务、出差后服务、管理服务',
+                '数据中台层：数据仓库、数据同步、数据清洗、数据分析',
+                '基础设施层：云计算平台、数据库、消息队列、文件存储'
+            ];
+            
+            layers.forEach((layer, index) => {
+                slide.addText(layer, {
+                    x: 0.5, y: 2 + index * 0.7, w: 9, h: 0.6,
+                    fontSize: 12, color: colors.secondary,
+                    align: 'left', fontFace: 'Microsoft YaHei'
+                });
+            });
+        }
+
+        // 创建演示效果页
+        async function createDemoSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            slide.background = { color: colors.background };
+            
+            slide.addText('核心功能演示', {
+                x: 1, y: 0.5, w: 8, h: 1,
+                fontSize: 32, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            slide.addText('AI智能行程规划演示效果', {
+                x: 1, y: 1.3, w: 8, h: 0.5,
+                fontSize: 18, color: colors.secondary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            slide.addText('输入：北京→上海，3天2夜，技术类出差，预算3000元\n\nAI智能输出：\n💰 总费用：2,850元 (节省150元)\n⏱️ 总用时：52小时\n⭐ 舒适度：4.5/5星\n\n✈️ 交通：高铁二等座 (468元)\n🏨 住宿：汉庭酒店(陆家嘴店) (318元×2晚)\n🍽️ 餐饮：商务简餐 (80元×3天)', {
+                x: 1, y: 2.5, w: 8, h: 4,
+                fontSize: 12, color: colors.secondary,
+                align: 'left', fontFace: 'Microsoft YaHei'
+            });
+        }
+
+        // 创建用户体验页
+        async function createUXSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            slide.background = { color: colors.background };
+            
+            slide.addText('用户体验优化', {
+                x: 1, y: 0.5, w: 8, h: 1,
+                fontSize: 32, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            const uxData = [
+                ['操作环节', '传统模式', 'AI智能模式', '效率提升'],
+                ['行程规划', '30分钟手动查询', '3分钟AI自动生成', '90% ⬆️'],
+                ['申请审批', '2-3天审批周期', '30分钟智能审批', '80% ⬆️'],
+                ['变更处理', '2小时人工协调', '5分钟AI自动处理', '95% ⬆️'],
+                ['报销提交', '1小时整理凭证', '自动生成提交', '100% ⬆️']
+            ];
+            
+            slide.addTable(uxData, {
+                x: 0.5, y: 2, w: 9, h: 3.5,
+                fontSize: 12, fontFace: 'Microsoft YaHei',
+                border: { type: 'solid', color: colors.secondary, pt: 1 },
+                fill: { color: 'FFFFFF' }
+            });
+        }
+
+        // 创建成本优化页
+        async function createCostSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            slide.background = { color: colors.background };
+            
+            slide.addText('成本优化效果', {
+                x: 1, y: 0.5, w: 8, h: 1,
+                fontSize: 32, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            slide.addText('💰 年度成本优化报告 (以1000人企业为例)\n\n传统模式年成本：800万元\nAI智能模式成本：620万元\n节省金额：180万元 (22.5% ⬇️)\n\n📈 节省来源分析：\n• 交通优化：85万元 (10.6%)\n• 住宿优化：65万元 (8.1%)\n• 效率提升：20万元 (2.5%)\n• 人工节省：10万元 (1.3%)', {
+                x: 1, y: 2, w: 8, h: 4.5,
+                fontSize: 14, color: colors.secondary,
+                align: 'left', fontFace: 'Microsoft YaHei'
+            });
+        }
+
+        // 创建结论页
+        async function createConclusionSlide(pptx, colors) {
+            let slide = pptx.addSlide();
+            slide.background = { color: colors.background };
+            
+            slide.addText('构建企业AI核心竞争力', {
+                x: 1, y: 1, w: 8, h: 1,
+                fontSize: 32, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            slide.addText('让我们携手共建智能差旅的美好未来！', {
+                x: 1, y: 2, w: 8, h: 0.8,
+                fontSize: 20, color: colors.success,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+            
+            const achievements = [
+                '✅ 效率革命：复杂差旅流程简化为智能化一键操作',
+                '✅ 成本优化：AI智能决策实现15-25%的成本节省',
+                '✅ 体验升级：从割裂操作升级为一站式智能服务',
+                '✅ 管理进化：从被动管控升级为主动实时优化'
+            ];
+            
+            achievements.forEach((achievement, index) => {
+                slide.addText(achievement, {
+                    x: 1, y: 3.5 + index * 0.6, w: 8, h: 0.5,
+                    fontSize: 14, color: colors.secondary,
+                    align: 'left', fontFace: 'Microsoft YaHei'
+                });
+            });
+            
+            slide.addText('谢谢观看！', {
+                x: 1, y: 6.5, w: 8, h: 0.8,
+                fontSize: 24, bold: true, color: colors.primary,
+                align: 'center', fontFace: 'Microsoft YaHei'
+            });
+        }
+    </script>
+</body>
+</html>

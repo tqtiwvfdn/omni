@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时变更处理演示 - AI赋能智能差旅管理平台</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%); */
+            backdrop-filter: blur(25px);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+        }
+        
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .liquid-glass-card {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+        }
+        
+        .alert-glass {
+            background: rgba(239, 68, 68, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            box-shadow: 0 6px 24px rgba(239, 68, 68, 0.1);
+        }
+        
+        .success-glass {
+            background: rgba(34, 197, 94, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            box-shadow: 0 6px 24px rgba(34, 197, 94, 0.1);
+        }
+        
+        .glow-animation {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 6px 24px rgba(59, 130, 246, 0.2); }
+            to { box-shadow: 0 6px 32px rgba(59, 130, 246, 0.4); }
+        }
+        
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.8s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .processing-bar {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+            background-size: 200% 100%;
+            animation: processing 2s ease-in-out infinite;
+        }
+        
+        @keyframes processing {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .mcp-indicator {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="p-8">
+    <div class="">
+        <!-- 页面标题 -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-3">
+                🚀 实时变更处理演示
+            </h1>
+            <p class="text-xl text-gray-600">AI智能应急响应能力 - 秒级决策，极致体验</p>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <!-- 左侧：问题检测 -->
+            <div class="xl:col-span-1">
+                <div class="liquid-glass-card rounded-2xl p-6 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">🔍 智能监控检测</h3>
+                        <div class="flex items-center space-x-2">
+                            <div class="mcp-indicator"></div>
+                            <span class="text-xs text-green-600 font-medium">MCP实时连接</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 航班信息 -->
+                    <div class="alert-glass rounded-xl p-4 mb-4 slide-in">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                ⚠️
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-sm font-medium text-red-700 mb-1">航班异常检测</div>
+                                <div class="text-xs text-red-600">MU5137 延误 2小时15分</div>
+                                <div class="text-xs text-gray-600 mt-1">检测时间: 刚刚</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 外部数据源 -->
+                    <div class="space-y-3">
+                        <div class="text-sm font-medium text-gray-700 mb-3">📡 MCP连接外部系统</div>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between p-3 bg-white/50 rounded-lg">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full pulse-dot"></div>
+                                    <span class="text-xs text-gray-600">民航信息网</span>
+                                </div>
+                                <span class="text-xs text-green-600">已连接</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-white/50 rounded-lg">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full pulse-dot"></div>
+                                    <span class="text-xs text-gray-600">天气服务API</span>
+                                </div>
+                                <span class="text-xs text-green-600">已连接</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-white/50 rounded-lg">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full pulse-dot"></div>
+                                    <span class="text-xs text-gray-600">酒店预订系统</span>
+                                </div>
+                                <span class="text-xs text-green-600">已连接</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-white/50 rounded-lg">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full pulse-dot"></div>
+                                    <span class="text-xs text-gray-600">会议系统API</span>
+                                </div>
+                                <span class="text-xs text-green-600">已连接</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LLM分析过程 -->
+                <div class="liquid-glass-card rounded-2xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">🧠 LLM智能分析</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3 p-3 bg-blue-50/80 rounded-lg">
+                            <div class="w-6 h-1 processing-bar rounded"></div>
+                            <span class="text-sm text-blue-700">实时分析影响范围...</span>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-green-50/80 rounded-lg">
+                            <div class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-green-700">识别替代方案选项</span>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-green-50/80 rounded-lg">
+                            <div class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-green-700">计算成本影响分析</span>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-green-50/80 rounded-lg">
+                            <div class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-xs">✓</span>
+                            </div>
+                            <span class="text-sm text-green-700">生成最优解决方案</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中间：智能建议 -->
+            <div class="xl:col-span-1">
+                <div class="liquid-glass-card rounded-2xl p-6 glow-animation">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">💡 AI智能解决方案</h3>
+                        <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">推荐中</span>
+                    </div>
+
+                    <!-- 影响分析 -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">📊 影响评估</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">重要会议影响</span>
+                                <span class="text-xs text-red-600 font-medium">高风险</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">酒店入住延迟</span>
+                                <span class="text-xs text-yellow-600 font-medium">中等影响</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">预算额外支出</span>
+                                <span class="text-xs text-green-600 font-medium">可控范围</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 推荐方案 -->
+                    <div class="space-y-4">
+                        <!-- 方案A -->
+                        <div class="success-glass rounded-xl p-4 border-l-4 border-green-500">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm font-medium text-green-700">方案A（推荐）</span>
+                                    <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">最优</span>
+                                </div>
+                                <span class="text-xs text-green-600">+¥280</span>
+                            </div>
+                            <div class="text-xs text-gray-600 mb-3">改签 HU7601 13:20起飞</div>
+                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                <div>
+                                    <span class="text-gray-500">准点率:</span>
+                                    <span class="text-green-600 font-medium"> 92%</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500">到达:</span>
+                                    <span class="text-green-600 font-medium"> 15:45</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500">会议:</span>
+                                    <span class="text-green-600 font-medium"> 可参加</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500">预算:</span>
+                                    <span class="text-green-600 font-medium"> 充足</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 方案B -->
+                        <div class="liquid-glass-card rounded-xl p-4 border-l-4 border-gray-300">
+                            <div class="flex items-start justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">方案B</span>
+                                <span class="text-xs text-gray-600">¥0</span>
+                            </div>
+                            <div class="text-xs text-gray-600 mb-3">保持原班次 17:30到达</div>
+                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                <div>
+                                    <span class="text-gray-500">会议影响:</span>
+                                    <span class="text-red-600 font-medium"> 错过</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500">已处理:</span>
+                                    <span class="text-blue-600 font-medium"> 已改期</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 智能洞察 -->
+                    <div class="mt-6 p-4 bg-blue-50/60 rounded-xl">
+                        <h4 class="text-sm font-medium text-blue-700 mb-2">🔮 AI智能洞察</h4>
+                        <ul class="text-xs text-blue-600 space-y-1">
+                            <li>• 天气原因导致延误，后续航班正常</li>
+                            <li>• 已自动联系会议方确认调整方案</li>
+                            <li>• 酒店已预留房间至19:00</li>
+                            <li>• 建议选择方案A确保重要会议</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：执行控制 -->
+            <div class="xl:col-span-1">
+                <div class="liquid-glass-card rounded-2xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">⚡ 一键智能处理</h3>
+                    
+                    <!-- 快速操作 -->
+                    <div class="space-y-3 mb-6">
+                        <button class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all shadow-lg">
+                            ✈️ 执行方案A (推荐)
+                        </button>
+                        <button class="w-full bg-gradient-to-r from-gray-400 to-gray-500 text-white py-3 px-4 rounded-xl font-medium hover:from-gray-500 hover:to-gray-600 transition-all">
+                            📅 执行方案B
+                        </button>
+                        <button class="w-full border-2 border-blue-300 text-blue-600 py-3 px-4 rounded-xl font-medium hover:bg-blue-50 transition-all">
+                            💬 人工客服协助
+                        </button>
+                    </div>
+
+                    <!-- 处理进度 -->
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">🔄 处理状态</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">异常检测</span>
+                                <span class="text-xs text-green-600">✓ 完成</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">方案生成</span>
+                                <span class="text-xs text-green-600">✓ 完成</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">等待用户确认</span>
+                                <span class="text-xs text-blue-600 pulse-dot">● 进行中</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 响应时间 -->
+                    <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-600 mb-1">2.3s</div>
+                            <div class="text-xs text-blue-500">从检测到方案生成</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 技术优势 -->
+                <div class="liquid-glass-card rounded-2xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">🚀 技术亮点</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <span class="text-blue-600 text-sm">🔗</span>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-800">MCP协议连接</div>
+                                <div class="text-xs text-gray-600">实时获取外部系统数据</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                <span class="text-green-600 text-sm">🧠</span>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-800">LLM智能推理</div>
+                                <div class="text-xs text-gray-600">深度理解和智能决策</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <span class="text-purple-600 text-sm">⚡</span>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-800">秒级响应</div>
+                                <div class="text-xs text-gray-600">实时处理突发情况</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                <span class="text-orange-600 text-sm">🎯</span>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-800">精准决策</div>
+                                <div class="text-xs text-gray-600">多维度智能分析优化</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部效果说明 -->
+        <div class="mt-8 text-center">
+            <div class="liquid-glass rounded-2xl p-6 max-w-4xl mx-auto">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">💪 核心能力展示</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
+                    <div>
+                        <div class="text-2xl font-bold text-blue-600">2.3s</div>
+                        <div class="text-sm text-gray-600">响应速度</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-green-600">95%</div>
+                        <div class="text-sm text-gray-600">方案准确率</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-purple-600">24/7</div>
+                        <div class="text-sm text-gray-600">全天候监控</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-orange-600">100%</div>
+                        <div class="text-sm text-gray-600">自动化处理</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能差旅平台架构与流程图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .tab-navigation {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            margin: 0 5px;
+            background: transparent;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .tab-btn.active {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(20px);
+        }
+        
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .diagram-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            min-height: 600px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 业务流程图样式 */
+        .business-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            height: 500px;
+        }
+        
+        .flow-phase {
+            flex: 1;
+            text-align: center;
+            margin: 0 10px;
+        }
+        
+        .phase-title {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 15px;
+            border-radius: 15px 15px 0 0;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .phase-content {
+            border: 2px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            padding: 20px;
+            height: 400px;
+            background: #f8f9fa;
+        }
+        
+        .flow-step {
+            background: white;
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .flow-step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        .ai-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4757;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        .flow-arrow {
+            color: #666;
+            font-size: 24px;
+            align-self: center;
+        }
+        
+        /* 技术架构图样式 */
+        .architecture {
+            display: grid;
+            grid-template-rows: repeat(5, 1fr);
+            gap: 20px;
+            height: 500px;
+        }
+        
+        .arch-layer {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(90deg, #f1f2f6, #ddd);
+            border-radius: 15px;
+            padding: 15px;
+            position: relative;
+        }
+        
+        .layer-label {
+            min-width: 120px;
+            font-weight: bold;
+            color: #2f3542;
+        }
+        
+        .layer-components {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .component {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            font-size: 12px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .component.ai-enabled {
+            border-color: #ff6b6b;
+            background: linear-gradient(45deg, #fff, #ffebee);
+        }
+        
+        .component:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        /* 功能模块图样式 */
+        .function-modules {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            height: 500px;
+        }
+        
+        .module-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+            opacity: 0;
+        }
+        
+        .module-card:hover::before {
+            opacity: 1;
+            top: -100%;
+            left: -100%;
+        }
+        
+        .module-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .module-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .module-features {
+            font-size: 12px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+        
+        /* 数据流转图样式 */
+        .data-flow {
+            position: relative;
+            height: 500px;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .data-node {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid #007bff;
+        }
+        
+        .data-node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .data-node.ai-node {
+            border-color: #ff6b6b;
+            background: linear-gradient(135deg, #fff, #ffebee);
+        }
+        
+        .node-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .node-label {
+            font-size: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .data-flow-line {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, #007bff, #28a745);
+            transform-origin: left center;
+        }
+        
+        .flow-animation {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            animation: flowMove 3s linear infinite;
+        }
+        
+        @keyframes flowMove {
+            0% { left: 0; opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+        
+        /* 详情面板样式 */
+        .detail-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 500px;
+            width: 90%;
+            display: none;
+        }
+        
+        .detail-panel.show {
+            display: block;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .overlay.show {
+            display: block;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .business-flow {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .flow-phase {
+                margin: 10px 0;
+            }
+            
+            .function-modules {
+                grid-template-columns: 1fr;
+            }
+            
+            .architecture {
+                grid-template-rows: auto;
+            }
+            
+            .tab-btn {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 智能差旅平台架构与流程设计</h1>
+            <p>基于AI赋能的企业差旅管理解决方案</p>
+        </div>
+        
+        <div class="tab-navigation">
+            <button class="tab-btn active" onclick="showTab('business-flow')">🔄 业务流程图</button>
+            <button class="tab-btn" onclick="showTab('architecture')">🏗️ 技术架构图</button>
+            <button class="tab-btn" onclick="showTab('function-modules')">⚡ 功能模块图</button>
+            <button class="tab-btn" onclick="showTab('data-flow')">📊 数据流转图</button>
+        </div>
+        
+        <div class="diagram-container">
+            <!-- 业务流程图 -->
+            <div id="business-flow" class="tab-content active">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2f3542;">智能差旅业务流程图</h2>
+                <div class="business-flow">
+                    <div class="flow-phase">
+                        <div class="phase-title">🎯 出差前</div>
+                        <div class="phase-content">
+                            <div class="flow-step" onclick="showDetail('供应商比价', '多家机票、酒店、租车供应商API接入，AI算法自动比价排序，支持价格、时间、服务评分等维度筛选')">
+                                <div class="ai-badge">AI</div>
+                                多供应商智能比价
+                            </div>
+                            <div class="flow-step" onclick="showDetail('行程规划', '用户输入目的地、时间、预算，AI自动规划最优行程，包含交通、住宿、餐饮全链路费用预估')">
+                                <div class="ai-badge">AI</div>
+                                智能行程规划
+                            </div>
+                            <div class="flow-step" onclick="showDetail('预算申请', '与现有AOM系统集成，支持预算查询、占用、释放，增加AI预算合理性检查')">
+                                预算申请与审批
+                            </div>
+                            <div class="flow-step" onclick="showDetail('中转优化', '无直达路线时，AI计算最优中转方案，综合考虑费用、时间、便捷性等因素')">
+                                <div class="ai-badge">AI</div>
+                                中转路线优化
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flow-arrow">➡️</div>
+                    
+                    <div class="flow-phase">
+                        <div class="phase-title">🛫 出差中</div>
+                        <div class="phase-content">
+                            <div class="flow-step" onclick="showDetail('实时监控', 'GPS轨迹跟踪，实时位置核验，异常行程自动报警，确保出差安全合规')">
+                                <div class="ai-badge">AI</div>
+                                实时行程监控
+                            </div>
+                            <div class="flow-step" onclick="showDetail('临时变更', '改签、换酒店等变更申请，AI自动计算费用影响，实时更新预算和后续行程')">
+                                <div class="ai-badge">AI</div>
+                                临时变更处理
+                            </div>
+                            <div class="flow-step" onclick="showDetail('展会识别', 'AI识别目的地展会信息，自动匹配差标提升规则，动态调整住宿餐饮标准')">
+                                <div class="ai-badge">AI</div>
+                                展会差标智能提升
+                            </div>
+                            <div class="flow-step" onclick="showDetail('超标审批', '实时差标控制，超标自动触发审批流程，移动端快速审批决策')">
+                                移动端超标审批
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flow-arrow">➡️</div>
+                    
+                    <div class="flow-phase">
+                        <div class="phase-title">📋 出差后</div>
+                        <div class="phase-content">
+                            <div class="flow-step" onclick="showDetail('智能核查', 'AI对比预算vs实际消费，自动标记异常项，智能识别不合规费用')">
+                                <div class="ai-badge">AI</div>
+                                差旅后智能核查
+                            </div>
+                            <div class="flow-step" onclick="showDetail('凭证归集', '自动抓取电子行程单、发票，OCR识别纸质凭证，智能分类管理')">
+                                <div class="ai-badge">AI</div>
+                                电子凭证自动归集
+                            </div>
+                            <div class="flow-step" onclick="showDetail('报销生成', '基于实际消费和凭证，自动生成标准化报销单，一键提交审批')">
+                                <div class="ai-badge">AI</div>
+                                报销单自动生成
+                            </div>
+                            <div class="flow-step" onclick="showDetail('预算核销', '自动核销使用预算，计算剩余额度，支持一键预算归还')">
+                                预算核销与归还
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 技术架构图 -->
+            <div id="architecture" class="tab-content">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2f3542;">AI赋能技术架构图</h2>
+                <div class="architecture">
+                    <div class="arch-layer">
+                        <div class="layer-label">用户层</div>
+                        <div class="layer-components">
+                            <div class="component">移动端APP</div>
+                            <div class="component">企业微信小程序</div>
+                            <div class="component">Web管理端</div>
+                            <div class="component">H5响应式页面</div>
+                        </div>
+                    </div>
+                    
+                    <div class="arch-layer">
+                        <div class="layer-label">AI服务层</div>
+                        <div class="layer-components">
+                            <div class="component ai-enabled">智能比价引擎</div>
+                            <div class="component ai-enabled">行程规划算法</div>
+                            <div class="component ai-enabled">异常检测模型</div>
+                            <div class="component ai-enabled">OCR识别服务</div>
+                            <div class="component ai-enabled">NLP凭证分析</div>
+                            <div class="component ai-enabled">推荐算法引擎</div>
+                        </div>
+                    </div>
+                    
+                    <div class="arch-layer">
+                        <div class="layer-label">业务服务层</div>
+                        <div class="layer-components">
+                            <div class="component">申请管理服务</div>
+                            <div class="component">预算控制服务</div>
+                            <div class="component">供应商集成服务</div>
+                            <div class="component">审批流程服务</div>
+                            <div class="component">报销单服务</div>
+                            <div class="component">对账结算服务</div>
+                        </div>
+                    </div>
+                    
+                    <div class="arch-layer">
+                        <div class="layer-label">数据层</div>
+                        <div class="layer-components">
+                            <div class="component">差旅业务数据库</div>
+                            <div class="component ai-enabled">AI训练数据湖</div>
+                            <div class="component">Redis缓存</div>
+                            <div class="component">ElasticSearch</div>
+                            <div class="component">文件存储OSS</div>
+                        </div>
+                    </div>
+                    
+                    <div class="arch-layer">
+                        <div class="layer-label">集成层</div>
+                        <div class="layer-components">
+                            <div class="component">AOM系统</div>
+                            <div class="component">差旅壹号</div>
+                            <div class="component">供应商API网关</div>
+                            <div class="component">财务系统</div>
+                            <div class="component">企业微信API</div>
+                            <div class="component">发票查验API</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 功能模块图 -->
+            <div id="function-modules" class="tab-content">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2f3542;">核心功能模块图</h2>
+                <div class="function-modules">
+                    <div class="module-card" onclick="showDetail('智能决策模块', '集成AI算法，提供比价推荐、行程优化、异常检测等智能决策能力，支持机器学习持续优化')">
+                        <div class="module-icon">🧠</div>
+                        <div class="module-title">AI智能决策</div>
+                        <div class="module-features">
+                            • 多维度比价算法<br>
+                            • 智能行程规划<br>
+                            • 异常行为检测<br>
+                            • 个性化推荐
+                        </div>
+                    </div>
+                    
+                    <div class="module-card" onclick="showDetail('供应商整合', '统一接入多家机票、酒店、租车供应商，实现资源聚合、价格比较、服务评估')">
+                        <div class="module-icon">🔗</div>
+                        <div class="module-title">供应商整合</div>
+                        <div class="module-features">
+                            • 多供应商API集成<br>
+                            • 实时价格同步<br>
+                            • 服务质量评估<br>
+                            • 协议价格管理
+                        </div>
+                    </div>
+                    
+                    <div class="module-card" onclick="showDetail('预算管控', '与AOM深度集成，实现预算查询、占用、释放、核销全流程管理')">
+                        <div class="module-icon">💰</div>
+                        <div class="module-title">预算管控</div>
+                        <div class="module-features">
+                            • AOM系统集成<br>
+                            • 实时预算查询<br>
+                            • 自动占用释放<br>
+                            • 智能预算分析
+                        </div>
+                    </div>
+                    
+                    <div class="module-card" onclick="showDetail('流程引擎', '可配置的审批流程，支持多级审批、并行审批、条件路由等复杂场景')">
+                        <div class="module-icon">⚙️</div>
+                        <div class="module-title">流程引擎</div>
+                        <div class="module-features">
+                            • 可视化流程配置<br>
+                            • 多级审批支持<br>
+                            • 移动端审批<br>
+                            • 流程监控分析
+                        </div>
+                    </div>
+                    
+                    <div class="module-card" onclick="showDetail('凭证管理', 'AI自动识别归集各类差旅凭证，支持OCR、分类、验真、存储管理')">
+                        <div class="module-icon">📄</div>
+                        <div class="module-title">智能凭证</div>
+                        <div class="module-features">
+                            • OCR自动识别<br>
+                            • 智能分类归档<br>
+                            • 发票验真查重<br>
+                            • 电子化存储
+                        </div>
+                    </div>
+                    
+                    <div class="module-card" onclick="showDetail('数据分析', '基于差旅大数据的深度分析，提供成本优化、行为分析、趋势预测等洞察')">
+                        <div class="module-icon">📊</div>
+                        <div class="module-title">数据分析</div>
+                        <div class="module-features">
+                            • 差旅成本分析<br>
+                            • 行为模式挖掘<br>
+                            • 趋势预测<br>
+                            • 可视化报表
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 数据流转图 -->
+            <div id="data-flow" class="tab-content">
+                <h2 style="text-align: center; margin-bottom: 20px; color: #2f3542;">智能数据流转图</h2>
+                <div class="data-flow">
+                    <!-- 用户端 -->
+                    <div class="data-node" style="top: 50px; left: 50px;" onclick="showDetail('用户端', '移动端APP、小程序、Web端，用户操作入口')">
+                        <div class="node-icon">👤</div>
+                        <div class="node-label">用户端</div>
+                    </div>
+                    
+                    <!-- AI引擎 -->
+                    <div class="data-node ai-node" style="top: 50px; left: 250px;" onclick="showDetail('AI引擎', '智能比价、行程规划、异常检测、OCR识别等AI核心能力')">
+                        <div class="node-icon">🤖</div>
+                        <div class="node-label">AI引擎</div>
+                    </div>
+                    
+                    <!-- 差旅平台 -->
+                    <div class="data-node" style="top: 200px; left: 150px;" onclick="showDetail('差旅平台', '核心业务处理平台，申请管理、预算控制、流程审批')">
+                        <div class="node-icon">🏢</div>
+                        <div class="node-label">差旅平台</div>
+                    </div>
+                    
+                    <!-- 供应商 -->
+                    <div class="data-node" style="top: 50px; left: 450px;" onclick="showDetail('供应商', '机票、酒店、租车等多家供应商API集成')">
+                        <div class="node-icon">✈️</div>
+                        <div class="node-label">供应商</div>
+                    </div>
+                    
+                    <!-- AOM系统 -->
+                    <div class="data-node" style="top: 350px; left: 50px;" onclick="showDetail('AOM系统', '现有企业管理系统，预算管理、员工信息、审批流程')">
+                        <div class="node-icon">🏛️</div>
+                        <div class="node-label">AOM系统</div>
+                    </div>
+                    
+                    <!-- 财务系统 -->
+                    <div class="data-node" style="top: 350px; left: 250px;" onclick="showDetail('财务系统', '报销单处理、财务审核、费用核算')">
+                        <div class="node-icon">💼</div>
+                        <div class="node-label">财务系统</div>
+                    </div>
+                    
+                    <!-- 数据湖 -->
+                    <div class="data-node ai-node" style="top: 350px; left: 450px;" onclick="showDetail('AI数据湖', '存储差旅行为数据，用于机器学习模型训练和优化')">
+                        <div class="node-icon">🗄️</div>
+                        <div class="node-label">AI数据湖</div>
+                    </div>
+                    
+                    <!-- 数据流转线 -->
+                    <div class="data-flow-line" style="top: 100px; left: 150px; width: 100px; transform: rotate(0deg);">
+                        <div class="flow-animation"></div>
+                    </div>
+                    <div class="data-flow-line" style="top: 100px; left: 350px; width: 100px; transform: rotate(0deg);">
+                        <div class="flow-animation"></div>
+                    </div>
+                    <div class="data-flow-line" style="top: 150px; left: 300px; width: 100px; transform: rotate(45deg);">
+                        <div class="flow-animation"></div>
+                    </div>
+                    <div class="data-flow-line" style="top: 250px; left: 200px; width: 100px; transform: rotate(90deg);">
+                        <div class="flow-animation"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 详情面板 -->
+    <div class="overlay" onclick="hideDetail()"></div>
+    <div class="detail-panel">
+        <button class="close-btn" onclick="hideDetail()">×</button>
+        <h3 id="detail-title"></h3>
+        <p id="detail-content"></p>
+    </div>
+    
+    <script>
+        function showTab(tabId) {
+            // 隐藏所有内容
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // 移除所有按钮的活动状态
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // 显示目标内容
+            document.getElementById(tabId).classList.add('active');
+            
+            // 激活对应按钮
+            event.target.classList.add('active');
+        }
+        
+        function showDetail(title, content) {
+            document.getElementById('detail-title').textContent = title;
+            document.getElementById('detail-content').textContent = content;
+            document.querySelector('.overlay').classList.add('show');
+            document.querySelector('.detail-panel').classList.add('show');
+        }
+        
+        function hideDetail() {
+            document.querySelector('.overlay').classList.remove('show');
+            document.querySelector('.detail-panel').classList.remove('show');
+        }
+        
+        // 添加键盘事件监听
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideDetail();
+            }
+        });
+        
+        // 自动展示一些提示信息
+        setTimeout(() => {
+            showDetail('💡 使用提示', '点击各个模块和流程节点可以查看详细说明。红色AI标识表示该功能由人工智能赋能，蓝色节点表示与现有系统集成。');
+        }, 2000);
+    </script>
+</body>
+</html>

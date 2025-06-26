@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功能地图与架构图</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f0f2f5 0%, #e8ecf0 50%, #f5f7fa 100%); */
+            backdrop-filter: blur(25px);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            /* padding: 20px; */
+            overflow-x: hidden;
+        }
+
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+        }
+
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.5); */
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+            border-radius: 20px;
+        }
+
+        .architecture-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .architecture-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .architecture-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #06b6d4, #0891b2, #06b6d4);
+            border-radius: 12px 12px 0 0;
+        }
+
+        .tech-layer {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(8, 145, 178, 0.1) 100%);
+            border: 2px solid rgba(6, 182, 212, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 16px 0;
+            position: relative;
+        }
+
+        .tech-layer-title {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .module-item {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .module-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(6, 182, 212, 0.4);
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.15);
+        }
+
+        .module-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 12px;
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+        }
+
+        .connection-line {
+            position: relative;
+        }
+
+        .connection-line::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 40px;
+            background: linear-gradient(180deg, #06b6d4, transparent);
+        }
+
+        .ai-matrix-table {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .ai-matrix-table th {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+            padding: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .ai-matrix-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(6, 182, 212, 0.1);
+            text-align: center;
+        }
+
+        .ai-level {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .star {
+            color: #fbbf24;
+            font-size: 16px;
+        }
+
+        .mcp-connection {
+            position: relative;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+            border: 2px dashed rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .mcp-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            position: absolute;
+            top: -8px;
+            left: 16px;
+        }
+
+        .data-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+
+        .data-flow-arrow {
+            color: #10b981;
+            font-size: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .architecture-overview {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            max-width: 100%;
+        }
+
+        @media (min-width: 1200px) {
+            .architecture-overview {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .slide-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .slide-title {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .slide-subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body class="p-8">
+    <div class="">
+        <!-- 页面标题 -->
+        <div class="slide-header">
+            <h1 class="slide-title">功能地图与架构图</h1>
+            <p class="slide-subtitle">完整技术架构设计 · AI引擎驱动的智能差旅平台</p>
+        </div>
+
+        <div class="architecture-overview">
+            <!-- 左侧：AI赋能功能矩阵 -->
+            <div class="liquid-glass p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <span class="text-2xl mr-2">🧠</span>
+                    AI赋能功能矩阵
+                </h2>
+                
+                <div class="ai-matrix-table w-full">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th>差旅阶段</th>
+                                <th>传统功能</th>
+                                <th>AI赋能升级</th>
+                                <th>智能化程度</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-semibold text-cyan-700">出差前</td>
+                                <td class="text-gray-600">人工规划</td>
+                                <td class="font-medium">LLM智能规划推荐</td>
+                                <td><div class="ai-level"><span class="star">⭐⭐⭐⭐⭐</span></div></td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold text-cyan-700"></td>
+                                <td class="text-gray-600">固定供应商</td>
+                                <td class="font-medium">多供应商智能比价</td>
+                                <td><div class="ai-level"><span class="star">⭐⭐⭐⭐⭐</span></div></td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold text-cyan-700">出差中</td>
+                                <td class="text-gray-600">人工处理</td>
+                                <td class="font-medium">AI智能变更建议</td>
+                                <td><div class="ai-level"><span class="star">⭐⭐⭐⭐</span></div></td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold text-cyan-700"></td>
+                                <td class="text-gray-600">固定规则</td>
+                                <td class="font-medium">智能场景识别</td>
+                                <td><div class="ai-level"><span class="star">⭐⭐⭐⭐</span></div></td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold text-cyan-700">出差后</td>
+                                <td class="text-gray-600">人工对比</td>
+                                <td class="font-medium">AI异常检测</td>
+                                <td><div class="ai-level"><span class="star">⭐⭐⭐⭐⭐</span></div></td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold text-cyan-700"></td>
+                                <td class="text-gray-600">手动整理</td>
+                                <td class="font-medium">AI自动归集识别</td>
+                                <td><div class="ai-level"><span class="star">⭐⭐⭐⭐</span></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- MCP协议连接说明 -->
+                <div class="mcp-connection mt-6">
+                    <div class="mcp-badge">MCP协议</div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 mt-2">外部系统动态连接</h3>
+                    <div class="space-y-2">
+                        <div class="data-flow">
+                            <span class="text-sm text-gray-700">供应商API</span>
+                            <span class="data-flow-arrow">→</span>
+                            <span class="text-sm font-medium">实时价格获取</span>
+                        </div>
+                        <div class="data-flow">
+                            <span class="text-sm text-gray-700">地理服务</span>
+                            <span class="data-flow-arrow">→</span>
+                            <span class="text-sm font-medium">路线规划优化</span>
+                        </div>
+                        <div class="data-flow">
+                            <span class="text-sm text-gray-700">展会数据</span>
+                            <span class="data-flow-arrow">→</span>
+                            <span class="text-sm font-medium">动态差标调整</span>
+                        </div>
+                        <div class="data-flow">
+                            <span class="text-sm text-gray-700">天气服务</span>
+                            <span class="data-flow-arrow">→</span>
+                            <span class="text-sm font-medium">出行建议生成</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：核心功能模块 -->
+            <div class="liquid-glass p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <span class="text-2xl mr-2">🏠</span>
+                    核心功能模块
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="architecture-card">
+                        <div class="flex items-center mb-3">
+                            <div class="module-icon">🎯</div>
+                            <div class="ml-3">
+                                <h3 class="font-semibold text-gray-800">LLM智能决策中心</h3>
+                                <p class="text-sm text-gray-600">基于大语言模型的智能推理</p>
+                            </div>
+                        </div>
+                        <div class="module-grid">
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">供应商智能比价</div>
+                            </div>
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">行程智能规划</div>
+                            </div>
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">预算智能优化</div>
+                            </div>
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">风险智能预警</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="architecture-card">
+                        <div class="flex items-center mb-3">
+                            <div class="module-icon">🔄</div>
+                            <div class="ml-3">
+                                <h3 class="font-semibold text-gray-800">实时管控中心</h3>
+                                <p class="text-sm text-gray-600">全程可视化监控与干预</p>
+                            </div>
+                        </div>
+                        <div class="module-grid">
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">行程实时监控</div>
+                            </div>
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">费用实时跟踪</div>
+                            </div>
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">异常实时告警</div>
+                            </div>
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">变更实时处理</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="architecture-card">
+                        <div class="flex items-center mb-3">
+                            <div class="module-icon">🤖</div>
+                            <div class="ml-3">
+                                <h3 class="font-semibold text-gray-800">AI助手服务</h3>
+                                <p class="text-sm text-gray-600">智能交互与自动化处理</p>
+                            </div>
+                        </div>
+                        <div class="module-grid">
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">智能客服</div>
+                            </div>
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">语音助手</div>
+                            </div>
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">智能问答</div>
+                            </div>
+                            <div class="module-item">
+                                <div class="text-sm font-medium text-gray-700">操作指导</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部：总体技术架构 -->
+        <div class="liquid-glass p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                <span class="text-2xl mr-2">🏗️</span>
+                总体技术架构
+            </h2>
+            
+            <div class="space-y-6">
+                <!-- 用户交互层 -->
+                <div class="tech-layer connection-line">
+                    <div class="tech-layer-title">用户交互层</div>
+                    <div class="module-grid mt-6">
+                        <div class="module-item">
+                            <div class="module-icon">📱</div>
+                            <div class="text-sm font-medium text-gray-700">移动端App</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">💻</div>
+                            <div class="text-sm font-medium text-gray-700">Web管理端</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">🎤</div>
+                            <div class="text-sm font-medium text-gray-700">语音助手</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">📊</div>
+                            <div class="text-sm font-medium text-gray-700">数据大屏</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI智能引擎层 -->
+                <div class="tech-layer connection-line">
+                    <div class="tech-layer-title">AI智能引擎层 (LLM驱动)</div>
+                    <div class="module-grid mt-6">
+                        <div class="module-item">
+                            <div class="module-icon">🧠</div>
+                            <div class="text-sm font-medium text-gray-700">推荐引擎</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">💰</div>
+                            <div class="text-sm font-medium text-gray-700">价格预测</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">🔍</div>
+                            <div class="text-sm font-medium text-gray-700">异常检测</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">📈</div>
+                            <div class="text-sm font-medium text-gray-700">决策支持</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">🎯</div>
+                            <div class="text-sm font-medium text-gray-700">个性化引擎</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">🔮</div>
+                            <div class="text-sm font-medium text-gray-700">趋势预测</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">⚠️</div>
+                            <div class="text-sm font-medium text-gray-700">风险控制</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">🤖</div>
+                            <div class="text-sm font-medium text-gray-700">智能客服</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 业务服务层 -->
+                <div class="tech-layer connection-line">
+                    <div class="tech-layer-title">业务服务层</div>
+                    <div class="module-grid mt-6">
+                        <div class="module-item">
+                            <div class="module-icon">🛫</div>
+                            <div class="text-sm font-medium text-gray-700">出差前服务</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">✈️</div>
+                            <div class="text-sm font-medium text-gray-700">出差中服务</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">📋</div>
+                            <div class="text-sm font-medium text-gray-700">出差后服务</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">💼</div>
+                            <div class="text-sm font-medium text-gray-700">管理服务</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据中台层 -->
+                <div class="tech-layer connection-line">
+                    <div class="tech-layer-title">数据中台层 (MCP协议集成)</div>
+                    <div class="module-grid mt-6">
+                        <div class="module-item">
+                            <div class="module-icon">📊</div>
+                            <div class="text-sm font-medium text-gray-700">数据仓库</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">🔄</div>
+                            <div class="text-sm font-medium text-gray-700">MCP数据同步</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">🧹</div>
+                            <div class="text-sm font-medium text-gray-700">数据清洗</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">📈</div>
+                            <div class="text-sm font-medium text-gray-700">数据分析</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 基础设施层 -->
+                <div class="tech-layer">
+                    <div class="tech-layer-title">基础设施层</div>
+                    <div class="module-grid mt-6">
+                        <div class="module-item">
+                            <div class="module-icon">☁️</div>
+                            <div class="text-sm font-medium text-gray-700">云计算平台</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">🗄️</div>
+                            <div class="text-sm font-medium text-gray-700">数据库</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">📨</div>
+                            <div class="text-sm font-medium text-gray-700">消息队列</div>
+                        </div>
+                        <div class="module-item">
+                            <div class="module-icon">📁</div>
+                            <div class="text-sm font-medium text-gray-700">文件存储</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

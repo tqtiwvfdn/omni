@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技术演进与愿景</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f0f2f5 0%, #e8ecf0 50%, #f5f7fa 100%); */
+            backdrop-filter: blur(25px);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+        }
+
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.5); */
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tech-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tech-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .tech-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .tech-card:hover::before {
+            left: 100%;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 24px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: -24px;
+            width: 2px;
+            background: linear-gradient(to bottom, #06b6d4, #0891b2);
+        }
+
+        .timeline-item:last-child::before {
+            bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .floating-animation {
+            animation: floating 6s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .tech-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .pulse-animation {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .ecosystem-node {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(6, 182, 212, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .ecosystem-node:hover {
+            border-color: rgba(6, 182, 212, 0.6);
+            background: rgba(255, 255, 255, 0.95);
+            transform: scale(1.05);
+        }
+
+        .connection-line {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(6, 182, 212, 0.3), rgba(6, 182, 212, 0.6), rgba(6, 182, 212, 0.3));
+            z-index: 1;
+        }
+
+        .roadmap-phase {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(8, 145, 178, 0.1));
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .roadmap-phase::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #06b6d4, #0891b2);
+        }
+    </style>
+</head>
+
+<body class="p-8">
+    <div class="">
+        <!-- 页面标题 -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold gradient-text mb-4">技术演进与愿景</h1>
+            <p class="text-xl text-gray-600">构建下一代智能差旅生态系统</p>
+            <div class="w-24 h-1 bg-gradient-to-r from-cyan-500 to-cyan-600 mx-auto mt-4 rounded"></div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            
+            <!-- 技术演进方向 -->
+            <div class="liquid-glass rounded-xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <span class="w-8 h-8 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center text-white mr-3">🚀</span>
+                    技术演进方向
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="tech-card floating-animation">
+                        <div class="tech-icon bg-gradient-to-r from-blue-500 to-blue-600 text-white">🧠</div>
+                        <h3 class="font-bold text-lg text-gray-800 mb-2">大语言模型深化</h3>
+                        <p class="text-gray-600 text-sm">从单一LLM向多模态、多专业领域的LLM集群演进，实现更精准的差旅场景理解和决策支持</p>
+                    </div>
+                    
+                    <div class="tech-card floating-animation" style="animation-delay: 1s;">
+                        <div class="tech-icon bg-gradient-to-r from-green-500 to-green-600 text-white">🔗</div>
+                        <h3 class="font-bold text-lg text-gray-800 mb-2">MCP协议生态</h3>
+                        <p class="text-gray-600 text-sm">通过Model Context Protocol实现AI系统与外部服务的标准化连接，动态获取实时数据</p>
+                    </div>
+                    
+                    <div class="tech-card floating-animation" style="animation-delay: 2s;">
+                        <div class="tech-icon bg-gradient-to-r from-purple-500 to-purple-600 text-white">⚡</div>
+                        <h3 class="font-bold text-lg text-gray-800 mb-2">边缘智能计算</h3>
+                        <p class="text-gray-600 text-sm">本地化AI推理能力，实现毫秒级响应，保护用户隐私的同时提升服务体验</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 智能生态构建 -->
+            <div class="liquid-glass rounded-xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <span class="w-8 h-8 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center text-white mr-3">🌐</span>
+                    智能生态构建
+                </h2>
+                
+                <!-- 生态系统图 -->
+                <div class="relative h-80 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg p-4">
+                    
+                    <!-- 中央核心 -->
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                        <div class="ecosystem-node pulse-animation">
+                            <div class="text-2xl mb-2">🤖</div>
+                            <div class="text-sm font-bold">AI差旅大脑</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 周围节点 -->
+                    <div class="absolute top-4 left-1/2 transform -translate-x-1/2">
+                        <div class="ecosystem-node">
+                            <div class="text-xl mb-1">✈️</div>
+                            <div class="text-xs">供应商生态</div>
+                        </div>
+                    </div>
+                    
+                    <div class="absolute top-1/2 left-4 transform -translate-y-1/2">
+                        <div class="ecosystem-node">
+                            <div class="text-xl mb-1">🏢</div>
+                            <div class="text-xs">企业系统</div>
+                        </div>
+                    </div>
+                    
+                    <div class="absolute top-1/2 right-4 transform -translate-y-1/2">
+                        <div class="ecosystem-node">
+                            <div class="text-xl mb-1">📱</div>
+                            <div class="text-xs">用户终端</div>
+                        </div>
+                    </div>
+                    
+                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                        <div class="ecosystem-node">
+                            <div class="text-xl mb-1">🔐</div>
+                            <div class="text-xs">安全合规</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 连接线 -->
+                    <div class="connection-line top-1/2 left-1/4 w-1/4" style="transform: translateY(-1px);"></div>
+                    <div class="connection-line top-1/2 right-1/4 w-1/4" style="transform: translateY(-1px);"></div>
+                    <div class="connection-line left-1/2 top-1/4 h-1/4 w-0.5" style="transform: translateX(-1px);"></div>
+                    <div class="connection-line left-1/2 bottom-1/4 h-1/4 w-0.5" style="transform: translateX(-1px);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 发展路线图 -->
+        <div class="liquid-glass rounded-xl p-8 mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-8 flex items-center">
+                <span class="w-8 h-8 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center text-white mr-3">🗺️</span>
+                三年发展路线图
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 第一年 -->
+                <div class="roadmap-phase">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-4">1</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">第一年：AI核心构建</h3>
+                            <p class="text-sm text-gray-600">2025年目标</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="timeline-item">
+                            <div class="timeline-dot">✓</div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">LLM差旅大模型</h4>
+                                <p class="text-sm text-gray-600">专业化差旅领域大语言模型训练</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot">✓</div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">MCP标准接入</h4>
+                                <p class="text-sm text-gray-600">实现与主流OTA平台标准化连接</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot">✓</div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">智能决策引擎</h4>
+                                <p class="text-sm text-gray-600">多维度实时决策推荐系统</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 第二年 -->
+                <div class="roadmap-phase">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold mr-4">2</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">第二年：生态扩展</h3>
+                            <p class="text-sm text-gray-600">2026年目标</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="timeline-item">
+                            <div class="timeline-dot">○</div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">多模态AI融合</h4>
+                                <p class="text-sm text-gray-600">语音、图像、文本多模态理解</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot">○</div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">全球化部署</h4>
+                                <p class="text-sm text-gray-600">国际差旅服务网络建设</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot">○</div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">行业标准制定</h4>
+                                <p class="text-sm text-gray-600">推动AI差旅行业规范建立</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 第三年 -->
+                <div class="roadmap-phase">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-4">3</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">第三年：智能进化</h3>
+                            <p class="text-sm text-gray-600">2027年目标</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="timeline-item">
+                            <div class="timeline-dot">○</div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">自主学习进化</h4>
+                                <p class="text-sm text-gray-600">AI系统自主优化迭代能力</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot">○</div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">预测性服务</h4>
+                                <p class="text-sm text-gray-600">基于大数据的行为预测服务</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot">○</div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">生态领导地位</h4>
+                                <p class="text-sm text-gray-600">成为行业技术标杆和引领者</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 愿景宣言 -->
+        <div class="text-center liquid-glass rounded-xl p-8">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold gradient-text mb-6">我们的愿景</h2>
+                <p class="text-xl text-gray-700 leading-relaxed mb-8">
+                    "让AI成为每个差旅者的智慧伙伴，让每次出行都充满智能与温度。
+                    通过MCP协议连接全球差旅服务网络，用LLM理解每个用户的独特需求，
+                    构建一个真正智能、开放、可信的差旅生态系统。"
+                </p>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">🎯</div>
+                        <div class="font-bold text-gray-800">智能化</div>
+                        <div class="text-sm text-gray-600">AI驱动决策</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">🌐</div>
+                        <div class="font-bold text-gray-800">开放性</div>
+                        <div class="text-sm text-gray-600">生态互联互通</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">🛡️</div>
+                        <div class="font-bold text-gray-800">可信赖</div>
+                        <div class="text-sm text-gray-600">安全可靠服务</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">💚</div>
+                        <div class="font-bold text-gray-800">可持续</div>
+                        <div class="text-sm text-gray-600">绿色智能出行</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            // 添加入场动画
+            const cards = document.querySelectorAll('.tech-card, .roadmap-phase');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+
+            // 生态系统节点交互
+            const nodes = document.querySelectorAll('.ecosystem-node');
+            nodes.forEach(node => {
+                node.addEventListener('click', function() {
+                    // 简单的点击反馈
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1.05)';
+                        setTimeout(() => {
+                            this.style.transform = 'scale(1)';
+                        }, 150);
+                    }, 100);
+                });
+            });
+
+            // 时间线动画
+            const timelineDots = document.querySelectorAll('.timeline-dot');
+            timelineDots.forEach((dot, index) => {
+                setTimeout(() => {
+                    dot.style.animation = 'pulse 1s ease-in-out';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+
+</html>
