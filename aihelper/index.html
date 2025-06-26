@@ -160,6 +160,132 @@
             font-size: 12px;
         }
 
+        /* 设置面板样式 */
+        .settings-panel {
+            position: fixed;
+            left: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: -8px 0 32px rgba(0, 0, 0, 0.1);
+            transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .settings-panel.open {
+            left: 0;
+        }
+
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .settings-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .settings-btn {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.05);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #ddd;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #06b6d4;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        .voice-option {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .voice-option.selected {
+            border-color: #06b6d4;
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .voice-option:hover {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .language-option {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 2px 0;
+        }
+
+        .language-option:hover {
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .language-option.selected {
+            background: rgba(6, 182, 212, 0.15);
+            color: #0891b2;
+            font-weight: 600;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 240px;
@@ -168,30 +294,246 @@
             .main-content {
                 margin-left: 8px;
             }
+
+            .settings-panel {
+                width: 320px;
+            }
         }
     </style>
 </head>
 
 <body class="flex h-screen overflow-hidden">
+    <!-- 设置面板遮罩 -->
+    <div class="settings-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
+
+    <!-- 设置面板 -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="p-6">
+            <!-- 设置标题 -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-800">设置</h2>
+                <button onclick="closeSettings()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- AI思考过程 -->
+            <div class="liquid-glass rounded-xl p-4 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-gray-800">AI思考过程</span>
+                    </div>
+                    <div class="toggle-switch" onclick="toggleSetting(this)"></div>
+                </div>
+                <p class="text-xs text-gray-500 ml-9">开启后，对话中展示AI思考过程</p>
+            </div>
+
+            <!-- 安全护盾 -->
+            <div class="liquid-glass rounded-xl p-4 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-gray-800">安全护盾</span>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+                </div>
+            </div>
+
+            <!-- 多轮会话 -->
+            <div class="liquid-glass rounded-xl p-4 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-gray-800">多轮会话</span>
+                    </div>
+                    <div class="toggle-switch" onclick="toggleSetting(this)"></div>
+                </div>
+            </div>
+
+            <!-- 播放语音 -->
+            <div class="liquid-glass rounded-xl p-4 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 7l7-3v20l-7-3V7z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-gray-800">播放语音</span>
+                    </div>
+                    <div class="toggle-switch" onclick="toggleSetting(this)"></div>
+                </div>
+            </div>
+
+            <!-- 语音转换模型 -->
+            <div class="liquid-glass rounded-xl p-4 mb-4">
+                <h3 class="text-sm font-medium text-gray-800 mb-3">语音转换模型</h3>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="voice-option" onclick="selectVoiceModel(this, 'xunfei')">
+                        <div class="w-8 h-8 bg-blue-500 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">讯</span>
+                        </div>
+                        <div class="text-xs font-medium">讯飞</div>
+                    </div>
+                    <div class="voice-option selected" onclick="selectVoiceModel(this, 'tencent')">
+                        <div class="w-8 h-8 bg-cyan-500 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">腾</span>
+                        </div>
+                        <div class="text-xs font-medium">腾讯</div>
+                    </div>
+                    <div class="voice-option" onclick="selectVoiceModel(this, 'volee')">
+                        <div class="w-8 h-8 bg-purple-500 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">V</span>
+                        </div>
+                        <div class="text-xs font-medium">Volee</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 声音设置 -->
+            <div class="liquid-glass rounded-xl p-4 mb-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-gray-800">声音设置</span>
+                    </div>
+                    <div class="flex items-center text-xs text-gray-500">
+                        <span>甜美女声</span>
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 多语言 -->
+            <div class="liquid-glass rounded-xl p-4 mb-4">
+                <h3 class="text-sm font-medium text-gray-800 mb-3">多语言</h3>
+                <div class="cursor-pointer" onclick="toggleLanguageDropdown()">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-gray-800">语言设置</span>
+                        </div>
+                        <div class="flex items-center text-xs text-gray-500">
+                            <span id="currentLanguage">简体中文</span>
+                            <svg class="w-4 h-4 ml-1 transition-transform" id="languageArrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 语言选择下拉菜单 -->
+                <div id="languageDropdown" class="mt-3 hidden">
+                    <div class="language-option selected" onclick="selectLanguage(this, 'zh-CN', '简体中文')">简体中文</div>
+                    <div class="language-option" onclick="selectLanguage(this, 'zh-TW', '繁体中文')">繁體中文</div>
+                    <div class="language-option" onclick="selectLanguage(this, 'en', 'English')">English</div>
+                    <div class="language-option" onclick="selectLanguage(this, 'ms', 'Bahasa Melayu')">Bahasa Melayu</div>
+                    <div class="language-option" onclick="selectLanguage(this, 'my', 'မြန်မာဘာသာ')">မြန်မာဘာသာ</div>
+                </div>
+            </div>
+
+            <!-- 用户协议 -->
+            <div class="liquid-glass rounded-xl p-4 mb-4">
+                <div class="flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-gray-800">用户协议</span>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 隐私保护 -->
+            <div class="liquid-glass rounded-xl p-4 mb-4">
+                <div class="flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-gray-800">隐私保护</span>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 关于小Bee -->
+            <div class="liquid-glass rounded-xl p-4 mb-4">
+                <div class="flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-gray-800">关于小Bee</span>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 左侧边栏 -->
     <div class="sidebar liquid-glass-strong p-2 flex flex-col m-4 mr-2 rounded-lg">
-        <!-- 头部 Logo -->
-        <div class="flex flex-col items-center mb-6 p-0">
+        <!-- 头部 Logo 和设置按钮 -->
+        <div class="flex items-center justify-between mb-6 p-0">
             <img src="/console/img/agreeLogo.png" alt="赞同科技" class="h-8">
+            <button class="settings-btn" onclick="openSettings()">
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </button>
         </div>
 
-        <!-- 新会话按钮 -->
-        <!-- <button
-            class="w-full mb-6 text-white font-medium flex items-center justify-center rounded-2xl p-2 relative overflow-hidden"
-            style="background: linear-gradient(135deg, #c53030 0%, #e53e3e 50%, #f56565 100%);">
-            
-            <div class="absolute left-4 w-4 h-4 bg-purple-500 rounded-full opacity-80"></div>
-            <div class="absolute right-4 w-3 h-3 bg-yellow-400 rounded-full"></div>
-            <div class="absolute right-8 w-6 h-6 bg-orange-400 rounded-full opacity-60"></div>
 
-            <span class="mr-2 text-lg">+</span>
-            <span class="text-lg">新会话</span>
-        </button> -->
+        <div>
+            <div class="liquid-glass rounded-lg cursor-pointer hover:bg-white/60 transition-all specular-highlight mt-4 mb-4 p-4" onclick="showKnowledge()" >
+                <div class="flex items-center space-x-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-xs font-medium text-gray-800 truncate">知识库</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
         <!-- 办公助手 -->
         <div class="mb-6">
@@ -265,18 +607,37 @@
             </div>
         </div>
 
-
         <!-- 柜面助手 -->
         <div class="mb-6">
             <h3 class="text-sm font-semibold text-gray-600 mb-4">柜面助手</h3>
             <div class="grid grid-cols-3 gap-4">
-                <div class="chat-sidebar-menu-btn flex flex-col items-center p-3 rounded-xl" data-assistant="A0007"
-                    data-url="智能表单助手.html">
+                <div class="chat-sidebar-menu-btn flex flex-col items-center p-3 rounded-xl" data-assistant="B0001"
+                    data-url="问答助手.html">
                     <div class="avatar mb-2">
-                        <img src="/assets/avatar4.png" alt="智能表单助手"
+                        <img src="/assets/avatar1.png" alt="问答助手"
                             class="w-12 h-12 rounded-full object-cover">
                     </div>
-                    <div class="name text-xs font-medium text-gray-800 text-center">智能表单助手</div>
+                    <div class="name text-xs font-medium text-gray-800 text-center">问答助手</div>
+                    <p class="text-xs text-gray-500">B0001</p>
+                </div>
+
+                <div class="chat-sidebar-menu-btn flex flex-col items-center p-3 rounded-xl" data-assistant="B0002"
+                    data-url="写作助手-2.html">
+                    <div class="avatar mb-2">
+                        <img src="/assets/avatar2.png" alt="写作助手"
+                            class="w-12 h-12 rounded-full object-cover">
+                    </div>
+                    <div class="name text-xs font-medium text-gray-800 text-center">写作助手</div>
+                    <p class="text-xs text-gray-500">B0002</p>
+                </div>
+
+                <div class="chat-sidebar-menu-btn flex flex-col items-center p-3 rounded-xl" data-assistant="A0007"
+                    data-url="表单助手.html">
+                    <div class="avatar mb-2">
+                        <img src="/assets/avatar4.png" alt="表单助手"
+                            class="w-12 h-12 rounded-full object-cover">
+                    </div>
+                    <div class="name text-xs font-medium text-gray-800 text-center">表单助手</div>
                     <p class="text-xs text-gray-500">A0007</p>
                 </div>
 
@@ -289,16 +650,6 @@
                     <div class="name text-xs font-medium text-gray-800 text-center">排班助手</div>
                     <p class="text-xs text-gray-500">A0008</p>
                 </div>
-                <!-- 
-                <div class="chat-sidebar-menu-btn flex flex-col items-center p-3 rounded-xl" data-assistant="A0006"
-                    data-url="文档助手.html">
-                    <div class="avatar mb-2">
-                        <img src="/assets/avatar6.png" alt="文档助手"
-                            class="w-12 h-12 rounded-full object-cover">
-                    </div>
-                    <div class="name text-xs font-medium text-gray-800 text-center">文档助手</div>
-                    <p class="text-xs text-gray-500">A0006</p>
-                </div> -->
             </div>
         </div>
 
@@ -375,7 +726,7 @@
             </div>
         </div>
 
-        <p  onclick="showLog()"  class="text-sm text-gray-500 flex items-center flex-col  cursor-pointer"> -V3.2506.2- </p>
+        <p onclick="showLog()" class="text-sm text-gray-500 flex items-center flex-col cursor-pointer"> -V3.2506.2- </p>
     </div>
 
     <!-- 主内容区域 -->
@@ -394,6 +745,75 @@
 
     <script>
         let currentAssistant = null;
+        let currentLanguage = 'zh-CN';
+
+        // 打开设置面板
+        function openSettings() {
+            document.getElementById('settingsPanel').classList.add('open');
+            document.getElementById('settingsOverlay').classList.add('show');
+        }
+
+        // 关闭设置面板
+        function closeSettings() {
+            document.getElementById('settingsPanel').classList.remove('open');
+            document.getElementById('settingsOverlay').classList.remove('show');
+            // 收起语言下拉菜单
+            document.getElementById('languageDropdown').classList.add('hidden');
+            document.getElementById('languageArrow').style.transform = 'rotate(0deg)';
+        }
+
+        // 切换设置开关
+        function toggleSetting(element) {
+            element.classList.toggle('active');
+        }
+
+        // 选择语音模型
+        function selectVoiceModel(element, model) {
+            // 移除其他选中状态
+            document.querySelectorAll('.voice-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            // 添加选中状态
+            element.classList.add('selected');
+        }
+
+        // 切换语言下拉菜单
+        function toggleLanguageDropdown() {
+            const dropdown = document.getElementById('languageDropdown');
+            const arrow = document.getElementById('languageArrow');
+            
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                dropdown.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // 选择语言
+        function selectLanguage(element, langCode, langName) {
+            // 移除其他选中状态
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // 添加选中状态
+            element.classList.add('selected');
+            
+            // 更新显示的语言
+            document.getElementById('currentLanguage').textContent = langName;
+            
+            // 设置当前语言
+            currentLanguage = langCode;
+            
+            // 可以在这里添加实际的语言切换逻辑
+            console.log('语言已切换到:', langCode, langName);
+            
+            // 关闭下拉菜单
+            document.getElementById('languageDropdown').classList.add('hidden');
+            document.getElementById('languageArrow').style.transform = 'rotate(0deg)';
+        }
 
         // 切换助手
         function switchToAssistant(assistantId) {
@@ -422,17 +842,30 @@
         }
 
         function showLog() {
-                document.getElementById('iframe-container').classList.remove('hidden');
+            document.getElementById('iframe-container').classList.remove('hidden');
 
-                // 设置iframe源地址
-                document.getElementById('content-iframe').src = './log.html';
+            // 设置iframe源地址
+            document.getElementById('content-iframe').src = './log.html';
 
-                currentAssistant = null;
-                document.querySelectorAll('.chat-sidebar-menu-btn').forEach(btn => {
-                    btn.classList.remove('active');
+            currentAssistant = null;
+            document.querySelectorAll('.chat-sidebar-menu-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        }
 
-                });
-            }
+        function showKnowledge() {
+            document.getElementById('iframe-container').classList.remove('hidden');
+
+            // 设置iframe源地址
+            document.getElementById('content-iframe').src = '/development/data-process/knowledge.html';
+
+            currentAssistant = null;
+            document.querySelectorAll('.chat-sidebar-menu-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        }
+
+        
 
         // 回到首页
         function goHome() {
@@ -458,17 +891,27 @@
                 });
             });
 
-            // 新会话按钮点击回到首页
-            // document.querySelector('button').addEventListener('click', goHome);
+            // 默认选择第一个助手
             document.querySelector('[data-assistant="A0001"]').click();
         });
 
         // 全局函数供卡片使用
         window.switchToAssistant = switchToAssistant;
+
+        // 点击外部关闭设置面板
+        document.addEventListener('click', function(e) {
+            const settingsPanel = document.getElementById('settingsPanel');
+            const settingsBtn = document.querySelector('.settings-btn');
+            
+            if (!settingsPanel.contains(e.target) && !settingsBtn.contains(e.target)) {
+                if (settingsPanel.classList.contains('open')) {
+                    closeSettings();
+                }
+            }
+        });
     </script>
     <script>
         (function () {
-
             const t = document.createElement('style');
             const r = Math.floor(Math.random() * 2000 + 1);
             t.innerHTML = `body{
@@ -521,7 +964,7 @@
                         e.style.borderRadius = '12px';
                     })
                 }, 180)
-            }())
+        }())
     </script>
 </body>
 

@@ -208,10 +208,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
   const t = document.createElement('style');
   t.innerHTML = `
 .bg-gray-50{
-  background-color:rgb(249 250 251 / 0)!important;
+  background: rgba(255, 255, 255, 0.5)!important;
+  backdrop-filter: blur(25px)!important;
 }
 .bg-white{
-  background-color:rgb(255 255 255 / 0.5)!important;
+  background: rgba(255, 255, 255, 0.5)!important;
+  backdrop-filter: blur(25px)!important;
 }
 /* Specular Highlight Effect */
 .specular-highlight {
@@ -248,8 +250,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
   };
   setTimeout(() => {
     document.querySelectorAll('button,select,input').forEach(e => {
-      e.classList.add('specular-highlight');
-      e.style.borderRadius='2em';
+
+      if(Array.prototype.findIndex.call(e.classList,e=>e==='tab-btn')===-1){
+        e.classList.add('specular-highlight');
+        e.style.borderRadius='2em';
+      }
     })
     document.querySelectorAll('.dify-card').forEach(e => {
       e.classList.add('specular-highlight');

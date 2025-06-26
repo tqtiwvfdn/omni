@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR与NLP技术应用 - 智言银行管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --primary-blue: #2970FF;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+        
+        body {
+            /* background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 25%, #1d4ed8 50%, #2563eb 75%, #3b82f6 100%); */
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-button {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .chart-container {
+            height: 200px;
+        }
+        
+        .tab-active {
+            background: var(--primary-blue);
+            color: white;
+        }
+        
+        .tab-inactive {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(0, 0, 0, 0.7);
+        }
+    </style>
+</head>
+<body class=" p-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-black mb-2">OCR与NLP技术应用</h1>
+                <p class="text-black/70">智能文档处理与信息提取核心引擎</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="glass-card px-4 py-2">
+                    <span class="text-black/70 text-sm">实时状态:</span>
+                    <span class="status-indicator bg-green-400 ml-2"></span>
+                    <span class="text-green-400 text-sm ml-1">运行正常</span>
+                </div>
+                <button class="glass-button px-6 py-2 rounded-lg text-black hover:scale-105 transition-transform">
+                    系统配置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要指标卡片 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-black/70 text-sm">今日处理量</p>
+                    <p class="text-2xl font-bold text-black">12,847</p>
+                    <p class="text-green-400 text-sm">↑ 15.3%</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-black/70 text-sm">识别准确率</p>
+                    <p class="text-2xl font-bold text-black">98.7%</p>
+                    <p class="text-green-400 text-sm">↑ 0.5%</p>
+                </div>
+                <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-black/70 text-sm">平均处理时间</p>
+                    <p class="text-2xl font-bold text-black">1.8s</p>
+                    <p class="text-green-400 text-sm">↓ 0.3s</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-black/70 text-sm">待处理任务</p>
+                    <p class="text-2xl font-bold text-black">234</p>
+                    <p class="text-red-400 text-sm">↑ 23</p>
+                </div>
+                <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能选项卡 -->
+    <div class="mb-6">
+        <div class="flex space-x-1 glass-card p-1 rounded-lg w-fit">
+            <button class="tab-btn tab-active px-6 py-2 rounded-md text-sm font-medium transition-all" data-tab="document-processing">
+                智能文档处理
+            </button>
+            <button class="tab-btn tab-inactive px-6 py-2 rounded-md text-sm font-medium transition-all" data-tab="order-flow">
+                订单流水采集
+            </button>
+            <button class="tab-btn tab-inactive px-6 py-2 rounded-md text-sm font-medium transition-all" data-tab="image-slicing">
+                影像切片管理
+            </button>
+            <button class="tab-btn tab-inactive px-6 py-2 rounded-md text-sm font-medium transition-all" data-tab="element-entry">
+                要素录入任务
+            </button>
+            <button class="tab-btn tab-inactive px-6 py-2 rounded-md text-sm font-medium transition-all" data-tab="system-config">
+                系统配置
+            </button>
+        </div>
+    </div>
+
+    <!-- 内容区域 -->
+    <div id="content-area">
+        <!-- 智能文档处理 -->
+        <div id="document-processing" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 实时处理状态 -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-black mb-4">实时处理状态</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="status-indicator bg-green-400"></div>
+                                <span class="text-black">OCR引擎</span>
+                            </div>
+                            <span class="text-green-400 text-sm">运行中</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="status-indicator bg-green-400"></div>
+                                <span class="text-black">NLP处理器</span>
+                            </div>
+                            <span class="text-green-400 text-sm">运行中</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="status-indicator bg-yellow-400"></div>
+                                <span class="text-black">格式转换器</span>
+                            </div>
+                            <span class="text-yellow-400 text-sm">负载高</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 支持的文档类型 -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-black mb-4">支持的文档类型</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3 bg-white/5 rounded-lg text-center">
+                            <div class="text-blue-400 text-sm font-medium">银行转账凭证</div>
+                            <div class="text-black/70 text-xs">准确率: 99.2%</div>
+                        </div>
+                        <div class="p-3 bg-white/5 rounded-lg text-center">
+                            <div class="text-blue-400 text-sm font-medium">存款回单</div>
+                            <div class="text-black/70 text-xs">准确率: 98.9%</div>
+                        </div>
+                        <div class="p-3 bg-white/5 rounded-lg text-center">
+                            <div class="text-blue-400 text-sm font-medium">贷款申请表</div>
+                            <div class="text-black/70 text-xs">准确率: 97.8%</div>
+                        </div>
+                        <div class="p-3 bg-white/5 rounded-lg text-center">
+                            <div class="text-blue-400 text-sm font-medium">理财产品认购书</div>
+                            <div class="text-black/70 text-xs">准确率: 97.5%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 处理流程展示 -->
+            <div class="glass-card p-6 mt-6">
+                <h3 class="text-lg font-semibold text-black mb-4">智能处理流程</h3>
+                <div class="flex items-center justify-between">
+                    <div class="flex-1 text-center">
+                        <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span class="text-blue-400 font-bold">1</span>
+                        </div>
+                        <div class="text-black text-sm">文档预处理</div>
+                        <div class="text-black/50 text-xs">去噪、校正、分析</div>
+                    </div>
+                    <svg class="w-6 h-6 text-black/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                    <div class="flex-1 text-center">
+                        <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span class="text-green-400 font-bold">2</span>
+                        </div>
+                        <div class="text-black text-sm">OCR识别</div>
+                        <div class="text-black/50 text-xs">字符识别、区域定位</div>
+                    </div>
+                    <svg class="w-6 h-6 text-black/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                    <div class="flex-1 text-center">
+                        <div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span class="text-yellow-400 font-bold">3</span>
+                        </div>
+                        <div class="text-black text-sm">NLP解析</div>
+                        <div class="text-black/50 text-xs">语义理解、信息抽取</div>
+                    </div>
+                    <svg class="w-6 h-6 text-black/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                    <div class="flex-1 text-center">
+                        <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span class="text-purple-400 font-bold">4</span>
+                        </div>
+                        <div class="text-black text-sm">结果输出</div>
+                        <div class="text-black/50 text-xs">结构化数据、验证</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 订单流水采集 -->
+        <div id="order-flow" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- 采集统计 -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-black mb-4">采集统计</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between">
+                            <span class="text-black/70">今日采集</span>
+                            <span class="text-black font-medium">8,429笔</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-black/70">成功率</span>
+                            <span class="text-green-400 font-medium">98.5%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-black/70">异常处理</span>
+                            <span class="text-yellow-400 font-medium">127笔</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-black/70">平均用时</span>
+                            <span class="text-blue-400 font-medium">1.2秒</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 流水类型分布 -->
+                <div class="glass-card p-6 lg:col-span-2">
+                    <h3 class="text-lg font-semibold text-black mb-4">流水类型分布</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-black">转账凭证</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 h-2 bg-white/10 rounded-full">
+                                    <div class="w-20 h-2 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="text-black/70 text-sm">3,247</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-black">存款回单</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 h-2 bg-white/10 rounded-full">
+                                    <div class="w-16 h-2 bg-green-500 rounded-full"></div>
+                                </div>
+                                <span class="text-black/70 text-sm">2,156</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-black">支票</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 h-2 bg-white/10 rounded-full">
+                                    <div class="w-12 h-2 bg-yellow-500 rounded-full"></div>
+                                </div>
+                                <span class="text-black/70 text-sm">1,684</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-black">汇票</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 h-2 bg-white/10 rounded-full">
+                                    <div class="w-8 h-2 bg-purple-500 rounded-full"></div>
+                                </div>
+                                <span class="text-black/70 text-sm">1,342</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 采集规则配置 -->
+            <div class="glass-card p-6 mt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-black">采集规则配置</h3>
+                    <button class="glass-button px-4 py-2 rounded-lg text-black text-sm">
+                        新增规则
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-white/10">
+                                <th class="text-left py-3 text-black/70 text-sm">规则名称</th>
+                                <th class="text-left py-3 text-black/70 text-sm">适用类型</th>
+                                <th class="text-left py-3 text-black/70 text-sm">提取字段</th>
+                                <th class="text-left py-3 text-black/70 text-sm">准确率</th>
+                                <th class="text-left py-3 text-black/70 text-sm">状态</th>
+                                <th class="text-right py-3 text-black/70 text-sm">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-white/5">
+                                <td class="py-3 text-black">转账凭证标准规则</td>
+                                <td class="py-3 text-black/70">银行转账凭证</td>
+                                <td class="py-3 text-black/70">账号、金额、用途</td>
+                                <td class="py-3 text-green-400">98.5%</td>
+                                <td class="py-3">
+                                    <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">已启用</span>
+                                </td>
+                                <td class="py-3 text-right">
+                                    <button class="text-blue-400 hover:text-blue-300 text-sm">编辑</button>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-white/5">
+                                <td class="py-3 text-black">存款回单规则</td>
+                                <td class="py-3 text-black/70">存款回单</td>
+                                <td class="py-3 text-black/70">客户、金额、日期</td>
+                                <td class="py-3 text-green-400">99.2%</td>
+                                <td class="py-3">
+                                    <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">已启用</span>
+                                </td>
+                                <td class="py-3 text-right">
+                                    <button class="text-blue-400 hover:text-blue-300 text-sm">编辑</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 影像切片管理 -->
+        <div id="image-slicing" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- 切片配置 -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-black mb-4">切片配置</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-black/70 text-sm mb-2">分割策略</label>
+                            <select class="w-full p-2 bg-white/10 border border-white/20 rounded text-black">
+                                <option>自动分割</option>
+                                <option>手动标注</option>
+                                <option>混合模式</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-black/70 text-sm mb-2">最小文档尺寸</label>
+                            <input type="text" value="200×200" class="w-full p-2 bg-white/10 border border-white/20 rounded text-black">
+                        </div>
+                        <div>
+                            <label class="block text-black/70 text-sm mb-2">边缘检测阈值</label>
+                            <input type="range" min="0.1" max="0.9" step="0.1" value="0.6" class="w-full">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 切片统计 -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-black mb-4">切片统计</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between">
+                            <span class="text-black/70">今日切片数</span>
+                            <span class="text-black font-medium">4,829</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-black/70">成功率</span>
+                            <span class="text-green-400 font-medium">96.2%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-black/70">平均用时</span>
+                            <span class="text-blue-400 font-medium">0.8秒</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-black/70">质量评分</span>
+                            <span class="text-yellow-400 font-medium">优秀</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 切片任务列表 -->
+            <div class="glass-card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-black">切片任务列表</h3>
+                    <button class="glass-button px-4 py-2 rounded-lg text-black text-sm">
+                        新建任务
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-white/10">
+                                <th class="text-left py-3 text-black/70 text-sm">任务ID</th>
+                                <th class="text-left py-3 text-black/70 text-sm">文档类型</th>
+                                <th class="text-left py-3 text-black/70 text-sm">切片数量</th>
+                                <th class="text-left py-3 text-black/70 text-sm">完成度</th>
+                                <th class="text-left py-3 text-black/70 text-sm">状态</th>
+                                <th class="text-right py-3 text-black/70 text-sm">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-white/5">
+                                <td class="py-3 text-black">SLICE_20250625_001</td>
+                                <td class="py-3 text-black/70">复合业务单据</td>
+                                <td class="py-3 text-black/70">1,247</td>
+                                <td class="py-3 text-black/70">89%</td>
+                                <td class="py-3">
+                                    <span class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">处理中</span>
+                                </td>
+                                <td class="py-3 text-right">
+                                    <button class="text-blue-400 hover:text-blue-300 text-sm mr-2">查看</button>
+                                    <button class="text-yellow-400 hover:text-yellow-300 text-sm">暂停</button>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-white/5">
+                                <td class="py-3 text-black">SLICE_20250625_002</td>
+                                <td class="py-3 text-black/70">银行凭证批次</td>
+                                <td class="py-3 text-black/70">856</td>
+                                <td class="py-3 text-black/70">100%</td>
+                                <td class="py-3">
+                                    <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">已完成</span>
+                                </td>
+                                <td class="py-3 text-right">
+                                    <button class="text-blue-400 hover:text-blue-300 text-sm mr-2">查看</button>
+                                    <button class="text-green-400 hover:text-green-300 text-sm">下载</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 要素录入任务 -->
+        <div id="element-entry" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- 任务概览 -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-black mb-4">任务概览</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-black/70">待分配</span>
+                            <span class="text-yellow-400 font-medium">156</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-black/70">进行中</span>
+                            <span class="text-blue-400 font-medium">89</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-black/70">待审核</span>
+                            <span class="text-orange-400 font-medium">34</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-black/70">已完成</span>
+                            <span class="text-green-400 font-medium">423</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 人员负荷 -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-black mb-4">人员负荷</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-black">张三</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-16 h-2 bg-white/10 rounded-full">
+                                    <div class="w-12 h-2 bg-green-500 rounded-full"></div>
+                                </div>
+                                <span class="text-black/70 text-sm">75%</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-black">李四</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-16 h-2 bg-white/10 rounded-full">
+                                    <div class="w-14 h-2 bg-yellow-500 rounded-full"></div>
+                                </div>
+                                <span class="text-black/70 text-sm">87%</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-black">王五</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-16 h-2 bg-white/10 rounded-full">
+                                    <div class="w-10 h-2 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="text-black/70 text-sm">62%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 质量指标 -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-black mb-4">质量指标</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-black/70">平均准确率</span>
+                            <span class="text-green-400 font-medium">97.8%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-black/70">返工率</span>
+                            <span class="text-yellow-400 font-medium">2.1%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-black/70">及时完成率</span>
+                            <span class="text-blue-400 font-medium">94.5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务分配策略 -->
+            <div class="glass-card p-6">
+                <h3 class="text-lg font-semibold text-black mb-4">智能分配策略</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div class="text-center p-4 bg-white/5 rounded-lg">
+                        <div class="text-blue-400 font-medium">技能匹配</div>
+                        <div class="text-black/70 text-sm mt-1">复杂业务文档</div>
+                        <div class="text-green-400 text-xs mt-1">+15%准确率</div>
+                    </div>
+                    <div class="text-center p-4 bg-white/5 rounded-lg">
+                        <div class="text-green-400 font-medium">负荷均衡</div>
+                        <div class="text-black/70 text-sm mt-1">日常批量处理</div>
+                        <div class="text-green-400 text-xs mt-1">+20%效率</div>
+                    </div>
+                    <div class="text-center p-4 bg-white/5 rounded-lg">
+                        <div class="text-yellow-400 font-medium">轮转制</div>
+                        <div class="text-black/70 text-sm mt-1">标准化文档</div>
+                        <div class="text-green-400 text-xs mt-1">技能均衡</div>
+                    </div>
+                    <div class="text-center p-4 bg-white/5 rounded-lg">
+                        <div class="text-red-400 font-medium">紧急响应</div>
+                        <div class="text-black/70 text-sm mt-1">紧急业务</div>
+                        <div class="text-green-400 text-xs mt-1">-50%响应时间</div>
+                    </div>
+                    <div class="text-center p-4 bg-white/5 rounded-lg">
+                        <div class="text-purple-400 font-medium">质量导向</div>
+                        <div class="text-black/70 text-sm mt-1">重要客户</div>
+                        <div class="text-green-400 text-xs mt-1">质量保障</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 系统配置 -->
+        <div id="system-config" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- OCR引擎配置 -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-black mb-4">OCR引擎配置</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-black/70 text-sm mb-2">识别引擎</label>
+                            <select class="w-full p-2 bg-white/10 border border-white/20 rounded text-black">
+                                <option>PaddleOCR v3.2</option>
+                                <option>TesseractOCR v5.0</option>
+                                <option>EasyOCR v1.7</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-black/70 text-sm mb-2">识别精度</label>
+                            <select class="w-full p-2 bg-white/10 border border-white/20 rounded text-black">
+                                <option>高精度模式</option>
+                                <option>平衡模式</option>
+                                <option>快速模式</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-black/70 text-sm mb-2">并发处理数</label>
+                            <input type="number" value="8" class="w-full p-2 bg-white/10 border border-white/20 rounded text-black">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NLP模型配置 -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-black mb-4">NLP模型配置</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-black/70 text-sm mb-2">语言模型</label>
+                            <select class="w-full p-2 bg-white/10 border border-white/20 rounded text-black">
+                                <option>BERT-Base-Chinese</option>
+                                <option>RoBERTa-wwm-ext</option>
+                                <option>FinBERT-Finance</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-black/70 text-sm mb-2">实体识别模型</label>
+                            <select class="w-full p-2 bg-white/10 border border-white/20 rounded text-black">
+                                <option>BiLSTM-CRF</option>
+                                <option>BERT-CRF</option>
+                                <option>Transformer-NER</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-black/70 text-sm mb-2">置信度阈值</label>
+                            <input type="range" min="0.5" max="1.0" step="0.05" value="0.85" class="w-full">
+                            <div class="text-black/50 text-sm">当前值: 0.85</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 性能优化设置 -->
+            <div class="glass-card p-6 mt-6">
+                <h3 class="text-lg font-semibold text-black mb-4">性能优化设置</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <h4 class="text-black font-medium mb-3">缓存设置</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" checked class="mr-2">
+                                <span class="text-black/70 text-sm">启用结果缓存</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" checked class="mr-2">
+                                <span class="text-black/70 text-sm">启用模型缓存</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2">
+                                <span class="text-black/70 text-sm">启用预热机制</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-black font-medium mb-3">资源限制</h4>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="block text-black/70 text-sm">最大内存使用</label>
+                                <input type="text" value="8GB" class="w-full p-1 bg-white/10 border border-white/20 rounded text-black text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-black/70 text-sm">GPU显存限制</label>
+                                <input type="text" value="4GB" class="w-full p-1 bg-white/10 border border-white/20 rounded text-black text-sm">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-black font-medium mb-3">监控设置</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" checked class="mr-2">
+                                <span class="text-black/70 text-sm">性能监控</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" checked class="mr-2">
+                                <span class="text-black/70 text-sm">错误日志</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2">
+                                <span class="text-black/70 text-sm">详细调试</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 选项卡切换功能
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const target = this.getAttribute('data-tab');
+                
+                // 更新按钮状态
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('tab-active');
+                    b.classList.add('tab-inactive');
+                });
+                this.classList.remove('tab-inactive');
+                this.classList.add('tab-active');
+                
+                // 更新内容显示
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(target).classList.remove('hidden');
+            });
+        });
+
+        // 模拟实时数据更新
+        function updateStats() {
+            // 这里可以添加AJAX调用来获取实时数据
+            console.log('更新统计数据');
+        }
+
+        // 每30秒更新一次数据
+        setInterval(updateStats, 30000);
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 可以在这里添加页面初始化逻辑
+            console.log('OCR与NLP技术应用页面已加载');
+        });
+    </script>
+</body>
+</html>

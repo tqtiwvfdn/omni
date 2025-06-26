@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信授权登录示例</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: #07c160;
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 30px;
+        }
+        
+        h1 {
+            margin: 0 0 10px;
+            font-size: 28px;
+            color: #333;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+        
+        .wechat-login-btn {
+            background: #07c160;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wechat-login-btn:hover {
+            background: #06ad56;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(7, 193, 96, 0.3);
+        }
+        
+        .wechat-login-btn:active {
+            transform: translateY(0);
+        }
+        
+        .wechat-login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #07c160;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .user-info {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            text-align: left;
+        }
+        
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+        }
+        
+        .user-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .user-details {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .user-openid {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin-top: 15px;
+        }
+        
+        .logout-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        
+        .logout-btn:hover {
+            background: #5a6268;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .tips {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: left;
+        }
+        
+        .tips h4 {
+            margin-top: 0;
+            color: #155724;
+        }
+        
+        .tips ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .tips li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">🤖</div>
+        <h1>微信授权登录</h1>
+        <p class="subtitle">使用微信账号快速登录</p>
+        
+        <button id="wechatLoginBtn" class="wechat-login-btn" onclick="startWechatLogin()">
+            <span>🔐 微信登录</span>
+        </button>
+        
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <span>正在跳转微信授权...</span>
+        </div>
+        
+        <div id="errorMessage" class="error-message"></div>
+        
+        <div id="userInfo" class="user-info">
+            <h3>✅ 登录成功</h3>
+            <img id="userAvatar" class="user-avatar" src="" alt="用户头像">
+            <div id="userName" class="user-name"></div>
+            <div id="userDetails" class="user-details"></div>
+            <div id="userOpenid" class="user-openid"></div>
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+        </div>
+        
+        <div class="tips">
+            <h4>💡 使用说明</h4>
+            <ul>
+                <li>点击"微信登录"按钮开始授权</li>
+                <li>在微信授权页面点击"同意"</li>
+                <li>授权成功后自动返回并显示用户信息</li>
+                <li>OpenID是用户在此公众号下的唯一标识</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 配置信息
+        const CONFIG = {
+            baseURL: 'http://localhost:4002/workchat', // 后端服务地址
+            redirectURL: window.location.origin + '/callback.html' // 授权回调页面
+        };
+        
+        // 开始微信登录
+        async function startWechatLogin() {
+            try {
+                showLoading(true);
+                hideError();
+                
+                // 获取授权链接
+                const response = await fetch(`${CONFIG.baseURL}/auth?redirect_url=${encodeURIComponent(CONFIG.redirectURL)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 跳转到微信授权页面
+                    window.location.href = data.authUrl;
+                } else {
+                    throw new Error(data.message || '获取授权链接失败');
+                }
+            } catch (error) {
+                console.error('微信登录失败:', error);
+                showError('微信登录失败: ' + error.message);
+                showLoading(false);
+            }
+        }
+        
+        // 显示加载状态
+        function showLoading(show) {
+            const btn = document.getElementById('wechatLoginBtn');
+            const loading = document.getElementById('loading');
+            
+            if (show) {
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+                loading.style.display = 'block';
+            } else {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                loading.style.display = 'none';
+            }
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        // 隐藏错误信息
+        function hideError() {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.style.display = 'none';
+        }
+        
+        // 显示用户信息
+        function showUserInfo(userInfo) {
+            document.getElementById('userAvatar').src = userInfo.headimgurl || 'https://via.placeholder.com/60x60?text=User';
+            document.getElementById('userName').textContent = userInfo.nickname || '未知用户';
+            document.getElementById('userDetails').innerHTML = `
+                <strong>性别:</strong> ${userInfo.sex === 1 ? '男' : userInfo.sex === 2 ? '女' : '未知'}<br>
+                <strong>地区:</strong> ${userInfo.country || ''} ${userInfo.province || ''} ${userInfo.city || ''}<br>
+                <strong>登录时间:</strong> ${new Date().toLocaleString()}
+            `;
+            document.getElementById('userOpenid').innerHTML = `<strong>OpenID:</strong><br>${userInfo.openid}`;
+            
+            // 隐藏登录按钮，显示用户信息
+            document.getElementById('wechatLoginBtn').style.display = 'none';
+            document.getElementById('userInfo').style.display = 'block';
+            
+            // 保存用户信息到本地存储
+            localStorage.setItem('wechat_user_info', JSON.stringify(userInfo));
+        }
+        
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('wechat_user_info');
+            document.getElementById('wechatLoginBtn').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'none';
+            hideError();
+        }
+        
+        // 页面加载完成后检查是否已登录
+        window.onload = function() {
+            const savedUserInfo = localStorage.getItem('wechat_user_info');
+            if (savedUserInfo) {
+                try {
+                    const userInfo = JSON.parse(savedUserInfo);
+                    showUserInfo(userInfo);
+                } catch (e) {
+                    console.error('解析用户信息失败:', e);
+                    localStorage.removeItem('wechat_user_info');
+                }
+            }
+            
+            // 监听来自授权回调页面的消息
+            window.addEventListener('message', function(event) {
+                if (event.data.type === 'wechat_auth_success') {
+                    showUserInfo(event.data.userInfo);
+                    hideError();
+                } else if (event.data.type === 'wechat_auth_error') {
+                    showError(event.data.message);
+                    showLoading(false);
+                }
+            });
+        };
+    </script>
+</body>
+</html>
