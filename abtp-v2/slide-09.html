@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUI语言用户界面</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+        }
+
+        .gf-red {
+            background: linear-gradient(135deg, #CC0000 0%, #8B0000 100%);
+        }
+
+        .gf-red-light {
+            background: linear-gradient(135deg, #FFE5E5 0%, #FFCCCC 100%);
+        }
+
+        .slide-container {
+            background: white;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px;
+            min-height: calc(100vh - 40px);
+        }
+
+        .interface-demo {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px;
+            height: 420px;
+            overflow-y: auto;
+        }
+
+        .gui-interface {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .lui-interface {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #CC0000;
+            border-radius: 12px;
+            padding: 16px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .chat-message {
+            margin-bottom: 12px;
+        }
+
+        .user-message {
+            background: #CC0000;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 85%;
+            margin-left: auto;
+            text-align: right;
+            font-size: 11px;
+        }
+
+        .ai-message {
+            background: white;
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 85%;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 11px;
+        }
+
+        .budget-panel {
+            background: #f0f8f0;
+            border: 1px solid #28a745;
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .comparison-table-mini {
+            font-size: 10px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table-mini th {
+            background: #e9ecef;
+            padding: 4px;
+            border: 1px solid #dee2e6;
+        }
+
+        .comparison-table-mini td {
+            padding: 4px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+
+        .price-trend {
+            height: 50px;
+            background: linear-gradient(45deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
+            border-radius: 4px;
+            display: flex;
+            align-items: end;
+            justify-content: space-around;
+            padding: 4px;
+        }
+
+        .price-bar {
+            background: #1976d2;
+            width: 8px;
+            border-radius: 2px;
+        }
+
+        .feature-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(204, 0, 0, 0.1);
+            border-color: #CC0000;
+        }
+
+        .icon-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .voice-wave {
+            display: inline-block;
+            width: 3px;
+            height: 16px;
+            background: #CC0000;
+            margin: 0 1px;
+            border-radius: 2px;
+            animation: wave 1.5s infinite ease-in-out;
+        }
+
+        .voice-wave:nth-child(2) { animation-delay: 0.1s; }
+        .voice-wave:nth-child(3) { animation-delay: 0.2s; }
+        .voice-wave:nth-child(4) { animation-delay: 0.3s; }
+
+        @keyframes wave {
+            0%, 40%, 100% { transform: scaleY(0.4); }
+            20% { transform: scaleY(1); }
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #FFE5E5 0%, #FFCCCC 100%);
+            border: 2px solid #CC0000;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .status-approved { background: #28a745; }
+        .status-pending { background: #ffc107; }
+        .status-rejected { background: #dc3545; }
+
+        .mini-chart {
+            width: 100%;
+            height: 30px;
+            background: linear-gradient(90deg, #e3f2fd 0%, #2196f3 50%, #1976d2 100%);
+            border-radius: 4px;
+            position: relative;
+            margin: 4px 0;
+        }
+
+        .chart-label {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="">
+        <!-- 页面标题 -->
+        <div class="flex items-center mb-6">
+            <div class="gf-red w-12 h-12 rounded-xl flex items-center justify-center mr-4">
+                <span class="text-white text-xl">💬</span>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold" style="color: #CC0000;">LUI语言用户界面</h1>
+                <p class="text-gray-600 text-lg mt-2">GUI + LUI双界面实际操作流程展示</p>
+            </div>
+        </div>
+
+        <!-- 双界面对比展示 -->
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <!-- 传统GUI界面 -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3 flex items-center">
+                    <span class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white text-sm mr-3">GUI</span>
+                    传统图形界面操作流程
+                </h3>
+                <div class="interface-demo">
+                    <div class="gui-interface">
+                        <!-- 费用明细实时显示 -->
+                        <div class="budget-panel">
+                            <div class="text-xs font-semibold mb-2">💰 费用预算监控</div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div>月度预算：¥5,000</div>
+                                <div>已使用：¥3,200</div>
+                                <div>剩余额度：¥1,800</div>
+                                <div class="text-red-600">使用率：64%</div>
+                            </div>
+                            <div class="mini-chart mt-2">
+                                <div class="chart-label">预算使用进度</div>
+                            </div>
+                        </div>
+
+                        <!-- 费用分解明细 -->
+                        <div class="text-xs mb-2 font-semibold">📊 本次差旅费用分解</div>
+                        <table class="comparison-table-mini mb-3">
+                            <tr>
+                                <th>项目</th>
+                                <th>金额</th>
+                                <th>占比</th>
+                            </tr>
+                            <tr>
+                                <td>机票</td>
+                                <td>¥850</td>
+                                <td>60%</td>
+                            </tr>
+                            <tr>
+                                <td>酒店</td>
+                                <td>¥480</td>
+                                <td>34%</td>
+                            </tr>
+                            <tr>
+                                <td>用车</td>
+                                <td>¥80</td>
+                                <td>6%</td>
+                            </tr>
+                        </table>
+
+                        <!-- 供应商比价界面 -->
+                        <div class="text-xs mb-2 font-semibold">🔍 多平台价格对比</div>
+                        <table class="comparison-table-mini mb-3">
+                            <tr>
+                                <th>平台</th>
+                                <th>价格</th>
+                                <th>评分</th>
+                                <th>操作</th>
+                            </tr>
+                            <tr class="bg-green-50">
+                                <td>合思商城</td>
+                                <td>¥850</td>
+                                <td>4.8</td>
+                                <td><button class="bg-green-500 text-white px-2 py-1 rounded text-xs">选择</button></td>
+                            </tr>
+                            <tr>
+                                <td>差旅壹号</td>
+                                <td>¥920</td>
+                                <td>4.6</td>
+                                <td><button class="bg-gray-400 text-white px-2 py-1 rounded text-xs">对比</button></td>
+                            </tr>
+                            <tr>
+                                <td>携程企业</td>
+                                <td>¥890</td>
+                                <td>4.7</td>
+                                <td><button class="bg-gray-400 text-white px-2 py-1 rounded text-xs">对比</button></td>
+                            </tr>
+                        </table>
+
+                        <!-- 价格趋势图 -->
+                        <div class="text-xs mb-2 font-semibold">📈 价格趋势分析</div>
+                        <div class="price-trend">
+                            <div class="price-bar" style="height: 30%"></div>
+                            <div class="price-bar" style="height: 50%"></div>
+                            <div class="price-bar" style="height: 80%"></div>
+                            <div class="price-bar" style="height: 40%"></div>
+                            <div class="price-bar" style="height: 60%"></div>
+                        </div>
+                        <div class="text-xs text-gray-500 text-center">近5日价格波动</div>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-500 mt-2">
+                    ✓ 详细数据展示，专业分析工具<br>
+                    ✓ 适合复杂决策和深度对比
+                </div>
+            </div>
+
+            <!-- LUI语言界面 -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3 flex items-center">
+                    <span class="w-8 h-8 gf-red rounded-full flex items-center justify-center text-white text-sm mr-3">LUI</span>
+                    语音交互完整流程
+                </h3>
+                <div class="interface-demo">
+                    <div class="lui-interface">
+                        <div class="text-sm font-medium mb-3 flex items-center">
+                            <span class="voice-wave"></span>
+                            <span class="voice-wave"></span>
+                            <span class="voice-wave"></span>
+                            <span class="voice-wave"></span>
+                            <span class="ml-2">智能差旅助手</span>
+                        </div>
+                        <div class="space-y-2">
+                            <!-- 基础预订对话 -->
+                            <div class="chat-message">
+                                <div class="user-message">
+                                    帮我订明天到上海的机票和酒店
+                                </div>
+                            </div>
+                            <div class="chat-message">
+                                <div class="ai-message">
+                                    已找到最优方案：CA1832航班¥850，希尔顿酒店¥580/晚。需要预订吗？
+                                </div>
+                            </div>
+                            <div class="chat-message">
+                                <div class="user-message">
+                                    预订，然后提交审批
+                                </div>
+                            </div>
+
+                            <!-- 审批流程语音操作 -->
+                            <div class="chat-message">
+                                <div class="ai-message">
+                                    ✅ 已提交审批申请。审批人：张经理<br>
+                                    <span class="status-indicator status-pending"></span>状态：待审批
+                                </div>
+                            </div>
+                            <div class="chat-message">
+                                <div class="user-message">
+                                    查看审批状态
+                                </div>
+                            </div>
+                            <div class="chat-message">
+                                <div class="ai-message">
+                                    <span class="status-indicator status-approved"></span>审批已通过！<br>
+                                    审批意见：同意出差，注意安全
+                                </div>
+                            </div>
+
+                            <!-- 变更申请语音操作 -->
+                            <div class="chat-message">
+                                <div class="user-message">
+                                    我要改成后天出发，提交变更申请
+                                </div>
+                            </div>
+                            <div class="chat-message">
+                                <div class="ai-message">
+                                    已为您重新查询后天航班：<br>
+                                    🛫 MU5106 09:15-11:30 ¥820<br>
+                                    变更申请已提交，等待审批
+                                </div>
+                            </div>
+
+                            <!-- 凭证管理语音指令 -->
+                            <div class="chat-message">
+                                <div class="user-message">
+                                    上传发票
+                                </div>
+                            </div>
+                            <div class="chat-message">
+                                <div class="ai-message">
+                                    📸 请拍照上传发票，我来帮您识别内容
+                                </div>
+                            </div>
+                            <div class="chat-message">
+                                <div class="user-message">
+                                    查看报销进度
+                                </div>
+                            </div>
+                            <div class="chat-message">
+                                <div class="ai-message">
+                                    📋 报销单进度：<br>
+                                    <span class="status-indicator status-approved"></span>财务已审核<br>
+                                    预计3个工作日到账
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-500 mt-2">
+                    ✓ 自然语言全流程操作<br>
+                    ✓ 一句话完成复杂业务流程
+                </div>
+            </div>
+        </div>
+
+        <!-- LUI核心特性 -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="feature-card">
+                <div class="icon-circle gf-red text-white">🎤</div>
+                <h4 class="text-sm font-semibold mb-2">语音预订</h4>
+                <p class="text-xs text-gray-600">"帮我订明天到上海的机票"</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-circle gf-red text-white">📋</div>
+                <h4 class="text-sm font-semibold mb-2">审批管理</h4>
+                <p class="text-xs text-gray-600">"提交变更申请"、"查看审批状态"</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-circle gf-red text-white">📄</div>
+                <h4 class="text-sm font-semibold mb-2">凭证处理</h4>
+                <p class="text-xs text-gray-600">"上传发票"、"查看报销进度"</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-circle gf-red text-white">🔍</div>
+                <h4 class="text-sm font-semibold mb-2">智能查询</h4>
+                <p class="text-xs text-gray-600">"我的预算还剩多少？"</p>
+            </div>
+        </div>
+
+        <!-- 底部总结 -->
+        <div class="highlight-box">
+            <div class="flex items-start space-x-4">
+                <div class="gf-red w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span class="text-white">🎯</span>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-3">双界面协同工作模式</h4>
+                    <div class="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                            <p class="font-semibold text-gray-800 mb-1">GUI专业界面：</p>
+                            <p class="text-gray-600">• 复杂数据分析和对比<br>• 详细费用监控<br>• 专业决策支持</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800 mb-1">LUI语音界面：</p>
+                            <p class="text-gray-600">• 快速业务操作<br>• 自然语言交互<br>• 移动场景友好</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800 mb-1">协同价值：</p>
+                            <p class="text-gray-600">• 覆盖全业务场景<br>• 满足不同用户需求<br>• 显著提升效率</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

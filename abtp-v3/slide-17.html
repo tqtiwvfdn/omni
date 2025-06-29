@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>差中预警管理 - 赞同智言差旅管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"> -->
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .alert-card {
+            transition: all 0.3s ease;
+        }
+        .alert-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .sidebar-active {
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 侧边栏 -->
+    <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-10">
+        <div class="p-6 border-b">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-plane text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-gray-800">赞同智言</h1>
+                    <p class="text-sm text-gray-500">差旅管理系统</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="mt-6">
+            <div class="px-4 space-y-2">
+                <a href="#" class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-gray-50">
+                    <i class="fas fa-tachometer-alt w-5"></i>
+                    <span class="ml-3">仪表板</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-gray-50">
+                    <i class="fas fa-file-alt w-5"></i>
+                    <span class="ml-3">差旅申请</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-gray-50">
+                    <i class="fas fa-check-circle w-5"></i>
+                    <span class="ml-3">审批管理</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 rounded-lg sidebar-active">
+                    <i class="fas fa-exclamation-triangle w-5"></i>
+                    <span class="ml-3">差中预警</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-gray-50">
+                    <i class="fas fa-chart-bar w-5"></i>
+                    <span class="ml-3">数据分析</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-gray-50">
+                    <i class="fas fa-cog w-5"></i>
+                    <span class="ml-3">系统设置</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="ml-64 min-h-screen">
+        <!-- 顶部栏 -->
+        <header class="bg-white shadow-sm border-b px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">差中预警管理</h1>
+                    <p class="text-gray-600 mt-1">实时监控差旅过程中的异常情况</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        <i class="fas fa-bell mr-2"></i>预警设置
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%234F46E5'/%3E%3Ctext x='16' y='20' text-anchor='middle' fill='white' font-family='Arial' font-size='12'%3E人%3C/text%3E%3C/svg%3E" alt="用户头像" class="w-8 h-8 rounded-full">
+                        <span class="text-gray-700">管理员</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 预警统计卡片 -->
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- 大额消费预警 -->
+                <div class="alert-card bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-dollar-sign text-red-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-semibold text-gray-800">大额消费预警</h3>
+                                <p class="text-gray-500 text-sm">超过标准限额的消费</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="text-3xl font-bold text-red-600">12</div>
+                        <div class="text-sm text-red-600">
+                            <i class="fas fa-arrow-up mr-1"></i>+3 今日新增
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预算消耗预警 -->
+                <div class="alert-card bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-chart-pie text-orange-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-semibold text-gray-800">预算消耗预警</h3>
+                                <p class="text-gray-500 text-sm">预算使用率超过阈值</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="text-3xl font-bold text-orange-600">8</div>
+                        <div class="text-sm text-orange-600">
+                            <i class="fas fa-arrow-up mr-1"></i>+1 今日新增
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 异常消费预警 -->
+                <div class="alert-card bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-yellow-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-semibold text-gray-800">异常消费预警</h3>
+                                <p class="text-gray-500 text-sm">时间地点商户异常</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="text-3xl font-bold text-yellow-600">5</div>
+                        <div class="text-sm text-yellow-600">
+                            <i class="fas fa-arrow-down mr-1"></i>-2 较昨日
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筛选和搜索栏 -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex-1 min-w-64">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" placeholder="搜索员工姓名、申请单号..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option>全部预警类型</option>
+                        <option>大额消费预警</option>
+                        <option>预算消耗预警</option>
+                        <option>异常消费预警</option>
+                    </select>
+                    <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option>全部状态</option>
+                        <option>待处理</option>
+                        <option>已处理</option>
+                        <option>已忽略</option>
+                    </select>
+                    <input type="date" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        <i class="fas fa-filter mr-2"></i>筛选
+                    </button>
+                </div>
+            </div>
+
+            <!-- 预警列表 -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                <div class="p-6 border-b border-gray-100">
+                    <h3 class="text-lg font-semibold text-gray-800">预警列表</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-500">预警类型</th>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-500">员工信息</th>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-500">申请单号</th>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-500">异常详情</th>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-500">金额</th>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-500">时间</th>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-500">状态</th>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-500">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-red-100 text-red-800">
+                                        <span class="status-dot bg-red-500"></span>大额消费
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div>
+                                        <div class="font-medium text-gray-900">张三</div>
+                                        <div class="text-sm text-gray-500">销售部 - 高级经理</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900">T2025-001234</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">酒店消费超出M4级别标准50%</td>
+                                <td class="px-6 py-4 text-sm font-medium text-red-600">¥3,200</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">2025-06-30 14:23</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">待处理</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-800 text-sm">查看详情</button>
+                                        <button class="text-green-600 hover:text-green-800 text-sm">批准</button>
+                                        <button class="text-red-600 hover:text-red-800 text-sm">驳回</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800">
+                                        <span class="status-dot bg-orange-500"></span>预算消耗
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div>
+                                        <div class="font-medium text-gray-900">李四</div>
+                                        <div class="text-sm text-gray-500">市场部 - 专员</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900">T2025-001233</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">部门月度预算使用率达到95%</td>
+                                <td class="px-6 py-4 text-sm font-medium text-orange-600">¥28,500</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">2025-06-30 13:45</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">待处理</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-800 text-sm">查看详情</button>
+                                        <button class="text-green-600 hover:text-green-800 text-sm">批准</button>
+                                        <button class="text-red-600 hover:text-red-800 text-sm">驳回</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800">
+                                        <span class="status-dot bg-yellow-500"></span>异常消费
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div>
+                                        <div class="font-medium text-gray-900">王五</div>
+                                        <div class="text-sm text-gray-500">技术部 - 工程师</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900">T2025-001232</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">非工作时间在娱乐场所消费</td>
+                                <td class="px-6 py-4 text-sm font-medium text-yellow-600">¥800</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">2025-06-30 12:10</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">已处理</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-800 text-sm">查看详情</button>
+                                        <span class="text-gray-400 text-sm">已批准</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-red-100 text-red-800">
+                                        <span class="status-dot bg-red-500"></span>大额消费
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div>
+                                        <div class="font-medium text-gray-900">赵六</div>
+                                        <div class="text-sm text-gray-500">财务部 - 经理</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900">T2025-001231</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">餐饮费用超出标准200%</td>
+                                <td class="px-6 py-4 text-sm font-medium text-red-600">¥1,500</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">2025-06-30 11:30</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">已驳回</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-800 text-sm">查看详情</button>
+                                        <span class="text-gray-400 text-sm">已驳回</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                    <div class="text-sm text-gray-500">
+                        显示 1-10 条，共 25 条记录
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">上一页</button>
+                        <button class="px-3 py-1 bg-blue-500 text-white rounded text-sm">1</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">2</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">3</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟实时数据更新
+        function updateAlertCounts() {
+            const alertCounts = document.querySelectorAll('.text-3xl.font-bold');
+            alertCounts.forEach(count => {
+                const currentValue = parseInt(count.textContent);
+                // 模拟数据变化
+                if (Math.random() > 0.8) {
+                    count.textContent = currentValue + (Math.random() > 0.5 ? 1 : -1);
+                }
+            });
+        }
+
+        // 每30秒更新一次数据
+        setInterval(updateAlertCounts, 30000);
+
+        // 表格行点击效果
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (!e.target.matches('button')) {
+                    this.classList.toggle('bg-blue-50');
+                }
+            });
+        });
+
+        // 操作按钮事件
+        document.querySelectorAll('button').forEach(button => {
+            if (button.textContent === '查看详情') {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    alert('跳转到详情页面...');
+                });
+            } else if (button.textContent === '批准') {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (confirm('确认批准这项预警吗？')) {
+                        const row = this.closest('tr');
+                        const statusCell = row.querySelector('td:nth-child(7)');
+                        statusCell.innerHTML = '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">已处理</span>';
+                        this.parentElement.innerHTML = '<button class="text-blue-600 hover:text-blue-800 text-sm">查看详情</button><span class="text-gray-400 text-sm">已批准</span>';
+                    }
+                });
+            } else if (button.textContent === '驳回') {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (confirm('确认驳回这项预警吗？')) {
+                        const row = this.closest('tr');
+                        const statusCell = row.querySelector('td:nth-child(7)');
+                        statusCell.innerHTML = '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">已驳回</span>';
+                        this.parentElement.innerHTML = '<button class="text-blue-600 hover:text-blue-800 text-sm">查看详情</button><span class="text-gray-400 text-sm">已驳回</span>';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

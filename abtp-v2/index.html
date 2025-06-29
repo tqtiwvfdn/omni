@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基于MCP协议的智能化差旅管理中台解决方案</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f1f3f4 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+        }
+
+        .gf-red {
+            background: linear-gradient(135deg, #CC0000 0%, #8B0000 100%);
+        }
+
+        .gf-red-light {
+            background: linear-gradient(135deg, #FFE5E5 0%, #FFCCCC 100%);
+        }
+
+        .sidebar {
+            width: 320px;
+            transition: width 0.3s ease;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .slide-nav-btn {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .slide-nav-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(204, 0, 0, 0.1);
+            border-color: #CC0000;
+        }
+
+        .slide-nav-btn.active {
+            background: linear-gradient(135deg, #FFE5E5 0%, #FFCCCC 100%);
+            border-color: #CC0000;
+            box-shadow: 0 4px 16px rgba(204, 0, 0, 0.2);
+        }
+
+        .slide-number {
+            background: linear-gradient(135deg, #CC0000 0%, #8B0000 100%);
+            color: white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .slide-content {
+            display: none;
+        }
+
+        .slide-content.active {
+            display: block;
+            height: 100%;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: rgba(204, 0, 0, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #CC0000 0%, #8B0000 100%);
+            transition: width 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .navigation-controls {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 50px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #CC0000 0%, #8B0000 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .nav-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(204, 0, 0, 0.3);
+        }
+
+        .nav-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #CC0000 0%, #8B0000 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .main-content {
+                margin-left: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden">
+    <!-- 左侧边栏 -->
+    <div class="sidebar p-4 flex flex-col m-4 mr-2 rounded-lg">
+        <!-- 头部 Logo -->
+        <div class="flex flex-col items-center mb-6">
+            <div class="w-12 h-12 gf-red rounded-xl flex items-center justify-center mb-3">
+                <span class="text-white font-bold text-lg">🏦</span>
+            </div>
+            <h1 class="text-lg font-bold text-gray-800 text-center">智能化差旅管理解决方案</h1>
+            <p class="text-sm text-gray-600">MCP协议 + LLM驱动</p>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-600">演示进度</span>
+                <span class="text-sm font-medium" style="color: #CC0000;" id="progress-text">1/18</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 5.56%"></div>
+            </div>
+        </div>
+
+        <!-- PPT页面导航 -->
+        <div class="flex-1 overflow-y-auto">
+            <h3 class="text-sm font-semibold text-gray-600 mb-4">📖 目录导航</h3>
+            
+            <!-- 引言部分 -->
+            <div class="mb-4">
+                <div class="section-header">引言</div>
+                
+                <div class="slide-nav-btn active" data-slide="1">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">01</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">封面</div>
+                            <div class="text-xs text-gray-500">方案概述</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="2">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">02</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">目录</div>
+                            <div class="text-xs text-gray-500">整体架构</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第一章：产品方案 -->
+            <div class="mb-4">
+                <div class="section-header">第一章：赞同科技差旅管理产品方案</div>
+                
+                <div class="slide-nav-btn" data-slide="3">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">03</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">企业差旅管理核心痛点</div>
+                            <div class="text-xs text-gray-500">平台分散 + 管控困难</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="4">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">04</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">MCP协议核心优势</div>
+                            <div class="text-xs text-gray-500">多平台统一接入</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="5">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">05</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">MCP多平台整合架构</div>
+                            <div class="text-xs text-gray-500">技术架构设计</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="6">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">06</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">核心功能模块设计</div>
+                            <div class="text-xs text-gray-500">智能比价 + 统一管控</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="7">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">07</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">方案核心价值</div>
+                            <div class="text-xs text-gray-500">平台中立性 + 效率提升</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第二章：AI赋能 -->
+            <div class="mb-4">
+                <div class="section-header">第二章：AI时代差旅管理的创新升级</div>
+                
+                <div class="slide-nav-btn" data-slide="8">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">08</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">LLM在差旅场景的应用</div>
+                            <div class="text-xs text-gray-500">智能对话 + 决策支持</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="9">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">09</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">LUI语言用户界面</div>
+                            <div class="text-xs text-gray-500">GUI + LUI双界面</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="10">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">10</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">多模态交互体验</div>
+                            <div class="text-xs text-gray-500">语音 + 图像识别</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="11">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">11</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">LLM技术架构</div>
+                            <div class="text-xs text-gray-500">私有化部署 + 安全保障</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第三章：现状对比 -->
+            <div class="mb-4">
+                <div class="section-header">第三章：银行业差旅管理现状与方案对比</div>
+                
+                <div class="slide-nav-btn" data-slide="12">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">12</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">银行业现状分析</div>
+                            <div class="text-xs text-gray-500">传统模式 + 特殊要求</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="13">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">13</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">方案对比分析</div>
+                            <div class="text-xs text-gray-500">传统 vs 智能化</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="14">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">14</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">管理效率对比</div>
+                            <div class="text-xs text-gray-500">时间 + 成本 + 决策</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="15">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">15</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">数字化转型适配性</div>
+                            <div class="text-xs text-gray-500">技术融合 + 业务价值</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 总结部分 -->
+            <div class="mb-4">
+                <div class="section-header">总结与展望</div>
+                
+                <div class="slide-nav-btn" data-slide="16">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">16</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">技术创新突破</div>
+                            <div class="text-xs text-gray-500">MCP + LLM + 双界面</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="17">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">17</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">方案价值总结</div>
+                            <div class="text-xs text-gray-500">多方价值实现</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-nav-btn" data-slide="18">
+                    <div class="flex items-center space-x-3">
+                        <div class="slide-number">18</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">谢谢</div>
+                            <div class="text-xs text-gray-500">Q&A环节</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 版权信息 -->
+        <div class="mt-4 text-center">
+            <p class="text-xs text-gray-500">Copyright © 2025 赞同科技股份有限公司</p>
+            <p class="text-xs text-gray-400">V1.0.20250628</p>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content flex flex-col overflow-hidden m-4 ml-2 rounded-lg">
+        <!-- 页面内容容器 -->
+        <div class="flex-1 overflow-hidden" id="slide-container">
+            
+            <!-- 第1页：封面 -->
+            <div class="slide-content active" id="slide-1">
+                <div class="h-full flex items-center justify-center p-12">
+                    <div class="text-center">
+                        <div class="gf-red w-20 h-20 mx-auto rounded-xl flex items-center justify-center mb-8">
+                            <span class="text-white text-3xl">🏦</span>
+                        </div>
+                        <h1 class="text-4xl font-bold mb-4" style="color: #CC0000;">基于MCP协议的智能化差旅管理中台解决方案</h1>
+                        <h2 class="text-2xl text-gray-600 mb-8">——LLM驱动的多平台统一管控体系</h2>
+                        <div class="gf-red-light p-6 rounded-lg inline-block">
+                            <p class="text-lg text-gray-700 mb-2">赞同科技股份有限公司</p>
+                            <p class="text-sm text-gray-500">2025年6月</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 其他页面将通过iframe动态加载 -->
+            <div class="slide-content" id="slide-2">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第2页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-3">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第3页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-4">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第4页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-5">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第5页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-6">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第6页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-7">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第7页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-8">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第8页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-9">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第9页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-10">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第10页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-11">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第11页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-12">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第12页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-13">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第13页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-14">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第14页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-15">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第15页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-16">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第16页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-17">
+                <div class="h-full flex items-center justify-center">
+                    <p class="text-gray-500">正在加载第17页内容...</p>
+                </div>
+            </div>
+
+            <div class="slide-content" id="slide-18">
+                <div class="h-full flex items-center justify-center p-12">
+                    <div class="text-center">
+                        <div class="gf-red w-20 h-20 mx-auto rounded-xl flex items-center justify-center mb-8">
+                            <span class="text-white text-3xl">🙏</span>
+                        </div>
+                        <h1 class="text-4xl font-bold mb-8" style="color: #CC0000;">谢谢</h1>
+                        <h2 class="text-2xl text-gray-600 mb-8">感谢您的聆听</h2>
+                        <div class="gf-red-light p-6 rounded-lg inline-block">
+                            <p class="text-lg text-gray-700 mb-2">Q&A 环节</p>
+                            <p class="text-sm text-gray-500">欢迎提问交流</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 底部导航控件 -->
+        <div class="p-6 flex items-center justify-between border-t border-gray-200">
+            <div class="navigation-controls">
+                <button class="nav-button" id="prev-btn" onclick="previousSlide()">‹</button>
+                <span class="text-sm text-gray-600 font-medium" id="slide-indicator">第 1 页 / 共 18 页</span>
+                <button class="nav-button" id="next-btn" onclick="nextSlide()">›</button>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-all"
+                    onclick="toggleFullscreen()">
+                    🔍 全屏模式
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 18;
+
+        // 切换到指定页面
+        function switchToSlide(slideNumber) {
+            // 移除所有活动状态
+            document.querySelectorAll('.slide-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.slide-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 激活当前页面
+            const currentBtn = document.querySelector(`[data-slide="${slideNumber}"]`);
+            const currentContent = document.getElementById(`slide-${slideNumber}`);
+            
+            if (currentBtn && currentContent) {
+                currentBtn.classList.add('active');
+                currentContent.classList.add('active');
+                currentSlide = slideNumber;
+
+                // 如果不是封面和结尾页，且还没有加载iframe，则动态加载
+                if (slideNumber >= 1 && slideNumber <= 18) {
+                    loadSlideContent(slideNumber);
+                }
+
+                // 更新进度
+                updateProgress();
+                updateNavigationState();
+            }
+        }
+
+        // 动态加载页面内容
+        function loadSlideContent(slideNumber) {
+            const slideElement = document.getElementById(`slide-${slideNumber}`);
+            const hasIframe = slideElement.querySelector('iframe');
+            
+            if (!hasIframe && slideNumber >= 1 && slideNumber <= 18) {
+                slideElement.innerHTML = `<iframe src="./slide-${slideNumber.toString().padStart(2, '0')}.html" class="w-full h-full border-0" frameborder="0"></iframe>`;
+            }
+        }
+
+        // 下一页
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                switchToSlide(currentSlide + 1);
+            }
+        }
+
+        // 上一页
+        function previousSlide() {
+            if (currentSlide > 1) {
+                switchToSlide(currentSlide - 1);
+            }
+        }
+
+        // 更新进度条
+        function updateProgress() {
+            const progressPercent = (currentSlide / totalSlides) * 100;
+            document.getElementById('progress-fill').style.width = `${progressPercent}%`;
+            document.getElementById('progress-text').textContent = `${currentSlide}/${totalSlides}`;
+            document.getElementById('slide-indicator').textContent = `第 ${currentSlide} 页 / 共 ${totalSlides} 页`;
+        }
+
+        // 更新导航按钮状态
+        function updateNavigationState() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+
+            prevBtn.disabled = currentSlide === 1;
+            nextBtn.disabled = currentSlide === totalSlides;
+        }
+
+        // 全屏模式
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // 导出PDF（模拟功能）
+        function exportPDF() {
+            alert('PDF导出功能开发中，请联系技术支持获取完整版本');
+        }
+
+        // 键盘导航
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    switchToSlide(1);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    switchToSlide(totalSlides);
+                    break;
+            }
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 绑定侧边栏点击事件
+            document.querySelectorAll('.slide-nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const slideNumber = parseInt(this.dataset.slide);
+                    switchToSlide(slideNumber);
+                });
+            });
+
+            // 初始化状态
+            updateProgress();
+            updateNavigationState();
+
+            loadSlideContent(1);
+        });
+
+        // 全局函数供外部调用
+        window.switchToSlide = switchToSlide;
+        window.nextSlide = nextSlide;
+        window.previousSlide = previousSlide;
+    </script>
+</body>
+
+</html>

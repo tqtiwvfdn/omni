@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赞同智言差旅管理系统 - 智能报表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar-item:hover { background-color: #f0fdf4; }
+        .active-tab { background-color: #16a34a; color: white; }
+        .card-hover:hover { box-shadow: 0 10px 25px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .report-card { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 fixed w-full top-0 z-30">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-chart-bar text-white text-sm"></i>
+                        </div>
+                        <h1 class="text-xl font-bold text-gray-800">赞同智言差旅管理系统</h1>
+                    </div>
+                    <span class="text-gray-400">|</span>
+                    <span class="text-lg text-gray-600">智能报表分析</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>导出报表
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+                        <span class="text-gray-700">管理员</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex pt-16">
+        <!-- 左侧导航栏 -->
+        <aside class="w-64 bg-white shadow-sm border-r border-gray-200 fixed h-full overflow-y-auto">
+            <div class="p-6">
+                <nav class="space-y-2">
+                    <div class="sidebar-item p-3 rounded-lg cursor-pointer flex items-center space-x-3">
+                        <i class="fas fa-tachometer-alt text-gray-500"></i>
+                        <span class="text-gray-700">仪表板</span>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg cursor-pointer flex items-center space-x-3">
+                        <i class="fas fa-plane text-gray-500"></i>
+                        <span class="text-gray-700">差旅申请</span>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg cursor-pointer flex items-center space-x-3">
+                        <i class="fas fa-check-circle text-gray-500"></i>
+                        <span class="text-gray-700">审批中心</span>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg cursor-pointer flex items-center space-x-3">
+                        <i class="fas fa-receipt text-gray-500"></i>
+                        <span class="text-gray-700">费用管理</span>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg cursor-pointer flex items-center space-x-3 bg-green-50 border-l-4 border-green-500">
+                        <i class="fas fa-chart-bar text-green-600"></i>
+                        <span class="text-green-700 font-medium">智能报表</span>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg cursor-pointer flex items-center space-x-3">
+                        <i class="fas fa-cog text-gray-500"></i>
+                        <span class="text-gray-700">系统设置</span>
+                    </div>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="flex-1 ml-64 p-6">
+            <!-- 报表类型选择 -->
+            <div class="mb-6">
+                <div class="flex items-center space-x-4 mb-4">
+                    <button class="active-tab px-6 py-3 rounded-lg font-medium transition-colors">
+                        <i class="fas fa-wallet mr-2"></i>预算报表
+                    </button>
+                    <button class="px-6 py-3 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-money-bill-wave mr-2"></i>费用报表
+                    </button>
+                    <button class="px-6 py-3 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-route mr-2"></i>行程报表
+                    </button>
+                    <button class="px-6 py-3 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-handshake mr-2"></i>供应商报表
+                    </button>
+                </div>
+            </div>
+
+            <!-- 筛选器和操作栏 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <label class="text-sm text-gray-600">时间范围:</label>
+                            <select class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+                                <option>本月</option>
+                                <option>本季度</option>
+                                <option>本年度</option>
+                                <option>自定义</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <label class="text-sm text-gray-600">部门:</label>
+                            <select class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+                                <option>全部部门</option>
+                                <option>市场部</option>
+                                <option>销售部</option>
+                                <option>技术部</option>
+                            </select>
+                        </div>
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-search mr-2"></i>查询
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>自定义报表
+                        </button>
+                        <button class="border border-gray-300 text-gray-600 px-4 py-2 rounded-md text-sm hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-save mr-2"></i>保存模板
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预设报表模板 -->
+            <div class="mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">预设报表模板</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="report-card card-hover bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-chart-pie text-blue-600 text-xl"></i>
+                            </div>
+                            <span class="text-xs text-gray-500">预算执行</span>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 mb-2">预算执行率分析</h3>
+                        <p class="text-sm text-gray-600 mb-4">分析各部门预算使用情况和执行效率</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-gray-500">最近更新: 2小时前</span>
+                            <button class="text-blue-600 text-sm hover:text-blue-800">查看报表</button>
+                        </div>
+                    </div>
+
+                    <div class="report-card card-hover bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-money-bill-wave text-green-600 text-xl"></i>
+                            </div>
+                            <span class="text-xs text-gray-500">费用统计</span>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 mb-2">差旅费用统计</h3>
+                        <p class="text-sm text-gray-600 mb-4">统计差旅费用构成和变化趋势</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-gray-500">最近更新: 1小时前</span>
+                            <button class="text-blue-600 text-sm hover:text-blue-800">查看报表</button>
+                        </div>
+                    </div>
+
+                    <div class="report-card card-hover bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-handshake text-purple-600 text-xl"></i>
+                            </div>
+                            <span class="text-xs text-gray-500">供应商分析</span>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 mb-2">供应商使用情况</h3>
+                        <p class="text-sm text-gray-600 mb-4">分析各供应商使用频次和成本效益</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-gray-500">最近更新: 3小时前</span>
+                            <button class="text-blue-600 text-sm hover:text-blue-800">查看报表</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 报表数据展示区域 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800">预算执行率分析</h2>
+                    <div class="flex items-center space-x-2">
+                        <button class="text-gray-600 hover:text-gray-800">
+                            <i class="fas fa-expand-arrows-alt"></i>
+                        </button>
+                        <button class="text-gray-600 hover:text-gray-800">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 统计卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-100 text-sm">总预算</p>
+                                <p class="text-2xl font-bold">¥500万</p>
+                            </div>
+                            <i class="fas fa-wallet text-blue-200 text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-100 text-sm">已使用</p>
+                                <p class="text-2xl font-bold">¥320万</p>
+                            </div>
+                            <i class="fas fa-credit-card text-green-200 text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-4 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-orange-100 text-sm">执行率</p>
+                                <p class="text-2xl font-bold">64%</p>
+                            </div>
+                            <i class="fas fa-chart-line text-orange-200 text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-100 text-sm">剩余预算</p>
+                                <p class="text-2xl font-bold">¥180万</p>
+                            </div>
+                            <i class="fas fa-piggy-bank text-purple-200 text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 报表表格 -->
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="text-left p-4 font-semibold text-gray-700 border-b">部门</th>
+                                <th class="text-left p-4 font-semibold text-gray-700 border-b">预算总额</th>
+                                <th class="text-left p-4 font-semibold text-gray-700 border-b">已使用</th>
+                                <th class="text-left p-4 font-semibold text-gray-700 border-b">执行率</th>
+                                <th class="text-left p-4 font-semibold text-gray-700 border-b">剩余预算</th>
+                                <th class="text-left p-4 font-semibold text-gray-700 border-b">状态</th>
+                                <th class="text-left p-4 font-semibold text-gray-700 border-b">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-4 border-b">市场部</td>
+                                <td class="p-4 border-b">¥150万</td>
+                                <td class="p-4 border-b">¥120万</td>
+                                <td class="p-4 border-b">
+                                    <div class="flex items-center">
+                                        <div class="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                                            <div class="bg-green-500 h-2 rounded-full" style="width: 80%"></div>
+                                        </div>
+                                        <span class="text-sm text-gray-600">80%</span>
+                                    </div>
+                                </td>
+                                <td class="p-4 border-b">¥30万</td>
+                                <td class="p-4 border-b">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">正常</span>
+                                </td>
+                                <td class="p-4 border-b">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm">查看详情</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-4 border-b">销售部</td>
+                                <td class="p-4 border-b">¥200万</td>
+                                <td class="p-4 border-b">¥110万</td>
+                                <td class="p-4 border-b">
+                                    <div class="flex items-center">
+                                        <div class="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                                            <div class="bg-blue-500 h-2 rounded-full" style="width: 55%"></div>
+                                        </div>
+                                        <span class="text-sm text-gray-600">55%</span>
+                                    </div>
+                                </td>
+                                <td class="p-4 border-b">¥90万</td>
+                                <td class="p-4 border-b">
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">良好</span>
+                                </td>
+                                <td class="p-4 border-b">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm">查看详情</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-4 border-b">技术部</td>
+                                <td class="p-4 border-b">¥100万</td>
+                                <td class="p-4 border-b">¥90万</td>
+                                <td class="p-4 border-b">
+                                    <div class="flex items-center">
+                                        <div class="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                                            <div class="bg-red-500 h-2 rounded-full" style="width: 90%"></div>
+                                        </div>
+                                        <span class="text-sm text-gray-600">90%</span>
+                                    </div>
+                                </td>
+                                <td class="p-4 border-b">¥10万</td>
+                                <td class="p-4 border-b">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">预警</span>
+                                </td>
+                                <td class="p-4 border-b">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm">查看详情</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分页 -->
+                <div class="flex items-center justify-between mt-6">
+                    <div class="text-sm text-gray-600">
+                        显示 1-10 条，共 25 条记录
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">上一页</button>
+                        <button class="px-3 py-2 bg-blue-600 text-white rounded-md text-sm">1</button>
+                        <button class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">2</button>
+                        <button class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">3</button>
+                        <button class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 报表类型切换
+        document.querySelectorAll('button[class*="px-6 py-3"]').forEach(button => {
+            button.addEventListener('click', function() {
+                // 移除所有活跃状态
+                document.querySelectorAll('button[class*="px-6 py-3"]').forEach(btn => {
+                    btn.classList.remove('active-tab');
+                    btn.classList.add('text-gray-600', 'hover:bg-gray-100');
+                });
+                
+                // 添加活跃状态到当前按钮
+                this.classList.add('active-tab');
+                this.classList.remove('text-gray-600', 'hover:bg-gray-100');
+            });
+        });
+
+        // 报表卡片点击效果
+        document.querySelectorAll('.report-card').forEach(card => {
+            card.addEventListener('click', function() {
+                console.log('查看报表:', this.querySelector('h3').textContent);
+            });
+        });
+    </script>
+</body>
+</html>

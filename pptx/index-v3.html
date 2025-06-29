@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML布局还原 to PPTX 转换器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PptxGenJS/3.12.0/pptxgen.bundle.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .render-iframe {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .element-box {
+            position: absolute;
+            border: 1px dashed #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            pointer-events: none;
+            font-size: 10px;
+            color: #1e40af;
+            z-index: 1000;
+        }
+
+        .debug-info {
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            max-width: 200px;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <!-- 头部 -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">HTML布局还原 to PPTX</h1>
+            <p class="text-gray-600">精确还原网页布局为可编辑的PowerPoint元素</p>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="grid grid-cols-12 gap-6">
+            <!-- 左侧：操作面板 -->
+            <div class="col-span-4">
+                <!-- URL管理 -->
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">📄 URL管理</h2>
+                    
+                    <div class="space-y-4">
+                        <!-- URL 输入 -->
+                        <div>
+                            <div class="flex gap-2">
+                                <input 
+                                    type="url" 
+                                    id="urlInput" 
+                                    placeholder="输入网页URL"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+                                >
+                                <button 
+                                    onclick="addUrl()" 
+                                    class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm"
+                                >
+                                    添加
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- URL 列表 -->
+                        <div class="space-y-2 max-h-40 overflow-y-auto" id="urlList">
+                            <!-- URL items will be added here -->
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button 
+                                onclick="loadSelectedUrl()" 
+                                class="flex-1 px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm"
+                            >
+                                加载预览
+                            </button>
+                            <button 
+                                onclick="clearUrls()" 
+                                class="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm"
+                            >
+                                清空
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分析控制 -->
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">🔍 页面分析</h2>
+                    
+                    <div class="space-y-4">
+                        <button 
+                            onclick="analyzeCurrentPage()" 
+                            id="analyzeBtn"
+                            class="w-full px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors text-sm"
+                        >
+                            分析页面结构
+                        </button>
+
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="showElementBounds" onchange="toggleElementBounds()">
+                            <label for="showElementBounds" class="text-sm text-gray-700">显示元素边界</label>
+                        </div>
+
+                        <!-- 分析结果 -->
+                        <div id="analysisResult" class="text-sm text-gray-600">
+                            <div class="text-center text-gray-400 py-4">等待分析...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 转换设置 -->
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">⚙️ 转换设置</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">PPT标题</label>
+                            <input 
+                                type="text" 
+                                id="pptTitle" 
+                                value="网页布局还原"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+                            >
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">幻灯片尺寸</label>
+                            <select id="slideSize" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
+                                <option value="16:9">16:9 宽屏</option>
+                                <option value="4:3">4:3 标准</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">最小元素尺寸(px)</label>
+                            <input 
+                                type="number" 
+                                id="minElementSize" 
+                                value="20"
+                                min="5"
+                                max="100"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+                            >
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="includeBackground" checked class="mr-2">
+                                <label for="includeBackground" class="text-sm text-gray-700">包含背景色</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="includeImages" checked class="mr-2">
+                                <label for="includeImages" class="text-sm text-gray-700">转换图片为形状</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="mergeSimilar" class="mr-2">
+                                <label for="mergeSimilar" class="text-sm text-gray-700">合并相似元素</label>
+                            </div>
+                        </div>
+
+                        <button 
+                            onclick="generatePPTX()" 
+                            id="generateBtn"
+                            class="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-md hover:from-blue-600 hover:to-purple-700 transition-all text-sm font-medium"
+                        >
+                            🚀 生成可编辑PPTX
+                        </button>
+
+                        <!-- 进度显示 -->
+                        <div id="progressInfo" class="hidden">
+                            <div class="flex items-center justify-center space-x-2 py-2">
+                                <div class="loading-spinner"></div>
+                                <span class="text-sm text-gray-600" id="progressText">处理中...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 状态显示 -->
+                <div id="statusContainer" class="hidden">
+                    <div class="bg-white rounded-lg shadow-lg p-4">
+                        <div class="text-sm" id="statusMessage"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：预览窗口 -->
+            <div class="col-span-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800">🖥️ 页面预览</h2>
+                        <div class="flex gap-2">
+                            <button onclick="refreshPreview()" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600">
+                                刷新
+                            </button>
+                            <span class="text-sm text-gray-600" id="currentUrl">未加载页面</span>
+                        </div>
+                    </div>
+                    
+                    <!-- iframe预览 -->
+                    <div class="relative">
+                        <iframe id="previewFrame" class="render-iframe" src="about:blank"></iframe>
+                        <div id="elementOverlay" class="absolute top-0 left-0 w-full h-full pointer-events-none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let urls = [];
+        let currentPageUrl = '';
+        let analyzedElements = [];
+        let selectedUrlIndex = 0;
+
+        // 样式转换工具
+        const StyleConverter = {
+            // RGB/RGBA 转十六进制
+            rgbToHex(rgb) {
+                if (!rgb || rgb === 'transparent' || rgb === 'rgba(0, 0, 0, 0)') return null;
+                
+                const rgbMatch = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                if (rgbMatch) {
+                    const r = parseInt(rgbMatch[1]).toString(16).padStart(2, '0');
+                    const g = parseInt(rgbMatch[2]).toString(16).padStart(2, '0');
+                    const b = parseInt(rgbMatch[3]).toString(16).padStart(2, '0');
+                    return r + g + b;
+                }
+                
+                if (rgb.startsWith('#')) {
+                    return rgb.substring(1);
+                }
+                
+                // 常见颜色名称
+                const colorMap = {
+                    'black': '000000', 'white': 'FFFFFF', 'red': 'FF0000',
+                    'green': '008000', 'blue': '0000FF', 'yellow': 'FFFF00',
+                    'gray': '808080', 'grey': '808080', 'transparent': null
+                };
+                
+                return colorMap[rgb.toLowerCase()] || '000000';
+            },
+
+            // 像素转英寸 (PPT使用英寸)
+            pxToInch(px) {
+                return parseFloat(px) / 96; // 96 DPI
+            },
+
+            // 像素转点 (字体大小)
+            pxToPt(px) {
+                return Math.max(8, Math.round(parseFloat(px) * 0.75));
+            },
+
+            // 获取字体粗细
+            getFontWeight(weight) {
+                const w = parseInt(weight) || 400;
+                return w >= 600;
+            },
+
+            // 文本对齐转换
+            getTextAlign(align) {
+                const alignMap = {
+                    'left': 'left',
+                    'center': 'center',
+                    'right': 'right',
+                    'justify': 'justify'
+                };
+                return alignMap[align] || 'left';
+            }
+        };
+
+        // 页面分析器
+        const PageAnalyzer = {
+            analyzeElements(doc) {
+                console.log('开始分析页面元素...');
+                const elements = [];
+                const minSize = parseInt(document.getElementById('minElementSize').value) || 5; // 降低最小尺寸限制
+                
+                // 直接选择所有有意义的元素
+                const selectors = [
+                    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',  // 标题
+                    'p', 'span', 'div',                    // 文本容器
+                    'a',                                   // 链接
+                    'img',                                 // 图片
+                    'button', 'input',                     // 控件
+                    'li', 'ul', 'ol',                     // 列表
+                    'td', 'th', 'table'                   // 表格
+                ];
+                
+                for (const selector of selectors) {
+                    const nodeList = doc.querySelectorAll(selector);
+                    console.log(`找到 ${nodeList.length} 个 ${selector} 元素`);
+                    
+                    nodeList.forEach(node => {
+                        try {
+                            const rect = node.getBoundingClientRect();
+                            const style = doc.defaultView.getComputedStyle(node);
+                            
+                            // 检查元素是否可见和有效
+                            if (this.isElementVisible(node, style, rect, minSize)) {
+                                const elementData = this.extractElementData(node, rect, style, doc);
+                                if (elementData) {
+                                    elements.push(elementData);
+                                    console.log(`添加元素: ${elementData.tagName} - ${elementData.text?.substring(0, 30) || '[无文本]'}`);
+                                }
+                            }
+                        } catch (error) {
+                            console.warn('处理元素失败:', node, error);
+                        }
+                    });
+                }
+
+                console.log(`总共分析到 ${elements.length} 个有效元素`);
+
+                // 按位置排序 (从上到下，从左到右)
+                elements.sort((a, b) => {
+                    const yDiff = a.position.y - b.position.y;
+                    return Math.abs(yDiff) < 10 ? a.position.x - b.position.x : yDiff;
+                });
+
+                return elements;
+            },
+
+            isElementVisible(element, style, rect, minSize) {
+                // 检查显示属性
+                if (style.display === 'none' || 
+                    style.visibility === 'hidden' ||
+                    parseFloat(style.opacity) < 0.1) {
+                    return false;
+                }
+                
+                // 检查尺寸 - 放宽限制
+                if (rect.width < minSize || rect.height < minSize) {
+                    return false;
+                }
+                
+                // 检查是否在视口内
+                if (rect.top < -1000 || rect.left < -1000) {
+                    return false;
+                }
+                
+                return true;
+            },
+
+            extractElementData(element, rect, style, doc) {
+                // 获取文本内容 - 改进版本
+                const text = this.getElementText(element);
+                
+                // 获取颜色 - 添加更多调试
+                const bgColor = StyleConverter.rgbToHex(style.backgroundColor);
+                const textColor = StyleConverter.rgbToHex(style.color) || '000000';
+                
+                console.log(`元素 ${element.tagName}: 文本="${text}" 位置=(${rect.left},${rect.top}) 尺寸=${rect.width}x${rect.height}`);
+                
+                // 构建元素数据
+                const elementData = {
+                    type: this.getElementType(element),
+                    tagName: element.tagName,
+                    text: text,
+                    position: {
+                        x: Math.round(rect.left),
+                        y: Math.round(rect.top),
+                        width: Math.round(rect.width),
+                        height: Math.round(rect.height)
+                    },
+                    style: {
+                        fontSize: StyleConverter.pxToPt(style.fontSize) || 12,
+                        fontFamily: (style.fontFamily || 'Arial').split(',')[0].replace(/['"]/g, '').trim(),
+                        fontWeight: StyleConverter.getFontWeight(style.fontWeight),
+                        color: textColor,
+                        backgroundColor: bgColor,
+                        textAlign: StyleConverter.getTextAlign(style.textAlign),
+                        lineHeight: parseFloat(style.lineHeight) || 1.2
+                    },
+                    attributes: {
+                        href: element.href || null,
+                        src: element.src || null,
+                        alt: element.alt || null
+                    }
+                };
+
+                // 确保至少有文本或背景色才返回元素
+                if (elementData.text?.trim() || elementData.style.backgroundColor) {
+                    return elementData;
+                }
+                
+                return null;
+            },
+
+            getElementText(element) {
+                // 多种方式获取文本内容
+                let text = '';
+                
+                // 1. 直接获取textContent
+                const directText = element.textContent?.trim();
+                if (directText && directText.length > 0 && directText.length < 1000) {
+                    text = directText;
+                }
+                
+                // 2. 如果没有，尝试获取直接子文本节点
+                if (!text) {
+                    for (let child of element.childNodes) {
+                        if (child.nodeType === Node.TEXT_NODE) {
+                            const nodeText = child.textContent?.trim();
+                            if (nodeText) {
+                                text += nodeText + ' ';
+                            }
+                        }
+                    }
+                    text = text.trim();
+                }
+                
+                // 3. 对于特殊元素，使用特定属性
+                if (!text) {
+                    if (element.tagName === 'IMG') {
+                        text = element.alt || element.title || '[图片]';
+                    } else if (element.tagName === 'INPUT') {
+                        text = element.value || element.placeholder || '[输入框]';
+                    } else if (element.tagName === 'BUTTON') {
+                        text = element.textContent || '[按钮]';
+                    }
+                }
+                
+                return text.substring(0, 500); // 限制长度
+            },
+
+            getElementType(element) {
+                const tag = element.tagName.toLowerCase();
+                
+                if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)) return 'heading';
+                if (['p', 'div', 'span'].includes(tag)) return 'text';
+                if (tag === 'img') return 'image';
+                if (tag === 'a') return 'link';
+                if (['ul', 'ol', 'li'].includes(tag)) return 'list';
+                if (['button', 'input'].includes(tag)) return 'control';
+                
+                return 'container';
+            }
+        };
+
+        // PPTX 生成器
+        const PPTXGenerator = {
+            async generate(elements, options = {}) {
+                console.log('开始生成PPTX，元素数量:', elements.length);
+                
+                const pptx = new PptxGenJS();
+                
+                // 设置幻灯片尺寸
+                const slideSize = options.slideSize || '16:9';
+                let slideWidth = 10, slideHeight = 5.625;
+                
+                if (slideSize === '4:3') {
+                    slideHeight = 7.5;
+                }
+                
+                pptx.defineLayout({ name: 'Custom', width: slideWidth, height: slideHeight });
+                pptx.layout = 'Custom';
+                
+                // 设置演示文稿属性
+                pptx.title = options.title || '网页布局还原';
+                pptx.subject = 'HTML to PPTX 转换';
+                pptx.author = 'HTML Layout Converter';
+
+                // 创建幻灯片
+                const slide = pptx.addSlide();
+                console.log('幻灯片创建成功');
+
+                // 如果没有元素，至少添加一些测试内容
+                if (elements.length === 0) {
+                    console.log('没有元素，添加测试内容');
+                    slide.addText('没有找到可转换的页面元素', {
+                        x: 1, y: 2, w: 8, h: 1,
+                        fontSize: 24,
+                        color: 'FF0000',
+                        align: 'center'
+                    });
+                    
+                    slide.addText('请检查页面是否正确加载，或降低最小元素尺寸设置', {
+                        x: 1, y: 3, w: 8, h: 1,
+                        fontSize: 14,
+                        color: '666666',
+                        align: 'center'
+                    });
+                    
+                    return pptx;
+                }
+
+                // 计算缩放比例
+                const iframe = document.getElementById('previewFrame');
+                const iframeRect = iframe.getBoundingClientRect();
+                console.log('iframe尺寸:', iframeRect.width, 'x', iframeRect.height);
+                
+                // 更保守的缩放计算
+                const scaleX = (slideWidth * 0.8) / iframeRect.width;
+                const scaleY = (slideHeight * 0.8) / iframeRect.height;
+                const scale = Math.min(scaleX, scaleY);
+                
+                console.log('缩放比例:', scale, '原始iframe尺寸:', iframeRect.width, 'x', iframeRect.height);
+
+                // 添加标题
+                slide.addText(`页面还原: ${new URL(currentPageUrl).hostname}`, {
+                    x: 0.5, y: 0.2, w: slideWidth - 1, h: 0.5,
+                    fontSize: 16,
+                    color: '2c3e50',
+                    bold: true,
+                    align: 'center'
+                });
+
+                // 添加所有元素到幻灯片
+                let addedCount = 0;
+                const startY = 0.8; // 为标题留出空间
+                
+                for (let i = 0; i < elements.length; i++) {
+                    const element = elements[i];
+                    try {
+                        const added = await this.addElementToSlide(slide, element, scale, slideWidth, slideHeight, startY);
+                        if (added) {
+                            addedCount++;
+                            console.log(`成功添加元素 ${i + 1}/${elements.length}: ${element.tagName}`);
+                        } else {
+                            console.log(`跳过元素 ${i + 1}/${elements.length}: ${element.tagName} (超出范围或太小)`);
+                        }
+                    } catch (error) {
+                        console.warn(`添加元素失败 ${i + 1}/${elements.length}:`, error, element);
+                    }
+                }
+
+                console.log(`总共成功添加 ${addedCount}/${elements.length} 个元素`);
+
+                // 添加页面信息
+                slide.addText(`来源: ${currentPageUrl} | 元素数: ${addedCount}`, {
+                    x: 0.1, y: slideHeight - 0.4, w: slideWidth - 0.2, h: 0.3,
+                    fontSize: 8,
+                    color: '666666',
+                    hyperlink: currentPageUrl ? { url: currentPageUrl } : undefined
+                });
+
+                return pptx;
+            },
+
+            async addElementToSlide(slide, element, scale, slideWidth, slideHeight, offsetY = 0) {
+                // 计算位置和尺寸 - 添加偏移
+                let x = StyleConverter.pxToInch(element.position.x * scale);
+                let y = StyleConverter.pxToInch(element.position.y * scale) + offsetY;
+                let w = StyleConverter.pxToInch(element.position.width * scale);
+                let h = StyleConverter.pxToInch(element.position.height * scale);
+
+                // 确保元素在幻灯片范围内
+                if (x >= slideWidth || y >= slideHeight) {
+                    return false;
+                }
+                
+                // 调整尺寸确保不超出边界
+                if (x + w > slideWidth) {
+                    w = slideWidth - x - 0.1;
+                }
+                if (y + h > slideHeight) {
+                    h = slideHeight - y - 0.1;
+                }
+                
+                // 确保最小尺寸
+                if (w < 0.1 || h < 0.1) {
+                    return false;
+                }
+
+                // 构建基本选项
+                const baseOptions = {
+                    x: Math.max(0.1, x),
+                    y: Math.max(offsetY, y),
+                    w: Math.max(0.1, w),
+                    h: Math.max(0.1, h)
+                };
+
+                console.log(`添加元素: ${element.tagName}, 位置: (${baseOptions.x.toFixed(2)}, ${baseOptions.y.toFixed(2)}), 尺寸: ${baseOptions.w.toFixed(2)}x${baseOptions.h.toFixed(2)}`);
+
+                try {
+                    // 根据元素类型处理
+                    if (element.type === 'image' && element.attributes.src && document.getElementById('includeImages').checked) {
+                        // 图片元素转为形状占位符
+                        slide.addShape(pptx.shapes.RECTANGLE, {
+                            ...baseOptions,
+                            fill: { color: 'E8F4FD' },
+                            line: { color: '4A90C2', width: 1 }
+                        });
+                        
+                        // 添加图片标识文本
+                        slide.addText(`📷 ${element.attributes.alt || '图片'}`, {
+                            ...baseOptions,
+                            fontSize: Math.max(8, Math.min(element.style.fontSize, 16)),
+                            color: '4A90C2',
+                            align: 'center',
+                            valign: 'middle'
+                        });
+                    } else if (element.text?.trim()) {
+                        // 文本元素
+                        const textOptions = {
+                            ...baseOptions,
+                            fontSize: Math.max(8, Math.min(element.style.fontSize || 12, 32)),
+                            color: element.style.color || '000000',
+                            bold: element.style.fontWeight,
+                            align: element.style.textAlign || 'left',
+                            valign: 'top',
+                            wrap: true,
+                            autoFit: false
+                        };
+
+                        // 添加背景色
+                        if (element.style.backgroundColor && document.getElementById('includeBackground').checked) {
+                            textOptions.fill = { color: element.style.backgroundColor };
+                        }
+
+                        // 链接处理
+                        if (element.attributes.href) {
+                            textOptions.hyperlink = { url: element.attributes.href };
+                            textOptions.color = '0066CC'; // 链接颜色
+                        }
+
+                        // 根据元素类型调整样式
+                        if (element.type === 'heading') {
+                            textOptions.bold = true;
+                            textOptions.fontSize = Math.max(14, textOptions.fontSize);
+                        }
+
+                        slide.addText(element.text.trim(), textOptions);
+                    } else if (element.style.backgroundColor && document.getElementById('includeBackground').checked) {
+                        // 仅背景色的容器元素
+                        slide.addShape(pptx.shapes.RECTANGLE, {
+                            ...baseOptions,
+                            fill: { color: element.style.backgroundColor },
+                            line: { width: 0 }
+                        });
+                    } else {
+                        return false; // 没有有效内容
+                    }
+
+                    return true;
+                } catch (error) {
+                    console.error('添加元素到slide失败:', error);
+                    return false;
+                }
+            }
+        };
+
+        // UI 控制函数
+        function addUrl() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+            
+            if (url && isValidUrl(url)) {
+                if (!urls.includes(url)) {
+                    urls.push(url);
+                    updateUrlList();
+                    urlInput.value = '';
+                    showStatus('URL已添加', 'success');
+                } else {
+                    showStatus('URL已存在', 'warning');
+                }
+            } else {
+                showStatus('请输入有效的URL', 'error');
+            }
+        }
+
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function updateUrlList() {
+            const urlList = document.getElementById('urlList');
+            urlList.innerHTML = '';
+            
+            urls.forEach((url, index) => {
+                const urlItem = document.createElement('div');
+                urlItem.className = `p-2 border rounded cursor-pointer text-sm ${selectedUrlIndex === index ? 'bg-blue-100 border-blue-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`;
+                urlItem.onclick = () => {
+                    selectedUrlIndex = index;
+                    updateUrlList();
+                };
+                urlItem.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1 truncate">${new URL(url).pathname || '/'}</div>
+                        <button onclick="removeUrl(${index}); event.stopPropagation();" class="text-red-500 hover:text-red-700 ml-2">×</button>
+                    </div>
+                    <div class="text-xs text-gray-500 truncate">${url}</div>
+                `;
+                urlList.appendChild(urlItem);
+            });
+        }
+
+        function removeUrl(index) {
+            urls.splice(index, 1);
+            if (selectedUrlIndex >= urls.length) {
+                selectedUrlIndex = Math.max(0, urls.length - 1);
+            }
+            updateUrlList();
+        }
+
+        function clearUrls() {
+            urls = [];
+            selectedUrlIndex = 0;
+            updateUrlList();
+            showStatus('已清空URL列表', 'info');
+        }
+
+        function loadSelectedUrl() {
+            if (urls.length === 0) {
+                showStatus('请先添加URL', 'warning');
+                return;
+            }
+
+            const url = urls[selectedUrlIndex];
+            currentPageUrl = url;
+            
+            const iframe = document.getElementById('previewFrame');
+            const currentUrlSpan = document.getElementById('currentUrl');
+            
+            showStatus('正在加载页面...', 'info');
+            currentUrlSpan.textContent = '加载中...';
+            
+            // 清除之前的分析结果
+            analyzedElements = [];
+            document.getElementById('analysisResult').innerHTML = '<div class="text-center text-gray-400 py-4">等待页面加载完成后分析...</div>';
+            clearElementBounds();
+            
+            console.log('开始加载URL:', url);
+            
+            // 定义加载完成处理函数
+            const handleLoad = () => {
+                clearTimeout(loadTimeout);
+                console.log('页面加载完成');
+                showStatus('页面加载完成，可以开始分析', 'success');
+                currentUrlSpan.textContent = new URL(url).hostname;
+                
+                // 检查是否能访问页面内容
+                try {
+                    const doc = iframe.contentDocument;
+                    if (doc && doc.body) {
+                        console.log('页面内容可访问，标题:', doc.title);
+                        console.log('页面body内容:', doc.body.innerHTML.length, '字符');
+                        
+                        // 自动分析页面
+                        setTimeout(() => {
+                            analyzeCurrentPage();
+                        }, 1000);
+                    } else {
+                        console.warn('无法访问页面内容，可能是跨域问题');
+                        showStatus('页面加载完成，但可能存在访问限制', 'warning');
+                    }
+                } catch (error) {
+                    console.error('访问页面内容失败:', error);
+                    showStatus('页面加载完成，但无法分析内容: ' + error.message, 'warning');
+                }
+            };
+            
+            // 添加超时处理
+            const loadTimeout = setTimeout(() => {
+                console.warn('页面加载超时');
+                showStatus('页面加载超时，请检查URL是否有效', 'warning');
+            }, 10000);
+            
+            iframe.onload = handleLoad;
+            
+            iframe.onerror = (error) => {
+                clearTimeout(loadTimeout);
+                console.error('页面加载失败:', error);
+                showStatus('页面加载失败', 'error');
+                currentUrlSpan.textContent = '加载失败';
+            };
+            
+            iframe.src = url;
+        }
+
+        function refreshPreview() {
+            if (currentPageUrl) {
+                loadSelectedUrl();
+            }
+        }
+
+        function analyzeCurrentPage() {
+            const iframe = document.getElementById('previewFrame');
+            
+            if (!iframe.contentDocument) {
+                showStatus('请先加载页面', 'warning');
+                return;
+            }
+
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            analyzeBtn.innerHTML = '<div class="loading-spinner inline-block mr-2"></div>分析中...';
+            analyzeBtn.disabled = true;
+
+            try {
+                console.log('开始分析当前页面...');
+                
+                // 等待页面完全渲染
+                setTimeout(() => {
+                    try {
+                        const doc = iframe.contentDocument;
+                        console.log('获取到页面文档:', doc.title);
+                        console.log('页面body元素数量:', doc.body.children.length);
+                        
+                        // 检查页面是否有内容
+                        if (!doc.body || doc.body.children.length === 0) {
+                            throw new Error('页面没有内容或加载失败');
+                        }
+                        
+                        analyzedElements = PageAnalyzer.analyzeElements(doc);
+                        
+                        console.log('分析完成，元素数量:', analyzedElements.length);
+                        
+                        displayAnalysisResult(analyzedElements);
+                        
+                        if (document.getElementById('showElementBounds').checked) {
+                            showElementBounds(analyzedElements);
+                        }
+                        
+                        analyzeBtn.textContent = '分析页面结构';
+                        analyzeBtn.disabled = false;
+                        
+                        if (analyzedElements.length > 0) {
+                            showStatus(`分析完成，发现 ${analyzedElements.length} 个可用元素`, 'success');
+                        } else {
+                            showStatus('未发现可用元素，请检查页面内容或降低最小元素尺寸', 'warning');
+                        }
+                        
+                    } catch (error) {
+                        console.error('页面分析过程出错:', error);
+                        showStatus('页面分析失败: ' + error.message, 'error');
+                        analyzeBtn.textContent = '分析页面结构';
+                        analyzeBtn.disabled = false;
+                    }
+                }, 1500); // 增加等待时间确保页面渲染完成
+                
+            } catch (error) {
+                console.error('分析失败:', error);
+                showStatus('页面分析失败: ' + error.message, 'error');
+                analyzeBtn.textContent = '分析页面结构';
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function displayAnalysisResult(elements) {
+            const resultDiv = document.getElementById('analysisResult');
+            
+            if (elements.length === 0) {
+                resultDiv.innerHTML = `
+                    <div class="text-red-500 text-center py-4">
+                        <div>❌ 未发现可用元素</div>
+                        <div class="text-xs mt-2 text-gray-600">
+                            建议：降低最小元素尺寸或检查页面内容
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 统计元素类型
+            const typeStats = {};
+            const textElements = [];
+            const backgroundElements = [];
+            
+            elements.forEach(el => {
+                typeStats[el.type] = (typeStats[el.type] || 0) + 1;
+                if (el.text?.trim()) textElements.push(el);
+                if (el.style.backgroundColor) backgroundElements.push(el);
+            });
+
+            let html = `
+                <div class="space-y-3">
+                    <div class="bg-green-50 p-3 rounded border">
+                        <div class="font-medium text-green-800">✅ 发现 ${elements.length} 个元素</div>
+                        <div class="text-xs mt-1 space-y-1 text-green-700">
+            `;
+
+            for (const [type, count] of Object.entries(typeStats)) {
+                html += `<div>• ${type}: ${count}个</div>`;
+            }
+
+            html += `
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-3 rounded border">
+                        <div class="text-xs space-y-1 text-blue-700">
+                            <div><strong>文本元素:</strong> ${textElements.length}个</div>
+                            <div><strong>背景元素:</strong> ${backgroundElements.length}个</div>
+                            <div><strong>预计PPT元素:</strong> ${textElements.length + backgroundElements.length}个</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-3 rounded border">
+                        <div class="text-xs text-gray-600">
+                            <div><strong>示例元素:</strong></div>
+            `;
+
+            // 显示前3个有文本的元素作为示例
+            const sampleElements = textElements.slice(0, 3);
+            sampleElements.forEach((el, index) => {
+                html += `<div class="mt-1">• ${el.tagName}: "${el.text.substring(0, 30)}${el.text.length > 30 ? '...' : ''}"</div>`;
+            });
+
+            if (sampleElements.length === 0) {
+                html += '<div class="mt-1 text-yellow-600">⚠️ 没有发现文本元素</div>';
+            }
+
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            resultDiv.innerHTML = html;
+        }
+
+        function toggleElementBounds() {
+            if (document.getElementById('showElementBounds').checked) {
+                showElementBounds(analyzedElements);
+            } else {
+                clearElementBounds();
+            }
+        }
+
+        function showElementBounds(elements) {
+            clearElementBounds();
+            
+            const overlay = document.getElementById('elementOverlay');
+            const iframe = document.getElementById('previewFrame');
+            const iframeRect = iframe.getBoundingClientRect();
+            
+            elements.forEach((element, index) => {
+                const box = document.createElement('div');
+                box.className = 'element-box';
+                box.style.left = element.position.x + 'px';
+                box.style.top = element.position.y + 'px';
+                box.style.width = element.position.width + 'px';
+                box.style.height = element.position.height + 'px';
+                
+                const info = document.createElement('div');
+                info.className = 'debug-info';
+                info.style.position = 'absolute';
+                info.style.top = '-20px';
+                info.style.left = '0';
+                info.textContent = `${element.type}: ${element.text ? element.text.substring(0, 20) + '...' : '[无文本]'}`;
+                
+                box.appendChild(info);
+                overlay.appendChild(box);
+            });
+        }
+
+        function clearElementBounds() {
+            document.getElementById('elementOverlay').innerHTML = '';
+        }
+
+        async function generatePPTX() {
+            if (analyzedElements.length === 0) {
+                showStatus('请先分析页面结构', 'warning');
+                return;
+            }
+
+            const generateBtn = document.getElementById('generateBtn');
+            const progressInfo = document.getElementById('progressInfo');
+            const progressText = document.getElementById('progressText');
+            
+            generateBtn.disabled = true;
+            progressInfo.classList.remove('hidden');
+            progressText.textContent = '正在生成PPTX...';
+
+            try {
+                const options = {
+                    title: document.getElementById('pptTitle').value,
+                    slideSize: document.getElementById('slideSize').value
+                };
+
+                progressText.textContent = '创建幻灯片...';
+                const pptx = await PPTXGenerator.generate(analyzedElements, options);
+                
+                progressText.textContent = '准备下载...';
+                const fileName = `${options.title}_${Date.now()}.pptx`;
+                
+                await pptx.writeFile({ fileName });
+                
+                showStatus('PPTX文件生成成功！', 'success');
+                
+            } catch (error) {
+                console.error('生成失败:', error);
+                showStatus('PPTX生成失败: ' + error.message, 'error');
+            } finally {
+                generateBtn.disabled = false;
+                progressInfo.classList.add('hidden');
+            }
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusContainer = document.getElementById('statusContainer');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            const colors = {
+                success: 'text-green-800 bg-green-100 border border-green-200',
+                error: 'text-red-800 bg-red-100 border border-red-200',
+                warning: 'text-yellow-800 bg-yellow-100 border border-yellow-200',
+                info: 'text-blue-800 bg-blue-100 border border-blue-200'
+            };
+            
+            statusMessage.className = colors[type] + ' rounded p-3';
+            statusMessage.textContent = message;
+            statusContainer.classList.remove('hidden');
+            
+            setTimeout(() => {
+                statusContainer.classList.add('hidden');
+            }, 5000);
+        }
+
+        // 事件监听
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addUrl();
+            }
+        });
+
+        // 初始化
+        window.addEventListener('load', function() {
+            showStatus('HTML布局还原工具已就绪', 'info');
+        });
+    </script>
+</body>
+</html>

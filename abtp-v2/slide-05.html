@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP多平台整合架构</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+        }
+
+        .gf-red {
+            background: linear-gradient(135deg, #CC0000 0%, #8B0000 100%);
+        }
+
+        .gf-red-light {
+            background: linear-gradient(135deg, #FFE5E5 0%, #FFCCCC 100%);
+        }
+
+        /* 赞同建设内容 - 蓝色系 */
+        .zt-build {
+            background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+            color: white;
+        }
+
+        .zt-build-light {
+            background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+            color: #1E40AF;
+            border: 1px solid #3B82F6;
+        }
+
+        /* 外部系统 - 绿色系 */
+        .external-sys {
+            background: linear-gradient(135deg, #10B981 0%, #047857 100%);
+            color: white;
+        }
+
+        .external-sys-light {
+            background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+            color: #047857;
+            border: 1px solid #10B981;
+        }
+
+        /* 基础设施 - 灰色系 */
+        .infrastructure {
+            background: linear-gradient(135deg, #6B7280 0%, #374151 100%);
+            color: white;
+        }
+
+        .infrastructure-light {
+            background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+            color: #374151;
+            border: 1px solid #6B7280;
+        }
+
+        .architecture-layer {
+            margin: 8px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .layer-header {
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 14px;
+            min-width: 160px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .layer-content {
+            background: white;
+            padding: 16px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            flex:1;
+        }
+
+        .module-box {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .module-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .legend {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 12px;
+        }
+
+        .annotation {
+            font-size: 11px;
+            color: #6B7280;
+            margin-top: 4px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+    </style>
+</head>
+
+<body class="p-6">
+    <div class="">
+        <!-- 页面标题 -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold mb-3" style="color: #CC0000;">MCP多平台整合架构</h1>
+            <h2 class="text-lg text-gray-600">系统技术架构图</h2>
+        </div>
+
+        <!-- 图例说明 -->
+        <div class="legend animate-in">
+            <h3 class="font-semibold text-gray-800 mb-3">🏗️ 建设主体说明</h3>
+            <div class="grid grid-cols-3 gap-6">
+                <div class="legend-item">
+                    <div class="legend-color zt-build"></div>
+                    <span class="text-sm font-medium">赞同科技建设内容</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color external-sys"></div>
+                    <span class="text-sm font-medium">外部系统/第三方平台</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color infrastructure"></div>
+                    <span class="text-sm font-medium">基础设施</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 架构图 -->
+        <div>
+            <!-- 展示层 -->
+            <div class="architecture-layer animate-in" style="animation-delay: 0.1s">
+                <div class="flex">
+                    <div class="layer-header gf-red">展示层</div>
+                    <div class="layer-content">
+                        <div class="module-box zt-build-light">
+                            差旅申请小程序
+                            <div class="annotation">员工差旅申请入口</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            差旅审批小程序
+                            <div class="annotation">管理层审批界面</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            LUI语言交互界面
+                            <div class="annotation">自然语言对话</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            Web管理后台
+                            <div class="annotation">系统管理界面</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 接入层 -->
+            <div class="architecture-layer animate-in" style="animation-delay: 0.2s">
+                <div class="flex">
+                    <div class="layer-header gf-red">接入层</div>
+                    <div class="layer-content">
+                        <div class="module-box zt-build-light">
+                            API网关
+                            <div class="annotation">统一入口</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            负载均衡
+                            <div class="annotation">流量分发</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            服务路由
+                            <div class="annotation">请求路由</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            认证授权
+                            <div class="annotation">安全控制</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MCP协议层 -->
+            <div class="architecture-layer animate-in" style="animation-delay: 0.3s">
+                <div class="flex">
+                    <div class="layer-header gf-red">MCP协议层</div>
+                    <div class="layer-content">
+                        <div class="module-box zt-build-light">
+                            智能路由引擎
+                            <div class="annotation">多平台智能选择</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            数据格式转换
+                            <div class="annotation">标准化数据映射</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            实时状态同步
+                            <div class="annotation">跨平台状态管理</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            异常处理机制
+                            <div class="annotation">故障自动恢复</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 业务服务层 -->
+            <div class="architecture-layer animate-in" style="animation-delay: 0.4s">
+                <div class="flex">
+                    <div class="layer-header gf-red">业务服务</div>
+                    <div class="layer-content">
+                        <div class="module-box zt-build-light">
+                            申请单管理
+                            <div class="annotation">差旅申请全生命周期</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            审批工作流引擎
+                            <div class="annotation">多级审批流程</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            业务规则引擎
+                            <div class="annotation">企业政策执行</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            凭证管理服务
+                            <div class="annotation">发票票据管理</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            后台管理平台
+                            <div class="annotation">系统配置管理</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 外部平台层 -->
+            <div class="architecture-layer animate-in" style="animation-delay: 0.5s">
+                <div class="flex">
+                    <div class="layer-header gf-red">外部平台</div>
+                    <div class="layer-content">
+                        <div class="module-box external-sys-light">
+                            合思商城
+                            <div class="annotation">费控报销 | 5000次/日 | JSON格式</div>
+                        </div>
+                        <div class="module-box external-sys-light">
+                            差旅壹号
+                            <div class="annotation">综合预订 | 10000次/日 | XML格式</div>
+                        </div>
+                        <div class="module-box external-sys-light">
+                            华住会
+                            <div class="annotation">酒店预订 | 3000次/日 | JSON格式</div>
+                        </div>
+                        <div class="module-box external-sys-light">
+                            携程企业版
+                            <div class="annotation">机票酒店 | 8000次/日 | JSON格式</div>
+                        </div>
+                        <div class="module-box external-sys-light">
+                            滴滴企业版
+                            <div class="annotation">用车服务 | 2000次/日 | JSON格式</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 技术服务层 -->
+            <div class="architecture-layer animate-in" style="animation-delay: 0.6s">
+                <div class="flex">
+                    <div class="layer-header gf-red">技术服务层</div>
+                    <div class="layer-content">
+                        <div class="module-box zt-build-light">
+                            AFBoot
+                            <div class="annotation">应用框架</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            AMQ
+                            <div class="annotation">消息队列</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            AOPS
+                            <div class="annotation">工作流引擎</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            LLM引擎
+                            <div class="annotation">大语言模型</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            缓存服务
+                            <div class="annotation">Redis集群</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据层 -->
+            <div class="architecture-layer animate-in" style="animation-delay: 0.7s">
+                <div class="flex">
+                    <div class="layer-header gf-red">数据层</div>
+                    <div class="layer-content">
+                        <div class="module-box zt-build-light">
+                            MySQL主从集群
+                            <div class="annotation">业务数据存储</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            MongoDB
+                            <div class="annotation">文档数据存储</div>
+                        </div>
+                        <div class="module-box zt-build-light">
+                            ElasticSearch
+                            <div class="annotation">搜索分析引擎</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 基础设施 -->
+            <div class="architecture-layer animate-in" style="animation-delay: 0.8s">
+                <div class="flex">
+                    <div class="layer-header gf-red">基础设施</div>
+                    <div class="layer-content">
+                        <div class="module-box infrastructure-light">
+                            Kubernetes集群
+                            <div class="annotation">容器编排</div>
+                        </div>
+                        <div class="module-box infrastructure-light">
+                            Docker容器
+                            <div class="annotation">应用容器化</div>
+                        </div>
+                        <div class="module-box infrastructure-light">
+                            云服务器VM
+                            <div class="annotation">计算资源</div>
+                        </div>
+                        <div class="module-box infrastructure-light">
+                            网络存储
+                            <div class="annotation">数据持久化</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 架构特点说明 -->
+        <div class="mt-6 grid grid-cols-3 gap-4 animate-in" style="animation-delay: 0.9s">
+            <div class="bg-white p-4 rounded-lg border border-blue-200">
+                <h4 class="font-semibold text-blue-800 mb-2">🔧 赞同科技建设</h4>
+                <p class="text-sm text-blue-600">负责MCP协议层、业务服务层、技术服务层的开发建设，提供统一的差旅管理中台能力</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg border border-green-200">
+                <h4 class="font-semibold text-green-800 mb-2">🌐 外部系统集成</h4>
+                <p class="text-sm text-green-600">通过标准化API接口与多个差旅服务平台对接，实现资源整合和统一管控</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg border border-gray-200">
+                <h4 class="font-semibold text-gray-800 mb-2">☁️ 云原生架构</h4>
+                <p class="text-sm text-gray-600">基于容器化和微服务架构，支持弹性伸缩和高可用部署</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 添加动画效果
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.animate-in');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                }, index * 150);
+            });
+        });
+
+        // 模块悬停效果
+        document.querySelectorAll('.module-box').forEach(box => {
+            box.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px) scale(1.02)';
+            });
+            
+            box.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+
+</html>

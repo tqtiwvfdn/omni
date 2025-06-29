@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>差旅后流程管理 - 赞同智言差旅系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .status-pending {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        }
+        
+        .status-approved {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .status-rejected {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        .status-processing {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+        
+        .flow-line {
+            position: relative;
+        }
+        
+        .flow-line::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -20px;
+            width: 40px;
+            height: 2px;
+            background: #e5e7eb;
+            transform: translateY(-50%);
+        }
+        
+        .flow-line.active::after {
+            background: #10b981;
+        }
+        
+        .animate-pulse-soft {
+            animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse-soft {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .8;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">赞</span>
+                    </div>
+                    <h1 class="text-xl font-semibold text-gray-900">差旅后流程管理</h1>
+                </div>
+                <div class="h-6 w-px bg-gray-300"></div>
+                <nav class="flex space-x-6">
+                    <a href="#" class="text-blue-600 font-medium">流程监控</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700">报销管理</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700">预算管理</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700">数据分析</a>
+                </nav>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17H4l5 5v-5z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7V2l-5 5h5z" />
+                    </svg>
+                </button>
+                <div class="h-6 w-px bg-gray-300"></div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+                    <span class="text-sm font-medium text-gray-700">管理员</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 p-6">
+        <!-- 统计概览 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">待处理报销</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">24</p>
+                        <p class="text-xs text-red-600 mt-1">↑ 较昨日 +3</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">审批中</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">12</p>
+                        <p class="text-xs text-blue-600 mt-1">平均用时 1.5小时</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">财务校验</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">8</p>
+                        <p class="text-xs text-yellow-600 mt-1">AI自动校验率 95%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">已完成</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">156</p>
+                        <p class="text-xs text-green-600 mt-1">本月累计</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 流程概览 -->
+        <div class="bg-white rounded-xl p-6 card-shadow mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-6">差后流程概览</h2>
+            <div class="flex items-center justify-between space-x-4">
+                <!-- 报销 -->
+                <div class="flex-1 flow-line active">
+                    <div class="relative">
+                        <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="font-semibold text-gray-900 mb-1">智能报销</h3>
+                            <p class="text-sm text-gray-600">OCR识别 · 自动归集</p>
+                            <div class="mt-2 px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full inline-block">
+                                24个待处理
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 审批 -->
+                <div class="flex-1 flow-line active">
+                    <div class="relative">
+                        <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="font-semibold text-gray-900 mb-1">智能审批</h3>
+                            <p class="text-sm text-gray-600">自动路由 · 合规检查</p>
+                            <div class="mt-2 px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full inline-block">
+                                12个审批中
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 财务校验 -->
+                <div class="flex-1 flow-line active">
+                    <div class="relative">
+                        <div class="w-16 h-16 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="font-semibold text-gray-900 mb-1">财务校验</h3>
+                            <p class="text-sm text-gray-600">发票验真 · 自动记账</p>
+                            <div class="mt-2 px-3 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full inline-block">
+                                8个校验中
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预算归还 -->
+                <div class="flex-1">
+                    <div class="relative">
+                        <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                            </svg>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="font-semibold text-gray-900 mb-1">预算归还</h3>
+                            <p class="text-sm text-gray-600">自动核销 · 余额归还</p>
+                            <div class="mt-2 px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full inline-block">
+                                实时处理
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 待处理事项列表 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 待处理报销 -->
+            <div class="bg-white rounded-xl card-shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">待处理报销</h3>
+                        <span class="px-3 py-1 bg-red-100 text-red-800 text-sm rounded-full">24个</span>
+                    </div>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-semibold text-blue-600">张</span>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">张文明 - 上海出差</p>
+                                <p class="text-sm text-gray-600">2025-06-28 提交 · ¥1,350</p>
+                            </div>
+                        </div>
+                        <button class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                            处理
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-semibold text-green-600">李</span>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">李强 - 深圳商务行</p>
+                                <p class="text-sm text-gray-600">2025-06-27 提交 · ¥2,180</p>
+                            </div>
+                        </div>
+                        <button class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                            处理
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-semibold text-purple-600">王</span>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">王丽 - 北京培训</p>
+                                <p class="text-sm text-gray-600">2025-06-27 提交 · ¥980</p>
+                            </div>
+                        </div>
+                        <button class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                            处理
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4 border-t border-gray-200">
+                    <button class="w-full text-center text-blue-600 hover:text-blue-700 text-sm font-medium">
+                        查看全部 →
+                    </button>
+                </div>
+            </div>
+
+            <!-- 异常预警 -->
+            <div class="bg-white rounded-xl card-shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">异常预警</h3>
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full">3个</span>
+                    </div>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center mt-1">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.764 0L3.05 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-red-900">疑似重复报销</p>
+                                <p class="text-sm text-red-700 mt-1">刘华 - 相同时间地点的餐费发票</p>
+                                <p class="text-xs text-red-600 mt-2">2025-06-28 14:30</p>
+                            </div>
+                            <button class="text-red-600 hover:text-red-700 text-sm font-medium">查看</button>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center mt-1">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.764 0L3.05 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-yellow-900">超标准消费</p>
+                                <p class="text-sm text-yellow-700 mt-1">陈明 - 酒店费用超出M3级标准</p>
+                                <p class="text-xs text-yellow-600 mt-2">2025-06-28 11:20</p>
+                            </div>
+                            <button class="text-yellow-600 hover:text-yellow-700 text-sm font-medium">查看</button>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-blue-900">发票验真异常</p>
+                                <p class="text-sm text-blue-700 mt-1">周敏 - 发票信息与税务局不符</p>
+                                <p class="text-xs text-blue-600 mt-2">2025-06-28 09:45</p>
+                            </div>
+                            <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">查看</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI智能分析 -->
+        <div class="mt-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">AI智能分析建议</h3>
+                    <p class="text-blue-100 mb-4">基于历史数据和当前流程状况的智能建议</p>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>建议优化审批流程，当前平均审批时间可缩短至1.2小时</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>检测到销售部门差旅成本上升15%，建议制定专项预算策略</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>OCR识别准确率达98.5%，可进一步提升自动化水平</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="text-right">
+                    <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-3">
+                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                    </div>
+                    <button class="px-4 py-2 bg-white text-blue-600 text-sm rounded-lg hover:bg-gray-100 transition-colors font-medium">
+                        查看详细报告
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赞同智言差旅管理系统 - 人事端智能审批</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .status-normal { background-color: #d1fae5; color: #065f46; }
+        .status-warning { background-color: #fef3c7; color: #92400e; }
+        .status-error { background-color: #fee2e2; color: #991b1b; }
+        .sidebar-item:hover {
+            background-color: #f3f4f6;
+            border-left: 4px solid #3b82f6;
+        }
+        .sidebar-item.active {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="text-2xl font-bold text-blue-600">赞同智言</div>
+                        <span class="ml-2 text-gray-500">差旅管理系统</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <img class="h-8 w-8 rounded-full" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%234F46E5'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='0.35em' fill='white' font-size='40' font-family='Arial'%3E人%3C/text%3E%3C/svg%3E" alt="用户头像">
+                        <span class="text-sm font-medium text-gray-700">人事管理员</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex">
+        <!-- 侧边栏 -->
+        <div class="w-64 bg-white shadow-sm h-screen">
+            <div class="p-4">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">人事管理中心</h2>
+                <nav class="space-y-1">
+                    <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <i class="fas fa-tachometer-alt mr-3 text-gray-400"></i>
+                        工作台
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <i class="fas fa-users mr-3 text-gray-400"></i>
+                        差标管理
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <i class="fas fa-calculator mr-3 text-gray-400"></i>
+                        预算管理
+                    </a>
+                    <a href="#" class="sidebar-item active flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <i class="fas fa-clipboard-check mr-3"></i>
+                        智能审批
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <i class="fas fa-exclamation-triangle mr-3 text-gray-400"></i>
+                        异常监控
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <i class="fas fa-chart-bar mr-3 text-gray-400"></i>
+                        数据报表
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="flex-1 p-6">
+            <!-- 页面标题和操作区 -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">差旅后核查</h1>
+                        <p class="mt-1 text-sm text-gray-500">智能比对实际消费与预算计划，标记异常消费项</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-download mr-2"></i>导出报告
+                        </button>
+                        <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                            <i class="fas fa-filter mr-2"></i>筛选条件
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-lg card-shadow">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100">
+                            <i class="fas fa-clipboard-list text-blue-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">待核查申请</p>
+                            <p class="text-2xl font-semibold text-gray-900">23</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg card-shadow">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100">
+                            <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">异常消费</p>
+                            <p class="text-2xl font-semibold text-gray-900">8</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg card-shadow">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-red-100">
+                            <i class="fas fa-ban text-red-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">超标费用</p>
+                            <p class="text-2xl font-semibold text-gray-900">5</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg card-shadow">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100">
+                            <i class="fas fa-check-circle text-green-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">已完成核查</p>
+                            <p class="text-2xl font-semibold text-gray-900">156</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主要内容表格 -->
+            <div class="bg-white rounded-lg card-shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">差旅申请核查列表</h3>
+                        <div class="flex space-x-2">
+                            <select class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                                <option>全部状态</option>
+                                <option>待核查</option>
+                                <option>异常标记</option>
+                                <option>已通过</option>
+                            </select>
+                            <input type="text" placeholder="搜索申请人、部门..." class="px-3 py-1 border border-gray-300 rounded-md text-sm w-48">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">申请信息</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">行程概况</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">预算对比</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">异常检测</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                            <span class="text-sm font-medium text-blue-800">张</span>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">张伟-A12306</div>
+                                            <div class="text-sm text-gray-500">市场部 · 销售经理</div>
+                                            <div class="text-xs text-gray-400">申请时间：2024-06-20</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">北京 → 上海</div>
+                                    <div class="text-sm text-gray-500">2024-06-25 至 2024-06-27</div>
+                                    <div class="text-xs text-gray-400">客户拜访 · 3天2夜</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">
+                                        <span class="font-medium">实际：¥3,240</span>
+                                        <div class="text-xs text-gray-500">预算：¥3,000</div>
+                                        <div class="text-xs text-red-600">超支：¥240 (8%)</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="space-y-1">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full status-warning">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>预算超支
+                                        </span>
+                                        <div class="text-xs text-gray-500">酒店标准超出M3级别</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        待核查
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                    <button class="text-blue-600 hover:text-blue-900" onclick="showDetails('detail1')">详细核查</button>
+                                    <button class="text-green-600 hover:text-green-900">通过</button>
+                                    <button class="text-red-600 hover:text-red-900">驳回</button>
+                                </td>
+                            </tr>
+                            
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                            <span class="text-sm font-medium text-green-800">李</span>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">李明-B43205</div>
+                                            <div class="text-sm text-gray-500">技术部 · 高级工程师</div>
+                                            <div class="text-xs text-gray-400">申请时间：2024-06-18</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">深圳 → 杭州</div>
+                                    <div class="text-sm text-gray-500">2024-06-22 至 2024-06-24</div>
+                                    <div class="text-xs text-gray-400">技术交流 · 2天1夜</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">
+                                        <span class="font-medium">实际：¥1,850</span>
+                                        <div class="text-xs text-gray-500">预算：¥2,000</div>
+                                        <div class="text-xs text-green-600">节省：¥150 (7.5%)</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="space-y-1">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full status-normal">
+                                            <i class="fas fa-check-circle mr-1"></i>正常
+                                        </span>
+                                        <div class="text-xs text-gray-500">符合差旅标准</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        已通过
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                    <button class="text-blue-600 hover:text-blue-900">查看详情</button>
+                                    <button class="text-gray-400 cursor-not-allowed">已处理</button>
+                                </td>
+                            </tr>
+
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                                            <span class="text-sm font-medium text-purple-800">王</span>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">王芳-C78901</div>
+                                            <div class="text-sm text-gray-500">财务部 · 财务经理</div>
+                                            <div class="text-xs text-gray-400">申请时间：2024-06-15</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">广州 → 成都</div>
+                                    <div class="text-sm text-gray-500">2024-06-20 至 2024-06-23</div>
+                                    <div class="text-xs text-gray-400">业务审计 · 4天3夜</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">
+                                        <span class="font-medium">实际：¥4,580</span>
+                                        <div class="text-xs text-gray-500">预算：¥3,500</div>
+                                        <div class="text-xs text-red-600">超支：¥1,080 (31%)</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="space-y-1">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full status-error">
+                                            <i class="fas fa-times-circle mr-1"></i>严重超标
+                                        </span>
+                                        <div class="text-xs text-gray-500">多项费用超标</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                        需审查
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                    <button class="text-blue-600 hover:text-blue-900" onclick="showDetails('detail2')">详细核查</button>
+                                    <button class="text-green-600 hover:text-green-900">特批通过</button>
+                                    <button class="text-red-600 hover:text-red-900">驳回</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                <div class="px-6 py-3 border-t border-gray-200 flex justify-between items-center">
+                    <div class="text-sm text-gray-500">
+                        显示 1-3 条，共 23 条记录
+                    </div>
+                    <div class="flex space-x-1">
+                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">上一页</button>
+                        <button class="px-3 py-2 text-sm bg-blue-600 text-white rounded-md">1</button>
+                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">2</button>
+                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">3</button>
+                        <button class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详细核查弹窗 -->
+    <div id="detailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" onclick="hideDetails()"></div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4" id="modalTitle">差旅详细核查</h3>
+                            
+                            <!-- 核查内容 -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- 基本信息 -->
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="font-medium text-gray-900 mb-3">申请基本信息</h4>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">申请人：</span>
+                                            <span class="text-gray-900">张伟 (市场部)</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">申请时间：</span>
+                                            <span class="text-gray-900">2024-06-20 14:30</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">差旅目的：</span>
+                                            <span class="text-gray-900">客户拜访</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">行程时间：</span>
+                                            <span class="text-gray-900">2024-06-25 至 06-27</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 预算对比 -->
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="font-medium text-gray-900 mb-3">预算执行分析</h4>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">预算总额：</span>
+                                            <span class="text-gray-900">¥3,000</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">实际消费：</span>
+                                            <span class="text-red-600 font-medium">¥3,240</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">超支金额：</span>
+                                            <span class="text-red-600 font-medium">¥240</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">超支比例：</span>
+                                            <span class="text-red-600 font-medium">8%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 异常检测结果 -->
+                            <div class="mt-6">
+                                <h4 class="font-medium text-gray-900 mb-3">智能异常检测结果</h4>
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>
+                                        <span class="text-yellow-800 font-medium">发现异常消费项</span>
+                                    </div>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-700">• 酒店住宿标准超出M3级别限制</span>
+                                            <span class="text-red-600 font-medium">+¥180</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-700">• 餐饮费用略超标准</span>
+                                            <span class="text-red-600 font-medium">+¥60</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 详细费用明细 -->
+                            <div class="mt-6">
+                                <h4 class="font-medium text-gray-900 mb-3">费用明细</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">费用类型</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">标准额度</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">实际金额</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">差额</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm text-gray-900">交通费</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500">¥1,200</td>
+                                                <td class="px-4 py-2 text-sm text-gray-900">¥1,180</td>
+                                                <td class="px-4 py-2 text-sm text-green-600">-¥20</td>
+                                                <td class="px-4 py-2"><span class="status-normal px-2 py-1 text-xs rounded-full">正常</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm text-gray-900">住宿费</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500">¥1,200</td>
+                                                <td class="px-4 py-2 text-sm text-gray-900">¥1,380</td>
+                                                <td class="px-4 py-2 text-sm text-red-600">+¥180</td>
+                                                <td class="px-4 py-2"><span class="status-warning px-2 py-1 text-xs rounded-full">超标</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm text-gray-900">餐饮费</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500">¥600</td>
+                                                <td class="px-4 py-2 text-sm text-gray-900">¥680</td>
+                                                <td class="px-4 py-2 text-sm text-red-600">+¥80</td>
+                                                <td class="px-4 py-2"><span class="status-warning px-2 py-1 text-xs rounded-full">轻微超标</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- AI建议 -->
+                            <div class="mt-6">
+                                <h4 class="font-medium text-gray-900 mb-3">AI智能建议</h4>
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-robot text-blue-600 mr-2"></i>
+                                        <span class="text-blue-800 font-medium">智能分析建议</span>
+                                    </div>
+                                    <div class="text-sm text-blue-700">
+                                        <p>• 住宿费用超标主要原因：选择了五星级酒店，超出M3级别标准</p>
+                                        <p>• 建议：可考虑特殊情况审批通过，或要求申请人说明超标原因</p>
+                                        <p>• 风险评估：超标幅度适中(8%)，申请人历史记录良好，建议审批通过</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        审批通过
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-red-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-red-700 hover:bg-red-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        驳回申请
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm" onclick="hideDetails()">
+                        关闭
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showDetails(detailId) {
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function hideDetails() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        // 模拟实时数据更新
+        function updateStats() {
+            // 这里可以添加实时数据更新逻辑
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('赞同智言差旅管理系统已加载');
+        });
+    </script>
+</body>
+</html>

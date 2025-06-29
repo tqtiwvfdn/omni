@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>员工端·智能行程</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-image: url("/lui/img/chat-bg.669e9f9e.png");
+            background-repeat: no-repeat;
+            background-size: contain;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        .gradient-button {
+            background: linear-gradient(45deg, #4F9CF9, #6BB6FF);
+        }
+        .status-approved {
+            background: linear-gradient(45deg, #10B981, #34D399);
+        }
+        .status-pending {
+            background: linear-gradient(45deg, #F59E0B, #FBBF24);
+        }
+        .floating-action {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 50;
+        }
+        .chat-bubble {
+            background: linear-gradient(45deg, #4F9CF9, #6BB6FF);
+            border-radius: 20px 20px 4px 20px;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6 animate-fade-in-up">
+        <div class="flex items-center">
+            <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center mr-3 card-shadow">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </div>
+            <h1 class="text-xl font-semibold text-gray-800">智能行程</h1>
+        </div>
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center card-shadow">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7H4l5-5v5z"></path>
+                </svg>
+            </div>
+            <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center card-shadow">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Trip Status -->
+    <div class="bg-white rounded-2xl p-5 mb-4 card-shadow animate-fade-in-up" style="animation-delay: 0.1s">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-800">当前行程</h2>
+            <span class="status-approved text-white text-xs px-3 py-1 rounded-full font-medium">进行中</span>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-center">
+                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                <div class="flex-1">
+                    <p class="text-gray-800 font-medium">北京 → 上海</p>
+                    <p class="text-gray-500 text-sm">CA1234 • 今日 14:30-16:45</p>
+                </div>
+                <button class="text-blue-500 text-sm font-medium" onclick="showChangeModal()">变更</button>
+            </div>
+            <div class="flex items-center">
+                <div class="w-3 h-3 bg-orange-400 rounded-full mr-3"></div>
+                <div class="flex-1">
+                    <p class="text-gray-800 font-medium">上海虹桥希尔顿酒店</p>
+                    <p class="text-gray-500 text-sm">入住 6月29日 • 2晚</p>
+                </div>
+                <button class="text-blue-500 text-sm font-medium" onclick="showHotelChange()">调整</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-2 gap-3 mb-4 animate-fade-in-up" style="animation-delay: 0.2s">
+        <button class="bg-white rounded-2xl p-4 card-shadow" onclick="showTransferModal()">
+            <div class="w-12 h-12 gradient-button rounded-full flex items-center justify-center mb-3 mx-auto">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                </svg>
+            </div>
+            <p class="text-gray-800 font-medium text-center">中转方案</p>
+            <p class="text-gray-500 text-xs text-center mt-1">智能规划路线</p>
+        </button>
+        <button class="bg-white rounded-2xl p-4 card-shadow" onclick="showPaymentModal()">
+            <div class="w-12 h-12 gradient-button rounded-full flex items-center justify-center mb-3 mx-auto">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z"></path>
+                </svg>
+            </div>
+            <p class="text-gray-800 font-medium text-center">扫码开票</p>
+            <p class="text-gray-500 text-xs text-center mt-1">便捷支付管理</p>
+        </button>
+    </div>
+
+    <!-- Recent Changes -->
+    <div class="bg-white rounded-2xl p-5 mb-4 card-shadow animate-fade-in-up" style="animation-delay: 0.3s">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">最近变更</h3>
+        <div class="space-y-4">
+            <div class="flex items-start">
+                <div class="w-8 h-8 status-approved rounded-full flex items-center justify-center mr-3 mt-1">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p class="text-gray-800 font-medium">航班改签已批准</p>
+                    <p class="text-gray-500 text-sm">CA1234改为CA1236 • 费用差额¥180</p>
+                    <p class="text-gray-400 text-xs">2小时前 • 审批人：张经理</p>
+                </div>
+            </div>
+            <div class="flex items-start">
+                <div class="w-8 h-8 status-pending rounded-full flex items-center justify-center mr-3 mt-1">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p class="text-gray-800 font-medium">酒店升级申请中</p>
+                    <p class="text-gray-500 text-sm">升级至行政套房 • 费用差额¥320/晚</p>
+                    <p class="text-gray-400 text-xs">30分钟前 • 等待审批</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Summary -->
+    <div class="bg-white rounded-2xl p-5 mb-20 card-shadow animate-fade-in-up" style="animation-delay: 0.4s">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">费用概览</h3>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="text-center">
+                <p class="text-2xl font-bold text-blue-500">¥3,280</p>
+                <p class="text-gray-500 text-sm">已使用</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-bold text-green-500">¥1,720</p>
+                <p class="text-gray-500 text-sm">剩余预算</p>
+            </div>
+        </div>
+        <div class="mt-4">
+            <div class="flex justify-between text-sm mb-2">
+                <span class="text-gray-600">预算使用率</span>
+                <span class="text-gray-800 font-medium">65.6%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-gradient-to-r from-blue-400 to-blue-500 h-2 rounded-full" style="width: 65.6%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-2">
+        <div class="flex justify-around">
+            <button class="flex flex-col items-center py-2">
+                <div class="w-6 h-6 text-blue-500 mb-1">
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                    </svg>
+                </div>
+                <span class="text-xs text-blue-500 font-medium">行程</span>
+            </button>
+            <button class="flex flex-col items-center py-2" onclick="showInvoiceModal()">
+                <div class="w-6 h-6 text-gray-400 mb-1">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <span class="text-xs text-gray-400">发票夹</span>
+            </button>
+            <button class="flex flex-col items-center py-2">
+                <div class="w-6 h-6 text-gray-400 mb-1">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </div>
+                <span class="text-xs text-gray-400">我的</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Chat Assistant -->
+    <div class="floating-action">
+        <button class="chat-bubble text-white p-3 shadow-lg" onclick="showChatModal()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Modals -->
+    <div id="changeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center hidden z-50">
+        <div class="bg-white rounded-t-3xl w-full max-w-md p-6 animate-fade-in-up">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">行程变更</h3>
+                <button onclick="hideChangeModal()" class="text-gray-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <button class="w-full text-left p-4 bg-gray-50 rounded-xl">
+                    <p class="font-medium text-gray-800">改签航班</p>
+                    <p class="text-gray-500 text-sm">更改起飞时间或航班号</p>
+                </button>
+                <button class="w-full text-left p-4 bg-gray-50 rounded-xl">
+                    <p class="font-medium text-gray-800">延长行程</p>
+                    <p class="text-gray-500 text-sm">延长出差时间</p>
+                </button>
+                <button class="w-full text-left p-4 bg-gray-50 rounded-xl">
+                    <p class="font-medium text-gray-800">紧急变更</p>
+                    <p class="text-gray-500 text-sm">临时取消或改期</p>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="transferModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center hidden z-50">
+        <div class="bg-white rounded-t-3xl w-full max-w-md p-6 animate-fade-in-up">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">中转方案推荐</h3>
+                <button onclick="hideTransferModal()" class="text-gray-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div class="p-4 border border-blue-200 bg-blue-50 rounded-xl">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-blue-600">推荐方案</span>
+                        <span class="text-lg font-bold text-blue-600">¥1,280</span>
+                    </div>
+                    <p class="text-gray-800 font-medium">北京 → 西安 → 成都</p>
+                    <p class="text-gray-500 text-sm">总用时：4小时20分 • 中转时间：1小时</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-600">备选方案</span>
+                        <span class="text-lg font-bold text-gray-600">¥1,450</span>
+                    </div>
+                    <p class="text-gray-800 font-medium">北京 → 重庆 → 成都</p>
+                    <p class="text-gray-500 text-sm">总用时：5小时10分 • 中转时间：2小时</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showChangeModal() {
+            document.getElementById('changeModal').classList.remove('hidden');
+        }
+
+        function hideChangeModal() {
+            document.getElementById('changeModal').classList.add('hidden');
+        }
+
+        function showTransferModal() {
+            document.getElementById('transferModal').classList.remove('hidden');
+        }
+
+        function hideTransferModal() {
+            document.getElementById('transferModal').classList.add('hidden');
+        }
+
+        function showHotelChange() {
+            alert('酒店调整功能开发中...');
+        }
+
+        function showPaymentModal() {
+            alert('扫码开票功能开发中...');
+        }
+
+        function showInvoiceModal() {
+            alert('发票夹功能开发中...');
+        }
+
+        function showChatModal() {
+            alert('智能助手：您好！我可以帮您处理行程变更、中转方案查询等问题。');
+        }
+
+        // 添加点击外部关闭模态框功能
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('bg-black')) {
+                hideChangeModal();
+                hideTransferModal();
+            }
+        });
+    </script>
+</body>
+</html>

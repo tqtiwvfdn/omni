@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人事端·预算管理系统</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"> -->
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .gradient-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .sync-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-header text-white shadow-lg">
+        <div class="px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-building text-2xl"></i>
+                        <h1 class="text-xl font-bold">赞同智言差旅管理系统</h1>
+                    </div>
+                    <span class="text-blue-200">|</span>
+                    <h2 class="text-lg">人事端 · 预算管理</h2>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-400 rounded-full sync-pulse"></div>
+                        <span class="text-sm">业务中台同步中</span>
+                    </div>
+                    <i class="fas fa-user-circle text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="px-4 sm:px-6 lg:px-8 py-6">
+        <!-- 部门、项目信息同步状态 -->
+        <div class="mb-6">
+            <div class="bg-white rounded-lg card-shadow p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-sync-alt text-blue-500 mr-2"></i>
+                        部门、项目信息同步状态
+                    </h3>
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm transition-colors">
+                        <i class="fas fa-refresh mr-1"></i>
+                        手动同步
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                            <div>
+                                <p class="text-sm font-medium text-green-800">部门信息</p>
+                                <p class="text-xs text-green-600">最后同步: 2025-06-29 14:30</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                            <div>
+                                <p class="text-sm font-medium text-green-800">项目信息</p>
+                                <p class="text-xs text-green-600">最后同步: 2025-06-29 14:28</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                            <div>
+                                <p class="text-sm font-medium text-green-800">预算信息</p>
+                                <p class="text-xs text-green-600">最后同步: 2025-06-29 14:25</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 部门项目关联管理 -->
+            <div class="bg-white rounded-lg card-shadow">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-sitemap text-indigo-500 mr-2"></i>
+                        部门项目关联管理
+                    </h3>
+                    
+                    <!-- 搜索和筛选 -->
+                    <div class="mb-4 space-y-2">
+                        <div class="flex space-x-2">
+                            <input type="text" placeholder="搜索员工..." class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <select class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>所有部门</option>
+                                <option>市场部-华东区</option>
+                                <option>市场部-华南区</option>
+                                <option>技术部</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 员工部门项目关联表 -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">员工</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">所属部门</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">项目组</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">张</div>
+                                            <div class="ml-3">
+                                                <p class="text-sm font-medium text-gray-900">张三</p>
+                                                <p class="text-xs text-gray-500">工号: 2024001</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">市场部-华东区</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">2025年Q3新品推广项目</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">已关联</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium">李</div>
+                                            <div class="ml-3">
+                                                <p class="text-sm font-medium text-gray-900">李四</p>
+                                                <p class="text-xs text-gray-500">工号: 2024002</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">市场部-华南区</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">华南区域拓展项目</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">已关联</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-medium">王</div>
+                                            <div class="ml-3">
+                                                <p class="text-sm font-medium text-gray-900">王五</p>
+                                                <p class="text-xs text-gray-500">工号: 2024003</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">技术部</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">待分配</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">待关联</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 专项预算规划 -->
+            <div class="bg-white rounded-lg card-shadow">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-chart-pie text-purple-500 mr-2"></i>
+                        专项预算规划和合规性校验
+                    </h3>
+                    
+                    <!-- 项目预算概览 -->
+                    <div class="space-y-4">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-900">2025年Q3新品推广项目</h4>
+                                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">进行中</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">总预算</span>
+                                    <span class="font-medium">¥500,000</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">差旅预算</span>
+                                    <span class="font-medium">¥100,000</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">已使用</span>
+                                    <span class="font-medium text-orange-600">¥35,000</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">剩余</span>
+                                    <span class="font-medium text-green-600">¥65,000</span>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 35%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">使用率: 35%</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-900">华南区域拓展项目</h4>
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">计划中</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">总预算</span>
+                                    <span class="font-medium">¥300,000</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">差旅预算</span>
+                                    <span class="font-medium">¥80,000</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">已使用</span>
+                                    <span class="font-medium text-gray-400">¥0</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">剩余</span>
+                                    <span class="font-medium text-green-600">¥80,000</span>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-gray-300 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">使用率: 0%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 合规性校验 -->
+                    <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <h5 class="font-medium text-green-800 mb-2 flex items-center">
+                            <i class="fas fa-shield-alt mr-2"></i>
+                            合规性校验状态
+                        </h5>
+                        <div class="space-y-1 text-sm text-green-700">
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                预算分配合规性检查通过
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                项目权限验证通过
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                差旅标准匹配检查通过
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按钮区域 -->
+        <div class="mt-6 flex justify-end space-x-3">
+            <button class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md transition-colors">
+                <i class="fas fa-download mr-2"></i>
+                导出报表
+            </button>
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md transition-colors">
+                <i class="fas fa-cog mr-2"></i>
+                预算配置
+            </button>
+            <button class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-md transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                新建预算
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 模拟数据同步状态更新
+        function updateSyncStatus() {
+            const syncElements = document.querySelectorAll('.sync-pulse');
+            syncElements.forEach(el => {
+                setTimeout(() => {
+                    el.classList.remove('sync-pulse');
+                    el.classList.add('bg-green-400');
+                }, Math.random() * 3000 + 2000);
+            });
+        }
+
+        // 页面加载完成后启动同步动画
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSyncStatus();
+        });
+
+        // 手动同步按钮功能
+        document.querySelector('button[onclick*="refresh"]')?.addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>同步中...';
+            this.disabled = true;
+            
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-check mr-1"></i>同步完成';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-refresh mr-1"></i>手动同步';
+                    this.disabled = false;
+                }, 1000);
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能报销</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-image: url("/lui/img/chat-bg.669e9f9e.png");
+            background-repeat: no-repeat;
+            background-size: contain;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .upload-area {
+            border: 2px dashed #93c5fd;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        .status-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="max-w-md mx-auto">
+        <!-- Header -->
+        <div class="card rounded-2xl p-4 mb-4 fade-in-up">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold gradient-text">智能报销</h1>
+                    <p class="text-gray-600 text-sm">免开票 · 免填写 · 智能识别</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- OCR发票扫描 -->
+        <div class="card rounded-2xl p-4 mb-4 fade-in-up" style="animation-delay: 0.1s">
+            <div class="flex items-center mb-3">
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-800">发票OCR扫描</h3>
+            </div>
+            
+            <div class="upload-area rounded-xl p-6 text-center mb-3 cursor-pointer" onclick="uploadInvoice()">
+                <svg class="w-12 h-12 text-blue-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <p class="text-gray-600 text-sm mb-1">拍照或选择发票图片</p>
+                <p class="text-xs text-gray-500">支持增值税专票、普票、电子发票</p>
+            </div>
+            
+            <div class="flex justify-between text-xs text-gray-500">
+                <span>✓ 自动识别金额日期</span>
+                <span>✓ 智能分类归档</span>
+            </div>
+        </div>
+
+        <!-- MCP同步 -->
+        <div class="card rounded-2xl p-4 mb-4 fade-in-up" style="animation-delay: 0.2s">
+            <div class="flex items-center mb-3">
+                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-800">三方平台同步</h3>
+                <span class="ml-auto px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">已连接</span>
+            </div>
+            
+            <div class="space-y-2">
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 bg-blue-500 rounded mr-2 flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">滴</span>
+                        </div>
+                        <span class="text-sm">滴滴出行</span>
+                    </div>
+                    <button class="text-blue-600 text-sm" onclick="syncPlatform('didi')">同步</button>
+                </div>
+                
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 bg-orange-500 rounded mr-2 flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">美</span>
+                        </div>
+                        <span class="text-sm">美团</span>
+                    </div>
+                    <button class="text-blue-600 text-sm" onclick="syncPlatform('meituan')">同步</button>
+                </div>
+                
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 bg-purple-500 rounded mr-2 flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">携</span>
+                        </div>
+                        <span class="text-sm">携程商旅</span>
+                    </div>
+                    <button class="text-blue-600 text-sm" onclick="syncPlatform('ctrip')">同步</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 其他凭证上传 -->
+        <div class="card rounded-2xl p-4 mb-4 fade-in-up" style="animation-delay: 0.3s">
+            <div class="flex items-center mb-3">
+                <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-800">其他凭证</h3>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button class="p-3 border border-gray-200 rounded-xl text-center hover:bg-gray-50 transition-colors" onclick="uploadOther('receipt')">
+                    <svg class="w-6 h-6 text-gray-600 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <p class="text-xs text-gray-700">收据凭证</p>
+                </button>
+                
+                <button class="p-3 border border-gray-200 rounded-xl text-center hover:bg-gray-50 transition-colors" onclick="uploadOther('advance')">
+                    <svg class="w-6 h-6 text-gray-600 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <p class="text-xs text-gray-700">垫资凭证</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- 智能合规检查 -->
+        <div class="card rounded-2xl p-4 mb-4 fade-in-up" style="animation-delay: 0.4s">
+            <div class="flex items-center mb-3">
+                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-800">智能合规检查</h3>
+                <span class="ml-auto status-badge px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">实时监控</span>
+            </div>
+            
+            <div class="space-y-2">
+                <div class="flex items-center text-sm">
+                    <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700">日期时效性验证</span>
+                </div>
+                
+                <div class="flex items-center text-sm">
+                    <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700">出差地点匹配</span>
+                </div>
+                
+                <div class="flex items-center text-sm">
+                    <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700">费用类型识别</span>
+                </div>
+                
+                <div class="flex items-center text-sm">
+                    <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700">差标超限检测</span>
+                </div>
+                
+                <div class="flex items-center text-sm">
+                    <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700">重复提交防控</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 报销单预览 -->
+        <div class="card rounded-2xl p-4 mb-4 fade-in-up" style="animation-delay: 0.5s">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-gray-800">报销预览</h3>
+                </div>
+                <span class="text-lg font-bold text-blue-600">¥1,256.80</span>
+            </div>
+            
+            <div class="space-y-2">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">交通费</span>
+                    <span class="text-gray-800">¥486.50</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">餐饮费</span>
+                    <span class="text-gray-800">¥320.30</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">住宿费</span>
+                    <span class="text-gray-800">¥450.00</span>
+                </div>
+                <hr class="my-2">
+                <div class="flex justify-between font-semibold">
+                    <span>合计</span>
+                    <span class="text-blue-600">¥1,256.80</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 提交按钮 -->
+        <button class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all fade-in-up" style="animation-delay: 0.6s" onclick="submitExpense()">
+            提交报销申请
+        </button>
+
+        <!-- 底部提示 -->
+        <div class="text-center mt-4 fade-in-up" style="animation-delay: 0.7s">
+            <p class="text-xs text-gray-500">💡 系统已自动填写报销信息，请核对后提交</p>
+        </div>
+    </div>
+
+    <script>
+        function uploadInvoice() {
+            showNotification('📸 正在启动OCR识别...', 'info');
+            setTimeout(() => {
+                showNotification('✅ 发票信息已自动识别完成', 'success');
+                // 模拟添加发票数据
+                updateExpensePreview();
+            }, 2000);
+        }
+
+        function syncPlatform(platform) {
+            const platformNames = {
+                'didi': '滴滴出行',
+                'meituan': '美团',
+                'ctrip': '携程商旅'
+            };
+            
+            showNotification(`🔄 正在同步${platformNames[platform]}数据...`, 'info');
+            setTimeout(() => {
+                showNotification(`✅ ${platformNames[platform]}数据同步成功`, 'success');
+                updateExpensePreview();
+            }, 1500);
+        }
+
+        function uploadOther(type) {
+            const typeNames = {
+                'receipt': '收据凭证',
+                'advance': '垫资凭证'
+            };
+            
+            showNotification(`📄 正在上传${typeNames[type]}...`, 'info');
+            setTimeout(() => {
+                showNotification(`✅ ${typeNames[type]}上传成功`, 'success');
+            }, 1000);
+        }
+
+        function submitExpense() {
+            showNotification('🚀 正在提交报销申请...', 'info');
+            setTimeout(() => {
+                showNotification('✅ 报销申请提交成功，等待审批', 'success');
+            }, 2000);
+        }
+
+        function updateExpensePreview() {
+            // 模拟更新金额
+            const amounts = ['¥1,256.80', '¥1,486.90', '¥892.40', '¥1,652.30'];
+            const randomAmount = amounts[Math.floor(Math.random() * amounts.length)];
+            document.querySelector('.text-blue-600.text-lg.font-bold').textContent = randomAmount;
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            } text-white text-sm`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // 初始化动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.fade-in-up');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

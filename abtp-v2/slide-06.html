@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>核心功能模块设计</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+        }
+
+        .gf-red {
+            background: linear-gradient(135deg, #CC0000 0%, #8B0000 100%);
+        }
+
+        .gf-red-light {
+            background: linear-gradient(135deg, #FFE5E5 0%, #FFCCCC 100%);
+        }
+
+        .system-block {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .ztong-block {
+            border-color: #CC0000;
+            background: linear-gradient(135deg, #FFF5F5 0%, #FFE5E5 100%);
+        }
+
+        .external-block {
+            border-color: #0891b2;
+            background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+        }
+
+        .module-item {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin: 4px 0;
+            font-size: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .ztong-module {
+            background: linear-gradient(135deg, #CC0000 0%, #8B0000 100%);
+            color: white;
+            border-color: #CC0000;
+        }
+
+        .external-module {
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+            color: white;
+            border-color: #0891b2;
+        }
+
+        .data-module {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border-color: #f59e0b;
+        }
+
+        .arrow {
+            position: absolute;
+            font-size: 16px;
+            font-weight: bold;
+            color: #CC0000;
+        }
+
+        .arrow-right {
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .arrow-down {
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .arrow-up {
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .detail-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-top: 24px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .feature-card {
+            background: rgba(255, 245, 245, 0.8);
+            border: 1px solid rgba(204, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(204, 0, 0, 0.15);
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body class="p-8">
+    <div class="">
+        <!-- 页面标题 -->
+        <div class="text-center mb-8 animate-fadeInUp">
+            <h1 class="text-3xl font-bold mb-2" style="color: #CC0000;">核心功能模块设计</h1>
+            <p class="text-lg text-gray-600">系统协作流程与用户交互细节</p>
+        </div>
+
+        <!-- 图例 -->
+        <div class="legend animate-fadeInUp">
+            <div class="legend-item">
+                <div class="legend-color gf-red"></div>
+                <span class="font-medium">赞同科技建设</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);"></div>
+                <span class="font-medium">外部系统对接</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);"></div>
+                <span class="font-medium">数据流转</span>
+            </div>
+        </div>
+
+        <!-- 系统架构图 -->
+        <div class="max-w-4xl m-auto relative mb-8 animate-fadeInUp" style="height: 500px; opacity: 0; transform: translateY(20px); animation: 0.6s ease-out 0s 1 normal forwards running fadeInUp;">
+            <!-- 移动端小程序 -->
+            <div class="absolute left-0 top-0 w-48 external-block system-block">
+                <h4 class="font-bold text-sm mb-3 text-center" style="color: #0891b2;">移动端应用</h4>
+                <div class="module-item external-module">差旅申请单</div>
+                <div class="module-item external-module">审批单列表</div>
+                <div class="module-item external-module">个人中心</div>
+                <div class="arrow arrow-right" style="
+    left: calc(100% - -50px);
+">→</div>
+            </div>
+
+            <!-- 赞同差旅管理中台 -->
+            <div class="absolute  top-0 w-80 ztong-block system-block" style="left: calc(50% - 150px);">
+                <h4 class="font-bold text-sm mb-3 text-center" style="color: #CC0000;">赞同差旅管理中台</h4>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="module-item ztong-module">MCP协议层</div>
+                    <div class="module-item ztong-module">智能比价</div>
+                    <div class="module-item ztong-module">统一预订</div>
+                    <div class="module-item ztong-module">费控管理</div>
+                    <div class="module-item ztong-module">数据分析</div>
+                    <div class="module-item ztong-module">工作流引擎</div>
+                </div>
+                <div class="mt-3">
+                    <div class="module-item data-module">T+1日订单数据</div>
+                </div>
+                <div class="arrow arrow-right" style="
+    right: calc(-50% + 97px);
+">→</div>
+                <div class="arrow arrow-down" style="bottom: -86px;">↓</div>
+            </div>
+
+            <!-- 银行AOM系统 -->
+            <div class="absolute top-0 w-48 external-block system-block" style="left: calc(100% - 149px);">
+                <h4 class="font-bold text-sm mb-3 text-center" style="color: #0891b2;">银行AOM系统</h4>
+                <div class="module-item external-module">部门/员工信息</div>
+                <div class="module-item external-module">差旅预算</div>
+                <div class="module-item external-module">审批流程</div>
+                <div class="module-item external-module">报销单</div>
+                <div class="module-item external-module">账户</div>
+                <div class="arrow arrow-up" style="top: -35px;left: 25%;color: #0891b2;">数据提交</div>
+                <div class="arrow arrow-up" style="top: -35px;left: 70%;color: #0891b2;white-space: nowrap;">数据同步</div>
+            </div>
+
+            <!-- 多平台资源池 -->
+            <div class="absolute bottom-0 w-80 external-block system-block" style="width: 400px;left: calc(50% - 187px);bottom: 20px;">
+                <h4 class="font-bold text-sm mb-3 text-center" style="color: #0891b2;">多平台资源池</h4>
+                <div class="grid grid-cols-4 gap-1">
+                    <div class="module-item external-module">合思商城</div>
+                    <div class="module-item external-module">差旅壹号</div>
+                    <div class="module-item external-module">华住会</div>
+                    <div class="module-item external-module">携程企业</div>
+                    <div class="module-item data-module">实时库存</div>
+                    <div class="module-item data-module">价格数据</div>
+                    <div class="module-item data-module">服务评分</div>
+                    <div class="module-item data-module">虚拟账户</div>
+                </div>
+            </div>
+
+            <!-- 数据流向标注 -->
+            <div class="absolute top-32 text-xs text-red-600 font-medium" style="left: calc(25%);">申请数据</div>
+            <div class="absolute top-32 text-xs text-red-600 font-medium" style="right: calc(25% - 25px);">预算验证</div>
+            <div class="absolute left-80 text-xs text-red-600 font-medium" style="bottom: 240px;left: calc(50% - 12px);">平台调用</div>
+        </div>
+
+        <!-- 用户交互功能详情 -->
+        <div class="detail-panel animate-fadeInUp">
+            <h3 class="text-xl font-bold mb-4" style="color: #CC0000;">🎯 核心交互功能详情</h3>
+            
+            <div class="feature-grid">
+                <!-- 可视化比价界面 -->
+                <div class="feature-card">
+                    <div class="text-2xl mb-2">📊</div>
+                    <div class="font-bold text-sm mb-2">可视化比价界面</div>
+                    <div class="text-xs text-gray-600">
+                        • 表格/卡片/对比视图<br>
+                        • 价格趋势图表<br>
+                        • 实时库存状态
+                    </div>
+                </div>
+
+                <!-- 多维度筛选 -->
+                <div class="feature-card">
+                    <div class="text-2xl mb-2">🔍</div>
+                    <div class="font-bold text-sm mb-2">多维度筛选</div>
+                    <div class="text-xs text-gray-600">
+                        • 价格/时间/评分排序<br>
+                        • 退改政策筛选<br>
+                        • 企业政策匹配
+                    </div>
+                </div>
+
+                <!-- 实时价格监控 -->
+                <div class="feature-card">
+                    <div class="text-2xl mb-2">⚡</div>
+                    <div class="font-bold text-sm mb-2">实时价格监控</div>
+                    <div class="text-xs text-gray-600">
+                        • 价格变动提醒<br>
+                        • 最优时机推荐<br>
+                        • 历史价格对比
+                    </div>
+                </div>
+
+                <!-- 实时费用显示 -->
+                <div class="feature-card">
+                    <div class="text-2xl mb-2">💰</div>
+                    <div class="font-bold text-sm mb-2">实时费用显示</div>
+                    <div class="text-xs text-gray-600">
+                        • 费用分解明细<br>
+                        • 预算使用进度条<br>
+                        • 超标预警提示
+                    </div>
+                </div>
+
+                <!-- 行程自定义调整 -->
+                <div class="feature-card">
+                    <div class="text-2xl mb-2">🎛️</div>
+                    <div class="font-bold text-sm mb-2">行程自定义调整</div>
+                    <div class="text-xs text-gray-600">
+                        • 拖拽式时间调整<br>
+                        • 方案对比选择<br>
+                        • 个性化推荐
+                    </div>
+                </div>
+
+                <!-- 中转方案专项 -->
+                <div class="feature-card">
+                    <div class="text-2xl mb-2">🔄</div>
+                    <div class="font-bold text-sm mb-2">中转方案专项</div>
+                    <div class="text-xs text-gray-600">
+                        • 中转地智能推荐<br>
+                        • 换乘便捷性评分<br>
+                        • 中转时间优化
+                    </div>
+                </div>
+
+                <!-- 审批工作流引擎 -->
+                <div class="feature-card">
+                    <div class="text-2xl mb-2">⚙️</div>
+                    <div class="font-bold text-sm mb-2">审批工作流引擎</div>
+                    <div class="text-xs text-gray-600">
+                        • 变更申请→审批<br>
+                        • 自动执行→通知<br>
+                        • 流程可视化跟踪
+                    </div>
+                </div>
+
+                <!-- 凭证管理模块 -->
+                <div class="feature-card">
+                    <div class="text-2xl mb-2">📋</div>
+                    <div class="font-bold text-sm mb-2">凭证管理模块</div>
+                    <div class="text-xs text-gray-600">
+                        • 自动归集→分类<br>
+                        • 在线预览→补传<br>
+                        • 智能识别验证
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据流转说明 -->
+        <div class="detail-panel animate-fadeInUp">
+            <h3 class="text-xl font-bold mb-4" style="color: #CC0000;">🔄 数据流转机制</h3>
+            <div class="grid grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="w-16 h-16 gf-red rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span class="text-white text-xl">📱</span>
+                    </div>
+                    <h4 class="font-bold mb-2">移动端交互</h4>
+                    <p class="text-sm text-gray-600">员工通过小程序提交差旅申请，实时查看审批状态和行程信息</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="w-16 h-16 gf-red rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span class="text-white text-xl">🔧</span>
+                    </div>
+                    <h4 class="font-bold mb-2">中台处理</h4>
+                    <p class="text-sm text-gray-600">赞同中台通过MCP协议整合多平台资源，提供智能比价和统一管理</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="w-16 h-16 gf-red rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span class="text-white text-xl">🏦</span>
+                    </div>
+                    <h4 class="font-bold mb-2">银行集成</h4>
+                    <p class="text-sm text-gray-600">与银行AOM系统深度集成，实现预算控制、审批流程和财务结算</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 页面加载动画
+            const elements = document.querySelectorAll('.animate-fadeInUp');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(20px)';
+                    el.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                }, index * 200);
+            });
+
+            // 功能卡片悬停效果
+            const featureCards = document.querySelectorAll('.feature-card');
+            featureCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.background = 'rgba(204, 0, 0, 0.1)';
+                    this.style.borderColor = '#CC0000';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.background = 'rgba(255, 245, 245, 0.8)';
+                    this.style.borderColor = 'rgba(204, 0, 0, 0.2)';
+                });
+            });
+
+            // 系统模块点击效果
+            const moduleItems = document.querySelectorAll('.module-item');
+            moduleItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
