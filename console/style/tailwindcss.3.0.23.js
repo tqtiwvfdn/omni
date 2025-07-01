@@ -243,11 +243,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
 }
 `
-  document.head.append(t);
-  const callback=e => {
-    e.classList.add('specular-highlight');
-    e.style.borderRadius='2em';
-  };
+  //document.head.append(t);
+
   setTimeout(() => {
     document.querySelectorAll('button,select,input').forEach(e => {
 

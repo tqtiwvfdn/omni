@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能差旅申请</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: url("/lui/img/chat-bg.669e9f9e.png");
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, Helvetica Neue, Helvetica, Segoe UI, Arial, Roboto, PingFang SC, miui, Hiragino Sans GB, Microsoft Yahei, sans-serif;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .card {
+            /* background: rgba(255, 255, 255, 0.95); */
+            /* backdrop-filter: blur(10px); */
+            /* border: 1px solid rgba(255, 255, 255, 0.2); */
+        }
+
+        .gradient-text {
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .typing-animation {
+            border-right: 2px solid #3b82f6;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            50% {
+                border-color: transparent;
+            }
+
+            51%,
+            100% {
+                border-color: #3b82f6;
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in-up {
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .price-option {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .price-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+        }
+
+        .price-option.selected {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .edit-mode {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px dashed #f59e0b;
+        }
+    </style>
+</head>
+
+<body class="p-4">
+    <div class="max-w-md mx-auto">
+        <!-- Header -->
+        
+
+        <!-- Chat Interface -->
+        <div class="card rounded-2xl p-4 mb-4 mt-12">
+            <div class="space-y-3">
+                <!-- User Message -->
+                <div class="flex justify-end">
+                    <div class="bg-white text-black px-4 py-2 rounded-2xl rounded-br-md max-w-xs">
+                        <p class="text-sm">下周二我要去上海两天，在虹桥火车站附近，早上去两天后下午回</p>
+                    </div>
+                </div>
+
+                <!-- AI Response with Plans -->
+                <div class="flex justify-start">
+                    <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-md max-w-full w-full">
+                        <div class="flex items-center mb-2">
+                            <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2">
+                                <span class="text-white text-xs font-bold">AI</span>
+                            </div>
+                            <p class="text-sm text-gray-700">已为您智能规划差旅方案：</p>
+                        </div>
+
+                        <!-- Smart Travel Plan Card -->
+                        <div id="travelPlan" class="bg-white rounded-xl p-4 mt-3 border border-gray-200 edit-mode">
+                            <!-- Plan Header -->
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7"></path>
+                                    </svg>
+                                    <h4 class="font-semibold text-gray-800">北京 → 上海</h4>
+                                </div>
+                                <button onclick="toggleEditMode()" class="text-blue-600 text-sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Date Range -->
+                            <div class="bg-blue-50 rounded-lg p-3 mb-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="text-sm">
+                                        <span class="text-gray-600">出发：</span>
+                                        <span id="departDate" class="font-medium text-gray-800">2025年7月8日(周二) 08:00</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between mt-1">
+                                    <div class="text-sm">
+                                        <span class="text-gray-600">返回：</span>
+                                        <span id="returnDate" class="font-medium text-gray-800">2025年7月10日(周四) 16:00</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Transportation Options -->
+                            <div class="space-y-3">
+                                <h5 class="font-medium text-gray-800 text-sm">推荐交通方案：</h5>
+                                
+                                <!-- Option 1: High Speed Rail -->
+                                <div class="price-option border border-gray-200 rounded-lg p-3" onclick="selectOption(this, 'rail')">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-sm">高铁(推荐)</p>
+                                                <p class="text-xs text-gray-500">G101 北京南→虹桥 4h28m</p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-bold text-blue-600">¥1,748</p>
+                                            <p class="text-xs text-gray-500">往返二等座</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Option 2: Flight -->
+                                <div class="price-option border border-gray-200 rounded-lg p-3 selected" onclick="selectOption(this, 'flight')">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-sm">航班</p>
+                                                <p class="text-xs text-gray-500">CA1835 首都→虹桥 2h30m</p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-bold text-orange-600">¥2,160</p>
+                                            <p class="text-xs text-gray-500">往返经济舱</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hotel Recommendation -->
+                                <div class="bg-purple-50 rounded-lg p-3">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-sm">虹桥地区酒店</p>
+                                                <p class="text-xs text-gray-500">距离虹桥站800m · 2晚</p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-bold text-purple-600">¥658</p>
+                                            <p class="text-xs text-gray-500">商务标间</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total Cost -->
+                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mt-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-medium text-gray-800">预估总费用：</span>
+                                    <span id="totalCost" class="text-xl font-bold text-blue-600">¥2,818</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">包含交通、住宿，不含餐饮</p>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex space-x-2 mt-4">
+                                <button onclick="showComparison()" class="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                                    比价广场
+                                </button>
+                                <button onclick="submitApplication()" class="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
+                                    提交申请
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Travel Application Modal (Hidden initially) -->
+        <div id="applicationModal" class="hidden card rounded-2xl p-4 mb-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold gradient-text">差旅申请单</h3>
+                <button onclick="closeApplication()" class="text-gray-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Application Details -->
+            <div class="space-y-4">
+                <div class="bg-blue-50 rounded-lg p-3">
+                    <h4 class="font-medium text-gray-800 mb-2">申请信息</h4>
+                    <div class="space-y-1 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">申请人：</span>
+                            <span class="text-gray-800">张三</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">部门：</span>
+                            <span class="text-gray-800">销售部</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">出差事由：</span>
+                            <span class="text-gray-800">客户拜访</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-green-50 rounded-lg p-3">
+                    <h4 class="font-medium text-gray-800 mb-2">行程安排</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                            <span class="text-gray-800">7月8日 08:00 - 12:28 北京南→上海虹桥</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                            <span class="text-gray-800">7月8-10日 虹桥地区酒店住宿</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+                            <span class="text-gray-800">7月10日 16:00-20:28 上海虹桥→北京南</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-purple-50 rounded-lg p-3">
+                    <h4 class="font-medium text-gray-800 mb-2">费用明细</h4>
+                    <div class="space-y-1 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">交通费(高铁往返)：</span>
+                            <span class="text-gray-800">¥1,748.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">住宿费(2晚)：</span>
+                            <span class="text-gray-800">¥658.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">餐饮补贴(3天)：</span>
+                            <span class="text-gray-800">¥450.00</span>
+                        </div>
+                        <hr class="my-2">
+                        <div class="flex justify-between font-semibold">
+                            <span class="text-gray-800">申请总额：</span>
+                            <span class="text-blue-600">¥2,856.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="confirmSubmit()" class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
+                    确认提交申请
+                </button>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        
+    </div>
+
+    <script>
+        let selectedTransportation = 'rail';
+        let isEditMode = false;
+
+        function selectOption(element, type) {
+            // Remove selected class from all options
+            document.querySelectorAll('.price-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            element.classList.add('selected');
+            
+            selectedTransportation = type;
+            updateTotalCost();
+        }
+
+        function updateTotalCost() {
+            const costs = {
+                rail: { transport: 1748, hotel: 658, total: 2406 },
+                flight: { transport: 2160, hotel: 658, total: 2818 }
+            };
+            
+            const cost = costs[selectedTransportation];
+            document.getElementById('totalCost').textContent = `¥${cost.total.toLocaleString()}`;
+        }
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const planCard = document.getElementById('travelPlan');
+            
+            if (isEditMode) {
+                planCard.classList.add('edit-mode');
+                showNotification('📝 已进入编辑模式，点击日期或选项可修改', 'info');
+            } else {
+                planCard.classList.remove('edit-mode');
+                showNotification('✅ 修改已保存', 'success');
+            }
+        }
+
+        function showComparison() {
+            showNotification('🔄 正在跳转比价广场...', 'info');
+            setTimeout(() => {
+                showNotification('💰 已为您找到3个更优方案', 'success');
+            }, 1500);
+        }
+
+        function submitApplication() {
+            document.getElementById('applicationModal').classList.remove('hidden');
+            document.getElementById('applicationModal').classList.add('slide-in-up');
+        }
+
+        function closeApplication() {
+            document.getElementById('applicationModal').classList.add('hidden');
+        }
+
+        function confirmSubmit() {
+            showNotification('🚀 差旅申请已提交，等待审批', 'success');
+            setTimeout(() => {
+                closeApplication();
+            }, 2000);
+        }
+
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                const input = event.target;
+                if (input.value.trim()) {
+                    showNotification('🤖 AI正在解析您的需求...', 'info');
+                    input.value = '';
+                    
+                    setTimeout(() => {
+                        showNotification('✅ 已生成新的差旅方案', 'success');
+                    }, 2000);
+                }
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            } text-white text-sm`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTotalCost();
+        });
+    </script>
+
+</body>
+
+</html>

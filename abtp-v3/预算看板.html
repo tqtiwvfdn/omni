@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预算管理看板 - 赞同智言</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-normal { background-color: #10b981; }
+        .status-warning { background-color: #f59e0b; }
+        .status-danger { background-color: #ef4444; }
+        .tab-active {
+            border-bottom: 3px solid #3b82f6;
+            color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .progress-bar {
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-semibold text-gray-900">赞同智言预算管理</h1>
+                    </div>
+                    <div class="ml-10">
+                        <div class="flex items-baseline space-x-4">
+                            <a href="#" class="bg-blue-100 text-blue-700 px-3 py-2 rounded-md text-sm font-medium">预算看板</a>
+                            <a href="#" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">预算调整</a>
+                            <a href="#" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">审批流程</a>
+                            <a href="#" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">统计分析</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500" id="userRole">集团副总经理</span>
+                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">李</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 页面标题和视角切换 -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">预算执行看板</h2>
+                <p class="text-gray-600 mt-1" id="dashboardDesc">实时监控各部门预算执行情况</p>
+            </div>
+            <div class="flex space-x-3">
+                <select class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+                    <option>2025年度</option>
+                    <option>2024年度</option>
+                </select>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">导出报表</button>
+            </div>
+        </div>
+
+        <!-- 视角切换Tab -->
+        <div class="bg-white rounded-lg card-shadow mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6">
+                    <button onclick="switchView('leadership')" id="leadershipTab" class="tab-active py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                        领导视角
+                    </button>
+                    <button onclick="switchView('department')" id="departmentTab" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                        部门视角
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- 领导视角内容 -->
+        <div id="leadershipView">
+            <!-- 整体指标卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">年度总预算</p>
+                            <p class="text-2xl font-bold text-gray-900">¥3,850万</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm text-gray-500">涉及9个部门</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">已执行预算</p>
+                            <p class="text-2xl font-bold text-gray-900">¥2,185万</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm text-green-600">执行率: 56.8%</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">超支部门</p>
+                            <p class="text-2xl font-bold text-red-600">2个</p>
+                        </div>
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.856-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm text-red-500">需要关注调整</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">预算节余</p>
+                            <p class="text-2xl font-bold text-gray-900">¥1,665万</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm text-gray-500">43.2%剩余</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 部门预算执行情况 -->
+            <div class="bg-white rounded-lg p-6 card-shadow mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">各部门预算执行情况</h3>
+                <div class="space-y-6">
+                    <!-- 市场营销部 -->
+                    <div class="border rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-medium text-gray-900">市场营销部</h4>
+                            <span class="text-sm text-red-500 bg-red-50 px-2 py-1 rounded">超支告警</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">差旅费</p>
+                                <p class="text-sm font-medium">¥285万 / ¥250万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-red-500" style="width: 114%"></div>
+                                </div>
+                                <p class="text-xs text-red-600 mt-1">114%</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">会议费</p>
+                                <p class="text-sm font-medium">¥85万 / ¥120万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-green-500" style="width: 71%"></div>
+                                </div>
+                                <p class="text-xs text-green-600 mt-1">71%</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">培训费</p>
+                                <p class="text-sm font-medium">¥165万 / ¥180万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-yellow-500" style="width: 92%"></div>
+                                </div>
+                                <p class="text-xs text-yellow-600 mt-1">92%</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">招待费</p>
+                                <p class="text-sm font-medium">¥45万 / ¥80万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-green-500" style="width: 56%"></div>
+                                </div>
+                                <p class="text-xs text-green-600 mt-1">56%</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 研发技术部 -->
+                    <div class="border rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-medium text-gray-900">研发技术部</h4>
+                            <span class="text-sm text-yellow-500 bg-yellow-50 px-2 py-1 rounded">预算偏高</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">差旅费</p>
+                                <p class="text-sm font-medium">¥95万 / ¥150万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-green-500" style="width: 63%"></div>
+                                </div>
+                                <p class="text-xs text-green-600 mt-1">63%</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">培训费</p>
+                                <p class="text-sm font-medium">¥285万 / ¥320万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-yellow-500" style="width: 89%"></div>
+                                </div>
+                                <p class="text-xs text-yellow-600 mt-1">89%</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">设备费</p>
+                                <p class="text-sm font-medium">¥420万 / ¥500万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-yellow-500" style="width: 84%"></div>
+                                </div>
+                                <p class="text-xs text-yellow-600 mt-1">84%</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">劳务费</p>
+                                <p class="text-sm font-medium">¥165万 / ¥200万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-green-500" style="width: 83%"></div>
+                                </div>
+                                <p class="text-xs text-green-600 mt-1">83%</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 人力资源部 -->
+                    <div class="border rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-medium text-gray-900">人力资源部</h4>
+                            <span class="text-sm text-green-500 bg-green-50 px-2 py-1 rounded">执行正常</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">差旅费</p>
+                                <p class="text-sm font-medium">¥65万 / ¥100万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-green-500" style="width: 65%"></div>
+                                </div>
+                                <p class="text-xs text-green-600 mt-1">65%</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">培训费</p>
+                                <p class="text-sm font-medium">¥125万 / ¥200万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-green-500" style="width: 63%"></div>
+                                </div>
+                                <p class="text-xs text-green-600 mt-1">63%</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">招聘费</p>
+                                <p class="text-sm font-medium">¥45万 / ¥80万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-green-500" style="width: 56%"></div>
+                                </div>
+                                <p class="text-xs text-green-600 mt-1">56%</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded">
+                                <p class="text-xs text-gray-500">福利费</p>
+                                <p class="text-sm font-medium">¥235万 / ¥300万</p>
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill bg-green-500" style="width: 78%"></div>
+                                </div>
+                                <p class="text-xs text-green-600 mt-1">78%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 部门视角内容 -->
+        <div id="departmentView" class="hidden">
+            <!-- 部门选择 -->
+            <div class="bg-white rounded-lg p-4 card-shadow mb-6">
+                <div class="flex items-center space-x-4">
+                    <label class="text-sm font-medium text-gray-700">查看部门:</label>
+                    <select id="departmentSelect" onchange="changeDepartment()" class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+                        <option value="marketing">市场营销部</option>
+                        <option value="rd">研发技术部</option>
+                        <option value="hr">人力资源部</option>
+                        <option value="finance">财务部</option>
+                        <option value="production">生产部</option>
+                        <option value="purchase">采购部</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 部门概览指标 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">部门总预算</p>
+                            <p class="text-2xl font-bold text-gray-900" id="deptTotalBudget">¥630万</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm text-gray-500" id="deptBudgetItems">4个预算科目</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">已使用预算</p>
+                            <p class="text-2xl font-bold text-gray-900" id="deptUsedBudget">¥580万</p>
+                        </div>
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm text-red-600" id="deptUsageRate">执行率: 92%</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">剩余预算</p>
+                            <p class="text-2xl font-bold text-gray-900" id="deptRemainingBudget">¥50万</p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm text-orange-600" id="deptTimeRemaining">Q4需谨慎使用</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">超支科目</p>
+                            <p class="text-2xl font-bold text-red-600" id="deptOverBudgetItems">1个</p>
+                        </div>
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.856-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm text-red-500" id="deptOverBudgetDesc">差旅费超支</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 详细预算科目 -->
+            <div class="bg-white rounded-lg p-6 card-shadow mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6" id="deptDetailTitle">市场营销部 - 预算执行明细</h3>
+                <div class="space-y-4" id="deptBudgetDetails">
+                    <!-- 差旅费详情 -->
+                    <div class="border-l-4 border-red-400 bg-red-50 p-4 rounded-r">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-medium text-red-800">差旅费</h4>
+                                <p class="text-sm text-red-600">预算: ¥250万 | 已用: ¥285万 | 超支: ¥35万</p>
+                            </div>
+                            <span class="text-sm bg-red-200 text-red-800 px-2 py-1 rounded">超支 14%</span>
+                        </div>
+                        <div class="progress-bar mb-3">
+                            <div class="progress-fill bg-red-500" style="width: 114%"></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-600">交通费</p>
+                                <p class="font-medium">¥165万</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">住宿费</p>
+                                <p class="font-medium">¥85万</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">其他费用</p>
+                                <p class="font-medium">¥35万</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 会议费详情 -->
+                    <div class="border-l-4 border-green-400 bg-green-50 p-4 rounded-r">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-medium text-green-800">会议费</h4>
+                                <p class="text-sm text-green-600">预算: ¥120万 | 已用: ¥85万 | 剩余: ¥35万</p>
+                            </div>
+                            <span class="text-sm bg-green-200 text-green-800 px-2 py-1 rounded">正常 71%</span>
+                        </div>
+                        <div class="progress-bar mb-3">
+                            <div class="progress-fill bg-green-500" style="width: 71%"></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-600">场地费</p>
+                                <p class="font-medium">¥45万</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">设备费</p>
+                                <p class="font-medium">¥25万</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">其他费用</p>
+                                <p class="font-medium">¥15万</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 培训费详情 -->
+                    <div class="border-l-4 border-yellow-400 bg-yellow-50 p-4 rounded-r">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-medium text-yellow-800">培训费</h4>
+                                <p class="text-sm text-yellow-600">预算: ¥180万 | 已用: ¥165万 | 剩余: ¥15万</p>
+                            </div>
+                            <span class="text-sm bg-yellow-200 text-yellow-800 px-2 py-1 rounded">接近上限 92%</span>
+                        </div>
+                        <div class="progress-bar mb-3">
+                            <div class="progress-fill bg-yellow-500" style="width: 92%"></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-600">外部培训</p>
+                                <p class="font-medium">¥95万</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">内部培训</p>
+                                <p class="font-medium">¥45万</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">培训材料</p>
+                                <p class="font-medium">¥25万</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 招待费详情 -->
+                    <div class="border-l-4 border-green-400 bg-green-50 p-4 rounded-r">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-medium text-green-800">招待费</h4>
+                                <p class="text-sm text-green-600">预算: ¥80万 | 已用: ¥45万 | 剩余: ¥35万</p>
+                            </div>
+                            <span class="text-sm bg-green-200 text-green-800 px-2 py-1 rounded">正常 56%</span>
+                        </div>
+                        <div class="progress-bar mb-3">
+                            <div class="progress-fill bg-green-500" style="width: 56%"></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-600">客户接待</p>
+                                <p class="font-medium">¥25万</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">商务用餐</p>
+                                <p class="font-medium">¥15万</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">其他招待</p>
+                                <p class="font-medium">¥5万</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作面板 -->
+        <div class="bg-white rounded-lg p-6 card-shadow">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">快捷操作</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button class="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="text-center">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <span class="text-sm font-medium">预算调整</span>
+                    </div>
+                </button>
+                
+                <button class="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="text-center">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">预算追加</span>
+                    </div>
+                </button>
+                
+                <button class="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="text-center">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                        </svg>
+                        <span class="text-sm font-medium">预算调配</span>
+                    </div>
+                </button>
+                
+                <button class="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="text-center">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">生成报表</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 视角切换函数
+        function switchView(view) {
+            const leadershipTab = document.getElementById('leadershipTab');
+            const departmentTab = document.getElementById('departmentTab');
+            const leadershipView = document.getElementById('leadershipView');
+            const departmentView = document.getElementById('departmentView');
+            const userRole = document.getElementById('userRole');
+            const dashboardDesc = document.getElementById('dashboardDesc');
+
+            if (view === 'leadership') {
+                leadershipTab.className = "tab-active py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap";
+                departmentTab.className = "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap";
+                leadershipView.classList.remove('hidden');
+                departmentView.classList.add('hidden');
+                userRole.textContent = "集团副总经理";
+                dashboardDesc.textContent = "实时监控各部门预算执行情况";
+            } else {
+                departmentTab.className = "tab-active py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap";
+                leadershipTab.className = "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap";
+                departmentView.classList.remove('hidden');
+                leadershipView.classList.add('hidden');
+                userRole.textContent = "市场营销部主管";
+                dashboardDesc.textContent = "监控本部门各预算科目执行情况";
+            }
+        }
+
+        // 部门切换函数
+        function changeDepartment() {
+            const select = document.getElementById('departmentSelect');
+            const selectedValue = select.value;
+            const userRole = document.getElementById('userRole');
+            
+            // 根据选择的部门更新用户角色显示
+            const roleMap = {
+                'marketing': '市场营销部主管',
+                'rd': '研发技术部主管', 
+                'hr': '人力资源部主管',
+                'finance': '财务部主管',
+                'production': '生产部主管',
+                'purchase': '采购部主管'
+            };
+            
+            userRole.textContent = roleMap[selectedValue] || '部门主管';
+            
+            // 这里可以添加更多逻辑来更新部门具体数据
+            updateDepartmentData(selectedValue);
+        }
+
+        // 更新部门数据
+        function updateDepartmentData(department) {
+            // 示例数据更新，实际应该从后端获取
+            const departmentData = {
+                'marketing': {
+                    totalBudget: '¥630万',
+                    usedBudget: '¥580万',
+                    remainingBudget: '¥50万',
+                    overBudgetItems: '1个',
+                    usageRate: '执行率: 92%',
+                    budgetItems: '4个预算科目',
+                    timeRemaining: 'Q4需谨慎使用',
+                    overBudgetDesc: '差旅费超支'
+                },
+                'rd': {
+                    totalBudget: '¥970万',
+                    usedBudget: '¥865万',
+                    remainingBudget: '¥105万',
+                    overBudgetItems: '0个',
+                    usageRate: '执行率: 89%',
+                    budgetItems: '4个预算科目',
+                    timeRemaining: '执行正常',
+                    overBudgetDesc: '暂无超支'
+                }
+            };
+
+            const data = departmentData[department] || departmentData['marketing'];
+            
+            document.getElementById('deptTotalBudget').textContent = data.totalBudget;
+            document.getElementById('deptUsedBudget').textContent = data.usedBudget;
+            document.getElementById('deptRemainingBudget').textContent = data.remainingBudget;
+            document.getElementById('deptOverBudgetItems').textContent = data.overBudgetItems;
+            document.getElementById('deptUsageRate').textContent = data.usageRate;
+            document.getElementById('deptBudgetItems').textContent = data.budgetItems;
+            document.getElementById('deptTimeRemaining').textContent = data.timeRemaining;
+            document.getElementById('deptOverBudgetDesc').textContent = data.overBudgetDesc;
+        }
+    </script>
+</body>
+</html>
