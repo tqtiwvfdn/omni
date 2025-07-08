@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUI卡片编辑器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --bg-glass: rgba(255, 255, 255, 0.95);
+            --border-glass: rgba(255, 255, 255, 0.3);
+        }
+        
+        .glass-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+        
+        .editor-section {
+            transition: all 0.3s ease;
+        }
+        
+        .editor-section.collapsed {
+            max-height: 60px;
+            overflow: hidden;
+        }
+        
+        .code-editor {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 16px;
+            min-height: 200px;
+            overflow-x: auto;
+        }
+        
+        .property-input {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .property-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .tab-button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .tab-button.active {
+            background: var(--primary-blue);
+            color: white;
+        }
+        
+        .tab-button:not(.active) {
+            background: rgba(156, 163, 175, 0.1);
+            color: rgb(75, 85, 99);
+        }
+        
+        .tab-button:not(.active):hover {
+            background: rgba(156, 163, 175, 0.2);
+        }
+        
+        .component-tree {
+            border-left: 2px solid #e5e7eb;
+            padding-left: 12px;
+        }
+        
+        .tree-item {
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .tree-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .tree-item.selected {
+            background: rgba(59, 130, 246, 0.2);
+            border-left: 3px solid var(--primary-blue);
+        }
+        
+        .preview-container {
+            background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f8f9fa 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        
+        .mobile-frame {
+            width: 375px;
+            height: 667px;
+            background: #000;
+            border-radius: 25px;
+            padding: 20px 15px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .mobile-screen {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .mobile-statusbar {
+            height: 44px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .i18n-key {
+            background: rgba(245, 158, 11, 0.1);
+            color: rgb(245, 158, 11);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        
+        .property-group {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .property-group-header {
+            background: #f9fafb;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: between;
+        }
+        
+        .property-group-content {
+            padding: 16px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="flex h-screen">
+        <!-- 左侧配置面板 -->
+        <div class="w-80 glass-card m-4 rounded-xl overflow-hidden flex flex-col">
+            <!-- 头部导航 -->
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                        <button onclick="goBack()" class="p-2 hover:bg-gray-100 rounded-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <div>
+                            <h1 class="text-lg font-bold text-gray-800">编辑卡片</h1>
+                            <p class="text-sm text-gray-500">TransferConfirmCard</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="text-blue-600 hover:text-blue-800 text-sm font-medium" onclick="saveCard()">
+                            保存
+                        </button>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium" onclick="publishCard()">
+                            发布
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 标签页 -->
+                <div class="flex space-x-1">
+                    <button class="tab-button active" onclick="switchTab('basic')">基础配置</button>
+                    <button class="tab-button" onclick="switchTab('layout')">设置布局</button>
+                    <button class="tab-button" onclick="switchTab('events')">事件配置</button>
+                    <button class="tab-button" onclick="switchTab('i18n')">国际化</button>
+                </div>
+            </div>
+            
+            <!-- 配置内容 -->
+            <div class="flex-1 overflow-y-auto p-4">
+                <!-- 基础配置标签页 -->
+                <div id="basic-tab" class="tab-content">
+                    <div class="property-group">
+                        <div class="property-group-header">
+                            <span>基本信息</span>
+                        </div>
+                        <div class="property-group-content space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">卡片ID</label>
+                                <input type="text" value="transfer_confirm" class="property-input w-full px-3 py-2 rounded-lg" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">卡片名称</label>
+                                <div class="flex items-center">
+                                    <input type="text" value="转账确认信息卡片" class="property-input flex-1 px-3 py-2 rounded-lg">
+                                    <span class="i18n-key">card.transfer_confirm.title</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">卡片描述</label>
+                                <div class="flex items-center">
+                                    <textarea class="property-input flex-1 px-3 py-2 rounded-lg" rows="2">用于显示转账确认信息的交互卡片</textarea>
+                                    <span class="i18n-key">card.transfer_confirm.desc</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">分类</label>
+                                <select class="property-input w-full px-3 py-2 rounded-lg">
+                                    <option value="payment">水费查询与缴纳</option>
+                                    <option value="collection">打开收款</option>
+                                    <option value="appointment">预约汇</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">版本</label>
+                                <input type="text" value="v3.2.1" class="property-input w-full px-3 py-2 rounded-lg">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="property-group">
+                        <div class="property-group-header">
+                            <span>输入参数</span>
+                            <button onclick="addInputParam()" class="text-blue-600 hover:text-blue-800 text-sm">
+                                + 添加
+                            </button>
+                        </div>
+                        <div class="property-group-content" id="input-params">
+                            <div class="space-y-3">
+                                <div class="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" value="amount" class="text-sm font-medium bg-transparent border-none outline-none">
+                                            <span class="text-xs text-gray-500">|</span>
+                                            <select class="text-xs bg-transparent border-none outline-none">
+                                                <option>Number</option>
+                                                <option>String</option>
+                                                <option>Boolean</option>
+                                                <option>Object</option>
+                                            </select>
+                                            <input type="checkbox" checked class="ml-2">
+                                            <span class="text-xs text-gray-500">必填</span>
+                                        </div>
+                                        <div class="flex items-center mt-1">
+                                            <input type="text" value="转账金额" class="text-xs text-gray-600 bg-transparent border-none outline-none flex-1" placeholder="参数描述">
+                                            <span class="i18n-key text-xs">exchange.amount</span>
+                                        </div>
+                                    </div>
+                                    <button class="text-red-500 hover:text-red-700 text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <div class="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" value="onCancel" class="text-sm font-medium bg-transparent border-none outline-none">
+                                        </div>
+                                        <div class="flex items-center mt-1">
+                                            <input type="text" value="用户点击取消按钮时触发" class="text-xs text-gray-600 bg-transparent border-none outline-none flex-1" placeholder="事件描述">
+                                            <span class="i18n-key text-xs">event.onCancel</span>
+                                        </div>
+                                    </div>
+                                    <button class="text-red-500 hover:text-red-700 text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <div class="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" value="onEdit" class="text-sm font-medium bg-transparent border-none outline-none">
+                                        </div>
+                                        <div class="flex items-center mt-1">
+                                            <input type="text" value="用户点击修改按钮时触发" class="text-xs text-gray-600 bg-transparent border-none outline-none flex-1" placeholder="事件描述">
+                                            <span class="i18n-key text-xs">event.onEdit</span>
+                                        </div>
+                                    </div>
+                                    <button class="text-red-500 hover:text-red-700 text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 设置布局标签页 -->
+                <div id="layout-tab" class="tab-content hidden">
+                    <div class="property-group">
+                        <div class="property-group-header">
+                            <span>组件树</span>
+                        </div>
+                        <div class="property-group-content">
+                            <div class="component-tree">
+                                <div class="tree-item selected" onclick="selectElement('root')">
+                                    <div class="flex items-center space-x-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                        </svg>
+                                        <span class="text-sm">卡片容器</span>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="tree-item" onclick="selectElement('header')">
+                                        <div class="flex items-center space-x-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
+                                            </svg>
+                                            <span class="text-sm">标题栏</span>
+                                        </div>
+                                    </div>
+                                    <div class="tree-item" onclick="selectElement('content')">
+                                        <div class="flex items-center space-x-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            <span class="text-sm">内容区域</span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="tree-item" onclick="selectElement('amount-field')">
+                                            <div class="flex items-center space-x-2">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                                </svg>
+                                                <span class="text-sm">转账金额</span>
+                                            </div>
+                                        </div>
+                                        <div class="tree-item" onclick="selectElement('payee-field')">
+                                            <div class="flex items-center space-x-2">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                </svg>
+                                                <span class="text-sm">收款人信息</span>
+                                            </div>
+                                        </div>
+                                        <div class="tree-item" onclick="selectElement('account-field')">
+                                            <div class="flex items-center space-x-2">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                                </svg>
+                                                <span class="text-sm">收款账号</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tree-item" onclick="selectElement('buttons')">
+                                        <div class="flex items-center space-x-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path>
+                                            </svg>
+                                            <span class="text-sm">操作按钮</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="property-group">
+                        <div class="property-group-header">
+                            <span>样式配置</span>
+                        </div>
+                        <div class="property-group-content" id="style-config">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">背景颜色</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="color" value="#ffffff" class="w-8 h-8 rounded border">
+                                        <input type="text" value="#ffffff" class="property-input flex-1 px-3 py-2 rounded-lg">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">边框圆角</label>
+                                    <input type="range" min="0" max="20" value="12" class="w-full" oninput="updateBorderRadius(this.value)">
+                                    <div class="text-xs text-gray-500 mt-1">当前值: <span id="border-radius-value">12px</span></div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">内边距</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="number" value="16" class="property-input px-3 py-2 rounded-lg" placeholder="上下">
+                                        <input type="number" value="20" class="property-input px-3 py-2 rounded-lg" placeholder="左右">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">阴影</label>
+                                    <select class="property-input w-full px-3 py-2 rounded-lg">
+                                        <option>无阴影</option>
+                                        <option selected>轻微阴影</option>
+                                        <option>中等阴影</option>
+                                        <option>重阴影</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 事件配置标签页 -->
+                <div id="events-tab" class="tab-content hidden">
+                    <div class="property-group">
+                        <div class="property-group-header">
+                            <span>生命周期事件</span>
+                        </div>
+                        <div class="property-group-content">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">组件加载时</label>
+                                    <textarea class="property-input w-full px-3 py-2 rounded-lg code-editor text-xs" rows="3" placeholder="// 组件初始化代码
+console.log('TransferConfirmCard loaded');"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">数据更新时</label>
+                                    <textarea class="property-input w-full px-3 py-2 rounded-lg code-editor text-xs" rows="3" placeholder="// 数据更新处理代码
+function onDataUpdate(newData) {
+  // 处理数据更新
+}"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">组件销毁时</label>
+                                    <textarea class="property-input w-full px-3 py-2 rounded-lg code-editor text-xs" rows="3" placeholder="// 组件清理代码
+function onDestroy() {
+  // 清理资源
+}"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="property-group">
+                        <div class="property-group-header">
+                            <span>用户交互事件</span>
+                        </div>
+                        <div class="property-group-content">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">确认按钮点击</label>
+                                    <textarea class="property-input w-full px-3 py-2 rounded-lg code-editor text-xs" rows="4" placeholder="// 确认按钮点击处理
+function onConfirm() {
+  // 发送确认事件
+  this.emit('confirm', {
+    amount: this.props.amount,
+    payeeName: this.props.payeeName,
+    payeeAccount: this.props.payeeAccount
+  });
+}">function onConfirm() {
+  // 发送确认事件
+  this.emit('confirm', {
+    amount: this.props.amount,
+    payeeName: this.props.payeeName,
+    payeeAccount: this.props.payeeAccount
+  });
+}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">取消按钮点击</label>
+                                    <textarea class="property-input w-full px-3 py-2 rounded-lg code-editor text-xs" rows="3" placeholder="// 取消按钮点击处理
+function onCancel() {
+  this.emit('cancel');
+}">function onCancel() {
+  this.emit('cancel');
+}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">编辑按钮点击</label>
+                                    <textarea class="property-input w-full px-3 py-2 rounded-lg code-editor text-xs" rows="3" placeholder="// 编辑按钮点击处理
+function onEdit() {
+  this.emit('edit');
+}">function onEdit() {
+  this.emit('edit');
+}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 国际化标签页 -->
+                <div id="i18n-tab" class="tab-content hidden">
+                    <div class="property-group">
+                        <div class="property-group-header">
+                            <span>多语言配置</span>
+                            <select class="text-sm">
+                                <option value="zh-CN">中文 (简体)</option>
+                                <option value="en">English</option>
+                                <option value="zh-HK">中文 (繁體)</option>
+                            </select>
+                        </div>
+                        <div class="property-group-content">
+                            <div class="space-y-4" id="i18n-fields">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        卡片标题
+                                        <span class="text-xs text-gray-500 ml-2">card.transfer_confirm.title</span>
+                                    </label>
+                                    <div class="space-y-2">
+                                        <input type="text" value="转账确认" class="property-input w-full px-3 py-2 rounded-lg" placeholder="中文">
+                                        <input type="text" value="Transfer Confirmation" class="property-input w-full px-3 py-2 rounded-lg" placeholder="English">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        确认按钮
+                                        <span class="text-xs text-gray-500 ml-2">button.confirm</span>
+                                    </label>
+                                    <div class="space-y-2">
+                                        <input type="text" value="确认" class="property-input w-full px-3 py-2 rounded-lg" placeholder="中文">
+                                        <input type="text" value="Confirm" class="property-input w-full px-3 py-2 rounded-lg" placeholder="English">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        取消按钮
+                                        <span class="text-xs text-gray-500 ml-2">button.cancel</span>
+                                    </label>
+                                    <div class="space-y-2">
+                                        <input type="text" value="取消" class="property-input w-full px-3 py-2 rounded-lg" placeholder="中文">
+                                        <input type="text" value="Cancel" class="property-input w-full px-3 py-2 rounded-lg" placeholder="English">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        金额标签
+                                        <span class="text-xs text-gray-500 ml-2">label.amount</span>
+                                    </label>
+                                    <div class="space-y-2">
+                                        <input type="text" value="转账金额" class="property-input w-full px-3 py-2 rounded-lg" placeholder="中文">
+                                        <input type="text" value="Transfer Amount" class="property-input w-full px-3 py-2 rounded-lg" placeholder="English">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        收款人标签
+                                        <span class="text-xs text-gray-500 ml-2">label.payee</span>
+                                    </label>
+                                    <div class="space-y-2">
+                                        <input type="text" value="收款人" class="property-input w-full px-3 py-2 rounded-lg" placeholder="中文">
+                                        <input type="text" value="Payee" class="property-input w-full px-3 py-2 rounded-lg" placeholder="English">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        账号标签
+                                        <span class="text-xs text-gray-500 ml-2">label.account</span>
+                                    </label>
+                                    <div class="space-y-2">
+                                        <input type="text" value="收款账号" class="property-input w-full px-3 py-2 rounded-lg" placeholder="中文">
+                                        <input type="text" value="Account Number" class="property-input w-full px-3 py-2 rounded-lg" placeholder="English">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="property-group">
+                        <div class="property-group-header">
+                            <span>批量操作</span>
+                        </div>
+                        <div class="property-group-content">
+                            <div class="space-y-3">
+                                <button class="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg text-blue-700 font-medium text-sm">
+                                    从JSON导入翻译
+                                </button>
+                                <button class="w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg text-green-700 font-medium text-sm">
+                                    导出为JSON文件
+                                </button>
+                                <button class="w-full text-left p-3 bg-purple-50 hover:bg-purple-100 rounded-lg text-purple-700 font-medium text-sm">
+                                    自动翻译（AI翻译）
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 中间预览面板 -->
+        <div class="flex-1 flex flex-col">
+            <!-- 预览工具栏 -->
+            <div class="glass-card m-4 mb-0 rounded-t-xl px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <h2 class="text-lg font-semibold text-gray-800">实时预览</h2>
+                        <div class="flex items-center space-x-2">
+                            <button class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg" onclick="refreshPreview()">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                            </button>
+                            <select class="text-sm bg-gray-100 border-none rounded-lg px-3 py-2" onchange="changeDevice(this.value)">
+                                <option value="mobile">手机预览</option>
+                                <option value="tablet">平板预览</option>
+                                <option value="desktop">桌面预览</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="text-blue-600 hover:text-blue-800 text-sm font-medium" onclick="testCard()">
+                            测试交互
+                        </button>
+                        <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium" onclick="exportCard()">
+                            导出代码
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 预览内容 -->
+            <div class="glass-card m-4 mt-0 rounded-b-xl flex-1 preview-container">
+                <div class="flex items-center justify-center h-full">
+                    <div class="mobile-frame">
+                        <div class="mobile-screen">
+                            <!-- 状态栏 -->
+                            <div class="mobile-statusbar">
+                                <span>11:10</span>
+                                <div class="flex items-center space-x-1">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+                                    </svg>
+                                    <svg class="w-6 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M2 17h20v2H2zm1.15-4.05L4 11l.85 1.95.66-.66c.78-.78 2.05-.78 2.83 0l.66.66L10.85 11 12 12.15 13.15 11l1.85 1.95.66-.66c.78-.78 2.05-.78 2.83 0l.66.66L20 11l.85 1.95L22 12.05 20.85 11 22 9.95 20.85 8 19 9.15 17.15 8 16 9.15 14.15 8 13 9.15 11.15 8 10 9.15 8.15 8 7 9.15 5.15 8 4 9.15 2.15 8 1 9.15z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            <!-- 卡片内容 -->
+                            <div class="p-4 h-full bg-gray-50">
+                                <div class="bg-white rounded-xl shadow-lg p-5 max-w-sm mx-auto" id="preview-card">
+                                    <div class="text-center mb-4">
+                                        <h3 class="text-lg font-bold text-gray-800 mb-2">转账确认</h3>
+                                        <p class="text-sm text-gray-600">请确认以下转账信息</p>
+                                    </div>
+                                    
+                                    <div class="space-y-4 mb-6">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-gray-600">转账金额</span>
+                                            <span class="text-lg font-bold text-blue-600">¥1,000.00</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-gray-600">收款人</span>
+                                            <span class="font-medium">张三</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-gray-600">收款账号</span>
+                                            <span class="font-medium">6222 **** **** 1234</span>
+                                        </div>
+                                        <div class="border-t pt-3">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-sm text-gray-600">手续费</span>
+                                                <span>免费</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex space-x-3">
+                                        <button class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-lg font-medium transition-colors" onclick="simulateEvent('cancel')">
+                                            取消
+                                        </button>
+                                        <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors" onclick="simulateEvent('confirm')">
+                                            确认
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧代码面板 -->
+        <div class="w-96 glass-card m-4 rounded-xl overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">生成代码</h2>
+                    <div class="flex items-center space-x-2">
+                        <select class="text-sm bg-gray-100 border-none rounded-lg px-3 py-2" onchange="switchCodeView(this.value)">
+                            <option value="vue">Vue组件</option>
+                            <option value="react">React组件</option>
+                            <option value="json">JSON配置</option>
+                        </select>
+                        <button class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg" onclick="copyCode()">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-auto">
+                <div id="vue-code" class="code-editor h-full p-4">
+<template>
+  <div class="transfer-confirm-card bg-white rounded-xl shadow-lg p-5">
+    <div class="text-center mb-4">
+      <h3 class="text-lg font-bold text-gray-800 mb-2">
+        {{ $t('card.transfer_confirm.title') }}
+      </h3>
+      <p class="text-sm text-gray-600">
+        {{ $t('card.transfer_confirm.desc') }}
+      </p>
+    </div>
+    
+    <div class="space-y-4 mb-6">
+      <div class="flex justify-between items-center">
+        <span class="text-sm text-gray-600">
+          {{ $t('label.amount') }}
+        </span>
+        <span class="text-lg font-bold text-blue-600">
+          ¥{{ amount }}
+        </span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-sm text-gray-600">
+          {{ $t('label.payee') }}
+        </span>
+        <span class="font-medium">{{ payeeName }}</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-sm text-gray-600">
+          {{ $t('label.account') }}
+        </span>
+        <span class="font-medium">{{ payeeAccount }}</span>
+      </div>
+    </div>
+    
+    <div class="flex space-x-3">
+      <button 
+        @click="handleCancel"
+        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-lg font-medium transition-colors">
+        {{ $t('button.cancel') }}
+      </button>
+      <button 
+        @click="handleConfirm"
+        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors">
+        {{ $t('button.confirm') }}
+      </button>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'TransferConfirmCard',
+  props: {
+    amount: {
+      type: [String, Number],
+      required: true
+    },
+    payeeName: {
+      type: String,
+      required: true
+    },
+    payeeAccount: {
+      type: String,
+      required: false
+    }
+  },
+  methods: {
+    handleConfirm() {
+      this.$emit('confirm', {
+        amount: this.amount,
+        payeeName: this.payeeName,
+        payeeAccount: this.payeeAccount
+      });
+    },
+    handleCancel() {
+      this.$emit('cancel');
+    },
+    handleEdit() {
+      this.$emit('edit');
+    }
+  }
+}
+</script>
+                </div>
+                
+                <div id="react-code" class="code-editor h-full p-4 hidden">
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+const TransferConfirmCard = ({ 
+  amount, 
+  payeeName, 
+  payeeAccount, 
+  onConfirm, 
+  onCancel, 
+  onEdit 
+}) => {
+  const { t } = useTranslation();
+
+  const handleConfirm = () => {
+    onConfirm?.({
+      amount,
+      payeeName,
+      payeeAccount
+    });
+  };
+
+  return (
+    <div className="transfer-confirm-card bg-white rounded-xl shadow-lg p-5">
+      <div className="text-center mb-4">
+        <h3 className="text-lg font-bold text-gray-800 mb-2">
+          {t('card.transfer_confirm.title')}
+        </h3>
+        <p className="text-sm text-gray-600">
+          {t('card.transfer_confirm.desc')}
+        </p>
+      </div>
+      
+      <div className="space-y-4 mb-6">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-600">
+            {t('label.amount')}
+          </span>
+          <span className="text-lg font-bold text-blue-600">
+            ¥{amount}
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-600">
+            {t('label.payee')}
+          </span>
+          <span className="font-medium">{payeeName}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-600">
+            {t('label.account')}
+          </span>
+          <span className="font-medium">{payeeAccount}</span>
+        </div>
+      </div>
+      
+      <div className="flex space-x-3">
+        <button 
+          onClick={onCancel}
+          className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-lg font-medium transition-colors">
+          {t('button.cancel')}
+        </button>
+        <button 
+          onClick={handleConfirm}
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors">
+          {t('button.confirm')}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default TransferConfirmCard;
+                </div>
+                
+                <div id="json-code" class="code-editor h-full p-4 hidden">
+{
+  "id": "transfer_confirm",
+  "name": "TransferConfirmCard",
+  "title": "转账确认信息卡片",
+  "description": "用于显示转账确认信息的交互卡片",
+  "category": "payment",
+  "version": "3.2.1",
+  "props": {
+    "amount": {
+      "type": "Number",
+      "required": true,
+      "description": "转账金额",
+      "i18nKey": "exchange.amount"
+    },
+    "payeeName": {
+      "type": "String", 
+      "required": true,
+      "description": "收款人姓名",
+      "i18nKey": "exchange.payeeName"
+    },
+    "payeeAccount": {
+      "type": "String",
+      "required": false,
+      "description": "收款人账号",
+      "i18nKey": "exchange.payeeAccount"
+    }
+  },
+  "events": {
+    "onConfirm": {
+      "description": "用户点击确认按钮时触发",
+      "i18nKey": "event.onConfirm",
+      "payload": {
+        "amount": "Number",
+        "payeeName": "String",
+        "payeeAccount": "String"
+      }
+    },
+    "onCancel": {
+      "description": "用户点击取消按钮时触发",
+      "i18nKey": "event.onCancel"
+    },
+    "onEdit": {
+      "description": "用户点击修改按钮时触发",
+      "i18nKey": "event.onEdit"
+    }
+  },
+  "i18n": {
+    "zh-CN": {
+      "card.transfer_confirm.title": "转账确认",
+      "button.confirm": "确认",
+      "button.cancel": "取消",
+      "label.amount": "转账金额",
+      "label.payee": "收款人",
+      "label.account": "收款账号"
+    },
+    "en": {
+      "card.transfer_confirm.title": "Transfer Confirmation",
+      "button.confirm": "Confirm", 
+      "button.cancel": "Cancel",
+      "label.amount": "Transfer Amount",
+      "label.payee": "Payee",
+      "label.account": "Account Number"
+    }
+  },
+  "style": {
+    "backgroundColor": "#ffffff",
+    "borderRadius": "12px",
+    "padding": "16px 20px",
+    "shadow": "light"
+  }
+}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="eventModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">事件触发</h3>
+                <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="eventContent" class="bg-gray-50 rounded-lg p-4">
+                <p class="text-gray-500">事件内容加载中...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'basic';
+        let currentCodeView = 'vue';
+
+        // 标签页切换
+        function switchTab(tab) {
+            // 隐藏所有标签页内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // 移除所有标签按钮的active状态
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示当前标签页内容
+            document.getElementById(tab + '-tab').classList.remove('hidden');
+            
+            // 激活当前标签按钮
+            event.target.classList.add('active');
+            
+            currentTab = tab;
+        }
+
+        // 代码视图切换
+        function switchCodeView(view) {
+            document.querySelectorAll('[id$="-code"]').forEach(code => {
+                code.classList.add('hidden');
+            });
+            document.getElementById(view + '-code').classList.remove('hidden');
+            currentCodeView = view;
+        }
+
+        // 选择元素
+        function selectElement(elementId) {
+            document.querySelectorAll('.tree-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // 更新样式配置面板
+            updateStyleConfig(elementId);
+        }
+
+        // 更新样式配置
+        function updateStyleConfig(elementId) {
+            // 根据选择的元素更新样式配置面板
+            console.log('选择了元素:', elementId);
+        }
+
+        // 更新边框圆角
+        function updateBorderRadius(value) {
+            document.getElementById('border-radius-value').textContent = value + 'px';
+        }
+
+        // 添加输入参数
+        function addInputParam() {
+            const container = document.getElementById('input-params');
+            const newParam = document.createElement('div');
+            newParam.className = 'flex items-center space-x-2 p-3 bg-gray-50 rounded-lg';
+            newParam.innerHTML = `
+                <div class="flex-1">
+                    <div class="flex items-center space-x-2">
+                        <input type="text" placeholder="参数名" class="text-sm font-medium bg-transparent border-none outline-none">
+                        <span class="text-xs text-gray-500">|</span>
+                        <select class="text-xs bg-transparent border-none outline-none">
+                            <option>String</option>
+                            <option>Number</option>
+                            <option>Boolean</option>
+                            <option>Object</option>
+                        </select>
+                        <input type="checkbox" class="ml-2">
+                        <span class="text-xs text-gray-500">必填</span>
+                    </div>
+                    <div class="flex items-center mt-1">
+                        <input type="text" placeholder="参数描述" class="text-xs text-gray-600 bg-transparent border-none outline-none flex-1">
+                        <span class="i18n-key text-xs">i18n.key</span>
+                    </div>
+                </div>
+                <button class="text-red-500 hover:text-red-700 text-sm" onclick="this.parentElement.remove()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            `;
+            container.querySelector('.space-y-3').appendChild(newParam);
+        }
+
+        // 添加输出事件
+        function addOutputEvent() {
+            const container = document.getElementById('output-events');
+            const newEvent = document.createElement('div');
+            newEvent.className = 'flex items-center space-x-2 p-3 bg-gray-50 rounded-lg';
+            newEvent.innerHTML = `
+                <div class="flex-1">
+                    <div class="flex items-center space-x-2">
+                        <input type="text" placeholder="事件名" class="text-sm font-medium bg-transparent border-none outline-none">
+                    </div>
+                    <div class="flex items-center mt-1">
+                        <input type="text" placeholder="事件描述" class="text-xs text-gray-600 bg-transparent border-none outline-none flex-1">
+                        <span class="i18n-key text-xs">event.key</span>
+                    </div>
+                </div>
+                <button class="text-red-500 hover:text-red-700 text-sm" onclick="this.parentElement.remove()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            `;
+            container.querySelector('.space-y-3').appendChild(newEvent);
+        }
+
+        // 模拟事件
+        function simulateEvent(eventName) {
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('eventContent');
+            
+            const eventData = {
+                'confirm': {
+                    event: 'onConfirm',
+                    payload: {
+                        amount: 1000.00,
+                        payeeName: '张三',
+                        payeeAccount: '6222 **** **** 1234'
+                    }
+                },
+                'cancel': {
+                    event: 'onCancel',
+                    payload: null
+                }
+            };
+            
+            const data = eventData[eventName];
+            content.innerHTML = `
+                <div class="space-y-3">
+                    <div>
+                        <span class="text-sm font-medium text-gray-700">事件名称:</span>
+                        <span class="text-blue-600 font-medium">${data.event}</span>
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-700">事件数据:</span>
+                        <pre class="bg-gray-100 p-2 rounded text-xs mt-1 overflow-auto">${JSON.stringify(data.payload, null, 2)}</pre>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        * 这是模拟事件触发，实际使用时会调用相应的事件处理函数
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+
+        // 关闭事件模态框
+        function closeEventModal() {
+            document.getElementById('eventModal').classList.add('hidden');
+        }
+
+        // 其他功能函数
+        function goBack() {
+            alert('返回到组件列表');
+        }
+
+        function saveCard() {
+            alert('卡片已保存');
+        }
+
+        function publishCard() {
+            alert('卡片已发布');
+        }
+
+        function refreshPreview() {
+            alert('预览已刷新');
+        }
+
+        function changeDevice(device) {
+            console.log('切换到设备:', device);
+        }
+
+        function testCard() {
+            alert('开始交互测试');
+        }
+
+        function exportCard() {
+            alert('代码已导出');
+        }
+
+        function copyCode() {
+            alert('代码已复制到剪贴板');
+        }
+
+        // 点击模态框外部关闭
+        document.getElementById('eventModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEventModal();
+            }
+        });
+    </script>
+</body>
+</html> 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <div class="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" value="payeeName" class="text-sm font-medium bg-transparent border-none outline-none">
+                                            <span class="text-xs text-gray-500">|</span>
+                                            <select class="text-xs bg-transparent border-none outline-none">
+                                                <option>String</option>
+                                                <option>Number</option>
+                                                <option>Boolean</option>
+                                                <option>Object</option>
+                                            </select>
+                                            <input type="checkbox" checked class="ml-2">
+                                            <span class="text-xs text-gray-500">必填</span>
+                                        </div>
+                                        <div class="flex items-center mt-1">
+                                            <input type="text" value="收款人姓名" class="text-xs text-gray-600 bg-transparent border-none outline-none flex-1" placeholder="参数描述">
+                                            <span class="i18n-key text-xs">exchange.payeeName</span>
+                                        </div>
+                                    </div>
+                                    <button class="text-red-500 hover:text-red-700 text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <div class="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" value="payeeAccount" class="text-sm font-medium bg-transparent border-none outline-none">
+                                            <span class="text-xs text-gray-500">|</span>
+                                            <select class="text-xs bg-transparent border-none outline-none">
+                                                <option>String</option>
+                                                <option>Number</option>
+                                                <option>Boolean</option>
+                                                <option>Object</option>
+                                            </select>
+                                            <input type="checkbox" class="ml-2">
+                                            <span class="text-xs text-gray-500">必填</span>
+                                        </div>
+                                        <div class="flex items-center mt-1">
+                                            <input type="text" value="收款人账号" class="text-xs text-gray-600 bg-transparent border-none outline-none flex-1" placeholder="参数描述">
+                                            <span class="i18n-key text-xs">exchange.payeeAccount</span>
+                                        </div>
+                                    </div>
+                                    <button class="text-red-500 hover:text-red-700 text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="property-group">
+                        <div class="property-group-header">
+                            <span>输出事件</span>
+                            <button onclick="addOutputEvent()" class="text-blue-600 hover:text-blue-800 text-sm">
+                                + 添加
+                            </button>
+                        </div>
+                        <div class="property-group-content" id="output-events">
+                            <div class="space-y-3">
+                                <div class="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" value="onConfirm" class="text-sm font-medium bg-transparent border-none outline-none">
+                                        </div>
+                                        <div class="flex items-center mt-1">
+                                            <input type="text" value="用户点击确认按钮时触发" class="text-xs text-gray-600 bg-transparent border-none outline-none flex-1" placeholder="事件描述">
+                                            <span class="i18n-key text-xs">event.onConfirm</span>
+                                        </div>
+                                    </div>
+                                    <button class="text-red-500 hover:text-red-700 text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0

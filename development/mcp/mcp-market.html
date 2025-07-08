@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP 市场 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2563eb;
+            --dify-primary-light: #dbeafe;
+            --dify-primary-dark: #1d4ed8;
+            --liquid-glass-bg: rgba(255, 255, 255, 0.95);
+            --liquid-glass-border: rgba(255, 255, 255, 0.3);
+            --liquid-glass-strong: rgba(255, 255, 255, 0.9);
+            --liquid-glass-subtle: rgba(255, 255, 255, 0.8);
+            --liquid-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --liquid-text-primary: rgba(15, 23, 42, 0.95);
+            --liquid-text-secondary: rgba(51, 65, 85, 0.8);
+            --liquid-text-tertiary: rgba(100, 116, 139, 0.7);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--liquid-text-primary);
+            /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+            min-height: 100vh;
+        }
+
+        /* 液态玻璃效果 */
+        .liquid-glass {
+            background: var(--liquid-glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--liquid-glass-border);
+            box-shadow: var(--liquid-shadow);
+        }
+
+        .liquid-glass-strong {
+            background: var(--liquid-glass-strong);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .liquid-glass-subtle {
+            background: var(--liquid-glass-subtle);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 高光效果 */
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+
+        .specular-highlight > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* MCP卡片样式 */
+        .mcp-card {
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: var(--liquid-shadow);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            background: var(--liquid-glass-bg);
+            backdrop-filter: blur(20px);
+            cursor: pointer;
+        }
+
+        .mcp-card:hover {
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* 分类标签 */
+        .category-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+            margin: 4px 8px 4px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--liquid-text-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .category-tag:hover, .category-tag.active {
+            background: var(--dify-primary);
+            color: white;
+            border-color: var(--dify-primary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* 状态指示器 */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        .status-verified {
+            background: rgba(34, 197, 94, 0.1);
+            color: rgb(34, 197, 94);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .status-official {
+            background: rgba(59, 130, 246, 0.1);
+            color: rgb(59, 130, 246);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .status-community {
+            background: rgba(168, 85, 247, 0.1);
+            color: rgb(168, 85, 247);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .status-beta {
+            background: rgba(245, 158, 11, 0.1);
+            color: rgb(245, 158, 11);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        /* 搜索框样式 */
+        .search-input {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            color: var(--liquid-text-primary);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--dify-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .search-input::placeholder {
+            color: var(--liquid-text-tertiary);
+        }
+
+        /* 按钮样式 */
+        .dify-btn {
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 图标容器 */
+        .icon-container {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* 评分星星 */
+        .star-rating {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .star {
+            width: 14px;
+            height: 14px;
+            fill: #fbbf24;
+        }
+
+        /* 动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* 统计数字 */
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--dify-primary), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen p-6">
+        <!-- 页面头部 -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-4xl font-bold text-slate-800 mb-2">MCP 市场</h1>
+                    <p class="text-slate-800/80 text-lg">Model Context Protocol 服务市场 - 发现、连接、集成各类智能服务</p>
+                </div>
+                <!-- <div class="flex items-center space-x-4">
+                    <button class="dify-btn px-6 py-3 bg-white/10 hover:bg-white/20 text-slate-800 font-semibold specular-highlight backdrop-blur-md border border-white/20">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        发布MCP
+                    </button>
+                    <button class="dify-btn px-6 py-3 bg-blue-600 hover:bg-blue-700 text-slate-800 font-semibold specular-highlight">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                        我的MCP
+                    </button>
+                </div> -->
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="liquid-glass rounded-xl p-6 text-center specular-highlight">
+                    <div class="stats-number">126</div>
+                    <div class="text-slate-600 font-medium">可用MCP</div>
+                </div>
+                <div class="liquid-glass rounded-xl p-6 text-center specular-highlight">
+                    <div class="stats-number">48</div>
+                    <div class="text-slate-600 font-medium">官方认证</div>
+                </div>
+                <div class="liquid-glass rounded-xl p-6 text-center specular-highlight">
+                    <div class="stats-number">2.3K</div>
+                    <div class="text-slate-600 font-medium">总下载量</div>
+                </div>
+                <div class="liquid-glass rounded-xl p-6 text-center specular-highlight">
+                    <div class="stats-number">156</div>
+                    <div class="text-slate-600 font-medium">开发者</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 搜索和过滤 -->
+        <div class="liquid-glass rounded-xl p-6 mb-8">
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- 搜索框 -->
+                <div class="flex-1">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            placeholder="搜索 MCP 服务..." 
+                            class="search-input w-full pl-12 pr-4 py-3 text-sm"
+                            id="searchInput"
+                            autocomplete="autocomplete"
+                            oninput="filterMCPs()"
+                        />
+                        <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- 分类过滤 -->
+                <div class="flex flex-wrap items-center">
+                    <span class="text-slate-600 font-medium mr-4 whitespace-nowrap">分类筛选：</span>
+                    <div class="flex flex-wrap">
+                        <div class="category-tag active" data-category="all">全部</div>
+                        <div class="category-tag" data-category="core-system">核心系统</div>
+                        <div class="category-tag" data-category="payment">支付系统</div>
+                        <div class="category-tag" data-category="monitoring">监控系统</div>
+                        <div class="category-tag" data-category="travel">差旅系统</div>
+                        <div class="category-tag" data-category="rpa">RPA自动化</div>
+                        <div class="category-tag" data-category="official">官方认证</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MCP列表 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="mcpGrid">
+            <!-- MCP 卡片将通过 JavaScript 动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // MCP 数据
+        const mcpData = [
+            {
+                id: 'core-banking-api',
+                name: 'Core Banking API',
+                description: '核心银行系统接口，提供账户查询、余额查询、交易记录等核心银行业务功能',
+                category: 'core-system',
+                author: 'AgreeFintech',
+                version: 'v2.1.0',
+                downloads: '1.2K',
+                rating: 4.8,
+                status: 'official',
+                icon: '🏦',
+                iconBg: 'bg-blue-100',
+                iconColor: 'text-blue-600',
+                tags: ['账户管理', ' 交易查询', '余额查询', 'API'],
+                lastUpdated: '2024-12-15'
+            },
+            {
+                id: 'payment-gateway',
+                name: 'Payment Gateway MCP',
+                description: '统一支付网关接口，支持微信支付、支付宝、银联等多种支付方式集成',
+                category: 'payment',
+                author: 'PaymentTeam',
+                version: 'v1.8.3',
+                downloads: '856',
+                rating: 4.6,
+                status: 'verified',
+                icon: '💳',
+                iconBg: 'bg-green-100',
+                iconColor: 'text-green-600',
+                tags: ['支付网关', '微信支付', '支付宝', '银联'],
+                lastUpdated: '2024-12-10'
+            },
+            {
+                id: 'monitoring-alerts',
+                name: 'Monitoring & Alerts',
+                description: '系统监控与告警服务，实时监控系统状态，异常情况自动发送告警通知',
+                category: 'monitoring',
+                author: 'OpsTeam',
+                version: 'v3.0.1',
+                downloads: '634',
+                rating: 4.7,
+                status: 'verified',
+                icon: '📊',
+                iconBg: 'bg-purple-100',
+                iconColor: 'text-purple-600',
+                tags: ['系统监控', '告警通知', '性能分析', '日志管理'],
+                lastUpdated: '2024-12-08'
+            },
+            {
+                id: 'ctrip-travel',
+                name: '携程商旅接口',
+                description: '携程商旅API集成，支持机票预订、酒店预订、差旅审批等企业差旅管理功能',
+                category: 'travel',
+                author: 'Ctrip',
+                version: 'v2.3.0',
+                downloads: '423',
+                rating: 4.5,
+                status: 'verified',
+                icon: '✈️',
+                iconBg: 'bg-orange-100',
+                iconColor: 'text-orange-600',
+                tags: ['机票预订', '酒店预订', '差旅管理', '审批流程'],
+                lastUpdated: '2024-12-05'
+            },
+            {
+                id: 'rpa-document-processor',
+                name: 'RPA 文档处理器',
+                description: 'AI驱动的RPA服务，自动化处理银行业务单据，包括开户申请、贷款审批等文档处理',
+                category: 'rpa',
+                author: 'RPAStudio',
+                version: 'v1.5.2',
+                downloads: '789',
+                rating: 4.4,
+                status: 'community',
+                icon: '🤖',
+                iconBg: 'bg-indigo-100',
+                iconColor: 'text-indigo-600',
+                tags: ['文档处理', '业务单据', 'OCR识别', '自动化审批'],
+                lastUpdated: '2024-12-12'
+            },
+            {
+                id: 'meituan-expense',
+                name: '美团企业版',
+                description: '美团企业服务API，员工餐饮、打车、出行等费用管理和报销自动化处理',
+                category: 'travel',
+                author: 'Meituan',
+                version: 'v1.9.1',
+                downloads: '567',
+                rating: 4.3,
+                status: 'verified',
+                icon: '🍜',
+                iconBg: 'bg-yellow-100',
+                iconColor: 'text-yellow-600',
+                tags: ['企业餐饮', '打车服务', '费用管理', '自动报销'],
+                lastUpdated: '2024-12-03'
+            },
+            {
+                id: 'finson-expense',
+                name: '合思费控平台',
+                description: '合思智能费控平台接口，提供费用申请、审批、报销、记账等全流程费用管理',
+                category: 'travel',
+                author: 'Finson',
+                version: 'v2.0.4',
+                downloads: '345',
+                rating: 4.6,
+                status: 'verified',
+                icon: '💰',
+                iconBg: 'bg-emerald-100',
+                iconColor: 'text-emerald-600',
+                tags: ['费用管理', '智能审批', '电子发票', '财务对接'],
+                lastUpdated: '2024-11-28'
+            },
+            {
+                id: 'rpa-data-entry',
+                name: 'RPA 数据录入助手',
+                description: '智能数据录入RPA，自动识别和录入各类银行表单，支持客户信息、交易数据等批量处理',
+                category: 'rpa',
+                author: 'DataBot',
+                version: 'v1.3.8',
+                downloads: '612',
+                rating: 4.2,
+                status: 'community',
+                icon: '📝',
+                iconBg: 'bg-teal-100',
+                iconColor: 'text-teal-600',
+                tags: ['数据录入', '表单处理', '批量导入', '智能识别'],
+                lastUpdated: '2024-12-01'
+            },
+            {
+                id: 'risk-control',
+                name: 'Risk Control System',
+                description: '智能风控系统接口，实时风险评估、反欺诈检测、合规性检查等风控核心功能',
+                category: 'core-system',
+                author: 'RiskTeam',
+                version: 'v2.5.1',
+                downloads: '934',
+                rating: 4.9,
+                status: 'official',
+                icon: '🛡️',
+                iconBg: 'bg-red-100',
+                iconColor: 'text-red-600',
+                tags: ['风险评估', '反欺诈', '合规检查', '实时监控'],
+                lastUpdated: '2024-12-14'
+            },
+            {
+                id: 'customer-service',
+                name: '智能客服平台',
+                description: '智能客服系统MCP，支持多渠道客户服务、智能问答、工单管理等客服核心功能',
+                category: 'core-system',
+                author: 'ServiceTeam',
+                version: 'v1.7.6',
+                downloads: '723',
+                rating: 4.4,
+                status: 'official',
+                icon: '🎧',
+                iconBg: 'bg-cyan-100',
+                iconColor: 'text-cyan-600',
+                tags: ['智能客服', '多渠道服务', '工单管理', '知识库'],
+                lastUpdated: '2024-12-11'
+            },
+            {
+                id: 'southern-airlines',
+                name: '南方航空企业服务',
+                description: '南航企业客户API，提供企业客户机票预订、团队出行、积分管理等航空服务',
+                category: 'travel',
+                author: 'ChinaSouthern',
+                version: 'v1.4.2',
+                downloads: '289',
+                rating: 4.1,
+                status: 'verified',
+                icon: '🛩️',
+                iconBg: 'bg-sky-100',
+                iconColor: 'text-sky-600',
+                tags: ['机票预订', '团队出行', '积分管理', '企业客户'],
+                lastUpdated: '2024-11-25'
+            },
+            {
+                id: 'rpa-workflow',
+                name: 'RPA 流程编排器',
+                description: '可视化RPA流程编排工具，支持复杂业务流程自动化，包括审批流程、数据同步等',
+                category: 'rpa',
+                author: 'WorkflowStudio',
+                version: 'v2.1.3',
+                downloads: '445',
+                rating: 4.5,
+                status: 'beta',
+                icon: '⚙️',
+                iconBg: 'bg-slate-100',
+                iconColor: 'text-slate-600',
+                tags: ['流程编排', '可视化设计', '业务自动化', '审批流程'],
+                lastUpdated: '2024-12-06'
+            }
+        ];
+
+        let filteredData = [...mcpData];
+
+        // 渲染MCP网格
+        function renderMCPs(data = filteredData) {
+            const grid = document.getElementById('mcpGrid');
+            grid.innerHTML = data.map(mcp => `
+                <div class="mcp-card p-6 animate-fade-in specular-highlight" onclick="viewMCPDetails('${mcp.id}')">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="icon-container ${mcp.iconBg} ${mcp.iconColor} mr-4">
+                                <span class="text-2xl">${mcp.icon}</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-800 mb-1">${mcp.name}</h3>
+                                <p class="text-sm text-slate-500">by ${mcp.author}</p>
+                            </div>
+                        </div>
+                        <span class="status-badge ${getStatusClass(mcp.status)}">${getStatusText(mcp.status)}</span>
+                    </div>
+
+                    <p class="text-slate-600 text-sm mb-4 line-clamp-2">${mcp.description}</p>
+
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="star-rating">
+                            ${generateStars(mcp.rating)}
+                            <span class="text-sm text-slate-600 ml-2">${mcp.rating}</span>
+                        </div>
+                        <div class="text-sm text-slate-500">${mcp.downloads} 下载</div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        ${mcp.tags.slice(0, 3).map(tag => `
+                            <span class="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md">${tag}</span>
+                        `).join('')}
+                        ${mcp.tags.length > 3 ? `<span class="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md">+${mcp.tags.length - 3}</span>` : ''}
+                    </div>
+
+                    <div class="flex items-center justify-between text-sm text-slate-500">
+                        <span>版本 ${mcp.version}</span>
+                        <span>更新于 ${mcp.lastUpdated}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 获取状态样式类
+        function getStatusClass(status) {
+            const classes = {
+                'official': 'status-official',
+                'verified': 'status-verified',
+                'community': 'status-community',
+                'beta': 'status-beta'
+            };
+            return classes[status] || 'status-community';
+        }
+
+        // 获取状态文本
+        function getStatusText(status) {
+            const texts = {
+                'official': '官方',
+                'verified': '认证',
+                'community': '社区',
+                'beta': '测试版'
+            };
+            return texts[status] || '社区';
+        }
+
+        // 生成星级评分
+        function generateStars(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            let stars = '';
+            
+            for (let i = 0; i < fullStars; i++) {
+                stars += '<svg class="star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+            }
+            
+            if (hasHalfStar) {
+                stars += '<svg class="star" viewBox="0 0 20 20"><defs><clipPath id="half"><rect x="0" y="0" width="10" height="20"/></clipPath></defs><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" clip-path="url(#half)"/></svg>';
+            }
+            
+            return stars;
+        }
+
+        // 分类过滤
+        function filterByCategory(category) {
+            if (category === 'all') {
+                filteredData = [...mcpData];
+            } else if (category === 'official') {
+                filteredData = mcpData.filter(mcp => mcp.status === 'official' || mcp.status === 'verified');
+            } else {
+                filteredData = mcpData.filter(mcp => mcp.category === category);
+            }
+            
+            const searchTerm = document.getElementById('searchInput').value;
+            if (searchTerm) {
+                filterBySearch(searchTerm);
+            }
+            
+            renderMCPs();
+        }
+
+        // 搜索过滤
+        function filterBySearch(searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filteredData = filteredData.filter(mcp => 
+                mcp.name.toLowerCase().includes(term) ||
+                mcp.description.toLowerCase().includes(term) ||
+                mcp.tags.some(tag => tag.toLowerCase().includes(term)) ||
+                mcp.author.toLowerCase().includes(term)
+            );
+        }
+
+        // 通用过滤函数
+        function filterMCPs() {
+            const searchTerm = document.getElementById('searchInput').value;
+            const activeCategory = document.querySelector('.category-tag.active').dataset.category;
+            
+            // 首先按分类过滤
+            if (activeCategory === 'all') {
+                filteredData = [...mcpData];
+            } else if (activeCategory === 'official') {
+                filteredData = mcpData.filter(mcp => mcp.status === 'official' || mcp.status === 'verified');
+            } else {
+                filteredData = mcpData.filter(mcp => mcp.category === activeCategory);
+            }
+            
+            // 然后按搜索词过滤
+            if (searchTerm) {
+                filterBySearch(searchTerm);
+            }
+            
+            renderMCPs();
+        }
+
+        // 查看MCP详情
+        function viewMCPDetails(mcpId) {
+            // 这里可以跳转到详情页面或显示模态框
+            console.log('查看MCP详情:', mcpId);
+            // 示例：打开新窗口显示详情页
+            window.open(`mcp-detail.html?id=${mcpId}`, '_self');
+        }
+
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化渲染
+            renderMCPs();
+            
+            // 分类标签点击事件
+            document.querySelectorAll('.category-tag').forEach(tag => {
+                tag.addEventListener('click', function() {
+                    document.querySelectorAll('.category-tag').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    filterByCategory(this.dataset.category);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

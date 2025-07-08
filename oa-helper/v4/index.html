@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OA智能助手</title>
+    <link rel="manifest" href="/manifest.json">
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <script src="/oa-helper/script/timestamp.js?v=3"></script>
+    <style>
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* LUI Glass Effects - 提高可读性 */
+        .glass {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* 防止横向滚动 */
+        .message-content {
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            max-width: 100%;
+        }
+
+        .message-content * {
+            max-width: 100% !important;
+            box-sizing: border-box;
+        }
+
+        /* 表格响应式处理 */
+        .table-container {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .table-container table {
+            min-width: 600px;
+            width: 100%;
+        }
+
+        /* Quick action cards */
+        .quick-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .quick-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .quick-card.clicked {
+            transform: scale(0.98);
+        }
+
+        /* Message animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Stream cursor */
+        .stream-cursor::after {
+            content: '|';
+            animation: blink 1s infinite;
+            color: #60a5fa;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Scrollbar styling */
+        .scrollbar-hide {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Phone link styles */
+        .phone-link {
+            color: #60a5fa;
+            text-decoration: none;
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 2px 6px;
+            background: rgba(96, 165, 250, 0.2);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .phone-link:hover {
+            background: rgba(96, 165, 250, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Custom gradients */
+        .gradient-blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        .gradient-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .gradient-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .gradient-purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+
+        /* 高对比度文字 */
+        .text-high-contrast {
+            color: #f8fafc;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .text-medium-contrast {
+            color: #e2e8f0;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .quick-card {
+                min-height: 80px;
+            }
+        }
+    </style>
+</head>
+
+<body class="overflow-hidden">
+    <!-- Loading Indicator -->
+    <div id="loading-indicator" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="glass-strong rounded-2xl p-6 text-center">
+            <div class="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <p class="text-high-contrast font-medium">正在初始化...</p>
+        </div>
+    </div>
+
+    <!-- Main Chat Interface -->
+    <div id="chat-interface" class="h-screen flex flex-col">
+        <!-- Header -->
+        <header class="glass-dark shadow-lg">
+            <div class="flex items-center justify-between max-w-6xl mx-auto px-4 py-3">
+                <div class="flex items-center space-x-3">
+                    <div>
+                        <h1 class="text-lg font-bold text-high-contrast">OA智能助手</h1>
+                        <p class="text-medium-contrast text-sm">您好，<span id="user-name" class="font-medium"></span></p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div id="connection-status" class="flex items-center space-x-2 hidden">
+                        <div class="w-2 h-2 bg-green-400 rounded-full shadow-sm"></div>
+                        <span class="text-medium-contrast text-sm">已连接</span>
+                    </div>
+                    <button id="clear-chat" class="p-2 rounded-lg hover:bg-white/20 transition-all duration-200">
+                        <svg class="w-4 h-4 text-high-contrast" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Messages -->
+        <main class="flex-1 p-3 overflow-hidden">
+            <div class="max-w-4xl mx-auto h-full flex flex-col">
+                <div id="chat-messages" class="flex-1 overflow-y-auto scrollbar-hide space-y-3 mb-4">
+                    <!-- 欢迎消息将由JS动态生成 -->
+                </div>
+
+                <!-- Input Area -->
+                <div class="glass-dark p-4 rounded-2xl">
+                    <div class="flex items-end space-x-3">
+                        <div class="flex-1 relative">
+                            <input id="chat-input" type="text" placeholder="请输入您的问题..."
+                                autocomplete="off" class="w-full bg-white/20 border border-white/30 rounded-xl px-4 py-2.5 text-high-contrast placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/30 transition-all duration-200">
+                        </div>
+                        <button id="send-btn" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-5 py-2.5 rounded-xl font-medium hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200 transform hover:scale-105 active:scale-95">
+                            发送
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 引入模块化JS文件 -->
+    <script src="js/config.js"></script>
+    <script src="js/intents.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/handlers.js"></script>
+    <script src="js/oa-assistant.js"></script>
+</body>
+
+</html>
