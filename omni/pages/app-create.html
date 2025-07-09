@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新建应用 - 智言Omni开发门户</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --omni-primary: #1e3a8a;
+            --omni-primary-light: #3730a3;
+            --omni-primary-dark: #581c87;
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-strong: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-tertiary: rgba(255, 255, 255, 0.6);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-strong {
+            background: var(--glass-strong);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .omni-btn {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .omni-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .template-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .template-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .template-card.selected {
+            border-color: rgba(59, 130, 246, 0.6);
+            background: rgba(59, 130, 246, 0.1);
+        }
+    </style>
+</head>
+
+<body class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- 页面标题 -->
+        <div class="mb-8">
+            <div class="flex items-center mb-4">
+                <button onclick="goBack()" class="omni-btn p-2 glass mr-4 hover:bg-white/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="text-3xl font-bold text-white">新建智能助手应用</h1>
+                    <p class="text-white/70 text-lg">选择模板快速开始或从零开始创建</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 应用基本信息 -->
+        <div class="glass rounded-2xl p-6 mb-6">
+            <h2 class="text-xl font-bold text-white mb-4">基本信息</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-white/80 text-sm font-medium mb-2">应用名称</label>
+                    <input type="text" id="app-name" placeholder="请输入应用名称" 
+                           class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/50 focus:bg-white/30">
+                </div>
+                <div>
+                    <label class="block text-white/80 text-sm font-medium mb-2">应用分类</label>
+                    <select id="app-category" class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:border-white/50 focus:bg-white/30">
+                        <option value="">请选择分类</option>
+                        <option value="核心服务">核心服务</option>
+                        <option value="内容生成">内容生成</option>
+                        <option value="数据处理">数据处理</option>
+                        <option value="用户体验">用户体验</option>
+                        <option value="风控合规">风控合规</option>
+                        <option value="流程自动化">流程自动化</option>
+                        <option value="营销推广">营销推广</option>
+                        <option value="数据分析">数据分析</option>
+                        <option value="系统服务">系统服务</option>
+                        <option value="开发工具">开发工具</option>
+                        <option value="质量保证">质量保证</option>
+                        <option value="资源管理">资源管理</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-white/80 text-sm font-medium mb-2">应用描述</label>
+                    <textarea id="app-description" rows="3" placeholder="请描述应用的主要功能和用途" 
+                              class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/50 focus:bg-white/30 resize-none"></textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-white/80 text-sm font-medium mb-2">
+                        Git仓库地址
+                        <span class="text-white/50 text-xs ml-1">(可选，系统将自动生成)</span>
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="git-repo" placeholder="https://git.company.com/ai-apps/your-app.git" 
+                               class="flex-1 px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/50 focus:bg-white/30">
+                        <button type="button" onclick="generateGitRepo()" 
+                                class="omni-btn px-4 py-3 glass text-white text-sm hover:bg-white/20 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            自动生成
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 应用模板选择 -->
+        <div class="glass rounded-2xl p-6 mb-6">
+            <h2 class="text-xl font-bold text-white mb-4">选择应用模板</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="templates-container">
+                <!-- 模板将由JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="flex justify-end space-x-4">
+            <button onclick="goBack()" class="omni-btn px-6 py-3 glass text-white hover:bg-white/20">
+                取消
+            </button>
+            <button onclick="createApp()" class="omni-btn px-6 py-3 bg-blue-600 text-white hover:bg-blue-700">
+                创建应用
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // API 配置
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        // 应用模板数据
+        const templates = [
+            {
+                id: 'blank',
+                name: '空白模板',
+                description: '从零开始创建自定义智能助手',
+                icon: '📄',
+                features: ['自定义配置', '灵活架构', '完全控制'],
+                complexity: '高级'
+            },
+            {
+                id: 'qa-assistant',
+                name: '问答助手模板',
+                description: '智能问答和知识检索助手',
+                icon: '🤖',
+                features: ['知识库', '自然语言处理', '多轮对话'],
+                complexity: '简单'
+            },
+            {
+                id: 'writing-assistant',
+                name: '写作助手模板',
+                description: '文档生成和写作辅助工具',
+                icon: '✍️',
+                features: ['文本生成', '格式化', '模板管理'],
+                complexity: '中等'
+            },
+            {
+                id: 'form-assistant',
+                name: '表单助手模板',
+                description: 'OCR识别和表单处理系统',
+                icon: '📋',
+                features: ['OCR识别', '数据提取', '验证处理'],
+                complexity: '中等'
+            },
+            {
+                id: 'navigation-assistant',
+                name: '导航助手模板',
+                description: '多模态交互导航系统',
+                icon: '🧭',
+                features: ['语音交互', '智能推荐', '上下文理解'],
+                complexity: '高级'
+            },
+            {
+                id: 'data-assistant',
+                name: '数据助手模板',
+                description: '数据分析和可视化系统',
+                icon: '📊',
+                features: ['数据查询', '图表生成', '智能分析'],
+                complexity: '高级'
+            }
+        ];
+
+        let selectedTemplate = null;
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTemplates();
+        });
+
+        // 创建应用（调用后端API）
+        async function createApp() {
+            const appName = document.getElementById('app-name').value.trim();
+            const appCategory = document.getElementById('app-category').value;
+            const appDescription = document.getElementById('app-description').value.trim();
+            const gitRepo = document.getElementById('git-repo').value.trim();
+
+            if (!appName) {
+                alert('请输入应用名称');
+                return;
+            }
+
+            if (!appCategory) {
+                alert('请选择应用分类');
+                return;
+            }
+
+            if (!appDescription) {
+                alert('请输入应用描述');
+                return;
+            }
+
+            if (!selectedTemplate) {
+                alert('请选择应用模板');
+                return;
+            }
+
+            // 如果没有填写Git仓库地址，自动生成
+            let finalGitRepo = gitRepo;
+            if (!finalGitRepo) {
+                const repoName = appName.toLowerCase()
+                    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+                    .replace(/^-+|-+$/g, '')
+                    .replace(/智能/g, '')
+                    .replace(/助手/g, '-assistant')
+                    .replace(/--+/g, '-');
+                finalGitRepo = `https://git.company.com/ai-apps/${repoName}.git`;
+            }
+
+            // 准备应用数据
+            const appData = {
+                name: appName,
+                description: appDescription,
+                category: appCategory,
+                template: selectedTemplate,
+                gitRepo: finalGitRepo,
+                developer: '开发团队',
+                features: getTemplateFeatures(selectedTemplate)
+            };
+
+            // 显示创建中状态
+            const loadingOverlay = showLoadingOverlay('正在创建应用...', `初始化代码仓库: ${finalGitRepo}`);
+
+            try {
+                // 调用后端API创建应用
+                const response = await fetch(`${API_BASE_URL}/applications`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(appData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 创建成功
+                    document.body.removeChild(loadingOverlay);
+                    showSuccessOverlay(result.data);
+                } else {
+                    // 创建失败
+                    document.body.removeChild(loadingOverlay);
+                    alert(`创建失败: ${result.error}`);
+                }
+            } catch (error) {
+                // 网络错误或服务器不可用
+                console.error('Error creating application:', error);
+                document.body.removeChild(loadingOverlay);
+                
+                // 使用本地模拟创建
+                const mockApp = {
+                    id: Date.now(),
+                    appId: generateAppId(appName, appCategory),
+                    name: appName,
+                    description: appDescription,
+                    category: appCategory,
+                    gitRepo: finalGitRepo,
+                    version: 'v0.1.0-alpha',
+                    status: 'development'
+                };
+                
+                showSuccessOverlay(mockApp);
+            }
+        }
+
+        // 显示加载状态
+        function showLoadingOverlay(title, subtitle) {
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
+            loadingOverlay.innerHTML = `
+                <div class="glass-strong rounded-2xl p-6 text-center">
+                    <div class="w-12 h-12 border-3 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <div class="space-y-2">
+                        <p class="text-white font-medium">${title}</p>
+                        <p class="text-white/70 text-sm">${subtitle}</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(loadingOverlay);
+            return loadingOverlay;
+        }
+
+        // 显示成功状态
+        function showSuccessOverlay(appData) {
+            const successOverlay = document.createElement('div');
+            successOverlay.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
+            successOverlay.innerHTML = `
+                <div class="glass-strong rounded-2xl p-6 text-center max-w-md">
+                    <div class="w-16 h-16 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">应用创建成功！</h3>
+                    <div class="text-left space-y-2 mb-4">
+                        <div class="text-white/70 text-sm">
+                            <span class="font-medium">应用名称:</span> ${appData.name}
+                        </div>
+                        <div class="text-white/70 text-sm">
+                            <span class="font-medium">AppID:</span> 
+                            <span class="bg-black/20 px-2 py-1 rounded font-mono text-xs">${appData.appId}</span>
+                        </div>
+                        <div class="text-white/70 text-sm">
+                            <span class="font-medium">Git仓库:</span> 
+                            <span class="text-xs break-all">${appData.gitRepo}</span>
+                        </div>
+                    </div>
+                    <p class="text-white/70 text-sm mb-6">您可以开始配置和开发了。</p>
+                    <div class="flex space-x-4">
+                        <button onclick="goToAppManagement()" class="flex-1 omni-btn px-4 py-2 glass text-white hover:bg-white/20">
+                            查看应用列表
+                        </button>
+                        <button onclick="goToWorkspace()" class="flex-1 omni-btn px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">
+                            进入工作台
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(successOverlay);
+        }
+
+        // 根据模板获取功能列表
+        function getTemplateFeatures(templateId) {
+            const template = templates.find(t => t.id === templateId);
+            return template ? template.features : [];
+        }
+
+        // 渲染模板
+        function renderTemplates() {
+            const container = document.getElementById('templates-container');
+            container.innerHTML = templates.map(template => `
+                <div class="template-card rounded-xl p-4" onclick="selectTemplate('${template.id}')" data-template="${template.id}">
+                    <div class="flex items-center mb-3">
+                        <span class="text-2xl mr-3">${template.icon}</span>
+                        <div>
+                            <h3 class="font-bold text-white text-sm">${template.name}</h3>
+                            <span class="text-xs px-2 py-1 rounded-full ${getComplexityClass(template.complexity)}">${template.complexity}</span>
+                        </div>
+                    </div>
+                    <p class="text-white/70 text-sm mb-3">${template.description}</p>
+                    <div class="space-y-1">
+                        ${template.features.map(feature => `
+                            <div class="flex items-center text-xs text-white/60">
+                                <div class="w-1 h-1 bg-blue-400 rounded-full mr-2"></div>
+                                ${feature}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 获取复杂度样式类
+        function getComplexityClass(complexity) {
+            switch(complexity) {
+                case '简单': return 'bg-green-600/20 text-green-300 border border-green-400/30';
+                case '中等': return 'bg-yellow-600/20 text-yellow-300 border border-yellow-400/30';
+                case '高级': return 'bg-red-600/20 text-red-300 border border-red-400/30';
+                default: return 'bg-gray-600/20 text-gray-300 border border-gray-400/30';
+            }
+        }
+
+        // 生成Git仓库地址
+        function generateGitRepo() {
+            const appName = document.getElementById('app-name').value.trim();
+            if (!appName) {
+                alert('请先输入应用名称');
+                return;
+            }
+            
+            // 生成标准化的仓库名称
+            const repoName = appName.toLowerCase()
+                .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .replace(/智能/g, '')
+                .replace(/助手/g, '-assistant')
+                .replace(/--+/g, '-');
+            
+            const gitUrl = `https://git.company.com/ai-apps/${repoName}.git`;
+            document.getElementById('git-repo').value = gitUrl;
+        }
+
+        // 选择模板
+        function selectTemplate(templateId) {
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-template="${templateId}"]`).classList.add('selected');
+            selectedTemplate = templateId;
+        }
+
+        // 创建应用
+        function createApp() {
+            const appName = document.getElementById('app-name').value.trim();
+            const appCategory = document.getElementById('app-category').value;
+            const appDescription = document.getElementById('app-description').value.trim();
+            const gitRepo = document.getElementById('git-repo').value.trim();
+
+            if (!appName) {
+                alert('请输入应用名称');
+                return;
+            }
+
+            if (!appCategory) {
+                alert('请选择应用分类');
+                return;
+            }
+
+            if (!appDescription) {
+                alert('请输入应用描述');
+                return;
+            }
+
+            if (!selectedTemplate) {
+                alert('请选择应用模板');
+                return;
+            }
+
+            // 如果没有填写Git仓库地址，自动生成
+            let finalGitRepo = gitRepo;
+            if (!finalGitRepo) {
+                const repoName = appName.toLowerCase()
+                    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+                    .replace(/^-+|-+$/g, '')
+                    .replace(/智能/g, '')
+                    .replace(/助手/g, '-assistant')
+                    .replace(/--+/g, '-');
+                finalGitRepo = `https://git.company.com/ai-apps/${repoName}.git`;
+            }
+
+            // 生成AppID
+            const appId = generateAppId(appName, appCategory);
+
+            // 模拟创建应用
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
+            loadingOverlay.innerHTML = `
+                <div class="glass-strong rounded-2xl p-6 text-center">
+                    <div class="w-12 h-12 border-3 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <div class="space-y-2">
+                        <p class="text-white font-medium">正在创建应用...</p>
+                        <p class="text-white/70 text-sm">初始化代码仓库: ${finalGitRepo}</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(loadingOverlay);
+
+            setTimeout(() => {
+                document.body.removeChild(loadingOverlay);
+                
+                // 创建成功提示
+                const successOverlay = document.createElement('div');
+                successOverlay.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
+                successOverlay.innerHTML = `
+                    <div class="glass-strong rounded-2xl p-6 text-center max-w-md">
+                        <div class="w-16 h-16 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">应用创建成功！</h3>
+                        <div class="text-left space-y-2 mb-4">
+                            <div class="text-white/70 text-sm">
+                                <span class="font-medium">应用名称:</span> ${appName}
+                            </div>
+                            <div class="text-white/70 text-sm">
+                                <span class="font-medium">AppID:</span> 
+                                <span class="bg-black/20 px-2 py-1 rounded font-mono text-xs">${appId}</span>
+                            </div>
+                            <div class="text-white/70 text-sm">
+                                <span class="font-medium">Git仓库:</span> 
+                                <span class="text-xs break-all">${finalGitRepo}</span>
+                            </div>
+                        </div>
+                        <p class="text-white/70 text-sm mb-6">您可以开始配置和开发了。</p>
+                        <div class="flex space-x-4">
+                            <button onclick="goToAppManagement()" class="flex-1 omni-btn px-4 py-2 glass text-white hover:bg-white/20">
+                                查看应用列表
+                            </button>
+                            <button onclick="goToWorkspace()" class="flex-1 omni-btn px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">
+                                进入工作台
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(successOverlay);
+            }, 2000);
+        }
+
+        // 生成AppID
+        function generateAppId(appName, category) {
+            const categoryMap = {
+                '核心服务': 'core',
+                '内容生成': 'content',
+                '数据处理': 'data',
+                '用户体验': 'ux',
+                '风控合规': 'risk',
+                '流程自动化': 'rpa',
+                '营销推广': 'marketing',
+                '数据分析': 'analytics',
+                '系统服务': 'system',
+                '开发工具': 'dev',
+                '质量保证': 'qa',
+                '资源管理': 'resource'
+            };
+            
+            const prefix = categoryMap[category] || 'app';
+            const suffix = String(Math.floor(Math.random() * 900) + 100).padStart(3, '0');
+            return `${prefix}-assistant-${suffix}`;
+        }
+
+        // 返回
+        function goBack() {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'navigate',
+                    url: '/omni/pages/app-management.html'
+                }, '*');
+            } else {
+                window.history.back();
+            }
+        }
+
+        // 前往应用管理
+        function goToAppManagement() {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'navigate',
+                    url: '/omni/pages/app-management.html'
+                }, '*');
+            } else {
+                window.location.href = '/omni/pages/app-management.html';
+            }
+        }
+
+        // 前往工作台
+        function goToWorkspace() {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'navigate',
+                    url: '/development/app-workspace/new-app'
+                }, '*');
+            } else {
+                window.location.href = '/development/app-workspace/new-app';
+            }
+        }
+    </script>
+</body>
+</html>

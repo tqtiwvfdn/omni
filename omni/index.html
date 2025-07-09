@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="overflow: hidden;">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智言Omni开发门户</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --omni-primary: #1e3a8a;
+            --omni-primary-light: #3730a3;
+            --omni-primary-dark: #581c87;
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-strong: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-tertiary: rgba(255, 255, 255, 0.6);
+            --sidebar-bg: rgba(255, 255, 255, 0.1);
+            --menu-hover: rgba(255, 255, 255, 0.1);
+            --menu-active: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            color: var(--text-primary);
+            /* background: linear-gradient(135deg, rgba(30, 58, 138, 0.8) 0%, rgba(55, 48, 163, 0.8) 50%, rgba(88, 28, 135, 0.8) 100%); */
+            transition: background 0.6s ease;
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            overflow: hidden;
+        }
+
+        /* Glass Effects */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-strong {
+            background: var(--glass-strong);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Specular highlight effect */
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+
+        .specular-highlight > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Menu styles */
+        .menu-item {
+            border-radius: 12px;
+            margin: 4px 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .menu-item:hover {
+            background-color: var(--menu-hover);
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        .menu-item.active {
+            background-color: var(--menu-active);
+            color: var(--text-primary);
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.8));
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Sidebar */
+        .omni-sidebar {
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* Dashboard cards */
+        .dashboard-card {
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            cursor: pointer;
+        }
+
+        .dashboard-card:hover {
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background: var(--glass-strong);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            min-width: 280px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            z-index: 1000;
+            top: 100%;
+            margin-top: 8px;
+            animation: dropdownFadeIn 0.2s ease-out;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .dropdown-item {
+            padding: 14px 18px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .dropdown-item:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .dropdown-item:last-child {
+            border-radius: 0 0 12px 12px;
+            border-bottom: none;
+        }
+
+        /* Button styles */
+        .omni-btn {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .omni-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .omni-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .menu-item {
+                margin: 2px 8px;
+                padding: 8px 12px;
+            }
+        }
+
+        /* Menu animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .menu-container {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Scrollbar styles */
+        .omni-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .omni-sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .omni-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+        }
+
+        .omni-sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        .status-online {
+            background: rgba(34, 197, 94, 0.2);
+            color: rgb(34, 197, 94);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-development {
+            background: rgba(59, 130, 246, 0.2);
+            color: rgb(59, 130, 246);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .status-new {
+            background: rgba(245, 158, 11, 0.2);
+            color: rgb(245, 158, 11);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+    </style>
+</head>
+
+<body class="from-blue-800 via-purple-700 to-purple-800 font-sans">
+    <div class="flex flex-col h-screen overflow-hidden">
+        <!-- Top Navigation Bar -->
+        <div class="glass border-b border-white/20" style="z-index: 1;">
+            <div class="flex items-center justify-between h-16 px-6">
+                <!-- Left: Logo and Title -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 mr-6">
+                        <img src="/console/img/agreeLogo.png" alt="赞同科技" class="h-8" />
+                    </div>
+                    <div class="hidden md:block">
+                        <h1 class="text-xl font-bold text-white cursor-default">
+                            智言Omni
+                            <small class="text-white/60 hover:text-white/80 cursor-pointer transition-colors text-sm font-medium ml-2">
+                                V3.2507.2
+                            </small>
+                        </h1>
+                    </div>
+                </div>
+
+                <!-- Right: Search, Tenant and User -->
+                <div class="flex items-center space-x-4">
+                    <!-- Search -->
+                    <div class="relative">
+                        <div id="search-trigger" class="px-4 py-2 flex items-center text-white/70 hover:text-white cursor-pointer transition-all duration-200 specular-highlight rounded-lg hover:bg-white/10" onclick="toggleSearch()">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+
+                        <div id="search-container" class="absolute right-0 top-0 hidden z-50">
+                            <div class="glass-strong rounded-xl border border-white/30 w-80 shadow-2xl">
+                                <div class="p-4">
+                                    <div class="relative">
+                                        <input type="text" id="search-input" placeholder="搜索功能模块..." class="w-full pl-12 pr-10 py-3 text-sm bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/50 focus:bg-white/30" />
+                                        <svg class="absolute left-4 top-3.5 w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                        </svg>
+                                        <button id="search-close-btn" class="absolute right-3 top-3 p-1 text-white/50 hover:text-white/80 rounded-full hover:bg-white/10 transition-all">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="search-results" class="max-h-96 overflow-y-auto border-t border-white/10"></div>
+
+                                <div id="search-tips" class="p-4 border-t border-white/10 text-xs text-white/60">
+                                    <div class="mb-3 font-semibold text-white/80">快速导航提示：</div>
+                                    <div class="space-y-2">
+                                        <div>• 输入 "应用" 查找应用管理</div>
+                                        <div>• 输入 "模型" 查找模型中心</div>
+                                        <div>• 输入 "MCP" 查找MCP市场</div>
+                                        <div>• 输入 "LUI" 查找LUI组件</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Background Toggle -->
+                    <div class="relative">
+                        <button id="bg-toggle" class="omni-btn px-4 py-2 glass text-white text-sm font-semibold specular-highlight focus:outline-none flex items-center" onclick="toggleBackground()">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            背景
+                        </button>
+                    </div>
+
+                    <!-- Admin Portal Button -->
+                    <div class="relative">
+                        <button class="omni-btn px-4 py-2 glass text-white text-sm font-semibold specular-highlight focus:outline-none flex items-center" onclick="openAdminPortal()">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            超管
+                        </button>
+                    </div>
+                    <div class="mr-4 dropdown">
+                        <div class="glass px-4 py-2 rounded-lg flex items-center specular-highlight cursor-pointer" onclick="toggleTenantDropdown()">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m0 0h2M7 7h10M7 11h6m-6 4h8"></path>
+                            </svg>
+                            <span id="current-tenant" class="text-sm font-medium">智言银行</span>
+                            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div id="tenant-dropdown" class="dropdown-content">
+                            <div class="dropdown-item" onclick="selectTenant('智言银行')">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                                <div>
+                                    <div class="font-semibold">智言银行</div>
+                                    <div class="text-xs text-white/50">开发环境</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-item" onclick="selectTenant('赞同智能体平台')">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                <div>
+                                    <div class="font-semibold">赞同智能体平台</div>
+                                    <div class="text-xs text-white/50">AAaaS平台</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Avatar -->
+                    <div class="dropdown">
+                        <div class="w-10 h-10 rounded-full glass flex items-center justify-center cursor-pointer specular-highlight" onclick="toggleUserDropdown()">
+                            <svg class="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                        <div id="user-dropdown" class="dropdown-content">
+                            <div class="dropdown-item">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                个人设置
+                            </div>
+                            <div class="dropdown-item text-red-300">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                </svg>
+                                退出登录
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Left Sidebar -->
+            <div class="omni-sidebar w-72 flex-shrink-0 mt-4 ml-4 mb-4 rounded-xl">
+                <div class="menu-container h-full overflow-y-auto">
+                    <nav class="mt-4">
+                        <div class="px-6 py-4 border-b border-white/10">
+                            <h2 class="text-lg font-bold text-white">开发门户</h2>
+                            <p class="text-sm text-white/60 mt-1">智能应用开发平台</p>
+                        </div>
+
+                        <!-- Dashboard -->
+                        <div class="menu-item flex items-center px-6 py-4 specular-highlight active" onclick="showDashboard()">
+                            <span class="mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2M9 9l3 3-3 3m4 0h4"></path>
+                                </svg>
+                            </span>
+                            <span>工作台</span>
+                        </div>
+
+                        <!-- Application Management -->
+                        <div class="menu-item flex items-center px-6 py-4 specular-highlight" onclick="loadPage('/omni/pages/app-management.html')">
+                            <span class="mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                </svg>
+                            </span>
+                            <span>应用管理</span>
+                        </div>
+
+                        <!-- Model Center -->
+                        <div class="menu-item flex items-center px-6 py-4 specular-highlight" onclick="loadPage('/development/model-center/model-management.html')">
+                            <span class="mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                                </svg>
+                            </span>
+                            <span>模型中心</span>
+                        </div>
+
+                        <!-- MCP Market -->
+                        <div class="menu-item flex items-center px-6 py-4 specular-highlight" onclick="loadPage('/development/mcp/mcp-market.html')">
+                            <span class="mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M8 11v6h8v-6M8 11h8"></path>
+                                </svg>
+                            </span>
+                            <span>MCP 市场</span>
+                        </div>
+
+                        <!-- LUI Market -->
+                        <div class="menu-item flex items-center px-6 py-4 specular-highlight" onclick="loadPage('/development/component-dev/card-dev.html')">
+                            <span class="mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z"></path>
+                                </svg>
+                            </span>
+                            <span>LUI 市场</span>
+                        </div>
+
+                        <!-- Vector Search -->
+                        <div class="menu-item flex items-center px-6 py-4 specular-highlight" onclick="loadPage('/development/data-process/embedding-models.html')">
+                            <span class="mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                                </svg>
+                            </span>
+                            <span>向量检索管理</span>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <div class="flex-1 overflow-auto p-4">
+                    <!-- IFRAME Content Container -->
+                    <div id="iframe-container" class="w-full h-full hidden">
+                        <iframe id="content-iframe" src="" class="w-full h-full border-0 rounded-xl glass" frameborder="0"></iframe>
+                    </div>
+
+                    <!-- Default Dashboard Content -->
+                    <div id="dashboard-content">
+                        
+
+                        <!-- Dashboard Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                            <!-- Applications Card -->
+                            <div class="dashboard-card p-6 specular-highlight" onclick="loadPage('/omni/pages/app-management.html')">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-bold text-white">应用管理</h3>
+                                    <span class="status-indicator status-development">12 应用</span>
+                                </div>
+                                <div class="flex items-end justify-between mb-4">
+                                    <div>
+                                        <p class="text-3xl font-bold text-white mb-2">12</p>
+                                        <p class="text-white/60 font-medium">总应用数</p>
+                                    </div>
+                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/20 text-blue-300">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between text-sm text-white/70">
+                                    <div class="text-center">
+                                        <div class="w-2 h-2 bg-green-400 rounded-full mx-auto mb-1"></div>
+                                        <div class="text-xs font-medium">3 生产中</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="w-2 h-2 bg-blue-400 rounded-full mx-auto mb-1"></div>
+                                        <div class="text-xs font-medium">5 开发中</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="w-2 h-2 bg-yellow-400 rounded-full mx-auto mb-1"></div>
+                                        <div class="text-xs font-medium">2 测试中</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="w-2 h-2 bg-gray-400 rounded-full mx-auto mb-1"></div>
+                                        <div class="text-xs font-medium">2 规划中</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Models Card -->
+                            <div class="dashboard-card p-6 specular-highlight" onclick="loadPage('/development/model-center/model-management.html')">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-bold text-white">模型中心</h3>
+                                    <span class="status-indicator status-online">运行中</span>
+                                </div>
+                                <div class="flex items-end justify-between">
+                                    <div>
+                                        <p class="text-3xl font-bold text-white mb-2">8</p>
+                                        <p class="text-white/60 font-medium">可用模型</p>
+                                    </div>
+                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/20 text-green-300">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MCP Services Card -->
+                            <div class="dashboard-card p-6 specular-highlight" onclick="loadPage('/development/mcp/mcp-market.html')">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-bold text-white">MCP服务</h3>
+                                    <span class="status-indicator status-new">3 新增</span>
+                                </div>
+                                <div class="flex items-end justify-between">
+                                    <div>
+                                        <p class="text-3xl font-bold text-white mb-2">24</p>
+                                        <p class="text-white/60 font-medium">可用服务</p>
+                                    </div>
+                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500/20 text-yellow-300">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M8 11v6h8v-6M8 11h8"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="dashboard-card overflow-hidden">
+                            <div class="px-6 py-4 border-b border-white/10">
+                                <h3 class="text-xl font-bold text-white">快速操作</h3>
+                                <p class="text-white/60 text-sm mt-1">常用功能快速访问</p>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div class="glass p-4 rounded-lg specular-highlight cursor-pointer" onclick="loadPage('/omni/pages/app-create.html')">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-white font-medium">新建应用</p>
+                                                <p class="text-white/50 text-xs">创建新的助手应用</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="glass p-4 rounded-lg specular-highlight cursor-pointer" onclick="loadPage('/development/model-center/model-management.html')">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-white font-medium">模型管理</p>
+                                                <p class="text-white/50 text-xs">管理AI模型</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="glass p-4 rounded-lg specular-highlight cursor-pointer" onclick="loadPage('/development/mcp/mcp-market.html')">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M8 11v6h8v-6M8 11h8"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-white font-medium">MCP市场</p>
+                                                <p class="text-white/50 text-xs">浏览服务市场</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="glass p-4 rounded-lg specular-highlight cursor-pointer" onclick="loadPage('/development/component-dev/card-dev.html')">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-white font-medium">LUI组件</p>
+                                                <p class="text-white/50 text-xs">界面组件开发</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Menu data for search functionality
+        const menuData = [
+            { name: '工作台', icon: '📊', url: null, action: 'showDashboard()', keywords: ['工作台', '仪表板', '首页'] },
+            { name: '应用管理', icon: '📱', url: '/omni/pages/app-management.html', keywords: ['应用', '应用管理', '管理'] },
+            { name: '模型中心', icon: '🧠', url: '/development/model-center/model-management.html', keywords: ['模型', '模型中心', 'LLM', 'AI'] },
+            { name: 'MCP市场', icon: '🛒', url: '/development/mcp/mcp-market.html', keywords: ['MCP', '市场', '服务', '插件'] },
+            { name: 'LUI市场', icon: '🎨', url: '/development/component-dev/card-dev.html', keywords: ['LUI', '组件', '界面', '卡片'] },
+            { name: '向量检索管理', icon: '🔍', url: '/development/data-process/embedding-models.html', keywords: ['向量', '检索', '嵌入', '搜索'] },
+            { name: '新建应用', icon: '➕', url: '/omni/pages/app-create.html', keywords: ['新建', '创建', '应用'] },
+            { name: '模型管理', icon: '⚙️', url: '/development/model-center/model-management.html', keywords: ['模型管理', '管理'] }
+        ];
+
+        // Search functionality
+        function toggleSearch() {
+            console.log('toggleSearch called');
+            const container = document.getElementById('search-container');
+            const input = document.getElementById('search-input');
+            
+            if (!container || !input) {
+                console.error('Search elements not found');
+                return;
+            }
+            
+            const isHidden = container.classList.contains('hidden');
+            console.log('Search container hidden:', isHidden);
+            
+            if (isHidden) {
+                container.classList.remove('hidden');
+                setTimeout(() => input.focus(), 100);
+                showSearchTips();
+            } else {
+                closeSearch();
+            }
+        }
+
+        function closeSearch() {
+            const container = document.getElementById('search-container');
+            const input = document.getElementById('search-input');
+            container.classList.add('hidden');
+            input.value = '';
+            clearSearchResults();
+        }
+
+        function handleSearch(query) {
+            console.log('handleSearch called with:', query);
+            const resultsContainer = document.getElementById('search-results');
+            const tipsContainer = document.getElementById('search-tips');
+            
+            if (!resultsContainer || !tipsContainer) {
+                console.error('Search result elements not found');
+                return;
+            }
+            
+            if (!query.trim()) {
+                showSearchTips();
+                return;
+            }
+
+            tipsContainer.style.display = 'none';
+            
+            const filteredResults = menuData.filter(item => {
+                const searchTerm = query.toLowerCase();
+                return item.keywords.some(keyword => keyword.toLowerCase().includes(searchTerm)) ||
+                       item.name.toLowerCase().includes(searchTerm);
+            });
+            
+            console.log('Filtered results:', filteredResults);
+
+            if (filteredResults.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="p-4 text-center text-white/60">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p class="text-sm">未找到相关功能</p>
+                    </div>
+                `;
+                return;
+            }
+
+            resultsContainer.innerHTML = filteredResults.map(item => `
+                <div class="p-3 hover:bg-white/10 transition-colors cursor-pointer border-b border-white/5 last:border-b-0" 
+                     onclick="navigateToItem('${item.url}', '${item.action}', '${item.name}')">
+                    <div class="flex items-center">
+                        <span class="text-lg mr-3">${item.icon}</span>
+                        <div>
+                            <div class="text-white font-medium text-sm">${item.name}</div>
+                            <div class="text-white/50 text-xs">${item.keywords.join(', ')}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function navigateToItem(url, action, name) {
+            closeSearch();
+            
+            if (action && action!=='undefined' &&  action !== 'null') {
+                eval(action);
+            } else if (url && url !== 'null') {
+                loadPage(url);
+            }
+        }
+
+        function showSearchTips() {
+            const resultsContainer = document.getElementById('search-results');
+            const tipsContainer = document.getElementById('search-tips');
+            
+            resultsContainer.innerHTML = '';
+            tipsContainer.style.display = 'block';
+        }
+
+        function clearSearchResults() {
+            document.getElementById('search-results').innerHTML = '';
+            document.getElementById('search-tips').style.display = 'block';
+        }
+
+        function handleKeydown(event) {
+            if (event.key === 'Escape') {
+                closeSearch();
+            }
+        }
+
+        // Admin portal functionality
+        function openAdminPortal() {
+            // You can customize this URL based on your admin portal location
+            const adminUrl = '/admin/index.html';
+            window.open(adminUrl, '_blank');
+        }
+
+        // Background toggle functionality
+        function toggleBackground() {
+            const currentBg = localStorage.getItem('omni-background') || '1';
+            const nextBg = Math.floor(Math.random() * 2000 + 1);
+            
+            localStorage.setItem('omni-background', nextBg.toString());
+            applyBackground(nextBg);
+        }
+
+        function applyBackground(bgNumber) {
+            const body = document.body;
+            const randomNum = bgNumber;
+
+
+            document.body.style.backgroundImage=`linear-gradient(135deg, rgba(255,255,255, 0.5) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0.5) 100%), url('https://img.infinitynewtab.com/wallpaper/${randomNum}.jpg')`;
+
+        }
+
+        // 初始化背景
+        function initializeBackground() {
+            const savedBg = localStorage.getItem('omni-background');
+            if (savedBg) {
+                applyBackground(parseInt(savedBg));
+            } else {
+                // 默认随机背景
+                const randomBg = Math.floor(Math.random() * 5) + 1;
+                localStorage.setItem('omni-background', randomBg.toString());
+                applyBackground(randomBg);
+            }
+        }
+
+        // Menu interaction
+        function loadPage(url) {
+            // Update menu active state - find the menu item that matches this URL
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Try to find and activate the corresponding menu item
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                const onclick = item.getAttribute('onclick');
+                if (onclick && onclick.includes(url)) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Show iframe container and hide dashboard
+            document.getElementById('dashboard-content').style.display = 'none';
+            document.getElementById('iframe-container').style.display = 'block';
+
+            // Load content in iframe
+            const iframe = document.getElementById('content-iframe');
+            iframe.src = url;
+            
+            console.log('Loading page:', url);
+        }
+
+        function showDashboard() {
+            // Update menu active state
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Activate the dashboard/工作台 menu item
+            const dashboardMenuItem = document.querySelector('.menu-item[onclick="showDashboard()"]');
+            if (dashboardMenuItem) {
+                dashboardMenuItem.classList.add('active');
+            }
+
+            // Show dashboard and hide iframe
+            document.getElementById('iframe-container').style.display = 'none';
+            document.getElementById('dashboard-content').style.display = 'block';
+            
+            console.log('Showing dashboard');
+        }
+
+        // Dropdown functionality
+        function toggleTenantDropdown() {
+            const dropdown = document.getElementById('tenant-dropdown');
+            dropdown.classList.toggle('show');
+            document.getElementById('user-dropdown').classList.remove('show');
+        }
+
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('user-dropdown');
+            dropdown.classList.toggle('show');
+            document.getElementById('tenant-dropdown').classList.remove('show');
+        }
+
+        // Tenant selection
+        function selectTenant(tenantName) {
+            document.getElementById('current-tenant').textContent = tenantName;
+            document.getElementById('dashboard-tenant').textContent = tenantName;
+            document.getElementById('tenant-dropdown').classList.remove('show');
+        }
+
+        // Close dropdowns and search when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.getElementById('tenant-dropdown').classList.remove('show');
+                document.getElementById('user-dropdown').classList.remove('show');
+            }
+            
+            // Close search if clicking outside
+            if (!event.target.closest('#search-container') && !event.target.closest('#search-trigger')) {
+                closeSearch();
+            }
+        });
+
+        // Listen for postMessage navigation events from iframe
+        window.addEventListener('message', function(event) {
+            // Verify origin for security (optional, adjust as needed)
+            if (event.origin !== window.location.origin) {
+                return;
+            }
+            
+            if (event.data.type === 'navigate') {
+                const url = event.data.url;
+                console.log('Received navigation request:', url);
+                
+                // Handle navigation
+                if (url) {
+                    loadPage(url);
+                }
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize background first
+            initializeBackground();
+            
+            // Add click effects to cards
+            document.querySelectorAll('.dashboard-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    this.style.transform = 'translateY(-2px) scale(0.98)';
+                    setTimeout(() => {
+                        this.style.transform = 'translateY(-4px) scale(1)';
+                    }, 100);
+                });
+            });
+            
+            // Initialize search functionality
+            const searchInput = document.getElementById('search-input');
+            const searchCloseBtn = document.getElementById('search-close-btn');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => handleSearch(e.target.value));
+                searchInput.addEventListener('keydown', handleKeydown);
+            }
+            
+            if (searchCloseBtn) {
+                searchCloseBtn.addEventListener('click', closeSearch);
+            }
+            
+            // Test search functionality
+            console.log('Search functionality initialized');
+        });
+    </script>
+</body>
+
+</html>

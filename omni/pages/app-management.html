@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>应用管理 - 智言Omni开发门户</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --omni-primary: #1e3a8a;
+            --omni-primary-light: #3730a3;
+            --omni-primary-dark: #581c87;
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-strong: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-tertiary: rgba(255, 255, 255, 0.6);
+        }
+
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        /* Glass Effects */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-strong {
+            background: var(--glass-strong);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Application cards */
+        .app-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .app-card:active {
+            transform: translateY(-2px) scale(1.01);
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        .status-production {
+            background: rgba(34, 197, 94, 0.2);
+            color: rgb(34, 197, 94);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-development {
+            background: rgba(59, 130, 246, 0.2);
+            color: rgb(59, 130, 246);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .status-testing {
+            background: rgba(245, 158, 11, 0.2);
+            color: rgb(245, 158, 11);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-planned {
+            background: rgba(156, 163, 175, 0.2);
+            color: rgb(156, 163, 175);
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
+        /* Buttons */
+        .omni-btn {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .omni-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .omni-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* Copy button */
+        .copy-btn {
+            opacity: 0;
+            transition: all 0.3s ease;
+            transform: scale(0.8);
+        }
+
+        .app-card:hover .copy-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .copy-btn.copied {
+            background: rgba(34, 197, 94, 0.3);
+            color: rgb(34, 197, 94);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            /* animation: fadeInUp 0.6s ease-out; */
+        }
+
+        /* .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; } */
+
+        /* Search and filter */
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .filter-tab.active {
+            background: var(--glass-strong);
+            color: var(--text-primary);
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-tab:hover:not(.active) {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+        }
+
+        /* App details modal overlay */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* AppID display */
+        .app-id {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+
+<body class="p-6">
+    <div class="">
+        <!-- 页面标题和统计 -->
+        <div class="mb-8 fade-in-up">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-white mb-2">应用管理</h1>
+                    <p class="text-white/70 text-lg">智能助手应用生命周期管理</p>
+                </div>
+                <div class="glass rounded-xl p-4">
+                    <div class="flex items-center space-x-6">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-white" id="total-apps">12</div>
+                            <div class="text-white/60 text-sm">总应用</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-400" id="production-apps">3</div>
+                            <div class="text-white/60 text-sm">生产中</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-400" id="dev-apps">5</div>
+                            <div class="text-white/60 text-sm">开发中</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-yellow-400" id="testing-apps">2</div>
+                            <div class="text-white/60 text-sm">测试中</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-gray-400" id="planned-apps">2</div>
+                            <div class="text-white/60 text-sm">规划中</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 搜索和筛选 -->
+            <div class="glass rounded-xl p-4 stagger-1 fade-in-up">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" id="search-input" placeholder="搜索应用名称或AppID..."
+                                class="w-80 pl-10 pr-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/50 focus:bg-white/30 transition-all">
+                            <svg class="absolute left-3 top-2.5 w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <div class="filter-tab active" data-filter="all">全部</div>
+                            <div class="filter-tab" data-filter="production">生产中</div>
+                            <div class="filter-tab" data-filter="development">开发中</div>
+                            <div class="filter-tab" data-filter="testing">测试中</div>
+                            <div class="filter-tab" data-filter="planned">规划中</div>
+                        </div>
+                    </div>
+
+                    <button class="omni-btn px-6 py-2 glass text-white font-semibold" onclick="createNewApp()">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        新建应用
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 应用列表 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="apps-container">
+            <!-- 应用卡片将由JavaScript动态生成 -->
+        </div>
+    </div>
+
+    <!-- 应用详情模态框 -->
+    <div id="app-detail-modal" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-6">
+        <div class="glass-strong rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div class="p-6 border-b border-white/20">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-white" id="modal-app-name">应用详情</h2>
+                    <button onclick="closeModal()" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-96">
+                <div id="modal-content">
+                    <!-- 模态框内容将由JavaScript动态填充 -->
+                </div>
+            </div>
+            
+            <div class="p-6 border-t border-white/20 flex justify-end space-x-4">
+                <button onclick="closeModal()" class="omni-btn px-6 py-2 bg-white/20 text-white hover:bg-white/30">
+                    取消
+                </button>
+                <button id="modal-action-btn" class="omni-btn px-6 py-2 bg-blue-600 text-white hover:bg-blue-700">
+                    进入工作台
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API 配置
+        const API_BASE_URL = 'http://localhost:3000/api';
+        
+        // 应用数据 - 初始化为空，从服务器获取
+        let appsData = [];
+
+        // 状态映射
+        const statusMap = {
+            development: { text: "开发中", class: "status-development", icon: "🛠️" },
+            testing: { text: "测试中", class: "status-testing", icon: "🧪" },
+            production: { text: "生产中", class: "status-production", icon: "✅" },
+            planned: { text: "规划中", class: "status-planned", icon: "📝" }
+        };
+
+        // 当前筛选条件
+        let currentFilter = 'all';
+        let currentSearch = '';
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            loadApplications();
+            initializeEventListeners();
+        });
+
+        // 从服务器加载应用数据
+        async function loadApplications() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/applications`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    appsData = result.data;
+                    renderApps();
+                    updateStats();
+                    console.log('Applications loaded successfully:', appsData.length);
+                } else {
+                    console.error('Failed to load applications:', result.error);
+                    // 如果服务器无法访问，使用本地数据作为后备
+                    loadFallbackData();
+                }
+            } catch (error) {
+                console.error('Error loading applications:', error);
+                // 如果服务器无法访问，使用本地数据作为后备
+                loadFallbackData();
+            }
+        }
+
+        // 后备数据（如果服务器不可用）
+        function loadFallbackData() {
+            console.log('Using fallback data');
+            appsData = [
+                {
+                    id: 1,
+                    appId: "qa-assistant-001",
+                    name: "智能问答助手",
+                    description: "AI行员助手核心，提供智能问答和知识检索服务",
+                    status: "development",
+                    version: "v2.1.3",
+                    icon: "🤖",
+                    category: "核心服务",
+                    lastUpdated: "2025-06-15",
+                    developer: "产品团队",
+                    features: ["自然语言处理", "知识库检索", "多轮对话", "意图识别"],
+                    workspace: "/development/app-workspace/qa-assistant",
+                    gitRepo: "https://git.company.com/ai-apps/qa-assistant.git"
+                },
+                {
+                    id: 2,
+                    appId: "writing-assistant-002",
+                    name: "智能写作助手",
+                    description: "基于大模型的文档生成和写作辅助工具",
+                    status: "production",
+                    version: "v1.8.2",
+                    icon: "✍️",
+                    category: "内容生成",
+                    lastUpdated: "2025-06-12",
+                    developer: "渠道解决方案部",
+                    features: ["文档生成", "文本润色", "格式标准化", "模板管理"],
+                    workspace: "/development/app-workspace/writing-assistant",
+                    gitRepo: "https://git.company.com/ai-apps/writing-assistant.git"
+                },
+                {
+                    id: 3,
+                    appId: "form-assistant-003",
+                    name: "智能表单助手",
+                    description: "OCR+AI融合的智能表单识别和处理系统",
+                    status: "production",
+                    version: "v1.5.1",
+                    icon: "📋",
+                    category: "数据处理",
+                    lastUpdated: "2025-06-10",
+                    developer: "产品团队",
+                    features: ["OCR识别", "表单解析", "数据验证", "自动填充"],
+                    workspace: "/development/app-workspace/form-assistant",
+                    gitRepo: "https://git.company.com/ai-apps/form-assistant.git"
+                }
+            ];
+            renderApps();
+            updateStats();
+        }
+
+        // 创建新应用（调用服务器API）
+        async function createNewAppOnServer(appData) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/applications`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(appData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('Application created successfully:', result.data);
+                    // 重新加载应用列表
+                    await loadApplications();
+                    return result.data;
+                } else {
+                    console.error('Failed to create application:', result.error);
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Error creating application:', error);
+                throw error;
+            }
+        }
+
+        // 更新应用状态
+        async function updateApplicationStatus(appId, status) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/applications/${appId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('Application status updated:', result.data);
+                    // 重新加载应用列表
+                    await loadApplications();
+                    return result.data;
+                } else {
+                    console.error('Failed to update application:', result.error);
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Error updating application:', error);
+                throw error;
+            }
+        }
+
+        
+
+        // 初始化事件监听器
+        function initializeEventListeners() {
+            // 搜索功能
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                currentSearch = e.target.value.toLowerCase();
+                renderApps();
+            });
+
+            // 筛选标签
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.filter;
+                    renderApps();
+                });
+            });
+
+            // 模态框关闭
+            document.getElementById('app-detail-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'app-detail-modal') {
+                    closeModal();
+                }
+            });
+        }
+
+        // 渲染应用列表
+        function renderApps() {
+            const container = document.getElementById('apps-container');
+            const filteredApps = appsData.filter(app => {
+                const matchesFilter = currentFilter === 'all' || app.status === currentFilter;
+                const matchesSearch = app.name.toLowerCase().includes(currentSearch) || 
+                                     app.description.toLowerCase().includes(currentSearch) ||
+                                     app.appId.toLowerCase().includes(currentSearch);
+                return matchesFilter && matchesSearch;
+            });
+
+            container.innerHTML = filteredApps.map((app, index) => `
+                <div class="app-card rounded-2xl p-6 fade-in-up stagger-${(index % 4) + 1}" 
+                     onclick="openAppDetail(${app.id})" data-app-id="${app.id}">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center">
+                            <span class="text-3xl mr-3">${app.icon}</span>
+                            <div>
+                                <h3 class="font-bold text-white text-lg">${app.name}</h3>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <span class="app-id">${app.appId}</span>
+                                    <button class="copy-btn p-1 rounded text-white/60 hover:text-white text-xs" 
+                                            onclick="event.stopPropagation(); copyAppId('${app.appId}', this)" 
+                                            title="复制AppID">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="text-white/60 text-sm">${app.category}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-white/70 text-sm mb-4 line-clamp-2">${app.description}</p>
+                    
+                    <div class="flex items-center justify-between text-sm mb-4">
+                        <div class="text-white/60">
+                            <div>版本: <span class="text-white/80 font-medium">${app.version}</span></div>
+                            <div>更新: <span class="text-white/80">${app.lastUpdated}</span></div>
+                        </div>
+                        <div class="text-right text-white/60">
+                            <div class="text-white/80 font-medium">${app.developer}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-4 border-t border-white/20 flex justify-end">
+                        <button class="omni-btn px-4 py-1 bg-blue-600/80 text-white text-sm hover:bg-blue-600" 
+                                onclick="event.stopPropagation(); enterWorkspace(${app.id})">
+                            进入工作台
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 复制AppID
+        function copyAppId(appId, button) {
+            navigator.clipboard.writeText(appId).then(() => {
+                button.classList.add('copied');
+                button.title = '已复制';
+                setTimeout(() => {
+                    button.classList.remove('copied');
+                    button.title = '复制AppID';
+                }, 2000);
+            }).catch(err => {
+                console.error('复制失败:', err);
+            });
+        }
+
+        // 更新统计数据
+        function updateStats() {
+            const stats = appsData.reduce((acc, app) => {
+                acc.total++;
+                if (app.status === 'production') acc.production++;
+                else if (app.status === 'development') acc.development++;
+                else if (app.status === 'testing') acc.testing++;
+                else if (app.status === 'planned') acc.planned++;
+                return acc;
+            }, { total: 0, production: 0, development: 0, testing: 0, planned: 0 });
+
+            document.getElementById('total-apps').textContent = stats.total;
+            document.getElementById('production-apps').textContent = stats.production;
+            document.getElementById('dev-apps').textContent = stats.development;
+            document.getElementById('testing-apps').textContent = stats.testing;
+            document.getElementById('planned-apps').textContent = stats.planned;
+        }
+
+        // 打开应用详情
+        function openAppDetail(appId) {
+            const app = appsData.find(a => a.id === appId);
+            if (!app) return;
+
+            document.getElementById('modal-app-name').textContent = app.name;
+            document.getElementById('modal-content').innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex items-center space-x-4">
+                        <span class="text-4xl">${app.icon}</span>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white">${app.name}</h3>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <span class="app-id">${app.appId}</span>
+                                <button class="copy-btn p-1 rounded text-white/60 hover:text-white text-xs" 
+                                        onclick="copyAppId('${app.appId}', this)" 
+                                        title="复制AppID">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <p class="text-white/70 mt-2">${app.description}</p>
+                            <div class="mt-2">
+                                <span class="status-indicator ${statusMap[app.status].class}">
+                                    ${statusMap[app.status].icon} ${statusMap[app.status].text}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="glass rounded-lg p-4">
+                            <div class="text-white/60 text-sm">版本信息</div>
+                            <div class="text-white font-medium">${app.version}</div>
+                        </div>
+                        <div class="glass rounded-lg p-4">
+                            <div class="text-white/60 text-sm">最后更新</div>
+                            <div class="text-white font-medium">${app.lastUpdated}</div>
+                        </div>
+                        <div class="glass rounded-lg p-4">
+                            <div class="text-white/60 text-sm">开发团队</div>
+                            <div class="text-white font-medium">${app.developer}</div>
+                        </div>
+                        <div class="glass rounded-lg p-4">
+                            <div class="text-white/60 text-sm">应用分类</div>
+                            <div class="text-white font-medium">${app.category}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass rounded-lg p-4">
+                        <div class="text-white/60 text-sm mb-2">Git仓库</div>
+                        <div class="flex items-center space-x-2">
+                            <code class="text-white/80 text-sm bg-black/20 px-2 py-1 rounded flex-1">${app.gitRepo}</code>
+                            <button class="copy-btn p-1 rounded text-white/60 hover:text-white text-xs" 
+                                    onclick="copyAppId('${app.gitRepo}', this)" 
+                                    title="复制Git地址">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="glass rounded-lg p-4">
+                        <div class="text-white/60 text-sm mb-3">核心功能</div>
+                        <div class="flex flex-wrap gap-2">
+                            ${app.features.map(feature => `
+                                <span class="px-3 py-1 bg-blue-600/30 text-blue-200 rounded-full text-sm border border-blue-400/30">
+                                    ${feature}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 确保复制按钮在模态框中也能正常显示
+            const modalCopyBtns = document.querySelectorAll('#modal-content .copy-btn');
+            modalCopyBtns.forEach(btn => {
+                btn.style.opacity = '1';
+                btn.style.transform = 'scale(1)';
+            });
+
+            document.getElementById('modal-action-btn').onclick = () => enterWorkspace(appId);
+            document.getElementById('app-detail-modal').classList.remove('hidden');
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('app-detail-modal').classList.add('hidden');
+        }
+
+        // 进入工作台
+        function enterWorkspace(appId) {
+            const app = appsData.find(a => a.id === appId);
+            if (!app) return;
+
+            // 根据应用状态决定跳转行为
+            if (app.status === 'planned') {
+                alert('该应用还在规划中，暂时无法进入工作台');
+                return;
+            }
+
+            // 实际跳转到工作台
+            if (window.parent && window.parent !== window) {
+                // 如果在iframe中，通知父窗口跳转
+                window.parent.postMessage({
+                    type: 'navigate',
+                    url: app.workspace
+                }, '*');
+            } else {
+                // 直接跳转
+                window.location.href = app.workspace;
+            }
+            
+            closeModal();
+        }
+
+        // 新建应用
+        function createNewApp() {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'navigate',
+                    url: '/omni/pages/app-create.html'
+                }, '*');
+            } else {
+                window.location.href = '/omni/pages/app-create.html';
+            }
+        }
+
+        // 监听来自父窗口的消息
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'refresh') {
+                // 刷新应用列表
+                renderApps();
+                updateStats();
+            }
+        });
+    </script>
+</body>
+</html>
