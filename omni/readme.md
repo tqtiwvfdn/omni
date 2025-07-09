@@ -110,9 +110,7 @@
   - 消息通知中心
 
 - **应用管理**
-  - 应用列表和状态
-  - 应用生命周期管理
-  - 应用模板库
+  - 应用列表
 
 - **模型中心**
   - 模型管理 (LLM/NLP/ASR/TTS) - `/development/model-center/model-management`

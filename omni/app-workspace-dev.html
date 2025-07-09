@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="overflow: hidden;">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>应用工作台 - 开发侧</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --omni-primary: #1e3a8a;
+            --omni-primary-light: #3730a3;
+            --omni-primary-dark: #581c87;
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-strong: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-tertiary: rgba(255, 255, 255, 0.6);
+            --sidebar-bg: rgba(255, 255, 255, 0.1);
+            --menu-hover: rgba(255, 255, 255, 0.1);
+            --menu-active: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: background 0.6s ease;
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            overflow: hidden;
+        }
+
+        /* Glass Effects */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-strong {
+            background: var(--glass-strong);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Specular highlight effect */
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+
+        .specular-highlight > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Sidebar */
+        .workspace-sidebar {
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* Menu styles */
+        .menu-item {
+            border-radius: 12px;
+            margin: 4px 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .menu-item:hover {
+            background-color: var(--menu-hover);
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        .menu-item.active {
+            background-color: var(--menu-active);
+            color: var(--text-primary);
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.8));
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Submenu styles */
+        .ml-4 .menu-item {
+            font-size: 14px;
+            color: var(--text-tertiary);
+            font-weight: 400;
+            margin: 2px 8px;
+            padding: 8px 12px;
+        }
+
+        .ml-4 .menu-item:hover {
+            color: var(--text-secondary);
+            background-color: rgba(255, 255, 255, 0.08);
+            transform: translateX(2px);
+        }
+
+        .ml-4 .menu-item.active {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.15);
+            font-weight: 500;
+        }
+
+        .ml-4 .menu-item.active::before {
+            width: 2px;
+            height: 16px;
+        }
+
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background: var(--glass-strong);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            min-width: 280px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            z-index: 1000;
+            top: 100%;
+            margin-top: 8px;
+            animation: dropdownFadeIn 0.2s ease-out;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .dropdown-item {
+            padding: 14px 18px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .dropdown-item:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .dropdown-item:last-child {
+            border-radius: 0 0 12px 12px;
+            border-bottom: none;
+        }
+
+        /* Content area */
+        .content-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        .status-development {
+            background: rgba(59, 130, 246, 0.2);
+            color: rgb(59, 130, 246);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .status-production {
+            background: rgba(34, 197, 94, 0.2);
+            color: rgb(34, 197, 94);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-testing {
+            background: rgba(245, 158, 11, 0.2);
+            color: rgb(245, 158, 11);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* Buttons */
+        .omni-btn {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .omni-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .omni-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .omni-btn-primary {
+            background: linear-gradient(135deg, var(--omni-primary), var(--omni-primary-light));
+            color: white;
+        }
+
+        .omni-btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .workspace-sidebar {
+                width: 240px;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Scrollbar styles */
+        .workspace-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .workspace-sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .workspace-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+        }
+
+        .workspace-sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Feature card styles */
+        .feature-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+
+<body class="from-blue-800 via-purple-700 to-purple-800 font-sans">
+    <div class="flex flex-col h-screen overflow-hidden">
+        <!-- Top Navigation Bar -->
+        <div class="glass border-b border-white/20" style="z-index: 1;">
+            <div class="flex items-center justify-between h-16 px-6">
+                <!-- Left: Logo and Title -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 mr-6">
+                        <img src="/console/img/agreeLogo.png" alt="赞同科技" class="h-8" />
+                    </div>
+                    <div class="hidden md:block">
+                        <h1 class="text-xl font-bold text-white cursor-default">
+                            应用工作台
+                            <small class="text-white/60 hover:text-white/80 cursor-pointer transition-colors text-sm font-medium ml-2">
+                                开发侧
+                            </small>
+                        </h1>
+                    </div>
+                </div>
+
+                <!-- Right: Environment Access -->
+                <div class="flex items-center space-x-4">
+                    <!-- Environment Access Dropdown -->
+                    <div class="mr-4 dropdown">
+                        <div class="glass px-4 py-2 rounded-lg flex items-center specular-highlight cursor-pointer" onclick="toggleEnvDropdown()">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                            </svg>
+                            <span id="current-env" class="text-sm font-medium">DEV 环境</span>
+                            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div id="env-dropdown" class="dropdown-content">
+                            <div class="dropdown-item" onclick="accessEnvironment('dev')">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                                <div>
+                                    <div class="font-semibold">DEV 环境</div>
+                                    <div class="text-xs text-white/50">开发环境</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-item" onclick="accessEnvironment('sit')">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                                <div>
+                                    <div class="font-semibold">SIT 环境</div>
+                                    <div class="text-xs text-white/50">系统集成测试</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-item" onclick="accessEnvironment('uat')">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                <div>
+                                    <div class="font-semibold">UAT 环境</div>
+                                    <div class="text-xs text-white/50">用户验收测试</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Left Sidebar -->
+            <div class="workspace-sidebar w-80 flex-shrink-0 mt-4 ml-4 mb-4 rounded-xl">
+                <div class="h-full overflow-y-auto">
+                    <nav class="mt-4">
+                        <div class="px-6 py-4 border-b border-white/10">
+                            <h2 class="text-lg font-bold text-white">应用开发</h2>
+                            <p class="text-sm text-white/60 mt-1">单应用开发工作台</p>
+                        </div>
+
+                        <!-- 知识库 RAG -->
+                        <div class="menu-item flex items-center justify-between px-6 py-4 specular-highlight active" onclick="toggleKnowledgeSubmenu()">
+                            <div class="flex items-center">
+                                <span class="mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                    </svg>
+                                </span>
+                                <span>知识库 RAG</span>
+                            </div>
+                            <svg id="knowledge-submenu-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+
+                        <!-- 知识库 RAG 子菜单 -->
+                        <div id="knowledge-submenu" class="ml-4 space-y-1">
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/data-process/knowledge.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </span>
+                                <span>文档管理</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/data-process/qa-generation.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                </span>
+                                <span>问答对管理</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/data-process/evaluation.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                </span>
+                                <span>知识库评估</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/data-process/qa-feedback.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                    </svg>
+                                </span>
+                                <span>QA反馈优化</span>
+                            </div>
+                        </div>
+
+                        <!-- 智能体编排 -->
+                        <div class="menu-item flex items-center justify-between px-6 py-4 specular-highlight" onclick="toggleAgentSubmenu()">
+                            <div class="flex items-center">
+                                <span class="mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                </span>
+                                <span>智能体编排</span>
+                            </div>
+                            <svg id="agent-submenu-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+
+                        <!-- 智能体编排子菜单 -->
+                        <div id="agent-submenu" class="hidden ml-4 space-y-1">
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/ability-center/agent-management.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                </span>
+                                <span>智能体编排</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/ability-center/agent-testing.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </span>
+                                <span>智能体评测</span>
+                            </div>
+                        </div>
+
+                        <!-- MCP服务集成 -->
+                        <div class="menu-item flex items-center justify-between px-6 py-4 specular-highlight" onclick="toggleMCPSubmenu()">
+                            <div class="flex items-center">
+                                <span class="mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+                                    </svg>
+                                </span>
+                                <span>MCP服务集成</span>
+                            </div>
+                            <svg id="mcp-submenu-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+
+                        <!-- MCP服务集成子菜单 -->
+                        <div id="mcp-submenu" class="hidden ml-4 space-y-1">
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/mcp/mcp-market.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M8 11v6h8v-6M8 11h8"></path>
+                                    </svg>
+                                </span>
+                                <span>MCP 市场</span>
+                            </div>
+                        </div>
+
+                        <!-- 业务开发 -->
+                        <div class="menu-item flex items-center justify-between px-6 py-4 specular-highlight" onclick="toggleBusinessSubmenu()">
+                            <div class="flex items-center">
+                                <span class="mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                                    </svg>
+                                </span>
+                                <span>业务开发</span>
+                            </div>
+                            <svg id="business-submenu-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+
+                        <!-- 业务开发子菜单 -->
+                        <div id="business-submenu" class="hidden ml-4 space-y-1">
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/dynamic-orchestration/dynamic-orchestration-mapping.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                                    </svg>
+                                </span>
+                                <span>原子意图配置</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/dynamic-orchestration/dynamic-orchestration-management.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                                    </svg>
+                                </span>
+                                <span>业务流程编排</span>
+                            </div>
+                        </div>
+
+                        <!-- LUI 卡片开发 -->
+                        <div class="menu-item flex items-center justify-between px-6 py-4 specular-highlight" onclick="toggleLUISubmenu()">
+                            <div class="flex items-center">
+                                <span class="mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z"></path>
+                                    </svg>
+                                </span>
+                                <span>LUI 卡片开发</span>
+                            </div>
+                            <svg id="lui-submenu-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+
+                        <!-- LUI 卡片开发子菜单 -->
+                        <div id="lui-submenu" class="hidden ml-4 space-y-1">
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/lui/index.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                </span>
+                                <span>LUI 首页</span>
+                            </div>
+                        </div>
+
+                        <!-- 助手运行配置 -->
+                        <div class="menu-item flex items-center px-6 py-4 specular-highlight" onclick="showAssistantConfig()">
+                            <span class="mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </span>
+                            <span>助手运行配置</span>
+                        </div>
+
+                        <!-- 权限设置 -->
+                        <div class="menu-item flex items-center px-6 py-4 specular-highlight" onclick="showPermissionSettings()">
+                            <span class="mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                            </span>
+                            <span>权限设置</span>
+                        </div>
+
+                        <!-- 应用部署 -->
+                        <div class="menu-item flex items-center justify-between px-6 py-4 specular-highlight" onclick="toggleDeploySubmenu()">
+                            <div class="flex items-center">
+                                <span class="mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                </span>
+                                <span>应用部署</span>
+                            </div>
+                            <svg id="deploy-submenu-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+
+                        <!-- 应用部署子菜单 -->
+                        <div id="deploy-submenu" class="hidden ml-4 space-y-1">
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/maintenance/service-management/service-config.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                                    </svg>
+                                </span>
+                                <span>环境配置</span>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <div class="flex-1 overflow-auto p-4">
+                    <!-- IFRAME Content Container -->
+                    <div id="iframe-container" class="w-full h-full hidden">
+                        <iframe id="content-iframe" src="" class="w-full h-full border-0 rounded-xl glass" frameborder="0"></iframe>
+                    </div>
+
+                    <!-- Default Dashboard Content -->
+                    <div id="dashboard-content">
+                        <!-- 知识库 RAG Content -->
+                        <div id="knowledge-rag-content" class="slide-in">
+                            <div class="content-card">
+                                <h2 class="text-2xl font-bold text-white mb-6">知识库 RAG</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="feature-card" onclick="loadPage('/development/data-process/knowledge.html')">
+                                        <div class="flex items-center mb-4">
+                                            <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mr-4">
+                                                <svg class="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-white">文档管理</h3>
+                                                <p class="text-white/60 text-sm">管理知识库文档和资源</p>
+                                            </div>
+                                        </div>
+                                        <p class="text-white/70 text-sm">上传、编辑和管理知识库文档，支持多种格式</p>
+                                    </div>
+
+                                    <div class="feature-card" onclick="loadPage('/development/data-process/qa-generation.html')">
+                                        <div class="flex items-center mb-4">
+                                            <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mr-4">
+                                                <svg class="w-6 h-6 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-white">问答对管理</h3>
+                                                <p class="text-white/60 text-sm">生成和管理问答对</p>
+                                            </div>
+                                        </div>
+                                        <p class="text-white/70 text-sm">自动生成问答对，优化知识库检索效果</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 智能体编排 Content -->
+                        <div id="agent-orchestration-content" class="hidden slide-in">
+                            <div class="content-card">
+                                <h2 class="text-2xl font-bold text-white mb-6">智能体编排</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div class="feature-card" onclick="loadPage('/development/ability-center/agent-management.html')">
+                                        <div class="flex items-center mb-4">
+                                            <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mr-4">
+                                                <svg class="w-6 h-6 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-white">Agent 配置</h3>
+                                                <p class="text-white/60 text-sm">配置智能体角色和功能</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="feature-card" onclick="loadPage('/development/ability-center/agent-testing.html')">
+                                        <div class="flex items-center mb-4">
+                                            <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center mr-4">
+                                                <svg class="w-6 h-6 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-white">多智能体评测</h3>
+                                                <p class="text-white/60 text-sm">测试智能体协作效果</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="feature-card" onclick="loadPage('/development/ability-center/prompt-template.html')">
+                                        <div class="flex items-center mb-4">
+                                            <div class="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center mr-4">
+                                                <svg class="w-6 h-6 text-pink-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-white">提示词模板</h3>
+                                                <p class="text-white/60 text-sm">管理提示词模板</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Other content sections (hidden by default) -->
+                        <div id="mcp-integration-content" class="hidden slide-in">
+                            <div class="content-card">
+                                <h2 class="text-2xl font-bold text-white mb-6">MCP服务集成</h2>
+                                <p class="text-white/70 mb-4">外部工具接入、API服务配置和第三方插件管理</p>
+                                <div class="flex justify-center">
+                                    <button class="omni-btn omni-btn-primary px-6 py-3" onclick="loadPage('/development/mcp/mcp-market.html')">
+                                        打开 MCP 市场
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="business-development-content" class="hidden slide-in">
+                            <div class="content-card">
+                                <h2 class="text-2xl font-bold text-white mb-6">业务开发</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="feature-card" onclick="loadPage('/development/dynamic-orchestration/dynamic-orchestration-mapping.html')">
+                                        <h3 class="text-lg font-semibold text-white mb-2">原子意图配置</h3>
+                                        <p class="text-white/70 text-sm">配置和管理原子意图映射</p>
+                                    </div>
+                                    <div class="feature-card" onclick="loadPage('/development/dynamic-orchestration/dynamic-orchestration-management.html')">
+                                        <h3 class="text-lg font-semibold text-white mb-2">业务流程编排</h3>
+                                        <p class="text-white/70 text-sm">设计业务流程编排逻辑</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="lui-card-development-content" class="hidden slide-in">
+                            <div class="content-card">
+                                <h2 class="text-2xl font-bold text-white mb-6">LUI 卡片开发</h2>
+                                <p class="text-white/70 mb-4">界面组件开发、交互逻辑和样式主题</p>
+                                <div class="flex justify-center">
+                                    <button class="omni-btn omni-btn-primary px-6 py-3" onclick="loadPage('/development/component-dev/card-dev.html')">
+                                        打开 LUI 开发工具
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="assistant-config-content" class="hidden slide-in">
+                            <div class="content-card">
+                                <h2 class="text-2xl font-bold text-white mb-6">助手运行配置</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="feature-card">
+                                        <h3 class="text-lg font-semibold text-white mb-2">Logo和品牌</h3>
+                                        <p class="text-white/70 text-sm">设置助手Logo和品牌形象</p>
+                                    </div>
+                                    <div class="feature-card">
+                                        <h3 class="text-lg font-semibold text-white mb-2">预设问题</h3>
+                                        <p class="text-white/70 text-sm">配置预设问题和快速回复</p>
+                                    </div>
+                                    <div class="feature-card">
+                                        <h3 class="text-lg font-semibold text-white mb-2">主题样式</h3>
+                                        <p class="text-white/70 text-sm">自定义助手界面主题</p>
+                                    </div>
+                                    <div class="feature-card">
+                                        <h3 class="text-lg font-semibold text-white mb-2">主意图入口</h3>
+                                        <p class="text-white/70 text-sm">配置主意图入口和导航</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="permission-settings-content" class="hidden slide-in">
+                            <div class="content-card">
+                                <h2 class="text-2xl font-bold text-white mb-6">权限设置</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div class="feature-card">
+                                        <h3 class="text-lg font-semibold text-white mb-2">开发权限</h3>
+                                        <p class="text-white/70 text-sm">管理开发阶段权限</p>
+                                    </div>
+                                    <div class="feature-card">
+                                        <h3 class="text-lg font-semibold text-white mb-2">测试权限</h3>
+                                        <p class="text-white/70 text-sm">配置测试环境权限</p>
+                                    </div>
+                                    <div class="feature-card">
+                                        <h3 class="text-lg font-semibold text-white mb-2">部署权限</h3>
+                                        <p class="text-white/70 text-sm">控制部署流程权限</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="app-deployment-content" class="hidden slide-in">
+                            <div class="content-card">
+                                <h2 class="text-2xl font-bold text-white mb-6">应用部署</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div class="feature-card">
+                                        <h3 class="text-lg font-semibold text-white mb-2">环境管理</h3>
+                                        <p class="text-white/70 text-sm">DEV/SIT/UAT环境配置</p>
+                                    </div>
+                                    <div class="feature-card">
+                                        <h3 class="text-lg font-semibold text-white mb-2">版本发布</h3>
+                                        <p class="text-white/70 text-sm">管理版本发布流程</p>
+                                    </div>
+                                    <div class="feature-card">
+                                        <h3 class="text-lg font-semibold text-white mb-2">回滚机制</h3>
+                                        <p class="text-white/70 text-sm">配置应用回滚策略</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Initialize background
+        function initializeBackground() {
+            const savedBg = localStorage.getItem('omni-background');
+            if (savedBg) {
+                applyBackground(parseInt(savedBg));
+            } else {
+                const randomBg = Math.floor(Math.random() * 2000 + 1);
+                localStorage.setItem('omni-background', randomBg.toString());
+                applyBackground(randomBg);
+            }
+        }
+
+        function applyBackground(bgNumber) {
+            document.body.style.backgroundImage = `linear-gradient(135deg, rgba(255,255,255, 0.5) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0.5) 100%), url('https://img.infinitynewtab.com/wallpaper/${bgNumber}.jpg')`;
+        }
+
+        // Submenu toggle functions
+        function toggleKnowledgeSubmenu() {
+            const submenu = document.getElementById('knowledge-submenu');
+            const arrow = document.getElementById('knowledge-submenu-arrow');
+            
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleAgentSubmenu() {
+            const submenu = document.getElementById('agent-submenu');
+            const arrow = document.getElementById('agent-submenu-arrow');
+            
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleMCPSubmenu() {
+            const submenu = document.getElementById('mcp-submenu');
+            const arrow = document.getElementById('mcp-submenu-arrow');
+            
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleBusinessSubmenu() {
+            const submenu = document.getElementById('business-submenu');
+            const arrow = document.getElementById('business-submenu-arrow');
+            
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleLUISubmenu() {
+            const submenu = document.getElementById('lui-submenu');
+            const arrow = document.getElementById('lui-submenu-arrow');
+            
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleDeploySubmenu() {
+            const submenu = document.getElementById('deploy-submenu');
+            const arrow = document.getElementById('deploy-submenu-arrow');
+            
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+        // Navigation functions
+        function showKnowledgeRAG() {
+            showContent('knowledge-rag-content');
+            setActiveMenuItem(0);
+        }
+
+        function showAgentOrchestration() {
+            showContent('agent-orchestration-content');
+            setActiveMenuItem(1);
+        }
+
+        function showMCPIntegration() {
+            showContent('mcp-integration-content');
+            setActiveMenuItem(2);
+        }
+
+        function showBusinessDevelopment() {
+            showContent('business-development-content');
+            setActiveMenuItem(3);
+        }
+
+        function showLUICardDevelopment() {
+            showContent('lui-card-development-content');
+            setActiveMenuItem(4);
+        }
+
+        function showAssistantConfig() {
+            showContent('assistant-config-content');
+            setActiveMenuItem(5);
+        }
+
+        function showPermissionSettings() {
+            showContent('permission-settings-content');
+            setActiveMenuItem(6);
+        }
+
+        function showAppDeployment() {
+            showContent('app-deployment-content');
+            setActiveMenuItem(7);
+        }
+
+        function showContent(contentId) {
+            // Show iframe container and hide dashboard
+            document.getElementById('dashboard-content').style.display = 'none';
+            document.getElementById('iframe-container').style.display = 'none';
+            
+            // Hide all content sections
+            document.querySelectorAll('[id$="-content"]').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // Show selected content
+            document.getElementById(contentId).classList.remove('hidden');
+            document.getElementById('dashboard-content').style.display = 'block';
+        }
+
+        function setActiveMenuItem(index) {
+            // Reset all main menu items
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Find all main menu items (direct children of nav, not in submenu)
+            const mainMenuItems = [];
+            document.querySelectorAll('nav .menu-item').forEach(item => {
+                // Check if this item is not in a submenu (ml-4 class indicates submenu)
+                if (!item.parentElement.classList.contains('ml-4')) {
+                    mainMenuItems.push(item);
+                }
+            });
+            
+            if (mainMenuItems[index]) {
+                mainMenuItems[index].classList.add('active');
+            }
+        }
+
+        // Menu interaction - adapted from index.html
+        function loadPage(url) {
+            // Update menu active state - find the menu item that matches this URL
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Try to find and activate the corresponding menu item
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                const onclick = item.getAttribute('onclick');
+                if (onclick && onclick.includes(url)) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Show iframe container and hide dashboard
+            document.getElementById('dashboard-content').style.display = 'none';
+            document.getElementById('iframe-container').style.display = 'block';
+
+            // Load content in iframe
+            const iframe = document.getElementById('content-iframe');
+            iframe.src = url;
+            
+            console.log('Loading page:', url);
+        }
+
+        // Environment access functions
+        function toggleEnvDropdown() {
+            const dropdown = document.getElementById('env-dropdown');
+            dropdown.classList.toggle('show');
+            // Close other dropdowns if open
+            document.querySelectorAll('.dropdown-content:not(#env-dropdown)').forEach(d => {
+                d.classList.remove('show');
+            });
+        }
+
+        function accessEnvironment(env) {
+            let envName = '';
+            let url = 'https://aom.awebide.com/ai/';
+            
+            switch(env) {
+                case 'dev':
+                    envName = 'DEV 环境';
+                    url = 'https://aom.awebide.com/ai/';
+                    break;
+                case 'sit':
+                    envName = 'SIT 环境';
+                    url = 'https://aom.awebide.com/ai/';
+                    break;
+                case 'uat':
+                    envName = 'UAT 环境';
+                    url = 'https://aom.awebide.com/ai/';
+                    break;
+            }
+            
+            // Update current environment display
+            document.getElementById('current-env').textContent = envName;
+            
+            // Close dropdown
+            document.getElementById('env-dropdown').classList.remove('show');
+            
+            // Open environment in new tab
+            window.open(url, '_blank');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+            }
+            
+            // Close search if clicking outside
+            if (!event.target.closest('#search-container') && !event.target.closest('#search-trigger')) {
+                // closeSearch(); // Uncomment if search functionality is added
+            }
+        });
+        window.addEventListener('message', function(event) {
+            // Verify origin for security (optional, adjust as needed)
+            if (event.origin !== window.location.origin) {
+                return;
+            }
+            
+            if (event.data.type === 'navigate') {
+                const url = event.data.url;
+                console.log('Received navigation request:', url);
+                
+                // Handle navigation
+                if (url) {
+                    loadPage(url);
+                }
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeBackground();
+            
+            // Default load document management page
+            loadPage('/development/data-process/knowledge.html');
+            
+            // Get application info from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const appName = urlParams.get('app');
+            const appId = urlParams.get('appId');
+            
+            if (appName) {
+                document.title = `${appName} - 应用工作台(开发侧)`;
+                // You can use appName and appId to customize the workspace
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="overflow: hidden;">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>应用工作台 - 运营侧</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --omni-primary: #1e3a8a;
+            --omni-primary-light: #3730a3;
+            --omni-primary-dark: #581c87;
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-strong: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-tertiary: rgba(255, 255, 255, 0.6);
+            --sidebar-bg: rgba(255, 255, 255, 0.1);
+            --menu-hover: rgba(255, 255, 255, 0.1);
+            --menu-active: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: background 0.6s ease;
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            overflow: hidden;
+        }
+
+        /* Glass Effects */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-strong {
+            background: var(--glass-strong);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Specular highlight effect */
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+
+        .specular-highlight > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Sidebar */
+        .workspace-sidebar {
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* Menu styles */
+        .menu-item {
+            border-radius: 12px;
+            margin: 4px 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .menu-item:hover {
+            background-color: var(--menu-hover);
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        .menu-item.active {
+            background-color: var(--menu-active);
+            color: var(--text-primary);
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.8));
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Submenu styles */
+        .ml-4 .menu-item {
+            font-size: 14px;
+            color: var(--text-tertiary);
+            font-weight: 400;
+            margin: 2px 8px;
+            padding: 8px 12px;
+        }
+
+        .ml-4 .menu-item:hover {
+            color: var(--text-secondary);
+            background-color: rgba(255, 255, 255, 0.08);
+            transform: translateX(2px);
+        }
+
+        .ml-4 .menu-item.active {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.15);
+            font-weight: 500;
+        }
+
+        .ml-4 .menu-item.active::before {
+            width: 2px;
+            height: 16px;
+        }
+
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background: var(--glass-strong);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            min-width: 280px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            z-index: 1000;
+            top: 100%;
+            margin-top: 8px;
+            animation: dropdownFadeIn 0.2s ease-out;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .dropdown-item {
+            padding: 14px 18px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .dropdown-item:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .dropdown-item:last-child {
+            border-radius: 0 0 12px 12px;
+            border-bottom: none;
+        }
+
+        /* Button styles */
+        .omni-btn {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .omni-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .omni-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        .status-online {
+            background: rgba(34, 197, 94, 0.2);
+            color: rgb(34, 197, 94);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: rgb(245, 158, 11);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: rgb(239, 68, 68);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Metric cards */
+        .metric-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s ease;
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .metric-trend {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .trend-up {
+            color: rgb(34, 197, 94);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .trend-down {
+            color: rgb(239, 68, 68);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Chart containers */
+        .chart-container {
+            background: var(--glass-bg);
+            border-radius: 12px;
+            padding: 16px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .workspace-sidebar {
+                width: 260px;
+            }
+            .menu-item {
+                margin: 2px 8px;
+                padding: 8px 12px;
+            }
+        }
+
+        /* Scrollbar styles */
+        .workspace-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .workspace-sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .workspace-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+        }
+
+        .workspace-sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+
+<body class="from-blue-800 via-purple-700 to-purple-800 font-sans">
+    <div class="flex flex-col h-screen overflow-hidden">
+        <!-- Top Navigation Bar -->
+        <div class="glass border-b border-white/20" style="z-index: 1;">
+            <div class="flex items-center justify-between h-16 px-6">
+                <!-- Left: App Logo and Status -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 mr-6">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                            🤖
+                        </div>
+                    </div>
+                    <div class="hidden md:block">
+                        <h1 class="text-xl font-bold text-white cursor-default" id="app-title">
+                            智能助手 - 运营工作台
+                        </h1>
+                        <div class="flex items-center mt-1">
+                            <div class="status-online mr-3">🟢 运行中</div>
+                            <small class="text-white/60 text-sm" id="app-id">
+                                App ID: qa-assistant-prod-001
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Controls and Tools -->
+                <div class="flex items-center space-x-4">
+                    <!-- Help Documentation -->
+                    <div class="relative">
+                        <button class="omni-btn px-4 py-2 glass text-white text-sm font-semibold specular-highlight focus:outline-none flex items-center" onclick="openHelp()">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            帮助文档
+                        </button>
+                    </div>
+
+
+                    <!-- Back to Production Portal -->
+                    <div class="relative">
+                        <button class="omni-btn px-4 py-2 glass text-white text-sm font-semibold specular-highlight focus:outline-none flex items-center" onclick="goToProductionPortal()">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                            生产门户
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Left Sidebar -->
+            <div class="workspace-sidebar w-80 flex-shrink-0 mt-4 ml-4 mb-4 rounded-xl">
+                <div class="h-full overflow-y-auto">
+                    <nav class="mt-4">
+                        <div class="px-6 py-4 border-b border-white/10">
+                            <h2 class="text-lg font-bold text-white">运营监控</h2>
+                            <p class="text-sm text-white/60 mt-1">单应用运维运营侧</p>
+                        </div>
+
+                        <!-- 知识库 RAG -->
+                        <div class="menu-item flex items-center justify-between px-6 py-4 specular-highlight active" onclick="toggleKnowledgeSubmenu()">
+                            <div class="flex items-center">
+                                <span class="mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                    </svg>
+                                </span>
+                                <span>知识库 RAG</span>
+                            </div>
+                            <svg id="knowledge-submenu-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+
+                        <!-- 知识库 RAG 子菜单 -->
+                        <div id="knowledge-submenu" class="ml-4 space-y-1">
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/data-process/knowledge.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                </span>
+                                <span>运营侧知识库管理</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/development/data-process/qa-feedback.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                    </svg>
+                                </span>
+                                <span>问答对质量监控</span>
+                            </div>
+                        </div>
+
+                        <!-- 意图参数配置 -->
+                        <div class="menu-item flex items-center px-6 py-4 specular-highlight" onclick="loadPage('/operations/business-operations/intent-params.html')">
+                            <span class="mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                                </svg>
+                            </span>
+                            <span>意图参数配置</span>
+                        </div>
+
+                        <!-- 用户价值分析 -->
+                        <div class="menu-item flex items-center justify-between px-6 py-4 specular-highlight" onclick="toggleUserAnalysisSubmenu()">
+                            <div class="flex items-center">
+                                <span class="mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                </span>
+                                <span>用户价值分析</span>
+                            </div>
+                            <svg id="user-analysis-submenu-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+
+                        <!-- 用户价值分析子菜单 -->
+                        <div id="user-analysis-submenu" class="hidden ml-4 space-y-1">
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/operations/user-experience/qa-analysis.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                </span>
+                                <span>问答分析</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/operations/user-experience/user-feedback-v2.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                    </svg>
+                                </span>
+                                <span>用户反馈</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/operations/user-experience/user-satisfy-v2.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </span>
+                                <span>满意度分析</span>
+                            </div>
+                        </div>
+
+                        <!-- 业务运营 -->
+                        <div class="menu-item flex items-center justify-between px-6 py-4 specular-highlight" onclick="toggleBusinessOpsSubmenu()">
+                            <div class="flex items-center">
+                                <span class="mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                </span>
+                                <span>业务运营</span>
+                            </div>
+                            <svg id="business-ops-submenu-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+
+                        <!-- 业务运营子菜单 -->
+                        <div id="business-ops-submenu" class="hidden ml-4 space-y-1">
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/operations/business-operations/usage-metrics.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </span>
+                                <span>使用指标</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/operations/business-operations/qa-performance.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </span>
+                                <span>问答效能</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/operations/business-operations/operation-logs.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </span>
+                                <span>操作记录</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/operations/business-operations/ai-performance.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                </span>
+                                <span>AI表现</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/operations/business-operations/roi-analysis.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </span>
+                                <span>ROI分析</span>
+                            </div>
+                        </div>
+
+                        <!-- 决策洞察 -->
+                        <div class="menu-item flex items-center justify-between px-6 py-4 specular-highlight" onclick="toggleDecisionInsightsSubmenu()">
+                            <div class="flex items-center">
+                                <span class="mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </span>
+                                <span>决策洞察</span>
+                            </div>
+                            <svg id="decision-insights-submenu-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+
+                        <!-- 决策洞察子菜单 -->
+                        <div id="decision-insights-submenu" class="hidden ml-4 space-y-1">
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/operations/decision-insights/trend-analysis.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                                    </svg>
+                                </span>
+                                <span>趋势分析</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/operations/decision-insights/market-insight.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9-9a9 9 0 00-9 9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                                    </svg>
+                                </span>
+                                <span>市场洞察</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/operations/decision-insights/prediction-model.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                </span>
+                                <span>预测模型</span>
+                            </div>
+                        </div>
+
+                        <!-- 权限设置 -->
+                        <div class="menu-item flex items-center justify-between px-6 py-4 specular-highlight" onclick="togglePermissionsSubmenu()">
+                            <div class="flex items-center">
+                                <span class="mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                    </svg>
+                                </span>
+                                <span>权限设置</span>
+                            </div>
+                            <svg id="permissions-submenu-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+
+                        <!-- 权限设置子菜单 -->
+                        <div id="permissions-submenu" class="hidden ml-4 space-y-1">
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/maintenance/basic-permissions/api-permissions.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                </span>
+                                <span>用户访问控制</span>
+                            </div>
+                            <div class="menu-item flex items-center px-6 py-3 specular-highlight" onclick="loadPage('/maintenance/basic-permissions/resource-permissions.html')">
+                                <span class="mr-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                </span>
+                                <span>数据访问权限</span>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <div class="flex-1 overflow-auto p-4">
+                    <!-- IFRAME Content Container -->
+                    <div id="iframe-container" class="w-full h-full hidden">
+                        <iframe id="content-iframe" src="" class="w-full h-full border-0 rounded-xl glass" frameborder="0"></iframe>
+                    </div>
+
+                    <!-- Default Dashboard Content -->
+                    <div id="dashboard-content">
+                        <!-- Key Metrics Overview -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <!-- Active Users -->
+                            <div class="metric-card">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-white/90 font-semibold">今日活跃用户</h3>
+                                    <span class="text-blue-400 text-2xl">👥</span>
+                                </div>
+                                <div class="metric-value text-blue-400">2,854</div>
+                                <div class="metric-trend trend-up mt-2">↗ +15.2%</div>
+                                <div class="text-white/60 text-sm">比昨日增长</div>
+                            </div>
+
+                            <!-- Satisfaction Rate -->
+                            <div class="metric-card">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-white/90 font-semibold">用户满意度</h3>
+                                    <span class="text-green-400 text-2xl">😊</span>
+                                </div>
+                                <div class="metric-value text-green-400">94.7%</div>
+                                <div class="metric-trend trend-up mt-2">↗ +2.1%</div>
+                                <div class="text-white/60 text-sm">较上周提升</div>
+                            </div>
+
+                            <!-- Average Response Time -->
+                            <div class="metric-card">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-white/90 font-semibold">平均响应时间</h3>
+                                    <span class="text-yellow-400 text-2xl">⚡</span>
+                                </div>
+                                <div class="metric-value text-yellow-400">1.2s</div>
+                                <div class="metric-trend trend-down mt-2">↘ -0.3s</div>
+                                <div class="text-white/60 text-sm">性能优化</div>
+                            </div>
+
+                            <!-- QA Success Rate -->
+                            <div class="metric-card">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-white/90 font-semibold">问答成功率</h3>
+                                    <span class="text-green-400 text-2xl">✅</span>
+                                </div>
+                                <div class="metric-value text-green-400">87.3%</div>
+                                <div class="metric-trend trend-up mt-2">↗ +1.8%</div>
+                                <div class="text-white/60 text-sm">持续改善</div>
+                            </div>
+                        </div>
+
+                        <!-- Charts and Analytics -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <!-- User Activity Trend -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="text-xl font-bold text-white mb-4">用户活跃度趋势</h3>
+                                <div class="chart-container">
+                                    <div class="text-center">
+                                        <svg class="w-16 h-16 text-blue-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                                        </svg>
+                                        <p class="text-white/60">7天用户活跃度图表</p>
+                                        <p class="text-white/40 text-sm mt-2">点击加载详细分析</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- QA Performance -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="text-xl font-bold text-white mb-4">问答效能分析</h3>
+                                <div class="chart-container">
+                                    <div class="text-center">
+                                        <svg class="w-16 h-16 text-green-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                        </svg>
+                                        <p class="text-white/60">问答准确率与响应时间</p>
+                                        <p class="text-white/40 text-sm mt-2">点击查看详细报告</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activities and Alerts -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Recent User Feedback -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="text-lg font-bold text-white mb-4">最新用户反馈</h3>
+                                <div class="space-y-4">
+                                    <div class="border-l-4 border-green-400 pl-4">
+                                        <p class="text-white/80 text-sm">回答很准确，帮助很大！</p>
+                                        <p class="text-white/50 text-xs mt-1">用户ID: u_1234 · 2分钟前</p>
+                                    </div>
+                                    <div class="border-l-4 border-yellow-400 pl-4">
+                                        <p class="text-white/80 text-sm">响应速度可以再快一些</p>
+                                        <p class="text-white/50 text-xs mt-1">用户ID: u_5678 · 15分钟前</p>
+                                    </div>
+                                    <div class="border-l-4 border-green-400 pl-4">
+                                        <p class="text-white/80 text-sm">界面很友好，体验不错</p>
+                                        <p class="text-white/50 text-xs mt-1">用户ID: u_9012 · 1小时前</p>
+                                    </div>
+                                </div>
+                                <button class="w-full mt-4 omni-btn py-2 glass text-white text-sm hover:bg-white/20" onclick="loadPage('/operations/user-experience/user-feedback-v2.html')">
+                                    查看全部反馈
+                                </button>
+                            </div>
+
+                            <!-- System Alerts -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="text-lg font-bold text-white mb-4">系统告警</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <p class="text-white/80 text-sm">知识库命中率下降</p>
+                                            <p class="text-white/50 text-xs">建议更新知识库内容</p>
+                                            <p class="text-white/40 text-xs mt-1">30分钟前</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start space-x-3">
+                                        <div class="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <p class="text-white/80 text-sm">性能优化完成</p>
+                                            <p class="text-white/50 text-xs">响应时间提升15%</p>
+                                            <p class="text-white/40 text-xs mt-1">2小时前</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="w-full mt-4 omni-btn py-2 glass text-white text-sm hover:bg-white/20">
+                                    查看所有告警
+                                </button>
+                            </div>
+
+                            <!-- Quick Actions -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="text-lg font-bold text-white mb-4">快速操作</h3>
+                                <div class="space-y-3">
+                                    <button class="w-full omni-btn py-3 bg-blue-600/80 hover:bg-blue-600 text-white text-sm" onclick="loadPage('/operations/business-operations/usage-metrics.html')">
+                                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        使用指标分析
+                                    </button>
+                                    <button class="w-full omni-btn py-3 bg-green-600/80 hover:bg-green-600 text-white text-sm" onclick="loadPage('/operations/user-experience/qa-analysis.html')">
+                                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                        </svg>
+                                        问答质量分析
+                                    </button>
+                                    <button class="w-full omni-btn py-3 bg-purple-600/80 hover:bg-purple-600 text-white text-sm" onclick="generateReport()">
+                                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        生成运营报告
+                                    </button>
+                                    <button class="w-full omni-btn py-3 bg-orange-600/80 hover:bg-orange-600 text-white text-sm" onclick="optimizeSettings()">
+                                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                        智能优化建议
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Get app info from URL parameters
+        function getAppInfoFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const appName = urlParams.get('app') || '智能助手';
+            const appId = urlParams.get('appId') || 'qa-assistant-prod-001';
+            
+            document.getElementById('app-title').textContent = `${appName} - 运营工作台`;
+            document.getElementById('app-id').textContent = `App ID: ${appId}`;
+        }
+
+        // Background functionality
+        function applyBackground(bgNumber) {
+            document.body.style.backgroundImage = `linear-gradient(135deg, rgba(0,0,0, 0.7) 0%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.9) 100%), url('https://img.infinitynewtab.com/wallpaper/${bgNumber}.jpg')`;
+        }
+
+        function initializeBackground() {
+            const savedBg = localStorage.getItem('omni-background');
+            if (savedBg) {
+                applyBackground(parseInt(savedBg));
+            } else {
+                const randomBg = Math.floor(Math.random() * 2000) + 1;
+                localStorage.setItem('omni-background', randomBg.toString());
+                applyBackground(randomBg);
+            }
+        }
+
+        // Submenu toggles
+        function toggleKnowledgeSubmenu() {
+            const submenu = document.getElementById('knowledge-submenu');
+            const arrow = document.getElementById('knowledge-submenu-arrow');
+            
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleUserAnalysisSubmenu() {
+            const submenu = document.getElementById('user-analysis-submenu');
+            const arrow = document.getElementById('user-analysis-submenu-arrow');
+            
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleBusinessOpsSubmenu() {
+            const submenu = document.getElementById('business-ops-submenu');
+            const arrow = document.getElementById('business-ops-submenu-arrow');
+            
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleDecisionInsightsSubmenu() {
+            const submenu = document.getElementById('decision-insights-submenu');
+            const arrow = document.getElementById('decision-insights-submenu-arrow');
+            
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function togglePermissionsSubmenu() {
+            const submenu = document.getElementById('permissions-submenu');
+            const arrow = document.getElementById('permissions-submenu-arrow');
+            
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Menu interaction
+        function loadPage(url) {
+            // Update menu active state
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Try to find and activate the corresponding menu item
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                const onclick = item.getAttribute('onclick');
+                if (onclick && onclick.includes(url)) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Show iframe container and hide dashboard
+            document.getElementById('dashboard-content').style.display = 'none';
+            document.getElementById('iframe-container').style.display = 'block';
+
+            // Load content in iframe
+            const iframe = document.getElementById('content-iframe');
+            iframe.src = url;
+            
+            console.log('Loading page:', url);
+        }
+
+        function showDashboard() {
+            // Update menu active state
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Show dashboard and hide iframe
+            document.getElementById('iframe-container').style.display = 'none';
+            document.getElementById('dashboard-content').style.display = 'block';
+            
+            console.log('Showing dashboard');
+        }
+
+        // Dropdown functionality
+        function toggleEnvironmentDropdown() {
+            const dropdown = document.getElementById('environment-dropdown');
+            dropdown.classList.toggle('show');
+            document.getElementById('toolbox-dropdown').classList.remove('show');
+        }
+
+        function toggleToolboxDropdown() {
+            const dropdown = document.getElementById('toolbox-dropdown');
+            dropdown.classList.toggle('show');
+            document.getElementById('environment-dropdown').classList.remove('show');
+        }
+
+        // Environment selection
+        function selectEnvironment(envName, envType) {
+            document.getElementById('current-environment').textContent = envName;
+            document.getElementById('environment-dropdown').classList.remove('show');
+            console.log('Environment switched to:', envType);
+        }
+
+        // Tool functions
+        function openHelp() {
+            window.open('/docs/operations-guide.html', '_blank');
+        }
+
+        function exportData() {
+            alert('开始导出运营数据...');
+        }
+
+        function generateReport() {
+            alert('正在生成运营报告...');
+        }
+
+        function optimizeSettings() {
+            alert('启动智能优化分析...');
+        }
+
+        function goToProductionPortal() {
+            window.location.href = '/omni/production-portal.html';
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.getElementById('environment-dropdown').classList.remove('show');
+                document.getElementById('toolbox-dropdown').classList.remove('show');
+            }
+        });
+
+        // Listen for postMessage navigation events from iframe
+        window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) {
+                return;
+            }
+            
+            if (event.data.type === 'navigate') {
+                const url = event.data.url;
+                console.log('Received navigation request:', url);
+                
+                if (url) {
+                    loadPage(url);
+                }
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize background
+            initializeBackground();
+            
+            // Get app info from URL
+            getAppInfoFromURL();
+            
+            // Initialize with first submenu open
+            toggleKnowledgeSubmenu();
+            
+            console.log('Operations workspace initialized');
+        });
+    </script>
+</body>
+
+</html>
