@@ -17,8 +17,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // HTTP client for external API calls
 const axios = require('axios');
 
-// Import MCP Service
+// Import Services
 const MCPService = require('./services/mcpService');
+const LUIService = require('./services/luiService');
 
 // Data storage paths
 const DATA_DIR = path.join(__dirname, 'data');
@@ -27,8 +28,9 @@ const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const STATS_FILE = path.join(DATA_DIR, 'stats.json');
 const MODELS_FILE = path.join(DATA_DIR, 'models.json');
 
-// Initialize MCP Service
+// Initialize Services
 const mcpService = new MCPService(DATA_DIR);
+const luiService = new LUIService(DATA_DIR);
 
 // Initialize data directory and files
 async function initializeData() {
@@ -92,6 +94,9 @@ async function initializeData() {
         
         // Initialize MCP data
         await mcpService.initializeMCPData();
+        
+        // Initialize LUI data
+        await luiService.initializeLUIData();
         
         console.log('Data files initialized successfully');
     } catch (error) {
@@ -576,6 +581,218 @@ app.get('/api/mcps/statistics', async (req, res) => {
         res.json({
             success: true,
             data: statistics
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+
+// LUI management endpoints
+
+// Get all LUIs
+app.get('/api/luis', async (req, res) => {
+    try {
+        const { category, search } = req.query;
+        const result = await luiService.getAllLUIs({ category, search });
+        
+        res.json({
+            success: true,
+            data: result.luis,
+            total: result.total,
+            categories: result.categories,
+            statistics: result.statistics
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get single LUI by ID
+app.get('/api/luis/:id', async (req, res) => {
+    try {
+        const lui = await luiService.getLUIById(req.params.id);
+        
+        if (!lui) {
+            return res.status(404).json({
+                success: false,
+                error: 'LUI not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: lui
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Create new LUI
+app.post('/api/luis', async (req, res) => {
+    try {
+        const { error, value } = luiService.getLUIValidationSchema().validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                error: error.details[0].message
+            });
+        }
+        
+        const newLUI = await luiService.createLUI(value);
+        
+        res.status(201).json({
+            success: true,
+            data: newLUI,
+            message: 'LUI created successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Update LUI
+app.put('/api/luis/:id', async (req, res) => {
+    try {
+        const { error, value } = luiService.getUpdateLUIValidationSchema().validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                error: error.details[0].message
+            });
+        }
+        
+        const updatedLUI = await luiService.updateLUI(req.params.id, value);
+        
+        if (!updatedLUI) {
+            return res.status(404).json({
+                success: false,
+                error: 'LUI not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: updatedLUI,
+            message: 'LUI updated successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Delete LUI
+app.delete('/api/luis/:id', async (req, res) => {
+    try {
+        const deletedLUI = await luiService.deleteLUI(req.params.id);
+        
+        if (!deletedLUI) {
+            return res.status(404).json({
+                success: false,
+                error: 'LUI not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: deletedLUI,
+            message: 'LUI deleted successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Search LUIs
+app.get('/api/luis/search/:query', async (req, res) => {
+    try {
+        const { category } = req.query;
+        const result = await luiService.searchLUIs(req.params.query, { category });
+        
+        res.json({
+            success: true,
+            data: result.luis,
+            total: result.total,
+            query: result.query,
+            filters: result.filters
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get LUI statistics
+app.get('/api/luis/statistics', async (req, res) => {
+    try {
+        const statistics = await luiService.getStatistics();
+        
+        res.json({
+            success: true,
+            data: statistics
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get LUI categories
+app.get('/api/luis/categories', async (req, res) => {
+    try {
+        const categories = await luiService.getCategories();
+        
+        res.json({
+            success: true,
+            data: categories
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Increment LUI usage
+app.post('/api/luis/:id/usage', async (req, res) => {
+    try {
+        const updatedLUI = await luiService.incrementUsage(req.params.id);
+        
+        if (!updatedLUI) {
+            return res.status(404).json({
+                success: false,
+                error: 'LUI not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: updatedLUI,
+            message: 'Usage count incremented'
         });
     } catch (error) {
         res.status(500).json({

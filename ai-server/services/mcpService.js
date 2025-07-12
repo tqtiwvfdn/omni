@@ -87,6 +87,31 @@ class MCPService {
             .replace(/^-|-$/g, '') + '-mcp';
     }
 
+    // 递增版本号
+    incrementVersion(currentVersion) {
+        try {
+            // 移除 'v' 前缀并解析版本号
+            const versionWithoutV = currentVersion.replace(/^v/i, '');
+            const parts = versionWithoutV.split('.');
+            
+            // 确保有三个部分 (major.minor.patch)
+            while (parts.length < 3) {
+                parts.push('0');
+            }
+            
+            // 递增补丁版本号
+            const major = parseInt(parts[0]) || 0;
+            const minor = parseInt(parts[1]) || 0;
+            const patch = parseInt(parts[2]) || 0;
+            
+            return `v${major}.${minor}.${patch + 1}`;
+        } catch (error) {
+            console.error('Error incrementing version:', error);
+            // 如果解析失败，返回默认版本
+            return 'v1.0.1';
+        }
+    }
+
     // 获取所有MCP
     async getAllMCPs(filters = {}) {
         try {
@@ -182,12 +207,35 @@ class MCPService {
                 return null;
             }
 
-            data.mcps[mcpIndex] = {
-                ...data.mcps[mcpIndex],
-                ...updateData,
-                id, // 确保ID不被修改
-                updatedAt: new Date().toISOString().split('T')[0]
+            const currentDate = new Date().toISOString().split('T')[0];
+            const existingMCP = data.mcps[mcpIndex];
+            
+            // 自动递增版本号（除非用户明确提供新版本号）
+            const newVersion = updateData.version || this.incrementVersion(existingMCP.version);
+            
+            // 创建新的MCP对象，明确设置所有字段
+            const updatedMCP = {
+                id: existingMCP.id,
+                name: updateData.name || existingMCP.name,
+                description: updateData.description || existingMCP.description,
+                category: updateData.category || existingMCP.category,
+                author: updateData.author || existingMCP.author,
+                version: newVersion,
+                downloads: existingMCP.downloads,
+                rating: existingMCP.rating,
+                status: existingMCP.status,
+                icon: existingMCP.icon,
+                iconBg: existingMCP.iconBg,
+                iconColor: existingMCP.iconColor,
+                tags: updateData.tags || existingMCP.tags,
+                lastUpdated: currentDate, // 强制使用当前日期
+                documentation: updateData.documentation || existingMCP.documentation,
+                endpoints: updateData.endpoints || existingMCP.endpoints,
+                createdAt: existingMCP.createdAt,
+                updatedAt: currentDate // 强制使用当前日期
             };
+            
+            data.mcps[mcpIndex] = updatedMCP;
 
             await this.updateStatistics(data);
             await fs.writeJson(this.MCPS_FILE, data, { spaces: 2 });

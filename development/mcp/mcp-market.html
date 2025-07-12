@@ -225,6 +225,13 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+
+        /* 模态框遮罩 */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
     </style>
 </head>
 <body>
@@ -240,18 +247,6 @@
                     <button id="register-mcp-btn" class="dify-btn px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold specular-highlight">
                         注册MCP
                     </button>
-                </div>
-            </div>
-
-            <!-- 统计信息 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div class="liquid-glass rounded-xl p-6 text-center specular-highlight">
-                    <div class="stats-number" id="total-mcps">0</div>
-                    <div class="text-white/60 font-medium">可用MCP</div>
-                </div>
-                <div class="liquid-glass rounded-xl p-6 text-center specular-highlight">
-                    <div class="stats-number" id="official-mcps">0</div>
-                    <div class="text-white/60 font-medium">官方服务</div>
                 </div>
             </div>
         </div>
@@ -298,8 +293,8 @@
     </div>
 
     <!-- MCP注册模态框 -->
-    <div id="register-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="liquid-glass rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div id="register-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 modal-overlay">
+        <div class="rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col" style="background: #505050; border: none; backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-2xl font-bold text-white">注册新的MCP服务</h2>
                 <button id="close-modal" class="text-white/60 hover:text-white transition-colors">
@@ -309,7 +304,7 @@
                 </button>
             </div>
 
-            <form id="register-form" class="space-y-6">
+            <form id="register-form" class="space-y-6 flex-1 overflow-auto">
                 <div>
                     <label class="block text-white/80 text-sm font-medium mb-2">MCP名称 *</label>
                     <input type="text" name="name" required 
@@ -372,6 +367,108 @@
         </div>
     </div>
 
+    <!-- 确认删除模态框 -->
+    <div id="confirm-delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 modal-overlay">
+        <div class="rounded-2xl p-6 max-w-md w-full" style="background: #505050; border: none; backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
+            <div class="text-center">
+                <div class="text-4xl mb-4">⚠️</div>
+                <h3 class="text-xl font-bold text-white mb-4">确认删除</h3>
+                <p class="text-white/80 mb-6" id="delete-confirm-text">确定要删除这个MCP服务吗？此操作不可撤销。</p>
+                <div class="flex space-x-4">
+                    <button id="cancel-delete-btn" class="flex-1 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors">
+                        取消
+                    </button>
+                    <button id="confirm-delete-btn" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                        确认删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MCP编辑模态框 -->
+    <div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 modal-overlay">
+        <div class="rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col" style="background: #505050; border: none; backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-white">编辑MCP服务</h2>
+                <button id="close-edit-modal" class="text-white/60 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="edit-form" class="space-y-6 flex-1 overflow-auto">
+                <input type="hidden" id="edit-mcp-id" name="id">
+                <div>
+                    <label class="block text-white/80 text-sm font-medium mb-2">MCP名称 *</label>
+                    <input type="text" id="edit-name" name="name" required 
+                           class="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/30"
+                           placeholder="请输入MCP服务名称">
+                </div>
+
+                <div>
+                    <label class="block text-white/80 text-sm font-medium mb-2">描述 *</label>
+                    <textarea id="edit-description" name="description" required rows="3"
+                             class="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/30"
+                             placeholder="请描述MCP服务的功能和用途"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-white/80 text-sm font-medium mb-2">分类 *</label>
+                        <select id="edit-category" name="category" required 
+                               class="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/30">
+                            <option value="">选择分类</option>
+                            <option value="core-system">核心系统</option>
+                            <option value="payment">支付系统</option>
+                            <option value="monitoring">监控系统</option>
+                            <option value="travel">差旅系统</option>
+                            <option value="rpa">RPA自动化</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-white/80 text-sm font-medium mb-2">开发者</label>
+                        <input type="text" id="edit-author" name="author" 
+                               class="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/30"
+                               placeholder="开发者名称">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-white/80 text-sm font-medium mb-2">版本</label>
+                    <input type="text" id="edit-version" name="version" 
+                           class="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/30"
+                           placeholder="例如: v1.0.0">
+                </div>
+
+                <div>
+                    <label class="block text-white/80 text-sm font-medium mb-2">标签</label>
+                    <input type="text" id="edit-tags" name="tags" 
+                           class="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/30"
+                           placeholder="使用逗号分隔多个标签，如：API, 数据处理, 自动化">
+                </div>
+
+                <div>
+                    <label class="block text-white/80 text-sm font-medium mb-2">详细文档 *</label>
+                    <textarea id="edit-documentation" name="documentation" required rows="8"
+                             class="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/30"
+                             placeholder="支持Markdown格式，请详细描述MCP的功能、API接口、使用方法等"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end space-x-4">
+                    <button type="button" id="cancel-edit-btn" class="px-6 py-2 text-white/60 hover:text-white transition-colors">
+                        取消
+                    </button>
+                    <button type="submit" class="dify-btn px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                        更新MCP
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // MCP 数据管理类
         class MCPMarket {
@@ -386,7 +483,6 @@
             async init() {
                 await this.loadMCPData();
                 this.renderMCPs();
-                this.updateStatistics();
                 this.initEventListeners();
             }
 
@@ -523,21 +619,6 @@
                 };
             }
 
-            // 更新统计信息显示
-            updateStatistics() {
-                if (this.statistics.totalMCPs !== undefined) {
-                    const totalElement = document.getElementById('total-mcps');
-                    if (totalElement) {
-                        totalElement.textContent = this.statistics.totalMCPs;
-                    }
-                }
-                if (this.statistics.officialMCPs !== undefined && this.statistics.verifiedMCPs !== undefined) {
-                    const officialElement = document.getElementById('official-mcps');
-                    if (officialElement) {
-                        officialElement.textContent = this.statistics.officialMCPs + this.statistics.verifiedMCPs;
-                    }
-                }
-            }
 
             // 格式化数字显示
             formatNumber(num) {
@@ -705,6 +786,8 @@
 
                 // 模态框事件
                 this.initModalEvents();
+                this.initEditModalEvents();
+                this.initDeleteModalEvents();
             }
 
             // 初始化模态框事件
@@ -732,6 +815,57 @@
                 if (form) {
                     form.addEventListener('submit', (e) => this.handleRegisterSubmit(e));
                 }
+            }
+
+            // 初始化编辑模态框事件
+            initEditModalEvents() {
+                const modal = document.getElementById('edit-modal');
+                const closeBtn = document.getElementById('close-edit-modal');
+                const cancelBtn = document.getElementById('cancel-edit-btn');
+                const form = document.getElementById('edit-form');
+
+                // 关闭模态框
+                [closeBtn, cancelBtn].forEach(btn => {
+                    if (btn) {
+                        btn.addEventListener('click', () => this.hideEditModal());
+                    }
+                });
+
+                // 点击背景关闭模态框
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        this.hideEditModal();
+                    }
+                });
+
+                // 表单提交
+                if (form) {
+                    form.addEventListener('submit', (e) => this.handleEditSubmit(e));
+                }
+            }
+
+            // 初始化删除确认模态框事件
+            initDeleteModalEvents() {
+                const modal = document.getElementById('confirm-delete-modal');
+                const cancelBtn = document.getElementById('cancel-delete-btn');
+                const confirmBtn = document.getElementById('confirm-delete-btn');
+
+                // 取消删除
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => this.hideDeleteConfirmModal());
+                }
+
+                // 确认删除
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', () => this.confirmDeleteMCP());
+                }
+
+                // 点击背景关闭模态框
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        this.hideDeleteConfirmModal();
+                    }
+                });
             }
 
             // 显示注册模态框
@@ -794,7 +928,6 @@
                         // 重新加载数据
                         await this.loadMCPData();
                         this.renderMCPs();
-                        this.updateStatistics();
                     } else {
                         throw new Error(result.error || 'Registration failed');
                     }
@@ -854,38 +987,157 @@
             }
 
             // 编辑MCP
-            editMCP(mcpId) {
-                console.log('编辑MCP:', mcpId);
-                // TODO: 实现编辑功能
-                this.showNotification('编辑功能开发中...', 'info');
+            async editMCP(mcpId) {
+                try {
+                    const response = await fetch(`${this.apiBase}/mcps/${mcpId}`);
+                    const result = await response.json();
+                    
+                    if (result.success && result.data) {
+                        const mcp = result.data;
+                        this.populateEditForm(mcp);
+                        this.showEditModal();
+                    } else {
+                        this.showNotification('无法加载MCP信息', 'error');
+                    }
+                } catch (error) {
+                    console.error('加载MCP信息失败:', error);
+                    this.showNotification('加载失败：' + error.message, 'error');
+                }
+            }
+
+            // 填充编辑表单
+            populateEditForm(mcp) {
+                document.getElementById('edit-mcp-id').value = mcp.id;
+                document.getElementById('edit-name').value = mcp.name;
+                document.getElementById('edit-description').value = mcp.description;
+                document.getElementById('edit-category').value = mcp.category;
+                document.getElementById('edit-author').value = mcp.author || '';
+                document.getElementById('edit-version').value = mcp.version || '';
+                document.getElementById('edit-tags').value = (mcp.tags || []).join(', ');
+                document.getElementById('edit-documentation').value = mcp.documentation || '';
+            }
+
+            // 显示编辑模态框
+            showEditModal() {
+                const modal = document.getElementById('edit-modal');
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            // 隐藏编辑模态框
+            hideEditModal() {
+                const modal = document.getElementById('edit-modal');
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                
+                // 清空表单
+                const form = document.getElementById('edit-form');
+                if (form) {
+                    form.reset();
+                }
             }
 
             // 删除MCP
-            async deleteMCP(mcpId) {
-                if (!confirm('确定要删除这个MCP服务吗？')) {
-                    return;
-                }
+            deleteMCP(mcpId) {
+                this.pendingDeleteId = mcpId;
+                this.showDeleteConfirmModal();
+            }
+
+            // 显示删除确认模态框
+            showDeleteConfirmModal() {
+                const modal = document.getElementById('confirm-delete-modal');
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            // 隐藏删除确认模态框
+            hideDeleteConfirmModal() {
+                const modal = document.getElementById('confirm-delete-modal');
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                this.pendingDeleteId = null;
+            }
+
+            // 确认删除MCP
+            async confirmDeleteMCP() {
+                if (!this.pendingDeleteId) return;
                 
                 try {
-                    const response = await fetch(`${this.apiBase}/mcps/${mcpId}`, {
+                    const response = await fetch(`${this.apiBase}/mcps/${this.pendingDeleteId}`, {
                         method: 'DELETE'
                     });
 
                     const result = await response.json();
 
                     if (result.success) {
+                        this.hideDeleteConfirmModal();
                         this.showNotification('MCP删除成功！', 'success');
                         
                         // 重新加载数据
                         await this.loadMCPData();
                         this.renderMCPs();
-                        this.updateStatistics();
                     } else {
                         throw new Error(result.error || 'Delete failed');
                     }
                 } catch (error) {
                     console.error('MCP删除失败:', error);
                     this.showNotification('删除失败：' + error.message, 'error');
+                }
+            }
+
+            // 处理编辑表单提交
+            async handleEditSubmit(e) {
+                e.preventDefault();
+                
+                const form = e.target;
+                const formData = new FormData(form);
+                
+                const mcpData = {
+                    name: formData.get('name'),
+                    description: formData.get('description'),
+                    category: formData.get('category'),
+                    author: formData.get('author') || 'Developer',
+                    version: formData.get('version') || 'v1.0.0',
+                    tags: formData.get('tags') ? formData.get('tags').split(',').map(tag => tag.trim()) : [],
+                    documentation: formData.get('documentation')
+                };
+
+                try {
+                    // 禁用提交按钮
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = '更新中...';
+
+                    const mcpId = formData.get('id');
+                    const response = await fetch(`${this.apiBase}/mcps/${mcpId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(mcpData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // 更新成功
+                        this.hideEditModal();
+                        this.showNotification('MCP更新成功！', 'success');
+                        
+                        // 重新加载数据
+                        await this.loadMCPData();
+                        this.renderMCPs();
+                    } else {
+                        throw new Error(result.error || 'Update failed');
+                    }
+                } catch (error) {
+                    console.error('MCP更新失败:', error);
+                    this.showNotification('更新失败：' + error.message, 'error');
+                } finally {
+                    // 恢复提交按钮
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '更新MCP';
                 }
             }
         }
