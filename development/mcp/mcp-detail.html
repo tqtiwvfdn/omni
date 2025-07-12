@@ -3,48 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPA 文档处理器 - MCP详情 - 智言银行后台管理端</title>
+    <title>MCP 详情 - 智言银行后台管理端</title>
     <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <script src="/script/prism-simple.js"></script>
+    <link rel="stylesheet" href="/style/prism-simple.css">
     <style>
         :root {
-            --dify-primary: #2563eb;
-            --dify-primary-light: #dbeafe;
-            --dify-primary-dark: #1d4ed8;
-            --liquid-glass-bg: rgba(255, 255, 255, 0.95);
-            --liquid-glass-border: rgba(255, 255, 255, 0.3);
-            --liquid-glass-strong: rgba(255, 255, 255, 0.9);
-            --liquid-glass-subtle: rgba(255, 255, 255, 0.8);
-            --liquid-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-            --liquid-text-primary: rgba(15, 23, 42, 0.95);
-            --liquid-text-secondary: rgba(51, 65, 85, 0.8);
-            --liquid-text-tertiary: rgba(100, 116, 139, 0.7);
+            --omni-primary: #1e3a8a;
+            --omni-primary-light: #3730a3;
+            --omni-primary-dark: #581c87;
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-strong: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-tertiary: rgba(255, 255, 255, 0.6);
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
-            color: var(--liquid-text-primary);
-            /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+            color: var(--text-primary);
             min-height: 100vh;
         }
 
         /* 液态玻璃效果 */
         .liquid-glass {
-            background: var(--liquid-glass-bg);
+            background: var(--glass-bg);
             backdrop-filter: blur(20px);
-            border: 1px solid var(--liquid-glass-border);
-            box-shadow: var(--liquid-shadow);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
         }
 
         .liquid-glass-strong {
-            background: var(--liquid-glass-strong);
+            background: var(--glass-strong);
             backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.4);
-        }
-
-        .liquid-glass-subtle {
-            background: var(--liquid-glass-subtle);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         /* 高光效果 */
@@ -79,7 +75,7 @@
         .status-badge {
             display: inline-flex;
             align-items: center;
-            padding: 6px 12px;
+            padding: 6px 16px;
             border-radius: 12px;
             font-size: 14px;
             font-weight: 600;
@@ -104,9 +100,15 @@
             border: 1px solid rgba(168, 85, 247, 0.2);
         }
 
+        .status-beta {
+            background: rgba(245, 158, 11, 0.1);
+            color: rgb(245, 158, 11);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
         /* 按钮样式 */
         .dify-btn {
-            border-radius: 10px;
+            border-radius: 12px;
             font-weight: 600;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
@@ -115,21 +117,7 @@
 
         .dify-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        /* 标签样式 */
-        .tag {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 600;
-            background: rgba(59, 130, 246, 0.1);
-            color: rgb(59, 130, 246);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            margin: 2px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
         }
 
         /* 评分星星 */
@@ -145,125 +133,148 @@
             fill: #fbbf24;
         }
 
-        /* 代码块样式 */
-        .code-block {
-            background: rgba(15, 23, 42, 0.9);
-            color: #e2e8f0;
+        /* 文档内容样式 */
+        .documentation-content {
+            line-height: 1.8;
+        }
+
+        .documentation-content h1,
+        .documentation-content h2,
+        .documentation-content h3,
+        .documentation-content h4 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .documentation-content h1 {
+            font-size: 2rem;
+            border-bottom: 2px solid var(--glass-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .documentation-content h2 {
+            font-size: 1.5rem;
+        }
+
+        .documentation-content h3 {
+            font-size: 1.25rem;
+        }
+
+        .documentation-content p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .documentation-content ul,
+        .documentation-content ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .documentation-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .documentation-content pre {
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 8px;
-            padding: 16px;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 14px;
-            line-height: 1.5;
+            padding: 1rem;
+            margin: 1rem 0;
             overflow-x: auto;
+            border: 1px solid var(--glass-border);
         }
 
-        /* 选项卡样式 */
-        .tab-nav {
-            display: flex;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 24px;
+        .documentation-content code {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #60a5fa;
         }
 
-        .tab-btn {
-            padding: 12px 24px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            color: var(--liquid-text-secondary);
-        }
-
-        .tab-btn.active {
-            color: var(--dify-primary);
-            border-bottom-color: var(--dify-primary);
-        }
-
-        .tab-btn:hover {
-            color: var(--liquid-text-primary);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* 步骤指示器 */
-        .step {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 24px;
-        }
-
-        .step-number {
-            width: 32px;
-            height: 32px;
-            background: var(--dify-primary);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-            flex-shrink: 0;
-            margin-right: 16px;
-        }
-
-        .step-content h4 {
-            margin: 0 0 8px 0;
-            font-weight: 600;
-            color: var(--liquid-text-primary);
-        }
-
-        .step-content p {
-            margin: 0;
-            color: var(--liquid-text-secondary);
-            line-height: 1.5;
-        }
-
-        /* 特性列表 */
-        .feature-list {
-            list-style: none;
+        .documentation-content pre code {
+            background: transparent;
             padding: 0;
+            color: var(--text-primary);
         }
 
-        .feature-item {
-            display: flex;
+        /* 端点列表样式 */
+        .endpoint-item {
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+
+        .method-badge {
+            display: inline-flex;
             align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
         }
 
-        .feature-item:last-child {
-            border-bottom: none;
-        }
-
-        .feature-icon {
-            width: 20px;
-            height: 20px;
+        .method-get {
             background: rgba(34, 197, 94, 0.1);
             color: rgb(34, 197, 94);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            flex-shrink: 0;
+            border: 1px solid rgba(34, 197, 94, 0.2);
         }
 
-        /* 响应式 */
-        @media (max-width: 768px) {
-            .tab-nav {
-                overflow-x: auto;
-                white-space: nowrap;
+        .method-post {
+            background: rgba(59, 130, 246, 0.1);
+            color: rgb(59, 130, 246);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .method-put {
+            background: rgba(245, 158, 11, 0.1);
+            color: rgb(245, 158, 11);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .method-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: rgb(239, 68, 68);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* 动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
             }
-            
-            .tab-btn {
-                padding: 8px 16px;
-                font-size: 14px;
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* 加载状态 */
+        .loading-skeleton {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
             }
         }
     </style>
@@ -272,702 +283,346 @@
     <div class="min-h-screen p-6">
         <!-- 返回按钮 -->
         <div class="mb-6">
-            <button onclick="goBack()" class="dify-btn px-4 py-2 bg-white/10 hover:bg-white/20 text-slate-800 backdrop-blur-md border border-white/20 specular-highlight">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            <button onclick="history.back()" class="dify-btn px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold specular-highlight backdrop-blur-md border border-white/20">
+                <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                 </svg>
                 返回市场
             </button>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- 主要内容区域 -->
-            <div class="lg:col-span-2">
-                <!-- MCP基本信息 -->
-                <div class="liquid-glass rounded-xl p-8 mb-8">
-                    <div class="flex items-start justify-between mb-6">
-                        <div class="flex items-center">
-                            <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mr-6 text-3xl">
-                                🤖
-                            </div>
-                            <div>
-                                <h1 class="text-3xl font-bold text-slate-800 mb-2">RPA 文档处理器</h1>
-                                <p class="text-slate-600 mb-2">by RPAStudio</p>
-                                <div class="flex items-center gap-4">
-                                    <div class="star-rating">
-                                        <svg class="star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        <svg class="star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        <svg class="star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        <svg class="star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        <svg class="star opacity-30" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        <span class="text-slate-600 ml-2 font-semibold">4.4</span>
-                                    </div>
-                                    <span class="text-slate-500">789 下载</span>
-                                    <span class="status-badge status-community">社区</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-sm text-slate-500 mb-2">最新版本</div>
-                            <div class="text-lg font-bold text-slate-800">v1.5.2</div>
-                        </div>
-                    </div>
-
-                    <p class="text-slate-600 text-lg leading-relaxed mb-6">
-                        AI驱动的RPA服务，自动化处理银行业务单据，包括开户申请、贷款审批等文档处理。支持OCR识别、智能表单填写、审批流程自动化等功能，显著提升银行业务处理效率。
-                    </p>
-
-                    <div class="flex flex-wrap gap-2 mb-6">
-                        <span class="tag">文档处理</span>
-                        <span class="tag">业务单据</span>
-                        <span class="tag">OCR识别</span>
-                        <span class="tag">自动化审批</span>
-                        <span class="tag">表单填写</span>
-                        <span class="tag">流程自动化</span>
-                    </div>
-
-                    <div class="flex items-center gap-4 text-sm text-slate-500">
-                        <span>📅 更新于 2024-12-12</span>
-                        <span>📦 大小: 45.2 MB</span>
-                        <span>🏷️ 许可证: MIT</span>
-                    </div>
-                </div>
-
-                <!-- 选项卡内容 -->
+        <!-- 页面内容 -->
+        <div id="mcp-detail" class="max-w-6xl mx-auto">
+            <!-- 加载中状态 -->
+            <div id="loading-state" class="space-y-6">
                 <div class="liquid-glass rounded-xl p-8">
-                    <div class="tab-nav">
-                        <div class="tab-btn active" data-tab="overview">概述</div>
-                        <div class="tab-btn" data-tab="installation">安装配置</div>
-                        <div class="tab-btn" data-tab="api">API文档</div>
-                        <div class="tab-btn" data-tab="examples">使用示例</div>
-                        <div class="tab-btn" data-tab="changelog">更新日志</div>
-                    </div>
-
-                    <!-- 概述选项卡 -->
-                    <div class="tab-content active" id="overview">
-                        <h3 class="text-xl font-bold text-slate-800 mb-6">功能特性</h3>
-                        <ul class="feature-list mb-8">
-                            <li class="feature-item">
-                                <div class="feature-icon">
-                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <strong>智能OCR识别</strong> - 支持各类银行单据的自动识别和数据提取，准确率达99.5%
-                                </div>
-                            </li>
-                            <li class="feature-item">
-                                <div class="feature-icon">
-                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <strong>自动化审批流程</strong> - 根据预设规则自动处理业务审批，支持多级审批
-                                </div>
-                            </li>
-                            <li class="feature-item">
-                                <div class="feature-icon">
-                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <strong>多格式支持</strong> - 支持PDF、图片、扫描件等多种文档格式处理
-                                </div>
-                            </li>
-                            <li class="feature-item">
-                                <div class="feature-icon">
-                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <strong>异常处理</strong> - 智能识别异常情况，自动转人工处理并记录日志
-                                </div>
-                            </li>
-                            <li class="feature-item">
-                                <div class="feature-icon">
-                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <strong>安全合规</strong> - 符合银行业安全标准，支持加密传输和审计日志
-                                </div>
-                            </li>
-                        </ul>
-
-                        <h3 class="text-xl font-bold text-slate-800 mb-6">适用场景</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                <h4 class="font-semibold text-blue-800 mb-2">🏦 开户业务</h4>
-                                <p class="text-blue-700 text-sm">自动处理开户申请表、身份证件识别、资料审核等流程</p>
-                            </div>
-                            <div class="p-4 bg-green-50 rounded-lg border border-green-200">
-                                <h4 class="font-semibold text-green-800 mb-2">💰 贷款审批</h4>
-                                <p class="text-green-700 text-sm">自动化处理贷款申请材料、征信报告分析、风险评估</p>
-                            </div>
-                            <div class="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                                <h4 class="font-semibold text-purple-800 mb-2">💳 信用卡申请</h4>
-                                <p class="text-purple-700 text-sm">处理信用卡申请表、收入证明、资质审核等</p>
-                            </div>
-                            <div class="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                                <h4 class="font-semibold text-orange-800 mb-2">📋 报表处理</h4>
-                                <p class="text-orange-700 text-sm">自动生成各类业务报表、数据汇总和分析</p>
-                            </div>
+                    <div class="flex items-start space-x-6 mb-6">
+                        <div class="loading-skeleton rounded-xl w-24 h-24"></div>
+                        <div class="flex-1 space-y-3">
+                            <div class="loading-skeleton h-8 w-3/4 rounded"></div>
+                            <div class="loading-skeleton h-4 w-1/2 rounded"></div>
+                            <div class="loading-skeleton h-6 w-1/4 rounded"></div>
                         </div>
                     </div>
-
-                    <!-- 安装配置选项卡 -->
-                    <div class="tab-content" id="installation">
-                        <h3 class="text-xl font-bold text-slate-800 mb-6">快速开始</h3>
-                        <div class="space-y-6">
-                            <div class="step">
-                                <div class="step-number">1</div>
-                                <div class="step-content">
-                                    <h4>安装MCP客户端</h4>
-                                    <p>首先确保您的系统已安装MCP客户端和必要的依赖项</p>
-                                    <div class="code-block mt-3">
-                                        <code>npm install -g @modelcontextprotocol/cli<br>
-pip install mcp-client python-dotenv</code>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="step">
-                                <div class="step-number">2</div>
-                                <div class="step-content">
-                                    <h4>下载并配置</h4>
-                                    <p>下载RPA文档处理器并配置环境变量</p>
-                                    <div class="code-block mt-3">
-                                        <code>git clone https://github.com/rpastudio/rpa-document-processor.git<br>
-cd rpa-document-processor<br>
-cp .env.example .env</code>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="step">
-                                <div class="step-number">3</div>
-                                <div class="step-content">
-                                    <h4>配置环境变量</h4>
-                                    <p>编辑.env文件，配置必要的环境变量</p>
-                                    <div class="code-block mt-3">
-                                        <code># OCR服务配置<br>
-OCR_API_KEY=your_ocr_api_key<br>
-OCR_ENDPOINT=https://ocr.api.example.com<br>
-<br>
-# 数据库配置<br>
-DB_HOST=localhost<br>
-DB_PORT=5432<br>
-DB_NAME=rpa_documents<br>
-DB_USER=rpa_user<br>
-DB_PASSWORD=your_password<br>
-<br>
-# 审批流程配置<br>
-APPROVAL_WEBHOOK=https://your-approval-system.com/webhook<br>
-MAX_RETRY_ATTEMPTS=3</code>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="step">
-                                <div class="step-number">4</div>
-                                <div class="step-content">
-                                    <h4>启动服务</h4>
-                                    <p>启动RPA文档处理器服务</p>
-                                    <div class="code-block mt-3">
-                                        <code>npm install<br>
-npm run build<br>
-npm start</code>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="step">
-                                <div class="step-number">5</div>
-                                <div class="step-content">
-                                    <h4>连接测试</h4>
-                                    <p>验证MCP连接是否正常</p>
-                                    <div class="code-block mt-3">
-                                        <code>curl -X POST http://localhost:3000/health<br>
-# 返回: {"status": "healthy", "version": "1.5.2"}</code>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- API文档选项卡 -->
-                    <div class="tab-content" id="api">
-                        <h3 class="text-xl font-bold text-slate-800 mb-6">API 接口文档</h3>
-                        
-                        <div class="space-y-8">
-                            <div>
-                                <h4 class="text-lg font-semibold text-slate-800 mb-4">文档处理接口</h4>
-                                <div class="bg-slate-50 rounded-lg p-4 mb-4">
-                                    <div class="flex items-center mb-2">
-                                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-mono mr-3">POST</span>
-                                        <span class="font-mono text-slate-700">/api/v1/documents/process</span>
-                                    </div>
-                                    <p class="text-slate-600 text-sm">处理上传的文档，执行OCR识别和数据提取</p>
-                                </div>
-                                
-                                <div class="mb-4">
-                                    <h5 class="font-semibold text-slate-700 mb-2">请求参数</h5>
-                                    <div class="code-block">
-                                        <code>{<br>
-  "file": "base64_encoded_file",<br>
-  "document_type": "account_opening", // 文档类型<br>
-  "options": {<br>
-    "auto_approve": false, // 是否自动审批<br>
-    "confidence_threshold": 0.95 // 置信度阈值<br>
-  }<br>
-}</code>
-                                    </div>
-                                </div>
-
-                                <div class="mb-6">
-                                    <h5 class="font-semibold text-slate-700 mb-2">响应示例</h5>
-                                    <div class="code-block">
-                                        <code>{<br>
-  "success": true,<br>
-  "task_id": "task_12345",<br>
-  "extracted_data": {<br>
-    "customer_name": "张三",<br>
-    "id_number": "110101199001011234",<br>
-    "phone": "13800138000",<br>
-    "account_type": "储蓄账户"<br>
-  },<br>
-  "confidence": 0.98,<br>
-  "status": "pending_approval"<br>
-}</code>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h4 class="text-lg font-semibold text-slate-800 mb-4">任务状态查询</h4>
-                                <div class="bg-slate-50 rounded-lg p-4 mb-4">
-                                    <div class="flex items-center mb-2">
-                                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm font-mono mr-3">GET</span>
-                                        <span class="font-mono text-slate-700">/api/v1/tasks/{task_id}</span>
-                                    </div>
-                                    <p class="text-slate-600 text-sm">查询文档处理任务的状态和结果</p>
-                                </div>
-                                
-                                <div class="mb-6">
-                                    <h5 class="font-semibold text-slate-700 mb-2">响应示例</h5>
-                                    <div class="code-block">
-                                        <code>{<br>
-  "task_id": "task_12345",<br>
-  "status": "completed", // pending, processing, completed, failed<br>
-  "progress": 100,<br>
-  "result": {<br>
-    "approved": true,<br>
-    "approval_time": "2024-12-12T10:30:00Z",<br>
-    "approver": "system_auto"<br>
-  },<br>
-  "created_at": "2024-12-12T10:15:00Z",<br>
-  "updated_at": "2024-12-12T10:30:00Z"<br>
-}</code>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h4 class="text-lg font-semibold text-slate-800 mb-4">批量处理接口</h4>
-                                <div class="bg-slate-50 rounded-lg p-4 mb-4">
-                                    <div class="flex items-center mb-2">
-                                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-mono mr-3">POST</span>
-                                        <span class="font-mono text-slate-700">/api/v1/documents/batch</span>
-                                    </div>
-                                    <p class="text-slate-600 text-sm">批量处理多个文档</p>
-                                </div>
-                                
-                                <div class="mb-6">
-                                    <h5 class="font-semibold text-slate-700 mb-2">请求参数</h5>
-                                    <div class="code-block">
-                                        <code>{<br>
-  "documents": [<br>
-    {<br>
-      "file": "base64_encoded_file_1",<br>
-      "document_type": "account_opening"<br>
-    },<br>
-    {<br>
-      "file": "base64_encoded_file_2",<br>
-      "document_type": "loan_application"<br>
-    }<br>
-  ],<br>
-  "options": {<br>
-    "auto_approve": false,<br>
-    "parallel_processing": true<br>
-  }<br>
-}</code>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 使用示例选项卡 -->
-                    <div class="tab-content" id="examples">
-                        <h3 class="text-xl font-bold text-slate-800 mb-6">使用示例</h3>
-                        
-                        <div class="space-y-8">
-                            <div>
-                                <h4 class="text-lg font-semibold text-slate-800 mb-4">Python 客户端示例</h4>
-                                <div class="code-block">
-                                    <code>import requests<br>
-import base64<br>
-<br>
-# 文档处理示例<br>
-def process_document(file_path, doc_type):<br>
-    with open(file_path, 'rb') as file:<br>
-        file_content = base64.b64encode(file.read()).decode('utf-8')<br>
-    <br>
-    payload = {<br>
-        'file': file_content,<br>
-        'document_type': doc_type,<br>
-        'options': {<br>
-            'auto_approve': False,<br>
-            'confidence_threshold': 0.95<br>
-        }<br>
-    }<br>
-    <br>
-    response = requests.post(<br>
-        'http://localhost:3000/api/v1/documents/process',<br>
-        json=payload<br>
-    )<br>
-    <br>
-    return response.json()<br>
-<br>
-# 使用示例<br>
-result = process_document('account_form.pdf', 'account_opening')<br>
-print(f"任务ID: {result['task_id']}")<br>
-print(f"提取数据: {result['extracted_data']}")</code>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h4 class="text-lg font-semibold text-slate-800 mb-4">JavaScript 客户端示例</h4>
-                                <div class="code-block">
-                                    <code>// 使用 fetch API 处理文档<br>
-async function processDocument(fileInput, documentType) {<br>
-  const file = fileInput.files[0];<br>
-  const reader = new FileReader();<br>
-  <br>
-  reader.onload = async function(e) {<br>
-    const base64File = e.target.result.split(',')[1];<br>
-    <br>
-    const payload = {<br>
-      file: base64File,<br>
-      document_type: documentType,<br>
-      options: {<br>
-        auto_approve: false,<br>
-        confidence_threshold: 0.95<br>
-      }<br>
-    };<br>
-    <br>
-    try {<br>
-      const response = await fetch('/api/v1/documents/process', {<br>
-        method: 'POST',<br>
-        headers: {<br>
-          'Content-Type': 'application/json'<br>
-        },<br>
-        body: JSON.stringify(payload)<br>
-      });<br>
-      <br>
-      const result = await response.json();<br>
-      console.log('处理结果:', result);<br>
-      <br>
-      // 监控任务状态<br>
-      pollTaskStatus(result.task_id);<br>
-    } catch (error) {<br>
-      console.error('处理失败:', error);<br>
-    }<br>
-  };<br>
-  <br>
-  reader.readAsDataURL(file);<br>
-}<br>
-<br>
-// 轮询任务状态<br>
-async function pollTaskStatus(taskId) {<br>
-  const interval = setInterval(async () => {<br>
-    const response = await fetch(`/api/v1/tasks/${taskId}`);<br>
-    const task = await response.json();<br>
-    <br>
-    console.log(`任务状态: ${task.status} (${task.progress}%)`);<br>
-    <br>
-    if (task.status === 'completed' || task.status === 'failed') {<br>
-      clearInterval(interval);<br>
-      console.log('任务完成:', task.result);<br>
-    }<br>
-  }, 2000);<br>
-}</code>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h4 class="text-lg font-semibold text-slate-800 mb-4">cURL 命令示例</h4>
-                                <div class="code-block">
-                                    <code># 处理单个文档<br>
-curl -X POST http://localhost:3000/api/v1/documents/process \<br>
-  -H "Content-Type: application/json" \<br>
-  -d '{<br>
-    "file": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwo...",<br>
-    "document_type": "account_opening",<br>
-    "options": {<br>
-      "auto_approve": false,<br>
-      "confidence_threshold": 0.95<br>
-    }<br>
-  }'<br>
-<br>
-# 查询任务状态<br>
-curl -X GET http://localhost:3000/api/v1/tasks/task_12345<br>
-<br>
-# 健康检查<br>
-curl -X GET http://localhost:3000/health</code>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 更新日志选项卡 -->
-                    <div class="tab-content" id="changelog">
-                        <h3 class="text-xl font-bold text-slate-800 mb-6">更新日志</h3>
-                        
-                        <div class="space-y-6">
-                            <div class="border-l-4 border-blue-500 pl-6">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h4 class="text-lg font-semibold text-slate-800">v1.5.2</h4>
-                                    <span class="text-sm text-slate-500">2024-12-12</span>
-                                </div>
-                                <ul class="text-slate-600 space-y-1 text-sm">
-                                    <li>• 🐛 修复批量处理时的内存泄漏问题</li>
-                                    <li>• ⚡ 优化OCR识别速度，提升20%处理效率</li>
-                                    <li>• 🔒 增强安全性，支持文档内容加密存储</li>
-                                    <li>• 📊 新增详细的处理统计和报告功能</li>
-                                </ul>
-                            </div>
-
-                            <div class="border-l-4 border-green-500 pl-6">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h4 class="text-lg font-semibold text-slate-800">v1.5.1</h4>
-                                    <span class="text-sm text-slate-500">2024-11-28</span>
-                                </div>
-                                <ul class="text-slate-600 space-y-1 text-sm">
-                                    <li>• ✨ 新增支持手写体识别功能</li>
-                                    <li>• 🔧 改进审批流程配置界面</li>
-                                    <li>• 📱 优化移动端文档上传体验</li>
-                                    <li>• 🌐 支持多语言文档处理（中文、英文）</li>
-                                </ul>
-                            </div>
-
-                            <div class="border-l-4 border-yellow-500 pl-6">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h4 class="text-lg font-semibold text-slate-800">v1.5.0</h4>
-                                    <span class="text-sm text-slate-500">2024-11-15</span>
-                                </div>
-                                <ul class="text-slate-600 space-y-1 text-sm">
-                                    <li>• 🎉 重大更新：全新的AI驱动识别引擎</li>
-                                    <li>• 📈 识别准确率提升至99.5%</li>
-                                    <li>• 🔄 支持实时处理状态推送</li>
-                                    <li>• 💾 新增文档模板管理功能</li>
-                                    <li>• 🛡️ 增强数据安全和隐私保护</li>
-                                </ul>
-                            </div>
-
-                            <div class="border-l-4 border-purple-500 pl-6">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h4 class="text-lg font-semibold text-slate-800">v1.4.8</h4>
-                                    <span class="text-sm text-slate-500">2024-10-30</span>
-                                </div>
-                                <ul class="text-slate-600 space-y-1 text-sm">
-                                    <li>• 🔧 修复大文件上传超时问题</li>
-                                    <li>• 📊 改进错误日志记录</li>
-                                    <li>• ⚙️ 优化系统配置管理</li>
-                                    <li>• 📝 更新API文档和示例代码</li>
-                                </ul>
-                            </div>
-                        </div>
+                    <div class="space-y-3">
+                        <div class="loading-skeleton h-4 w-full rounded"></div>
+                        <div class="loading-skeleton h-4 w-5/6 rounded"></div>
+                        <div class="loading-skeleton h-4 w-4/5 rounded"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- 侧边栏 -->
-            <div class="lg:col-span-1">
-                <!-- 操作按钮 -->
-                <div class="liquid-glass rounded-xl p-6 mb-6">
-                    <div class="space-y-4">
-                        <!-- <button class="dify-btn w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-slate-800 font-semibold specular-highlight">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- MCP详情内容 -->
+            <div id="detail-content" class="hidden space-y-6">
+                <!-- MCP基本信息 -->
+                <div class="liquid-glass rounded-xl p-8 animate-fade-in">
+                    <div class="flex items-start justify-between mb-6">
+                        <div class="flex items-start space-x-6">
+                            <div id="mcp-icon" class="w-24 h-24 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-4xl font-bold">
+                                📦
+                            </div>
+                            <div>
+                                <h1 id="mcp-name" class="text-3xl font-bold text-white mb-2">MCP名称</h1>
+                                <p id="mcp-author" class="text-white/60 text-lg mb-3">by 开发者</p>
+                                <div class="flex items-center space-x-4">
+                                    <span id="mcp-status" class="status-badge status-community">社区</span>
+                                    <div class="star-rating">
+                                        <span id="stars-container"></span>
+                                        <span id="rating-text" class="text-white/60 ml-2">0.0</span>
+                                    </div>
+                                    <span id="downloads-text" class="text-white/60">0 下载</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div id="version-text" class="text-white/60 text-sm mb-2">版本 v1.0.0</div>
+                            <div id="updated-text" class="text-white/60 text-sm">更新于 2024-01-01</div>
+                        </div>
+                    </div>
+
+                    <p id="mcp-description" class="text-white/80 text-lg leading-relaxed mb-6">
+                        MCP描述...
+                    </p>
+
+                    <div id="tags-container" class="flex flex-wrap gap-2 mb-6">
+                        <!-- 标签将动态生成 -->
+                    </div>
+
+                    <div class="flex space-x-4">
+                        <button class="dify-btn px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold specular-highlight">
+                            <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
-                            安装到环境
-                        </button> -->
-                        
-                        <button class="dify-btn w-full px-6 py-3 bg-white border-2 border-slate-300 hover:border-slate-400 text-slate-700 font-semibold specular-highlight">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            安装使用
+                        </button>
+                        <button class="dify-btn px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold specular-highlight backdrop-blur-md border border-white/20">
+                            <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                             </svg>
-                            添加到收藏
-                        </button>
-
-                        <button class="dify-btn w-full px-6 py-3 bg-white border-2 border-slate-300 hover:border-slate-400 text-slate-700 font-semibold specular-highlight">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
-                            </svg>
-                            分享
+                            收藏
                         </button>
                     </div>
                 </div>
 
-                <!-- 开发者信息 -->
-                <div class="liquid-glass rounded-xl p-6 mb-6">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4">开发者信息</h3>
-                    <div class="flex items-center mb-4">
-                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xl font-bold mr-4">
-                            R
-                        </div>
-                        <div>
-                            <div class="font-semibold text-slate-800">RPAStudio</div>
-                            <div class="text-sm text-slate-500">专业RPA解决方案提供商</div>
-                        </div>
-                    </div>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex items-center text-slate-600">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
-                            </svg>
-                            https://rpastudio.com
-                        </div>
-                        <div class="flex items-center text-slate-600">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                            </svg>
-                            support@rpastudio.com
-                        </div>
-                        <div class="flex items-center text-slate-600">
-                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path>
-                            </svg>
-                            GitHub
-                        </div>
+                <!-- API端点列表 -->
+                <div id="endpoints-section" class="liquid-glass rounded-xl p-8 animate-fade-in">
+                    <h2 class="text-2xl font-bold text-white mb-6">API 端点</h2>
+                    <div id="endpoints-list" class="space-y-4">
+                        <!-- 端点列表将动态生成 -->
                     </div>
                 </div>
 
-                <!-- 统计信息 -->
-                <div class="liquid-glass rounded-xl p-6 mb-6">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4">统计信息</h3>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-slate-600">总下载量</span>
-                            <span class="font-semibold text-slate-800">789</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-600">本周下载</span>
-                            <span class="font-semibold text-slate-800">23</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-600">GitHub Stars</span>
-                            <span class="font-semibold text-slate-800">156</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-600">Issues</span>
-                            <span class="font-semibold text-slate-800">3 开放</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-600">许可证</span>
-                            <span class="font-semibold text-slate-800">MIT</span>
-                        </div>
+                <!-- 文档内容 -->
+                <div class="liquid-glass rounded-xl p-8 animate-fade-in">
+                    <h2 class="text-2xl font-bold text-white mb-6">详细文档</h2>
+                    <div id="documentation-content" class="documentation-content text-white/80">
+                        <!-- 文档内容将动态生成 -->
                     </div>
                 </div>
+            </div>
 
-                <!-- 相关MCP -->
-                <div class="liquid-glass rounded-xl p-6">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4">相关推荐</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center p-3 rounded-lg border border-slate-200 hover:border-blue-300 cursor-pointer transition-colors">
-                            <div class="w-10 h-10 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center mr-3 text-lg">
-                                📝
-                            </div>
-                            <div class="flex-1">
-                                <div class="font-semibold text-sm text-slate-800">RPA 数据录入助手</div>
-                                <div class="text-xs text-slate-500">智能数据录入RPA</div>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center p-3 rounded-lg border border-slate-200 hover:border-blue-300 cursor-pointer transition-colors">
-                            <div class="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center mr-3 text-lg">
-                                ⚙️
-                            </div>
-                            <div class="flex-1">
-                                <div class="font-semibold text-sm text-slate-800">RPA 流程编排器</div>
-                                <div class="text-xs text-slate-500">可视化流程编排</div>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center p-3 rounded-lg border border-slate-200 hover:border-blue-300 cursor-pointer transition-colors">
-                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mr-3 text-lg">
-                                🏦
-                            </div>
-                            <div class="flex-1">
-                                <div class="font-semibold text-sm text-slate-800">Core Banking API</div>
-                                <div class="text-xs text-slate-500">核心银行系统接口</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- 错误状态 -->
+            <div id="error-state" class="hidden liquid-glass rounded-xl p-8 text-center">
+                <div class="text-6xl mb-4">😞</div>
+                <h2 class="text-2xl font-bold text-white mb-4">MCP未找到</h2>
+                <p class="text-white/60 mb-6">抱歉，无法找到您请求的MCP服务。</p>
+                <button onclick="history.back()" class="dify-btn px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold specular-highlight">
+                    返回市场
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        // 返回功能
-        function goBack() {
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                window.location.href = 'mcp-market.html';
+        class MCPDetail {
+            constructor() {
+                this.apiBase = '/omni-api';
+                this.mcpId = this.getMCPIdFromURL();
+                this.init();
+            }
+
+            // 从URL获取MCP ID
+            getMCPIdFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('id');
+            }
+
+            async init() {
+                if (!this.mcpId) {
+                    this.showError();
+                    return;
+                }
+
+                try {
+                    await this.loadMCPDetail();
+                } catch (error) {
+                    console.error('加载MCP详情失败:', error);
+                    this.showError();
+                }
+            }
+
+            // 加载MCP详情
+            async loadMCPDetail() {
+                try {
+                    const response = await fetch(`${this.apiBase}/mcps/${this.mcpId}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        this.renderMCPDetail(data.data);
+                    } else {
+                        throw new Error(data.error || 'MCP not found');
+                    }
+                } catch (error) {
+                    console.error('Error loading MCP detail:', error);
+                    throw error;
+                }
+            }
+
+            // 渲染MCP详情
+            renderMCPDetail(mcp) {
+                // 更新基本信息
+                document.getElementById('mcp-icon').innerHTML = `
+                    <span class="text-4xl">${mcp.icon || '📦'}</span>
+                `;
+                document.getElementById('mcp-icon').className = `w-24 h-24 rounded-xl ${mcp.iconBg || 'bg-blue-100'} ${mcp.iconColor || 'text-blue-600'} flex items-center justify-center text-4xl font-bold`;
+                
+                document.getElementById('mcp-name').textContent = mcp.name;
+                document.getElementById('mcp-author').textContent = `by ${mcp.author}`;
+                document.getElementById('mcp-description').textContent = mcp.description;
+                
+                // 更新状态
+                const statusElement = document.getElementById('mcp-status');
+                statusElement.textContent = this.getStatusText(mcp.status);
+                statusElement.className = `status-badge ${this.getStatusClass(mcp.status)}`;
+                
+                // 更新评分
+                document.getElementById('stars-container').innerHTML = this.generateStars(mcp.rating);
+                document.getElementById('rating-text').textContent = mcp.rating.toFixed(1);
+                document.getElementById('downloads-text').textContent = `${this.formatNumber(mcp.downloads || '0')} 下载`;
+                
+                // 更新版本和更新时间
+                document.getElementById('version-text').textContent = `版本 ${mcp.version}`;
+                document.getElementById('updated-text').textContent = `更新于 ${mcp.lastUpdated}`;
+                
+                // 渲染标签
+                this.renderTags(mcp.tags || []);
+                
+                // 渲染API端点
+                this.renderEndpoints(mcp.endpoints || []);
+                
+                // 渲染文档内容
+                this.renderDocumentation(mcp.documentation || '暂无详细文档');
+                
+                // 显示内容，隐藏加载状态
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('detail-content').classList.remove('hidden');
+            }
+
+            // 渲染标签
+            renderTags(tags) {
+                const container = document.getElementById('tags-container');
+                container.innerHTML = tags.map(tag => `
+                    <span class="px-3 py-1 bg-white/20 text-white/80 text-sm rounded-full font-medium">
+                        ${tag}
+                    </span>
+                `).join('');
+            }
+
+            // 渲染API端点
+            renderEndpoints(endpoints) {
+                const container = document.getElementById('endpoints-list');
+                if (endpoints.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-white/60 py-8">
+                            <div class="text-4xl mb-4">📚</div>
+                            <p>暂无API端点信息</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = endpoints.map(endpoint => `
+                    <div class="endpoint-item">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-3">
+                                <span class="method-badge ${this.getMethodClass(endpoint.method)}">
+                                    ${endpoint.method}
+                                </span>
+                                <code class="text-blue-300 font-mono text-sm bg-black/20 px-2 py-1 rounded">
+                                    ${endpoint.path}
+                                </code>
+                            </div>
+                        </div>
+                        <h3 class="text-white font-semibold mb-2">${endpoint.name}</h3>
+                        <p class="text-white/70 text-sm">${endpoint.description}</p>
+                    </div>
+                `).join('');
+            }
+
+            // 渲染文档内容
+            renderDocumentation(documentation) {
+                const container = document.getElementById('documentation-content');
+                
+                // 简单的Markdown渲染
+                let html = documentation
+                    .replace(/### (.*?)\n/g, '<h3>$1</h3>\n')
+                    .replace(/## (.*?)\n/g, '<h2>$1</h2>\n')
+                    .replace(/# (.*?)\n/g, '<h1>$1</h1>\n')
+                    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+                    .replace(/`([^`]+)`/g, '<code>$1</code>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n- (.*?)(?=\n|$)/g, '</p><ul><li>$1</li></ul><p>')
+                    .replace(/<\/ul><p><ul>/g, '')
+                    .replace(/^\s*/, '<p>')
+                    .replace(/\s*$/, '</p>');
+                
+                container.innerHTML = html;
+                
+                // 如果包含代码，应用语法高亮
+                try {
+                    if (typeof Prism !== 'undefined' && Prism.highlightAll) {
+                        Prism.highlightAll();
+                    }
+                } catch (error) {
+                    console.warn('Prism syntax highlighting not available:', error);
+                }
+            }
+
+            // 获取HTTP方法的样式类
+            getMethodClass(method) {
+                const classes = {
+                    'GET': 'method-get',
+                    'POST': 'method-post',
+                    'PUT': 'method-put',
+                    'DELETE': 'method-delete'
+                };
+                return classes[method.toUpperCase()] || 'method-get';
+            }
+
+            // 获取状态样式类
+            getStatusClass(status) {
+                const classes = {
+                    'official': 'status-official',
+                    'verified': 'status-verified',
+                    'community': 'status-community',
+                    'beta': 'status-beta'
+                };
+                return classes[status] || 'status-community';
+            }
+
+            // 获取状态文本
+            getStatusText(status) {
+                const texts = {
+                    'official': '官方',
+                    'verified': '认证',
+                    'community': '社区',
+                    'beta': '测试版'
+                };
+                return texts[status] || '社区';
+            }
+
+            // 生成星级评分
+            generateStars(rating) {
+                const fullStars = Math.floor(rating);
+                const hasHalfStar = rating % 1 >= 0.5;
+                let stars = '';
+                
+                for (let i = 0; i < fullStars; i++) {
+                    stars += '<svg class="star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+                }
+                
+                if (hasHalfStar) {
+                    stars += '<svg class="star" viewBox="0 0 20 20"><defs><clipPath id="half"><rect x="0" y="0" width="10" height="20"/></clipPath></defs><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" clip-path="url(#half)"/></svg>';
+                }
+                
+                return stars;
+            }
+
+            // 格式化数字显示
+            formatNumber(num) {
+                const number = parseInt(num);
+                if (number >= 1000) {
+                    return (number / 1000).toFixed(1) + 'K';
+                }
+                return number.toString();
+            }
+
+            // 显示错误状态
+            showError() {
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('detail-content').classList.add('hidden');
+                document.getElementById('error-state').classList.remove('hidden');
             }
         }
 
-        // 选项卡切换
+        // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
-
-            tabButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const targetTab = this.getAttribute('data-tab');
-
-                    // 移除所有活动状态
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
-
-                    // 激活当前选项卡
-                    this.classList.add('active');
-                    document.getElementById(targetTab).classList.add('active');
-                });
-            });
-        });
-
-        // 模拟按钮点击效果
-        document.querySelectorAll('.dify-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const buttonText = this.textContent.trim();
-                
-                if (buttonText.includes('安装到环境')) {
-                    alert('正在安装 RPA 文档处理器到您的环境...');
-                } else if (buttonText.includes('添加到收藏')) {
-                    alert('已添加到收藏夹！');
-                } else if (buttonText.includes('分享')) {
-                    alert('分享链接已复制到剪贴板！');
-                }
-            });
+            new MCPDetail();
         });
     </script>
 </body>

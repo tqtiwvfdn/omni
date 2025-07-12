@@ -66,13 +66,13 @@
         }
 
         .app-card:hover {
-            transform: translateY(-4px) scale(1.02);
+            transform: translateYY(-4px) scale(1.02);
             box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
             border-color: rgba(255, 255, 255, 0.4);
         }
 
         .app-card:active {
-            transform: translateY(-2px) scale(1.01);
+            transform: translateYY(-2px) scale(1.01);
         }
 
         /* Status indicators */
@@ -120,12 +120,12 @@
         }
 
         .omni-btn:hover {
-            transform: translateY(-2px);
+            transform: translateYY(-2px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
         }
 
         .omni-btn:active {
-            transform: translateY(-1px);
+            transform: translateYY(-1px);
         }
 
         /* Copy button */
@@ -153,11 +153,11 @@
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateYY(30px);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateYY(0);
             }
         }
 
@@ -284,7 +284,7 @@
 
     <!-- 应用详情模态框 -->
     <div id="app-detail-modal" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-6">
-        <div class="glass-strong rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+        <div class="rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden" style="background: #505050; border: none; backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
             <div class="p-6 border-b border-white/20">
                 <div class="flex items-center justify-between">
                     <h2 class="text-2xl font-bold text-white" id="modal-app-name">应用详情</h2>
@@ -341,7 +341,18 @@
         // 从服务器加载应用数据
         async function loadApplications() {
             try {
-                const response = await fetch(`${API_BASE_URL}/applications`);
+                const tenantId = localStorage.getItem('tenantId');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (tenantId) {
+                    headers['X-Tenant-Id'] = tenantId;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/applications`, {
+                    headers: headers
+                });
                 const result = await response.json();
                 
                 if (result.success) {
@@ -418,11 +429,18 @@
         // 创建新应用（调用服务器API）
         async function createNewAppOnServer(appData) {
             try {
+                const tenantId = localStorage.getItem('tenantId');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (tenantId) {
+                    headers['X-Tenant-Id'] = tenantId;
+                }
+                
                 const response = await fetch(`${API_BASE_URL}/applications`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: headers,
                     body: JSON.stringify(appData)
                 });
                 
@@ -446,11 +464,18 @@
         // 更新应用状态
         async function updateApplicationStatus(appId, status) {
             try {
+                const tenantId = localStorage.getItem('tenantId');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (tenantId) {
+                    headers['X-Tenant-Id'] = tenantId;
+                }
+                
                 const response = await fetch(`${API_BASE_URL}/applications/${appId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: headers,
                     body: JSON.stringify({ status })
                 });
                 
