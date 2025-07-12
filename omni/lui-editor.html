@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUI 编辑器 - 逻辑用户界面组件编辑</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --liquid-glass-bg: rgba(255, 255, 255, 0.1);
+            --liquid-glass-border: rgba(255, 255, 255, 0.2);
+            --liquid-glass-strong: rgba(255, 255, 255, 0.15);
+            --liquid-glass-subtle: rgba(255, 255, 255, 0.05);
+            --liquid-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --liquid-text-primary: rgba(255, 255, 255, 0.9);
+            --liquid-text-secondary: rgba(0, 0, 0, 0.7);
+            --liquid-text-tertiary: rgba(255, 255, 255, 0.5);
+            
+            /* Editor specific colors */
+            --editor-bg: rgba(255, 255, 255, 0.05);
+            --editor-panel-bg: rgba(255, 255, 255, 0.08);
+            --editor-border: rgba(255, 255, 255, 0.15);
+            --editor-text: rgba(255, 255, 255, 0.95);
+            --editor-text-muted: rgba(255, 255, 255, 0.7);
+        }
+
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: var(--liquid-text-primary);
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 编辑器布局 */
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        /* 顶部工具栏 */
+        .editor-header {
+            grid-column: 1 / -1;
+            /* background: var(--liquid-glass-bg); */
+            /* backdrop-filter: blur(20px); */
+            /* border-bottom: 1px solid var(--liquid-glass-border); */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            /* box-shadow: var(--liquid-shadow); */
+            z-index: 100;
+        }
+
+        /* 左侧面板 */
+        .editor-sidebar-left {
+            background: var(--editor-panel-bg);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--editor-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 右侧面板 */
+        .editor-sidebar-right {
+            background: var(--editor-panel-bg);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--editor-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 中间画布 */
+        .editor-canvas {
+            /* background: var(--editor-bg); */
+            position: relative;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .canvas-container {
+            background: var(--liquid-glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 12px;
+            box-shadow: var(--liquid-shadow);
+            min-width: 600px;
+            min-height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .canvas-grid {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            gap: 8px;
+            padding: 16px;
+        }
+
+        .canvas-cell {
+            border: 2px dashed var(--liquid-glass-border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            position: relative;
+            min-height: 60px;
+            background: var(--liquid-glass-subtle);
+        }
+
+        .canvas-cell:hover {
+            border-color: var(--dify-primary);
+            background: rgba(41, 112, 255, 0.05);
+        }
+
+        .canvas-cell.has-component {
+            border-style: solid;
+            border-color: var(--dify-primary);
+            background: var(--liquid-glass-bg);
+        }
+
+        .canvas-cell.selected {
+            border-color: #4caf50;
+            background: rgba(76, 175, 80, 0.1);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
+        }
+
+        .canvas-cell.drag-over {
+            border-color: #4caf50;
+            background: rgba(76, 175, 80, 0.05);
+        }
+
+        .component-preview {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .component-preview-icon {
+            font-size: 32px;
+        }
+
+        .component-preview-name {
+            font-size: 12px;
+            color: var(--liquid-text-tertiary);
+        }
+
+        .component-controls {
+            position: absolute;
+            top: -30px;
+            right: 0;
+            display: none;
+            gap: 4px;
+        }
+
+        .canvas-cell.selected .component-controls {
+            display: flex;
+        }
+
+        .control-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 4px;
+            background: #4caf50;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 组件库样式 */
+        .component-palette {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .component-item {
+            aspect-ratio: 1;
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 8px;
+            cursor: grab;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--liquid-glass-bg);
+            backdrop-filter: blur(15px);
+            user-select: none;
+        }
+
+        .component-item:hover {
+            border-color: var(--dify-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--liquid-shadow);
+            background: var(--liquid-glass-strong);
+        }
+
+        .component-item:active {
+            cursor: grabbing;
+        }
+
+        .component-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .component-name {
+            font-size: 12px;
+            color: var(--liquid-text-tertiary);
+            font-weight: 500;
+        }
+
+        /* 布局模板 */
+        .layout-templates {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .layout-template {
+            aspect-ratio: 1.2;
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            background: var(--liquid-glass-subtle);
+        }
+
+        .layout-template:hover {
+            border-color: var(--dify-primary);
+            box-shadow: var(--liquid-shadow);
+        }
+
+        .layout-template.active {
+            border-color: var(--dify-primary);
+            background: rgba(41, 112, 255, 0.1);
+        }
+
+        .layout-preview {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            gap: 2px;
+            padding: 6px;
+        }
+
+        .layout-cell {
+            background: var(--liquid-glass-border);
+            border-radius: 2px;
+        }
+
+        /* 标签页样式 */
+        .tab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .tab-header {
+            display: flex;
+            border-bottom: 1px solid var(--liquid-glass-border);
+            background: var(--liquid-glass-subtle);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            background: none;
+            border: none;
+            color: var(--liquid-text-tertiary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab-btn.active {
+            color: var(--dify-primary);
+            border-bottom-color: var(--dify-primary);
+            background: var(--liquid-glass-bg);
+        }
+        
+        .tab-btn:hover {
+            background: var(--liquid-glass-subtle);
+        }
+        
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-header {
+            padding: 16px 20px;
+            background: var(--liquid-glass-subtle);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--editor-text);
+            border-bottom: 1px solid var(--liquid-glass-border);
+        }
+
+        /* 预览模态框 */
+        .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-modal.active {
+            display: flex;
+        }
+
+        .preview-modal-content {
+            /* background: var(--liquid-glass-bg); */
+            background: #505050;
+            backdrop-filter: blur(25px);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 1000px;
+            height: 80%;
+            display: flex;
+            flex-direction: column;
+            color: var(--liquid-text-primary);
+            border: 1px solid var(--liquid-glass-border);
+        }
+
+        .preview-modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--liquid-glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-modal-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .preview-json-editor {
+            width: 40%;
+            border-right: 1px solid var(--liquid-glass-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-display {
+            width: 60%;
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--liquid-glass-subtle);
+        }
+
+        .json-editor {
+            flex: 1;
+            border: none;
+            background: var(--liquid-glass-subtle);
+            color: var(--liquid-text-primary);
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+        }
+
+        /* 添加输入框样式 */
+        input, textarea, select {
+            background: var(--liquid-glass-subtle) !important;
+            border: 1px solid var(--liquid-glass-border) !important;
+            color: var(--liquid-text-primary) !important;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            background: var(--liquid-glass-bg) !important;
+            border-color: var(--dify-primary) !important;
+            box-shadow: 0 0 0 2px rgba(41, 112, 255, 0.1) !important;
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: var(--liquid-text-tertiary) !important;
+        }
+        
+        /* Specular Highlight Effect */
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+
+        .specular-highlight > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Button Styles */
+        .dify-btn {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        label {
+            color: var(--liquid-text-primary) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-layout">
+        <!-- 顶部工具栏 -->
+        <div class="editor-header">
+            <div class="flex items-center space-x-3">
+                <button class="dify-btn px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold specular-highlight backdrop-blur-md border border-white/20" onclick="returnToMarket()">
+                    <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    返回市场
+                </button>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">🎨</span>
+                <span id="editor-title" class="text-lg font-semibold" style="color: var(--liquid-text-primary)">LUI 编辑器</span>
+            </div>
+            <div class="flex items-center space-x-3">
+               
+                <button class="dify-btn px-4 py-2 bg-green-600/90 hover:bg-green-700/90 text-white font-semibold specular-highlight backdrop-blur-md border border-green-500/30" 
+                        onclick="openPreviewModal()">
+                    <svg class="w-4 h-4 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    预览
+                </button>
+                <button class="dify-btn px-4 py-2 bg-blue-600/90 hover:bg-blue-700/90 text-white font-semibold specular-highlight backdrop-blur-md border border-blue-500/30" 
+                        onclick="saveLUI()">
+                    <svg class="w-4 h-4 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    保存
+                </button>
+            </div>
+        </div>
+
+        <!-- 左侧面板 -->
+        <div class="editor-sidebar-left overflow-auto ml-4 mb-4 rounded-xl">
+            <!-- 布局选择 -->
+            <div class="section-header">布局选择</div>
+            <div class="flex flex-wrap gap-2 p-4">
+                <button class="px-3 py-1 text-xs bg-blue-100 border border-blue-300 text-blue-700 rounded active" data-ratio="1:1">1:1</button>
+                <button class="px-3 py-1 text-xs bg-gray-100 border border-gray-300 text-gray-700 rounded hover:bg-gray-200" data-ratio="16:9">16:9</button>
+                <button class="px-3 py-1 text-xs bg-gray-100 border border-gray-300 text-gray-700 rounded hover:bg-gray-200" data-ratio="4:3">4:3</button>
+                <button class="px-3 py-1 text-xs bg-gray-100 border border-gray-300 text-gray-700 rounded hover:bg-gray-200" data-ratio="3:4">3:4</button>
+            </div>
+            <div class="layout-templates" id="layout-templates">
+                <!-- 布局模板将动态生成 -->
+            </div>
+
+            <!-- 组件库 -->
+            <div class="section-header">组件库</div>
+            <div class="component-palette">
+                <!-- 组件将动态生成 -->
+            </div>
+        </div>
+
+        <!-- 中间画布 -->
+        <div class="editor-canvas">
+            <div class="canvas-container">
+                <div class="canvas-grid" id="canvas-grid">
+                    <!-- 画布网格将动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧属性面板 -->
+        <div class="editor-sidebar-right mr-4 mb-4 rounded-xl">
+            <div class="tab-container">
+                <!-- 标签页导航 -->
+                <div class="tab-header">
+                    <button class="tab-btn active" onclick="switchTab('canvas-tab')">画布</button>
+                    <button class="tab-btn" onclick="switchTab('component-tab')">组件</button>
+                    <button class="tab-btn" onclick="switchTab('global-tab')">全局</button>
+                </div>
+
+                <!-- 画布配置标签页 -->
+                <div class="tab-content active" id="canvas-tab">
+                    <div class="p-4 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">画布尺寸</label>
+                            <div class="flex space-x-2">
+                                <div class="flex-1">
+                                    <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="canvas-rows" min="1" max="20" value="3" placeholder="行数">
+                                </div>
+                                <div class="flex-1">
+                                    <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="canvas-cols" min="1" max="20" value="4" placeholder="列数">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">网格间距 (px)</label>
+                            <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="canvas-gap" min="0" max="50" value="8">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 组件配置标签页 -->
+                <div class="tab-content" id="component-tab">
+                    <div class="p-4" id="component-properties">
+                        <div class="text-center text-gray-500 py-8">
+                            <div class="text-4xl mb-2">📦</div>
+                            <p>选择组件后可编辑属性</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 全局配置标签页 -->
+                <div class="tab-content" id="global-tab">
+                    <div class="p-4 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">组件名称 *</label>
+                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="lui-name" placeholder="请输入组件名称" required>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">分类 *</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="lui-category" required>
+                                    <option value="">选择分类</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">图标</label>
+                                <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="lui-icon" placeholder="🎨" maxlength="2">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">描述 *</label>
+                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="lui-description" placeholder="请输入组件描述" required rows="3"></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">作者</label>
+                                <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="lui-author" placeholder="Developer">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">版本</label>
+                                <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="lui-version" placeholder="v1.0.0">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">标签</label>
+                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="lui-tags" placeholder="用逗号分隔">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">使用文档</label>
+                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="lui-documentation" placeholder="请输入组件使用说明" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预览标签页 -->
+                <div class="tab-content" id="preview-tab">
+                    <div class="p-4">
+                        <div class="mb-4">
+                            <button class="w-full px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors" 
+                                    style="background: #10b981; color: white;" 
+                                    onmouseover="this.style.background='#059669'" 
+                                    onmouseout="this.style.background='#10b981'"
+                                    onclick="openPreviewModal()">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                <span>打开预览</span>
+                            </button>
+                        </div>
+                        
+                        <div class="rounded-lg p-3 text-sm" style="background: var(--liquid-glass-subtle); color: var(--liquid-text-tertiary);">
+                            <h4 class="font-medium mb-2" style="color: var(--liquid-text-primary);">预览功能说明：</h4>
+                            <ul class="space-y-1 text-xs">
+                                <li>• 点击上方按钮打开预览弹窗</li>
+                                <li>• 系统会自动生成预览数据</li>
+                                <li>• 可手动编辑JSON数据查看效果</li>
+                                <li>• 支持实时预览组件渲染</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预览模态框 -->
+    <div class="preview-modal" id="preview-modal">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <h3 class="text-lg font-semibold">组件预览</h3>
+                <button class="text-white hover:text-gray-300" onclick="closePreviewModal()">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="preview-modal-body">
+                <div class="preview-json-editor">
+                    <div class="p-4 border-b border-gray-600">
+                        <h4 class="font-medium">预览数据 (JSON)</h4>
+                        <button class="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded" onclick="updatePreviewDisplay()">更新预览</button>
+                    </div>
+                    <textarea class="json-editor" id="preview-json-data" placeholder="编辑JSON数据..."></textarea>
+                </div>
+                <div class="preview-display" id="preview-display">
+                    <div class="text-center text-gray-300 py-8">
+                        <div class="text-4xl mb-2">👁️</div>
+                        <p>选择组件并更新数据以查看预览</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LUIEditor {
+            constructor() {
+                this.apiBase = '/omni-api';
+                this.luiId = this.getLUIIdFromURL();
+                this.categories = {};
+                this.components = {};
+                this.componentDefinitions = {}; // 存储组件定义
+                this.componentRenderers = {}; // 存储组件渲染器
+                this.currentLayout = { rows: 3, cols: 4, gap: 8 };
+                this.currentLUI = null;
+                this.selectedComponent = null;
+                this.selectedCell = null;
+                
+                this.init();
+            }
+
+            getLUIIdFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('id');
+            }
+
+            async init() {
+                await this.loadCategories();
+                await this.loadComponentDefinitions();
+                this.populateCategorySelect();
+                this.generateComponentPalette();
+                this.generateLayoutTemplates();
+                this.initCanvas();
+                this.initEventListeners();
+                this.initDragAndDrop();
+                
+                if (this.luiId) {
+                    await this.loadLUI();
+                }
+            }
+
+            async loadComponentDefinitions() {
+                try {
+                    // 使用 API 获取组件清单
+                    const response = await fetch('/omni-api/components');
+                    const result = await response.json();
+                    
+                    if (result.success && result.data) {
+                        // 将API返回的组件数据转换为编辑器需要的格式
+                        Object.entries(result.data).forEach(([componentType, componentData]) => {
+                            if (componentData.hasRenderer) {
+                                this.componentDefinitions[componentType] = componentData;
+                            }
+                        });
+                        
+                        // 为有渲染器的组件加载渲染器代码
+                        for (const [componentType, componentData] of Object.entries(this.componentDefinitions)) {
+                            if (componentData.hasRenderer && componentData.paths.render) {
+                                try {
+                                    const renderResponse = await fetch(componentData.paths.render);
+                                    if (renderResponse.ok) {
+                                        const renderCode = await renderResponse.text();
+                                        // 执行渲染器代码
+                                        try {
+                                            eval(renderCode);
+                                            // 根据组件类型获取渲染器
+                                            const rendererName = componentType.charAt(0).toUpperCase() + componentType.slice(1).replace(/-([a-z])/g, (match, letter) => letter.toUpperCase()) + 'Renderer';
+                                            if (window[rendererName]) {
+                                                this.componentRenderers[componentType] = window[rendererName];
+                                            }
+                                        } catch (renderError) {
+                                            console.warn(`Failed to load renderer for ${componentType}:`, renderError);
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.warn(`Failed to fetch renderer for ${componentType}:`, error);
+                                }
+                            }
+                        }
+                        
+                        console.log('Loaded component definitions from API:', Object.keys(this.componentDefinitions));
+                        console.log('Loaded component renderers:', Object.keys(this.componentRenderers));
+                    } else {
+                        // 回退到原有的静态加载逻辑
+                        console.warn('API loading failed, falling back to static loading');
+                        await this.loadComponentDefinitionsStatic();
+                    }
+                } catch (error) {
+                    console.error('Failed to load component definitions from API:', error);
+                    // 回退到原有的静态加载逻辑
+                    await this.loadComponentDefinitionsStatic();
+                }
+            }
+
+            async loadComponentDefinitionsStatic() {
+                // 原有的静态加载逻辑作为回退方案
+                const componentTypes = [
+                    'button', 'image', 'paragraph', 'table', 'title-content',
+                    'line-chart', 'bar-chart', 'pie-chart', 'gauge-chart'
+                ];
+                
+                for (const componentType of componentTypes) {
+                    try {
+                        // 加载组件的 package.json
+                        const packageResponse = await fetch(`/components/${componentType}/package.json`);
+                        if (packageResponse.ok) {
+                            const packageData = await packageResponse.json();
+                            this.componentDefinitions[componentType] = packageData;
+                            
+                            // 尝试加载渲染器
+                            const renderResponse = await fetch(`/components/${componentType}/render.js`);
+                            if (renderResponse.ok) {
+                                const renderCode = await renderResponse.text();
+                                // 执行渲染器代码
+                                try {
+                                    eval(renderCode);
+                                    // 根据组件类型获取渲染器
+                                    const rendererName = componentType.charAt(0).toUpperCase() + componentType.slice(1).replace(/-([a-z])/g, (match, letter) => letter.toUpperCase()) + 'Renderer';
+                                    if (window[rendererName]) {
+                                        this.componentRenderers[componentType] = window[rendererName];
+                                    }
+                                } catch (renderError) {
+                                    console.warn(`Failed to load renderer for ${componentType}:`, renderError);
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to load component ${componentType}:`, error);
+                    }
+                }
+            }
+            async loadCategories() {
+                try {
+                    const response = await fetch(`${this.apiBase}/luis/categories`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.categories = result.data;
+                    } else {
+                        this.loadDefaultCategories();
+                    }
+                } catch (error) {
+                    console.error('加载分类失败:', error);
+                    this.loadDefaultCategories();
+                }
+            }
+
+            loadDefaultCategories() {
+                this.categories = {
+                    'office': '办公助手',
+                    'data': '数据展示',
+                    'form': '表单卡片',
+                    'chart': '图表组件',
+                    'workflow': '工作流程',
+                    'notification': '通知提醒'
+                };
+            }
+
+            generateComponentPalette() {
+                const container = document.querySelector('.component-palette');
+                if (!container) return;
+                
+                let paletteHtml = '';
+                
+                // 基于加载的组件定义生成组件面板
+                Object.entries(this.componentDefinitions).forEach(([componentType, definition]) => {
+                    paletteHtml += `
+                        <div class="component-item" data-type="${componentType}" draggable="true">
+                            <div class="component-icon">${definition.icon || '📦'}</div>
+                            <div class="component-name">${definition.displayName || componentType}</div>
+                        </div>
+                    `;
+                });
+                
+                // 如果没有加载到组件定义，使用默认组件
+                if (Object.keys(this.componentDefinitions).length === 0) {
+                    const defaultComponents = [
+                        { type: 'title-content', icon: '📄', name: '标题+内容' },
+                        { type: 'image', icon: '🖼️', name: '图片' },
+                        { type: 'paragraph', icon: '📝', name: '段落' },
+                        { type: 'table', icon: '📋', name: '表格' },
+                        { type: 'line-chart', icon: '📈', name: '折线图' },
+                        { type: 'bar-chart', icon: '📊', name: '柱状图' },
+                        { type: 'pie-chart', icon: '🥧', name: '饼图' },
+                        { type: 'button', icon: '🔘', name: '按钮' }
+                    ];
+                    
+                    paletteHtml = defaultComponents.map(comp => `
+                        <div class="component-item" data-type="${comp.type}" draggable="true">
+                            <div class="component-icon">${comp.icon}</div>
+                            <div class="component-name">${comp.name}</div>
+                        </div>
+                    `).join('');
+                }
+                
+                container.innerHTML = paletteHtml;
+            }
+
+            populateCategorySelect() {
+                const select = document.getElementById('lui-category');
+                select.innerHTML = '<option value="">选择分类</option>' + 
+                    Object.entries(this.categories).map(([key, value]) => 
+                        `<option value="${key}">${value}</option>`
+                    ).join('');
+            }
+
+            generateLayoutTemplates() {
+                const container = document.getElementById('layout-templates');
+                const layouts = [
+                    { rows: 2, cols: 2, name: '2×2' },
+                    { rows: 2, cols: 3, name: '2×3' },
+                    { rows: 3, cols: 2, name: '3×2' },
+                    { rows: 3, cols: 3, name: '3×3' },
+                    { rows: 3, cols: 4, name: '3×4' },
+                    { rows: 4, cols: 3, name: '4×3' },
+                    { rows: 4, cols: 4, name: '4×4' },
+                    { rows: 4, cols: 6, name: '4×6' }
+                ];
+
+                container.innerHTML = layouts.map((layout, index) => `
+                    <div class="layout-template ${index === 4 ? 'active' : ''}" 
+                         onclick="selectLayout(${layout.rows}, ${layout.cols})"
+                         data-rows="${layout.rows}" data-cols="${layout.cols}">
+                        <div class="layout-preview" style="grid-template-rows: repeat(${layout.rows}, 1fr); grid-template-columns: repeat(${layout.cols}, 1fr);">
+                            ${Array(layout.rows * layout.cols).fill(0).map(() => '<div class="layout-cell"></div>').join('')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            initCanvas() {
+                this.updateCanvas();
+            }
+
+            updateCanvas() {
+                const canvas = document.getElementById('canvas-grid');
+                canvas.style.gridTemplateRows = `repeat(${this.currentLayout.rows}, 1fr)`;
+                canvas.style.gridTemplateColumns = `repeat(${this.currentLayout.cols}, 1fr)`;
+                canvas.style.gap = `${this.currentLayout.gap}px`;
+
+                canvas.innerHTML = '';
+
+                const cellComponentMap = {};
+                Object.values(this.components).forEach(component => {
+                    if (component && component.position) {
+                        const startIndex = component.position.row * this.currentLayout.cols + component.position.col;
+                        for (let r = 0; r < component.rowSpan; r++) {
+                            for (let c = 0; c < component.colSpan; c++) {
+                                const cellIndex = startIndex + r * this.currentLayout.cols + c;
+                                cellComponentMap[cellIndex] = component;
+                            }
+                        }
+                    }
+                });
+
+                for (let i = 0; i < this.currentLayout.rows * this.currentLayout.cols; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'canvas-cell';
+                    cell.dataset.cellIndex = i;
+
+                    const component = cellComponentMap[i];
+                    if (component) {
+                        const row = Math.floor(i / this.currentLayout.cols);
+                        const col = i % this.currentLayout.cols;
+                        const isMainCell = component.position.row === row && component.position.col === col;
+                        
+                        if (isMainCell) {
+                            cell.classList.add('has-component');
+                            cell.style.gridRowEnd = `span ${component.rowSpan}`;
+                            cell.style.gridColumnEnd = `span ${component.colSpan}`;
+                            cell.innerHTML = `
+                                <div class="component-preview">
+                                    <div class="component-preview-icon">${this.getComponentIcon(component.type)}</div>
+                                    <div class="component-preview-name">${this.getComponentName(component.type)}</div>
+                                </div>
+                                <div class="component-controls">
+                                    <button class="control-btn" onclick="luiEditor.editComponent('${component.id}')" title="编辑">✏️</button>
+                                    <button class="control-btn" onclick="luiEditor.deleteComponent('${component.id}')" title="删除">🗑️</button>
+                                </div>
+                            `;
+                            
+                            cell.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                this.selectComponent(component.id, cell);
+                            });
+                        } else {
+                            cell.style.display = 'none';
+                        }
+                    } else {
+                        cell.innerHTML = `<div style="color: #cbd5e0; font-size: 14px; font-weight: 500;">${i + 1}</div>`;
+                        this.addDropListeners(cell, i);
+                    }
+
+                    canvas.appendChild(cell);
+                }
+
+                canvas.addEventListener('click', (e) => {
+                    if (e.target === canvas) {
+                        this.deselectComponent();
+                    }
+                });
+            }
+
+            initEventListeners() {
+                ['canvas-rows', 'canvas-cols', 'canvas-gap'].forEach(id => {
+                    document.getElementById(id).addEventListener('input', (e) => {
+                        this.currentLayout[id.split('-')[1] === 'rows' ? 'rows' : id.split('-')[1] === 'cols' ? 'cols' : 'gap'] = parseInt(e.target.value);
+                        this.updateCanvas();
+                    });
+                });
+
+                document.querySelectorAll('.ratio-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.ratio-btn').forEach(b => {
+                            b.classList.remove('active', 'bg-blue-100', 'border-blue-300', 'text-blue-700');
+                            b.classList.add('bg-gray-100', 'border-gray-300', 'text-gray-700', 'hover:bg-gray-200');
+                        });
+                        e.target.classList.remove('bg-gray-100', 'border-gray-300', 'text-gray-700', 'hover:bg-gray-200');
+                        e.target.classList.add('active', 'bg-blue-100', 'border-blue-300', 'text-blue-700');
+                    });
+                });
+            }
+
+            initDragAndDrop() {
+                document.querySelectorAll('.component-item').forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', item.dataset.type);
+                        e.dataTransfer.effectAllowed = 'copy';
+                    });
+                });
+            }
+
+            addDropListeners(cell, index) {
+                cell.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'copy';
+                    cell.classList.add('drag-over');
+                });
+
+                cell.addEventListener('dragleave', () => {
+                    cell.classList.remove('drag-over');
+                });
+
+                cell.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    cell.classList.remove('drag-over');
+                    
+                    const componentType = e.dataTransfer.getData('text/plain');
+                    if (componentType) {
+                        this.addComponent(index, componentType);
+                    }
+                });
+
+                cell.addEventListener('dblclick', () => {
+                    if (this.components[index]) {
+                        delete this.components[index];
+                        this.updateCanvas();
+                    }
+                });
+            }
+
+            addComponent(cellIndex, componentType) {
+                const row = Math.floor(cellIndex / this.currentLayout.cols);
+                const col = cellIndex % this.currentLayout.cols;
+                
+                const componentId = `component_${componentType}_${Date.now()}`;
+                this.components[componentId] = {
+                    id: componentId,
+                    type: componentType,
+                    position: { row, col },
+                    rowSpan: 1,
+                    colSpan: 1,
+                    properties: this.getDefaultProperties(componentType),
+                    style: {},
+                    variables: this.extractVariables(this.getDefaultProperties(componentType))
+                };
+                this.updateCanvas();
+            }
+
+            getComponentIcon(type) {
+                const icons = {
+                    'title-content': '📄', 'title': '📄', 'image': '🖼️', 'paragraph': '📝', 'button': '🔘',
+                    'line-chart': '📈', 'bar-chart': '📊', 'pie-chart': '🥧', 'gauge-chart': '⏲️',
+                    'chart': '📊', 'table': '📋', 'form': '📝', 'card': '🃏'
+                };
+                return icons[type] || '📦';
+            }
+
+            getComponentName(type) {
+                const names = {
+                    'title-content': '标题+内容', 'title': '标题', 'image': '图片', 'paragraph': '段落', 'button': '按钮',
+                    'line-chart': '折线图', 'bar-chart': '柱状图', 'pie-chart': '饼图', 'gauge-chart': '仪表盘',
+                    'chart': '图表', 'table': '表格', 'form': '表单', 'card': '卡片'
+                };
+                return names[type] || '组件';
+            }
+
+            getDefaultProperties(type) {
+                // 如果有组件定义，使用组件定义中的默认属性
+                if (this.componentDefinitions[type] && this.componentDefinitions[type].properties) {
+                    const properties = {};
+                    const definition = this.componentDefinitions[type].properties;
+                    
+                    Object.entries(definition).forEach(([key, propDef]) => {
+                        properties[key] = propDef.defaultValue || '';
+                    });
+                    
+                    return properties;
+                }
+                
+                // 回退到硬编码的默认属性
+                const defaults = {
+                    'title-content': { 
+                        title: '标题文本', 
+                        content: '内容文本',
+                        titleLevel: 'h2',
+                        titleStyle: 'font-size: 18px; font-weight: bold;',
+                        contentStyle: 'font-size: 14px; line-height: 1.5;'
+                    },
+                    'title': { 
+                        title: '标题文本',
+                        titleLevel: 'h2',
+                        titleStyle: 'font-size: 18px; font-weight: bold;'
+                    },
+                    'image': { 
+                        url: '{{image_url}}', 
+                        alt: '图片描述',
+                        width: '100%',
+                        height: 'auto'
+                    },
+                    'paragraph': { 
+                        text: '{{content}}',
+                        style: 'font-size: 14px; line-height: 1.6;'
+                    },
+                    'button': { 
+                        text: '按钮文本', 
+                        type: 'primary', 
+                        action: '{{button_action}}',
+                        style: 'padding: 8px 16px; border-radius: 4px;'
+                    },
+                    'line-chart': { 
+                        title: '折线图标题',
+                        xAxis: '{{x_data}}',
+                        yAxis: '{{y_data}}',
+                        series: '{{series_data}}'
+                    },
+                    'bar-chart': { 
+                        title: '柱状图标题',
+                        xAxis: '{{x_data}}',
+                        yAxis: '{{y_data}}',
+                        series: '{{series_data}}'
+                    },
+                    'pie-chart': { 
+                        title: '饼图标题',
+                        data: '{{pie_data}}'
+                    },
+                    'gauge-chart': { 
+                        title: '仪表盘标题',
+                        value: '{{gauge_value}}',
+                        max: 100,
+                        unit: '%'
+                    },
+                    'chart': { 
+                        title: '图表标题',
+                        chartType: 'line',
+                        data: '{{chart_data}}'
+                    },
+                    'table': { 
+                        columns: ['{{column1}}', '{{column2}}', '{{column3}}'], 
+                        data: '{{table_data}}',
+                        pagination: true
+                    },
+                    'form': {
+                        title: '表单标题',
+                        fields: '{{form_fields}}',
+                        action: '{{form_action}}'
+                    },
+                    'card': {
+                        title: '卡片标题',
+                        content: '卡片内容',
+                        style: 'padding: 16px; border-radius: 8px;'
+                    }
+                };
+                return defaults[type] || {};
+            }
+
+            extractVariables(properties) {
+                const variables = [];
+                const variableRegex = /\{\{([^}]+)\}\}/g;
+                
+                function extractFromValue(value) {
+                    if (typeof value === 'string') {
+                        let match;
+                        while ((match = variableRegex.exec(value)) !== null) {
+                            // 只存储变量名，不包含花括号
+                            const varName = match[1];
+                            if (!variables.includes(varName)) {
+                                variables.push(varName);
+                            }
+                        }
+                    } else if (typeof value === 'object' && value !== null) {
+                        Object.values(value).forEach(extractFromValue);
+                    }
+                }
+                
+                extractFromValue(properties);
+                return variables;
+            }
+
+            selectComponent(componentId, cellElement) {
+                this.deselectComponent();
+                
+                this.selectedComponent = componentId;
+                this.selectedCell = cellElement;
+                
+                cellElement.classList.add('selected');
+                
+                this.showComponentConfig(componentId);
+                switchTab('component-tab');
+            }
+
+            deselectComponent() {
+                if (this.selectedCell) {
+                    this.selectedCell.classList.remove('selected');
+                }
+                this.selectedComponent = null;
+                this.selectedCell = null;
+            }
+
+            showComponentConfig(componentId) {
+                const component = this.components[componentId];
+                if (!component) return;
+                
+                const container = document.getElementById('component-properties');
+                const componentDef = this.componentDefinitions[component.type];
+                
+                // 基本配置
+                let configHtml = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">组件类型</label>
+                            <input type="text" class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md" value="${this.getComponentName(component.type)}" readonly>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">行跨度</label>
+                                <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="component-rowspan" min="1" max="10" value="${component.rowSpan || 1}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">列跨度</label>
+                                <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" id="component-colspan" min="1" max="10" value="${component.colSpan || 1}">
+                            </div>
+                        </div>
+                `;
+                
+                // 如果有组件定义，使用组件定义生成属性配置
+                if (componentDef && componentDef.properties) {
+                    Object.entries(componentDef.properties).forEach(([key, propDef]) => {
+                        const currentValue = component.properties[key] || propDef.defaultValue || '';
+                        const label = propDef.label || key;
+                        
+                        if (propDef.type === 'select') {
+                            configHtml += `
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
+                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-property="${key}">
+                                        ${propDef.options.map(option => 
+                                            `<option value="${option.value}" ${currentValue === option.value ? 'selected' : ''}>${option.label}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                            `;
+                        } else if (propDef.type === 'textarea') {
+                            configHtml += `
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
+                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" data-property="${key}">${currentValue}</textarea>
+                                </div>
+                            `;
+                        } else if (propDef.type === 'checkbox') {
+                            configHtml += `
+                                <div>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-2" data-property="${key}" ${currentValue ? 'checked' : ''}>
+                                        <span class="text-sm font-medium text-gray-700">${label}</span>
+                                    </label>
+                                </div>
+                            `;
+                        } else {
+                            // 默认为文本输入
+                            const inputType = propDef.type === 'number' ? 'number' : 'text';
+                            configHtml += `
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
+                                    <input type="${inputType}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-property="${key}" value="${currentValue}">
+                                </div>
+                            `;
+                        }
+                    });
+                } else {
+                    // 回退到原有逻辑
+                    Object.entries(component.properties || {}).forEach(([key, value]) => {
+                        const label = this.getPropertyLabel(key);
+                        
+                        if (typeof value === 'boolean') {
+                            configHtml += `
+                                <div>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-2" data-property="${key}" ${value ? 'checked' : ''}>
+                                        <span class="text-sm font-medium text-gray-700">${label}</span>
+                                    </label>
+                                </div>
+                            `;
+                        } else if (key.includes('style') || key === 'content' || key === 'text') {
+                            configHtml += `
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
+                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" data-property="${key}">${value}</textarea>
+                                </div>
+                            `;
+                        } else {
+                            configHtml += `
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
+                                    <input type="${typeof value === 'number' ? 'number' : 'text'}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-property="${key}" value="${value}">
+                                </div>
+                            `;
+                        }
+                    });
+                }
+                
+                configHtml += '</div>';
+                container.innerHTML = configHtml;
+                
+                this.bindComponentConfigEvents(componentId);
+            }
+
+            getPropertyLabel(key) {
+                const labels = {
+                    title: '标题', content: '内容', text: '文本', url: '链接',
+                    alt: '替代文本', width: '宽度', height: '高度',
+                    style: '样式', titleStyle: '标题样式', contentStyle: '内容样式',
+                    titleLevel: '标题级别', type: '类型', action: '动作',
+                    xAxis: 'X轴数据', yAxis: 'Y轴数据', series: '系列数据',
+                    data: '数据', value: '数值', max: '最大值', unit: '单位',
+                    columns: '列定义', pagination: '分页'
+                };
+                return labels[key] || key;
+            }
+
+            bindComponentConfigEvents(componentId) {
+                const rowSpanInput = document.getElementById('component-rowspan');
+                const colSpanInput = document.getElementById('component-colspan');
+                
+                if (rowSpanInput) {
+                    rowSpanInput.addEventListener('input', (e) => {
+                        const component = this.components[componentId];
+                        if (component) {
+                            component.rowSpan = parseInt(e.target.value) || 1;
+                            this.updateCanvas();
+                            setTimeout(() => {
+                                const newCell = document.querySelector(`[data-cell-index="${component.position.row * this.currentLayout.cols + component.position.col}"]`);
+                                if (newCell && newCell.classList.contains('has-component')) {
+                                    this.selectComponent(componentId, newCell);
+                                }
+                            }, 100);
+                        }
+                    });
+                }
+                
+                if (colSpanInput) {
+                    colSpanInput.addEventListener('input', (e) => {
+                        const component = this.components[componentId];
+                        if (component) {
+                            component.colSpan = parseInt(e.target.value) || 1;
+                            this.updateCanvas();
+                            setTimeout(() => {
+                                const newCell = document.querySelector(`[data-cell-index="${component.position.row * this.currentLayout.cols + component.position.col}"]`);
+                                if (newCell && newCell.classList.contains('has-component')) {
+                                    this.selectComponent(componentId, newCell);
+                                }
+                            }, 100);
+                        }
+                    });
+                }
+                
+                const propertyInputs = document.querySelectorAll('#component-properties input[data-property], #component-properties textarea[data-property], #component-properties select[data-property]');
+                propertyInputs.forEach(input => {
+                    const eventType = input.type === 'checkbox' ? 'change' : 'input';
+                    input.addEventListener(eventType, (e) => {
+                        const component = this.components[componentId];
+                        if (component) {
+                            const property = e.target.dataset.property;
+                            let value = e.target.value;
+                            
+                            if (e.target.type === 'checkbox') {
+                                value = e.target.checked;
+                            } else if (e.target.type === 'number') {
+                                value = parseFloat(value) || 0;
+                            }
+                            
+                            component.properties[property] = value;
+                            component.variables = this.extractVariables(component.properties);
+                        }
+                    });
+                });
+            }
+
+            editComponent(componentId) {
+                const component = this.components[componentId];
+                if (!component) return;
+                
+                const cellIndex = component.position.row * this.currentLayout.cols + component.position.col;
+                const cell = document.querySelector(`[data-cell-index="${cellIndex}"]`);
+                if (cell) {
+                    this.selectComponent(componentId, cell);
+                }
+            }
+
+            deleteComponent(componentId) {
+                if (confirm('确定要删除这个组件吗？')) {
+                    delete this.components[componentId];
+                    this.deselectComponent();
+                    this.updateCanvas();
+                }
+            }
+
+            async loadLUI() {
+                try {
+                    const response = await fetch(`${this.apiBase}/luis/${this.luiId}`);
+                    const result = await response.json();
+                    
+                    if (result.success && result.data) {
+                        this.currentLUI = result.data;
+                        this.populateForm();
+                        this.loadComponents();
+                    }
+                } catch (error) {
+                    console.error('加载LUI失败:', error);
+                }
+            }
+
+            populateForm() {
+                if (!this.currentLUI) return;
+                
+                // 更新页面标题
+                const titleElement = document.getElementById('editor-title');
+                if (titleElement) {
+                    titleElement.textContent = `编辑 - ${this.currentLUI.name}`;
+                }
+                
+                document.getElementById('lui-name').value = this.currentLUI.name || '';
+                document.getElementById('lui-category').value = this.currentLUI.category || '';
+                document.getElementById('lui-icon').value = this.currentLUI.icon || '';
+                document.getElementById('lui-author').value = this.currentLUI.author || '';
+                document.getElementById('lui-version').value = this.currentLUI.version || '';
+                document.getElementById('lui-description').value = this.currentLUI.description || '';
+                document.getElementById('lui-tags').value = this.currentLUI.tags ? this.currentLUI.tags.join(', ') : '';
+                document.getElementById('lui-documentation').value = this.currentLUI.documentation || '';
+
+                if (this.currentLUI.layout) {
+                    this.currentLayout = {
+                        rows: this.currentLUI.layout.rows || 3,
+                        cols: this.currentLUI.layout.cols || 4,
+                        gap: this.currentLUI.layout.gridGap || 8
+                    };
+                    
+                    document.getElementById('canvas-rows').value = this.currentLayout.rows;
+                    document.getElementById('canvas-cols').value = this.currentLayout.cols;
+                    document.getElementById('canvas-gap').value = this.currentLayout.gap;
+                }
+            }
+
+            loadComponents() {
+                if (this.currentLUI.components && Array.isArray(this.currentLUI.components)) {
+                    this.components = {};
+                    this.currentLUI.components.forEach((component, index) => {
+                        if (component && component !== null) {
+                            const componentData = {
+                                id: component.id || `component_${index}`,
+                                type: component.type,
+                                position: {
+                                    row: component.position ? component.position.row : Math.floor(index / this.currentLayout.cols),
+                                    col: component.position ? component.position.col : index % this.currentLayout.cols
+                                },
+                                rowSpan: component.position ? (component.position.rowSpan || 1) : 1,
+                                colSpan: component.position ? (component.position.colSpan || 1) : 1,
+                                properties: this.convertLegacyContent(component),
+                                style: component.style || {},
+                                variables: component.variables || []
+                            };
+                            this.components[componentData.id] = componentData;
+                        }
+                    });
+                }
+                this.updateCanvas();
+            }
+
+            convertLegacyContent(component) {
+                if (component.properties) {
+                    return component.properties;
+                }
+                
+                if (component.content) {
+                    switch (component.type) {
+                        case 'button':
+                            return {
+                                text: component.content.title || '按钮',
+                                type: 'primary',
+                                action: component.content.action || '',
+                                icon: component.content.icon || '',
+                                subtitle: component.content.subtitle || '',
+                                actionParams: JSON.stringify(component.content.actionParams || {})
+                            };
+                        case 'title':
+                            return {
+                                title: component.content.text || '标题',
+                                titleLevel: component.content.level || 'h2'
+                            };
+                        case 'paragraph':
+                            return {
+                                text: component.content.text || '段落内容'
+                            };
+                        case 'image':
+                            return {
+                                url: component.content.url || '',
+                                alt: component.content.alt || '图片',
+                                width: component.content.width || '100%',
+                                height: component.content.height || 'auto'
+                            };
+                        case 'chart':
+                            return {
+                                title: component.content.title || '图表',
+                                chartType: component.content.chartType || 'line',
+                                xAxis: component.content.data || '{{x_data}}',
+                                series: component.content.data || '{{series_data}}'
+                            };
+                        case 'table':
+                            return {
+                                columns: JSON.stringify(component.content.columns || []),
+                                data: component.content.data || '{{table_data}}'
+                            };
+                        default:
+                            return { ...component.content };
+                    }
+                }
+                
+                return this.getDefaultProperties(component.type);
+            }
+
+            async saveLUI() {
+                const formData = this.getFormData();
+                
+                if (!formData.name || !formData.category || !formData.description) {
+                    alert('请填写必填字段：组件名称、分类和描述');
+                    return;
+                }
+
+                try {
+                    let response;
+                    if (this.luiId) {
+                        response = await fetch(`${this.apiBase}/luis/${this.luiId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(formData)
+                        });
+                    } else {
+                        response = await fetch(`${this.apiBase}/luis`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(formData)
+                        });
+                    }
+
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('保存成功！');
+                        if (!this.luiId && result.data && result.data.id) {
+                            this.luiId = result.data.id;
+                            const newUrl = `${window.location.pathname}?id=${encodeURIComponent(this.luiId)}`;
+                            window.history.pushState({}, '', newUrl);
+                        }
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    console.error('保存失败:', error);
+                    alert('保存失败：' + error.message);
+                }
+            }
+
+            getFormData() {
+                const componentsArray = Object.values(this.components).map(component => ({
+                    id: component.id,
+                    type: component.type,
+                    position: {
+                        row: component.position.row,
+                        col: component.position.col,
+                        rowSpan: component.rowSpan,
+                        colSpan: component.colSpan
+                    },
+                    content: component.properties,
+                    style: component.style || {},
+                    variables: component.variables || []
+                }));
+
+                return {
+                    name: document.getElementById('lui-name').value.trim(),
+                    category: document.getElementById('lui-category').value,
+                    icon: document.getElementById('lui-icon').value.trim() || '🎨',
+                    author: document.getElementById('lui-author').value.trim() || 'Developer',
+                    version: document.getElementById('lui-version').value.trim() || 'v1.0.0',
+                    description: document.getElementById('lui-description').value.trim(),
+                    tags: document.getElementById('lui-tags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
+                    layout: {
+                        rows: this.currentLayout.rows,
+                        cols: this.currentLayout.cols,
+                        gridGap: this.currentLayout.gap
+                    },
+                    components: componentsArray,
+                    variables: this.getAllVariables(),
+                    documentation: document.getElementById('lui-documentation').value.trim()
+                };
+            }
+
+            getAllVariables() {
+                const allVariables = new Set();
+                Object.values(this.components).forEach(component => {
+                    if (component.variables) {
+                        component.variables.forEach(variable => {
+                            // 清理变量名，移除 {{}} 符号
+                            const cleanVariable = variable.replace(/^\{\{|\}\}$/g, '');
+                            allVariables.add(cleanVariable);
+                        });
+                    }
+                });
+                return Array.from(allVariables).map(name => ({
+                    name,
+                    type: 'string',
+                    defaultValue: '',
+                    description: `变量: ${name}`
+                }));
+            }
+
+            generatePreviewData() {
+                const variables = {};
+                Object.values(this.components).forEach(component => {
+                    if (component.variables) {
+                        component.variables.forEach(varName => {
+                            // 清理变量名，移除可能的花括号
+                            const cleanVarName = varName.replace(/^\{\{|\}\}$/g, '');
+                            if (!variables[cleanVarName]) {
+                                // 根据变量名生成合适的示例数据
+                                if (cleanVarName.includes('title') || cleanVarName.includes('name')) {
+                                    variables[cleanVarName] = '示例标题';
+                                } else if (cleanVarName.includes('content') || cleanVarName.includes('text')) {
+                                    variables[cleanVarName] = '这是示例内容文本';
+                                } else if (cleanVarName.includes('url') || cleanVarName.includes('image')) {
+                                    variables[cleanVarName] = '/console/img/agreeLogo.png';
+                                } else if (cleanVarName.includes('data')) {
+                                    variables[cleanVarName] = '[1, 2, 3, 4, 5]';
+                                } else if (cleanVarName.includes('action')) {
+                                    variables[cleanVarName] = 'alert("按钮被点击了！")';
+                                } else if (cleanVarName.includes('count')) {
+                                    variables[cleanVarName] = '5';
+                                } else {
+                                    variables[cleanVarName] = '示例数据';
+                                }
+                            }
+                        });
+                    }
+                });
+                return variables;
+            }
+        }
+
+        // 全局函数
+        function selectLayout(rows, cols) {
+            document.querySelectorAll('.layout-template').forEach(template => {
+                template.classList.remove('active');
+                if (template.dataset.rows == rows && template.dataset.cols == cols) {
+                    template.classList.add('active');
+                }
+            });
+
+            luiEditor.currentLayout.rows = rows;
+            luiEditor.currentLayout.cols = cols;
+            document.getElementById('canvas-rows').value = rows;
+            document.getElementById('canvas-cols').value = cols;
+            luiEditor.updateCanvas();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function returnToMarket() {
+            window.history.back();
+        }
+
+        function saveLUI() {
+            luiEditor.saveLUI();
+        }
+
+        function openPreviewModal() {
+            const modal = document.getElementById('preview-modal');
+            const jsonEditor = document.getElementById('preview-json-data');
+            const previewData = luiEditor.generatePreviewData();
+            
+            jsonEditor.value = JSON.stringify(previewData, null, 2);
+            modal.classList.add('active');
+            
+            updatePreviewDisplay();
+        }
+
+        function closePreviewModal() {
+            document.getElementById('preview-modal').classList.remove('active');
+        }
+
+        function updatePreviewDisplay() {
+            const jsonData = document.getElementById('preview-json-data').value;
+            const previewDisplay = document.getElementById('preview-display');
+            
+            try {
+                const data = JSON.parse(jsonData);
+                
+                // 创建网格布局容器
+                const gridStyle = `
+                    display: grid;
+                    grid-template-rows: repeat(${luiEditor.currentLayout.rows}, 1fr);
+                    grid-template-columns: repeat(${luiEditor.currentLayout.cols}, 1fr);
+                    gap: ${luiEditor.currentLayout.gap}px;
+                    min-height: 400px;
+                    background: #f8fafc;
+                    border-radius: 8px;
+                    padding: 16px;
+                `;
+                
+                let previewHtml = `<div class="preview-grid" style="${gridStyle}">`;
+                
+                // 创建网格布局映射
+                const cellComponentMap = {};
+                Object.values(luiEditor.components).forEach(component => {
+                    if (component && component.position) {
+                        const startIndex = component.position.row * luiEditor.currentLayout.cols + component.position.col;
+                        for (let r = 0; r < component.rowSpan; r++) {
+                            for (let c = 0; c < component.colSpan; c++) {
+                                const cellIndex = startIndex + r * luiEditor.currentLayout.cols + c;
+                                cellComponentMap[cellIndex] = component;
+                            }
+                        }
+                    }
+                });
+                
+                // 生成网格单元格
+                for (let i = 0; i < luiEditor.currentLayout.rows * luiEditor.currentLayout.cols; i++) {
+                    const component = cellComponentMap[i];
+                    if (component) {
+                        const row = Math.floor(i / luiEditor.currentLayout.cols);
+                        const col = i % luiEditor.currentLayout.cols;
+                        const isMainCell = component.position.row === row && component.position.col === col;
+                        
+                        if (isMainCell) {
+                            const renderedContent = luiEditor.renderComponentPreview(component, data);
+                            previewHtml += `
+                                <div style="
+                                    grid-row-end: span ${component.rowSpan};
+                                    grid-column-end: span ${component.colSpan};
+                                    background: white;
+                                    border-radius: 6px;
+                                    border: 1px solid #e2e8f0;
+                                    overflow: hidden;
+                                ">
+                                    ${renderedContent}
+                                </div>
+                            `;
+                        } else {
+                            // 跨度单元格，跳过
+                        }
+                    } else {
+                        previewHtml += `
+                            <div style="
+                                background: #f1f5f9;
+                                border: 1px dashed #cbd5e0;
+                                border-radius: 4px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: #94a3b8;
+                                font-size: 12px;
+                            ">${i + 1}</div>
+                        `;
+                    }
+                }
+                
+                previewHtml += `</div>`;
+                
+                if (Object.keys(luiEditor.components).length > 0) {
+                    previewDisplay.innerHTML = previewHtml;
+                } else {
+                    previewDisplay.innerHTML = '<div class="text-center text-gray-300 py-8"><div class="text-4xl mb-2">📦</div><p>暂无组件可预览</p></div>';
+                }
+            } catch (error) {
+                previewDisplay.innerHTML = `<div class="text-center text-red-300 py-8"><div class="text-4xl mb-2">❌</div><p>JSON格式错误: ${error.message}</p></div>`;
+            }
+        }
+
+        // 预览组件渲染
+        LUIEditor.prototype.renderComponentPreview = function(component, data) {
+            const { type, properties } = component;
+            
+            // 处理变量替换
+            const processedProps = {};
+            Object.entries(properties).forEach(([key, value]) => {
+                if (typeof value === 'string') {
+                    processedProps[key] = value.replace(/\{\{([^}]+)\}\}/g, (match, varName) => {
+                        return data[varName] !== undefined ? data[varName] : match;
+                    });
+                } else {
+                    processedProps[key] = value;
+                }
+            });
+            
+            // 如果有专用的渲染器，使用渲染器
+            if (this.componentRenderers[type] && this.componentRenderers[type].render) {
+                try {
+                    const renderedContent = this.componentRenderers[type].render(data, processedProps);
+                    return `<div style="padding: 16px; height: 100%;">${renderedContent}</div>`;
+                } catch (error) {
+                    console.warn(`Renderer error for ${type}:`, error);
+                    // 降级到默认渲染
+                }
+            }
+            
+            // 降级到默认渲染逻辑
+            const componentName = this.getComponentName(type);
+            
+            switch (type) {
+                case 'title-content':
+                    return `
+                        <div style="padding: 16px; height: 100%;">
+                            <h3 style="${processedProps.titleStyle || 'font-size: 18px; font-weight: bold; margin: 0 0 8px 0;'}">${processedProps.title || '标题'}</h3>
+                            <div style="${processedProps.contentStyle || 'font-size: 14px; line-height: 1.5; color: #666;'}">${processedProps.content || '内容'}</div>
+                        </div>
+                    `;
+                case 'title':
+                    return `
+                        <div style="padding: 16px; height: 100%;">
+                            <h3 style="${processedProps.titleStyle || 'font-size: 18px; font-weight: bold; margin: 0;'}">${processedProps.title || '标题'}</h3>
+                        </div>
+                    `;
+                case 'image':
+                    return `
+                        <div style="padding: 16px; height: 100%; display: flex; align-items: center; justify-content: center;">
+                            <img src="${processedProps.url || '/console/img/agreeLogo.png'}" 
+                                 alt="${processedProps.alt || '图片'}" 
+                                 style="max-width: 100%; max-height: 100%; object-fit: ${processedProps.objectFit || 'cover'}; border-radius: ${processedProps.borderRadius || '4px'};" />
+                        </div>
+                    `;
+                case 'paragraph':
+                    return `
+                        <div style="padding: 16px; height: 100%;">
+                            <p style="font-size: ${processedProps.fontSize || '14px'}; line-height: ${processedProps.lineHeight || '1.6'}; color: ${processedProps.color || '#333'}; text-align: ${processedProps.textAlign || 'left'}; margin: 0;">${processedProps.text || '段落内容'}</p>
+                        </div>
+                    `;
+                case 'button':
+                    const buttonStyle = `
+                        padding: 8px 16px;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 500;
+                        background: ${processedProps.type === 'primary' ? '#2970FF' : '#f5f7fa'};
+                        color: ${processedProps.type === 'primary' ? 'white' : '#1a202c'};
+                    `;
+                    const iconHtml = processedProps.icon ? `${processedProps.icon} ` : '';
+                    return `
+                        <div style="padding: 16px; height: 100%; display: flex; align-items: center; justify-content: center;">
+                            <button style="${buttonStyle}">
+                                ${iconHtml}${processedProps.text || '按钮'}
+                            </button>
+                        </div>
+                    `;
+                case 'line-chart':
+                case 'bar-chart':
+                case 'pie-chart':
+                case 'gauge-chart':
+                    return `
+                        <div style="padding: 16px; height: 100%;">
+                            <h4 style="font-weight: 600; margin: 0 0 8px 0; font-size: 14px;">${processedProps.title || '图表标题'}</h4>
+                            <div style="height: calc(100% - 32px); background: #f8fafc; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                                <div style="font-size: 24px;">${this.getComponentIcon(type)}</div>
+                                <span style="margin-top: 8px; color: #64748b; font-size: 12px;">${componentName} 预览</span>
+                            </div>
+                        </div>
+                    `;
+                case 'table':
+                    let columns;
+                    try {
+                        columns = typeof processedProps.columns === 'string' ? JSON.parse(processedProps.columns) : processedProps.columns;
+                    } catch {
+                        columns = ['列1', '列2', '列3'];
+                    }
+                    return `
+                        <div style="padding: 16px; height: 100%; overflow: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                <thead>
+                                    <tr style="background: #f8fafc;">
+                                        ${columns.map(col => `<th style="border: 1px solid #e2e8f0; padding: 4px 8px; text-align: left; font-weight: 600;">${col}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        ${columns.map(() => `<td style="border: 1px solid #e2e8f0; padding: 4px 8px; color: #64748b;">示例数据</td>`).join('')}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                default:
+                    return `
+                        <div style="padding: 16px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">${this.getComponentIcon(type)}</div>
+                            <p style="color: #64748b; font-size: 12px; margin: 0;">${componentName} 组件</p>
+                        </div>
+                    `;
+            }
+        };
+
+        // 初始化
+        let luiEditor;
+        document.addEventListener('DOMContentLoaded', function() {
+            luiEditor = new LUIEditor();
+        });
+    </script>
+</body>
+</html>

@@ -747,10 +747,10 @@
 
                             <!-- 第二行 -->
                             <div class="dashboard-card p-4 specular-highlight cursor-pointer relative"
-                                onclick="loadPage('/development/component-dev/card-dev.html')">
+                                onclick="loadPage('/omni/lui-market.html')">
                                 <h3 class="text-lg font-bold text-white absolute top-4 left-4">LUI市场</h3>
                                 <div class="flex items-center justify-center h-full">
-                                    <p id="lui-count" class="text-8xl font-bold text-white">18</p>
+                                    <p id="lui-count" class="text-8xl font-bold text-white">0</p>
                                 </div>
                                 <p class="text-white/60 text-lg absolute bottom-4 right-4">个</p>
                             </div>
@@ -778,8 +778,10 @@
                             <!-- 快速操作区域 - 第三、四行前三列 3*2 -->
                             <div class="dashboard-card p-4 col-span-3 row-span-2 flex flex-col">
                                 <h3 class="text-lg font-bold text-white mb-4">应用列表</h3>
-                                <div id="dashboard-apps-list" class="grid grid-cols-3 gap-3 overflow-y-auto flex-1">
-                                    <!-- 应用列表将由JavaScript动态加载 -->
+                                <div class="overflow-y-auto flex-1">
+                                    <div id="dashboard-apps-list" class="grid grid-cols-3 gap-3 ">
+                                        <!-- 应用列表将由JavaScript动态加载 -->
+                                    </div>
                                 </div>
                             </div>
 
@@ -840,7 +842,7 @@
             { name: '数据标注', icon: '✏️', url: '/development/model-optimization/data-annotation.html', keywords: ['数据标注', '标注', '数据'] },
             { name: '提示词模版', icon: '📝', url: '/development/ability-center/prompt-template.html', keywords: ['提示词模版', '提示词', '模版', 'prompt'] },
             { name: 'MCP市场', icon: '🛒', url: '/development/mcp/mcp-market.html', keywords: ['MCP', '市场', '服务', '插件'] },
-            { name: 'LUI市场', icon: '🎨', url: '/development/component-dev/card-dev.html', keywords: ['LUI', '组件', '界面', '卡片'] },
+            { name: 'LUI市场', icon: '🎨', url: '/omni/lui-market.html', keywords: ['LUI', '组件', '界面', '卡片'] },
             { name: '向量检索管理', icon: '🔍', url: '/development/data-process/embedding-models.html', keywords: ['向量', '检索', '嵌入', '搜索'] },
             { name: '新建应用', icon: '➕', url: '/omni/pages/app-create.html', keywords: ['新建', '创建', '应用'] },
             { name: '待办任务', icon: '📋', url: null, action: 'showTaskCenter()', keywords: ['待办', '任务', '工作'] },
@@ -1262,6 +1264,48 @@
                 const modelsCountElement = document.getElementById('models-count');
                 if (modelsCountElement) {
                     modelsCountElement.textContent = '0';
+                }
+            }
+        }
+
+        // Load LUI statistics from API
+        async function loadLUIStatistics() {
+            try {
+                const response = await fetch('/omni-api/luis');
+                
+                // 检查HTTP状态
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const luis = result.data;
+                    const luiCount = luis.length;
+
+                    // Update the LUI count
+                    const luiCountElement = document.getElementById('lui-count');
+                    if (luiCountElement) {
+                        luiCountElement.textContent = luiCount;
+                    }
+
+                    // Log for debugging
+                    console.log('LUI statistics loaded:', { luiCount });
+                } else {
+                    console.warn('Failed to load LUI statistics:', result.error);
+                    // Keep default display if API fails
+                    const luiCountElement = document.getElementById('lui-count');
+                    if (luiCountElement) {
+                        luiCountElement.textContent = '0';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading LUI statistics:', error);
+                // Keep default display if network fails
+                const luiCountElement = document.getElementById('lui-count');
+                if (luiCountElement) {
+                    luiCountElement.textContent = '0';
                 }
             }
         }
@@ -1695,6 +1739,9 @@
 
             // Load MCP statistics
             loadMCPStatistics();
+
+            // Load LUI statistics
+            loadLUIStatistics();
 
             // Add click effects to cards
             document.querySelectorAll('.dashboard-card').forEach(card => {

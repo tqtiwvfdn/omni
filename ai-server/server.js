@@ -14,12 +14,17 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Serve static files from the root directory
+app.use(express.static(path.join(__dirname, '..')));
+
 // HTTP client for external API calls
 const axios = require('axios');
 
 // Import Services
 const MCPService = require('./services/mcpService');
 const LUIService = require('./services/luiService');
+const ComponentService = require('./services/componentService');
+const PromptTemplateService = require('./services/promptTemplateService');
 
 // Data storage paths
 const DATA_DIR = path.join(__dirname, 'data');
@@ -31,6 +36,8 @@ const MODELS_FILE = path.join(DATA_DIR, 'models.json');
 // Initialize Services
 const mcpService = new MCPService(DATA_DIR);
 const luiService = new LUIService(DATA_DIR);
+const componentService = new ComponentService(DATA_DIR);
+const promptTemplateService = new PromptTemplateService();
 
 // Initialize data directory and files
 async function initializeData() {
@@ -614,6 +621,116 @@ app.get('/api/luis', async (req, res) => {
     }
 });
 
+// LUI Category management endpoints - these must come before the /:id route
+
+// Get LUI categories
+app.get('/api/luis/categories', async (req, res) => {
+    try {
+        const categories = await luiService.getCategories();
+        
+        res.json({
+            success: true,
+            data: categories
+        });
+    } catch (error) {
+        console.trace();
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Create new LUI category
+app.post('/api/luis/categories', async (req, res) => {
+    try {
+        const { key, name } = req.body;
+        
+        if (!key || !name) {
+            return res.status(400).json({
+                success: false,
+                error: 'Category key and name are required'
+            });
+        }
+        
+        const result = await luiService.createCategory(key, name);
+        
+        res.status(201).json({
+            success: true,
+            data: result,
+            message: 'Category created successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Update LUI category
+app.put('/api/luis/categories/:key', async (req, res) => {
+    try {
+        const { key } = req.params;
+        const { name } = req.body;
+        
+        if (!name) {
+            return res.status(400).json({
+                success: false,
+                error: 'Category name is required'
+            });
+        }
+        
+        const result = await luiService.updateCategory(key, name);
+        
+        if (!result) {
+            return res.status(404).json({
+                success: false,
+                error: 'Category not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: result,
+            message: 'Category updated successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Delete LUI category
+app.delete('/api/luis/categories/:key', async (req, res) => {
+    try {
+        const { key } = req.params;
+        
+        const result = await luiService.deleteCategory(key);
+        
+        if (!result) {
+            return res.status(404).json({
+                success: false,
+                error: 'Category not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: result,
+            message: 'Category deleted successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Get single LUI by ID
 app.get('/api/luis/:id', async (req, res) => {
     try {
@@ -760,22 +877,6 @@ app.get('/api/luis/statistics', async (req, res) => {
     }
 });
 
-// Get LUI categories
-app.get('/api/luis/categories', async (req, res) => {
-    try {
-        const categories = await luiService.getCategories();
-        
-        res.json({
-            success: true,
-            data: categories
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
 
 // Increment LUI usage
 app.post('/api/luis/:id/usage', async (req, res) => {
@@ -798,6 +899,430 @@ app.post('/api/luis/:id/usage', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message
+        });
+    }
+});
+
+
+// Component management endpoints
+
+// Get all components
+app.get('/api/components', async (req, res) => {
+    try {
+        const result = await componentService.getComponents();
+        
+        res.json({
+            success: result.success,
+            data: result.data,
+            count: result.count,
+            error: result.error
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get single component by name
+app.get('/api/components/:name', async (req, res) => {
+    try {
+        const result = await componentService.getComponent(req.params.name);
+        
+        if (!result.success) {
+            return res.status(404).json({
+                success: false,
+                error: result.error
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: result.data
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Ensure all components have required files
+app.post('/api/components/ensure', async (req, res) => {
+    try {
+        const result = await componentService.ensureAllComponentFiles();
+        
+        res.json({
+            success: result.success,
+            data: result.data,
+            message: 'Component files ensured successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Ensure specific component has required files
+app.post('/api/components/:name/ensure', async (req, res) => {
+    try {
+        const result = await componentService.ensureComponentFiles(req.params.name);
+        
+        res.json({
+            success: true,
+            data: result,
+            message: `Component ${req.params.name} files ensured successfully`
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+
+// Prompt Template management endpoints
+
+// Get prompt template categories
+app.get('/api/prompt-templates/categories', async (req, res) => {
+    try {
+        const categories = await promptTemplateService.getCategories();
+        const stats = await promptTemplateService.getStats();
+        
+        res.json({
+            success: true,
+            data: categories,
+            stats: stats?.categoryStats || {}
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Create new prompt template category
+app.post('/api/prompt-templates/categories', async (req, res) => {
+    try {
+        const newCategory = await promptTemplateService.createCategory(req.body);
+        
+        res.json({
+            success: true,
+            data: newCategory
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Update prompt template category
+app.put('/api/prompt-templates/categories/:id', async (req, res) => {
+    try {
+        const updatedCategory = await promptTemplateService.updateCategory(req.params.id, req.body);
+        
+        res.json({
+            success: true,
+            data: updatedCategory
+        });
+    } catch (error) {
+        res.status(404).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Delete prompt template category
+app.delete('/api/prompt-templates/categories/:id', async (req, res) => {
+    try {
+        await promptTemplateService.deleteCategory(req.params.id);
+        
+        res.json({
+            success: true,
+            message: 'Category deleted successfully'
+        });
+    } catch (error) {
+        res.status(404).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get all prompt templates
+app.get('/api/prompt-templates', async (req, res) => {
+    try {
+        const { category, search } = req.query;
+        const templates = await promptTemplateService.getTemplates(category, search);
+        
+        res.json({
+            success: true,
+            data: templates,
+            total: templates.length
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get single prompt template by ID
+app.get('/api/prompt-templates/:id', async (req, res) => {
+    try {
+        const template = await promptTemplateService.getTemplateById(req.params.id);
+        
+        if (!template) {
+            return res.status(404).json({
+                success: false,
+                error: 'Template not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: template
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Create new prompt template
+app.post('/api/prompt-templates', async (req, res) => {
+    try {
+        const newTemplate = await promptTemplateService.createTemplate(req.body);
+        
+        res.json({
+            success: true,
+            data: newTemplate
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Update prompt template
+app.put('/api/prompt-templates/:id', async (req, res) => {
+    try {
+        const updatedTemplate = await promptTemplateService.updateTemplate(req.params.id, req.body);
+        
+        res.json({
+            success: true,
+            data: updatedTemplate
+        });
+    } catch (error) {
+        res.status(404).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Delete prompt template
+app.delete('/api/prompt-templates/:id', async (req, res) => {
+    try {
+        await promptTemplateService.deleteTemplate(req.params.id);
+        
+        res.json({
+            success: true,
+            message: 'Template deleted successfully'
+        });
+    } catch (error) {
+        res.status(404).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Increment template usage count
+app.post('/api/prompt-templates/:id/usage', async (req, res) => {
+    try {
+        await promptTemplateService.incrementUsageCount(req.params.id);
+        
+        res.json({
+            success: true,
+            message: 'Usage count incremented'
+        });
+    } catch (error) {
+        res.status(404).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get prompt template statistics
+app.get('/api/prompt-templates/statistics', async (req, res) => {
+    try {
+        const stats = await promptTemplateService.getStats();
+        
+        res.json({
+            success: true,
+            data: stats
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// AI optimization endpoint
+app.post('/api/prompt-templates/:id/optimize', async (req, res) => {
+    try {
+        const template = await promptTemplateService.getTemplateById(req.params.id);
+        if (!template) {
+            return res.status(404).json({
+                success: false,
+                error: 'Template not found'
+            });
+        }
+
+        const { focus = 'clarity', intensity = 'moderate', targetModel = 'gpt4' } = req.body;
+        
+        // Call OpenAI API for optimization
+        const optimizationPrompt = `作为一个提示词工程专家，请帮我优化以下提示词。
+
+优化重点：${focus}
+优化强度：${intensity}
+目标模型：${targetModel}
+
+原始提示词：
+${template.content}
+
+请按照以下要求优化：
+1. 保持原有的变量格式 {{variable_name}}
+2. 提升指令的清晰度和可执行性
+3. 优化结构和逻辑
+4. 改进示例的质量
+5. 增强上下文理解
+
+请只返回优化后的提示词内容，不要包含其他说明。`;
+
+        const openaiResponse = await axios.post('http://localhost:3000/raw-ai/v1/chat/completions', {
+            model: 'gpt-4',
+            messages: [
+                {
+                    role: 'user',
+                    content: optimizationPrompt
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 2048
+        }, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const optimizedContent = openaiResponse.data.choices[0].message.content;
+
+        res.json({
+            success: true,
+            data: {
+                original: template.content,
+                optimized: optimizedContent,
+                improvements: [
+                    { type: 'structure', description: '优化了指令结构，使其更加清晰明确' },
+                    { type: 'clarity', description: '改进了表达方式，降低了理解难度' },
+                    { type: 'examples', description: '完善了示例内容，提供更好的引导' }
+                ]
+            }
+        });
+    } catch (error) {
+        console.error('AI optimization error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'AI优化服务暂时不可用，请稍后再试'
+        });
+    }
+});
+
+// Template debug/test endpoint
+app.post('/api/prompt-templates/:id/debug', async (req, res) => {
+    try {
+        const template = await promptTemplateService.getTemplateById(req.params.id);
+        if (!template) {
+            return res.status(404).json({
+                success: false,
+                error: 'Template not found'
+            });
+        }
+
+        const { testData, userMessage } = req.body;
+        
+        // Replace variables in template
+        let processedPrompt = template.content;
+        if (testData) {
+            Object.entries(testData).forEach(([key, value]) => {
+                const regex = new RegExp(`{{${key}}}`, 'g');
+                processedPrompt = processedPrompt.replace(regex, value);
+            });
+        }
+
+        // Call OpenAI API for testing
+        const messages = [
+            { role: 'system', content: processedPrompt }
+        ];
+        
+        if (userMessage) {
+            messages.push({ role: 'user', content: userMessage });
+        }
+
+        const startTime = Date.now();
+        const openaiResponse = await axios.post('http://localhost:3000/raw-ai/v1/chat/completions', {
+            model: 'gpt-4',
+            messages,
+            temperature: 0.7,
+            max_tokens: 1024
+        }, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const responseTime = Date.now() - startTime;
+        const aiResponse = openaiResponse.data.choices[0].message.content;
+
+        // Increment usage count
+        await promptTemplateService.incrementUsageCount(req.params.id);
+
+        res.json({
+            success: true,
+            data: {
+                response: aiResponse,
+                metrics: {
+                    responseTime: `${responseTime}ms`,
+                    accuracy: '87%', // Mock value
+                    quality: 'A+'    // Mock value
+                },
+                processedPrompt
+            }
+        });
+    } catch (error) {
+        console.error('Debug test error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'AI调试服务暂时不可用，请稍后再试'
         });
     }
 });

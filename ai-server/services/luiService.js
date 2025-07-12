@@ -5,6 +5,7 @@ const Joi = require('joi');
 class LUIService {
     constructor(dataDir) {
         this.LUIS_FILE = path.join(dataDir, 'luis.json');
+        this.CATEGORIES_FILE = path.join(dataDir, 'categories.json');
         this.OA_HELPER_DIR = path.join(__dirname, '../../oa-helper');
     }
 
@@ -26,7 +27,7 @@ class LUIService {
             components: Joi.array().items(
                 Joi.object({
                     id: Joi.string().required(),
-                    type: Joi.string().valid('title', 'image', 'paragraph', 'table', 'chart', 'button').required(),
+                    type: Joi.string().valid('title', 'image', 'paragraph', 'table', 'chart', 'button', 'title-content', 'line-chart', 'bar-chart', 'pie-chart', 'gauge-chart').required(),
                     position: Joi.object({
                         row: Joi.number().integer().min(0).required(),
                         col: Joi.number().integer().min(0).required(),
@@ -67,7 +68,7 @@ class LUIService {
             components: Joi.array().items(
                 Joi.object({
                     id: Joi.string().required(),
-                    type: Joi.string().valid('title', 'image', 'paragraph', 'table', 'chart', 'button').required(),
+                    type: Joi.string().valid('title', 'image', 'paragraph', 'table', 'chart', 'button', 'title-content', 'line-chart', 'bar-chart', 'pie-chart', 'gauge-chart').required(),
                     position: Joi.object({
                         row: Joi.number().integer().min(0).required(),
                         col: Joi.number().integer().min(0).required(),
@@ -798,11 +799,127 @@ class LUIService {
     // 获取分类列表
     async getCategories() {
         try {
+            // 先尝试读取独立的分类文件
+            if (await fs.pathExists(this.CATEGORIES_FILE)) {
+                const categories = await fs.readJson(this.CATEGORIES_FILE);
+                return categories;
+            }
+            
+            // 如果分类文件不存在，从LUI文件中读取并迁移
             const data = await fs.readJson(this.LUIS_FILE);
-            return data.categories || {};
+            if (data.categories) {
+                // 将分类数据迁移到独立文件
+                await fs.writeJson(this.CATEGORIES_FILE, data.categories, { spaces: 2 });
+                
+                // 从LUI文件中移除分类数据
+                delete data.categories;
+                await fs.writeJson(this.LUIS_FILE, data, { spaces: 2 });
+                
+                return data.categories;
+            }
+            
+            // 如果都没有，返回默认分类
+            const defaultCategories = {
+                "office": "办公助手",
+                "data": "数据展示", 
+                "form": "表单卡片",
+                "chart": "图表组件",
+                "workflow": "工作流程",
+                "notification": "通知提醒"
+            };
+            
+            await fs.writeJson(this.CATEGORIES_FILE, defaultCategories, { spaces: 2 });
+            return defaultCategories;
         } catch (error) {
             console.error('Error getting categories:', error);
             return {};
+        }
+    }
+
+    // 创建新分类
+    async createCategory(key, name) {
+        try {
+            let categories = {};
+            
+            // 读取现有分类
+            if (await fs.pathExists(this.CATEGORIES_FILE)) {
+                categories = await fs.readJson(this.CATEGORIES_FILE);
+            }
+            
+            // 检查分类是否已存在
+            if (categories[key]) {
+                throw new Error('Category already exists');
+            }
+            
+            // 添加新分类
+            categories[key] = name;
+            
+            // 保存文件
+            await fs.writeJson(this.CATEGORIES_FILE, categories, { spaces: 2 });
+            
+            return { [key]: name };
+        } catch (error) {
+            console.error('Error creating category:', error);
+            throw error;
+        }
+    }
+
+    // 更新分类
+    async updateCategory(key, name) {
+        try {
+            let categories = {};
+            
+            // 读取现有分类
+            if (await fs.pathExists(this.CATEGORIES_FILE)) {
+                categories = await fs.readJson(this.CATEGORIES_FILE);
+            }
+            
+            // 检查分类是否存在
+            if (!categories[key]) {
+                return null;
+            }
+            
+            // 更新分类名称
+            categories[key] = name;
+            
+            // 保存文件
+            await fs.writeJson(this.CATEGORIES_FILE, categories, { spaces: 2 });
+            
+            return { [key]: name };
+        } catch (error) {
+            console.error('Error updating category:', error);
+            throw error;
+        }
+    }
+
+    // 删除分类
+    async deleteCategory(key) {
+        try {
+            let categories = {};
+            
+            // 读取现有分类
+            if (await fs.pathExists(this.CATEGORIES_FILE)) {
+                categories = await fs.readJson(this.CATEGORIES_FILE);
+            }
+            
+            // 检查分类是否存在
+            if (!categories[key]) {
+                return null;
+            }
+            
+            // 保存被删除的分类
+            const deletedCategory = { [key]: categories[key] };
+            
+            // 删除分类
+            delete categories[key];
+            
+            // 保存文件
+            await fs.writeJson(this.CATEGORIES_FILE, categories, { spaces: 2 });
+            
+            return deletedCategory;
+        } catch (error) {
+            console.error('Error deleting category:', error);
+            throw error;
         }
     }
 

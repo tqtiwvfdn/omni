@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUI 预览 - 逻辑用户界面组件预览</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --liquid-glass-bg: rgba(255, 255, 255, 0.1);
+            --liquid-glass-border: rgba(255, 255, 255, 0.2);
+            --liquid-glass-strong: rgba(255, 255, 255, 0.15);
+            --liquid-glass-subtle: rgba(255, 255, 255, 0.05);
+            --liquid-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --liquid-text-primary: rgba(255, 255, 255, 0.9);
+            --liquid-text-secondary: rgba(0, 0, 0, 0.7);
+            --liquid-text-tertiary: rgba(255, 255, 255, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            color: var(--liquid-text-primary);
+            min-height: 100vh;
+        }
+
+        /* Liquid Glass Effects */
+        .liquid-glass {
+            background: var(--liquid-glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--liquid-glass-border);
+            box-shadow: var(--liquid-shadow);
+        }
+
+        .liquid-glass-strong {
+            background: var(--liquid-glass-strong);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        /* Specular Highlight */
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+
+        .specular-highlight > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Button Styles */
+        .dify-btn {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dify-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        .status-active {
+            background: rgba(34, 197, 94, 0.1);
+            color: rgb(34, 197, 94);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        /* Tag Styles */
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            margin: 2px;
+            border-radius: 12px;
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Version Tag */
+        .version-tag {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Layout Preview */
+        .preview-grid {
+            display: grid;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+            min-height: 300px;
+        }
+
+        .preview-component {
+            background: var(--liquid-glass-bg);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.2s ease;
+            position: relative;
+            min-height: 60px;
+        }
+
+        .preview-component.has-component {
+            background: rgba(59, 130, 246, 0.3);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            color: white;
+            font-weight: 500;
+        }
+
+        /* Data Preview Grid */
+        .data-preview-grid {
+            display: grid;
+            gap: 8px;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            min-height: 400px;
+        }
+
+        .data-preview-cell {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Loading Skeleton */
+        .loading-skeleton {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Documentation Content */
+        .documentation-content {
+            line-height: 1.8;
+        }
+
+        .documentation-content h1,
+        .documentation-content h2,
+        .documentation-content h3,
+        .documentation-content h4 {
+            color: var(--liquid-text-primary);
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .documentation-content h1 {
+            font-size: 2rem;
+            border-bottom: 2px solid var(--liquid-glass-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .documentation-content h2 {
+            font-size: 1.5rem;
+        }
+
+        .documentation-content h3 {
+            font-size: 1.25rem;
+        }
+
+        .documentation-content p {
+            margin-bottom: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .documentation-content pre {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            border: 1px solid var(--liquid-glass-border);
+        }
+
+        .documentation-content code {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen p-6">
+        <!-- 返回按钮 -->
+        <div class="mb-6">
+            <button onclick="history.back()" class="dify-btn px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold specular-highlight backdrop-blur-md border border-white/20">
+                <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                返回市场
+            </button>
+        </div>
+
+        <!-- 页面内容 -->
+        <div id="lui-detail" class="">
+            <!-- 加载中状态 -->
+            <div id="loading-state" class="space-y-6">
+                <div class="liquid-glass rounded-xl p-8">
+                    <div class="flex items-start space-x-6 mb-6">
+                        <div class="loading-skeleton rounded-xl w-24 h-24"></div>
+                        <div class="flex-1 space-y-3">
+                            <div class="loading-skeleton h-8 w-3/4 rounded"></div>
+                            <div class="loading-skeleton h-4 w-1/2 rounded"></div>
+                            <div class="loading-skeleton h-6 w-1/4 rounded"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="loading-skeleton h-4 w-full rounded"></div>
+                        <div class="loading-skeleton h-4 w-5/6 rounded"></div>
+                        <div class="loading-skeleton h-4 w-4/5 rounded"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LUI详情内容 -->
+            <div id="detail-content" class="hidden space-y-6">
+                <!-- LUI基本信息 -->
+                <div class="liquid-glass rounded-xl p-8 animate-fade-in">
+                    <div class="flex items-start justify-between mb-6">
+                        <div class="flex items-start space-x-6">
+                            <div id="lui-icon" class="w-24 h-24 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center text-4xl font-bold">
+                                🎨
+                            </div>
+                            <div>
+                                <h1 id="lui-name" class="text-3xl font-bold text-white mb-2">LUI组件名称</h1>
+                                <p id="lui-description" class="text-white/80 text-lg leading-relaxed mb-4">
+                                    LUI组件描述...
+                                </p>
+                                <div class="flex items-center space-x-4 text-sm">
+                                    <span id="lui-author" class="text-white/70">作者: Unknown</span>
+                                    <span id="lui-usage" class="text-white/70">使用: 0 次</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div id="version-text" class="version-tag mb-2">v1.0.0</div>
+                            <div id="updated-text" class="text-white/60 text-sm">更新于 2024-01-01</div>
+                            <div id="category-text" class="status-badge status-active mt-2">默认分类</div>
+                        </div>
+                    </div>
+
+                    <div id="tags-container" class="flex flex-wrap gap-2 mb-6">
+                        <!-- 标签将动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 布局信息和预览 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 左侧：布局信息 -->
+                    <div class="liquid-glass rounded-xl p-8 animate-fade-in">
+                        <h2 class="text-2xl font-bold text-white mb-6">布局信息</h2>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-white/80">网格尺寸</span>
+                                <span id="layout-size" class="text-white font-medium">3×4</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-white/80">网格间距</span>
+                                <span id="layout-gap" class="text-white font-medium">16px</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-white/80">组件数量</span>
+                                <span id="components-count" class="text-white font-medium">0个</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：真实预览 -->
+                    <div class="liquid-glass rounded-xl p-8 animate-fade-in">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-white">真实预览</h2>
+                            <button id="toggle-preview-mode" onclick="luiPreview.togglePreviewMode()" 
+                                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors">
+                                切换到数据预览
+                            </button>
+                        </div>
+                        
+                        <!-- 布局预览模式 -->
+                        <div id="layout-preview-mode">
+                            <div id="layout-preview" class="preview-grid">
+                                <!-- 预览网格将动态生成 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 真实数据预览模式 -->
+                        <div id="data-preview-mode" class="hidden">
+                            <div class="mb-4">
+                                <label class="block text-white/80 text-sm mb-2">预览数据 (JSON):</label>
+                                <textarea id="preview-json-data" 
+                                    class="w-full h-32 p-3 bg-black/20 border border-white/20 rounded-lg text-white/90 text-sm font-mono resize-none focus:outline-none focus:border-blue-400"
+                                    placeholder="编辑JSON数据查看实时预览效果..."></textarea>
+                                <button onclick="luiPreview.updateDataPreview()" 
+                                        class="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors">
+                                    更新预览
+                                </button>
+                            </div>
+                            <div id="data-preview-display" class="mt-4">
+                                <!-- 数据预览将动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 使用文档 -->
+                <div class="liquid-glass rounded-xl p-8 animate-fade-in">
+                    <h2 class="text-2xl font-bold text-white mb-6">使用文档</h2>
+                    <div id="documentation-content" class="documentation-content text-white/80">
+                        <!-- 文档内容将动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 错误状态 -->
+            <div id="error-state" class="hidden liquid-glass rounded-xl p-8 text-center">
+                <div class="text-6xl mb-4">😞</div>
+                <h2 class="text-2xl font-bold text-white mb-4">LUI组件未找到</h2>
+                <p class="text-white/60 mb-6">抱歉，无法找到您请求的LUI组件。</p>
+                <button onclick="history.back()" class="dify-btn px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold specular-highlight">
+                    返回市场
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LUIPreview {
+            constructor() {
+                this.apiBase = '/omni-api';
+                this.luiId = this.getLUIIdFromURL();
+                this.categories = {};
+                this.componentDefinitions = {};
+                this.componentRenderers = {};
+                this.currentLUI = null;
+                this.previewMode = 'layout'; // 'layout' or 'data'
+                this.init();
+            }
+
+            // 从URL获取LUI ID
+            getLUIIdFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('id');
+            }
+
+            async init() {
+                if (!this.luiId) {
+                    this.showError();
+                    return;
+                }
+
+                try {
+                    await this.loadCategories();
+                    await this.loadComponentDefinitions();
+                    await this.loadLUIDetail();
+                } catch (error) {
+                    console.error('加载LUI详情失败:', error);
+                    this.showError();
+                }
+            }
+
+            async loadComponentDefinitions() {
+                try {
+                    // 使用 API 获取组件清单
+                    const response = await fetch('/omni-api/components');
+                    const result = await response.json();
+                    
+                    if (result.success && result.data) {
+                        // 将API返回的组件数据转换为预览器需要的格式
+                        Object.entries(result.data).forEach(([componentType, componentData]) => {
+                            if (componentData.hasRenderer) {
+                                this.componentDefinitions[componentType] = componentData;
+                            }
+                        });
+                        
+                        // 为有渲染器的组件加载渲染器代码
+                        for (const [componentType, componentData] of Object.entries(this.componentDefinitions)) {
+                            if (componentData.hasRenderer && componentData.paths.render) {
+                                try {
+                                    const renderResponse = await fetch(componentData.paths.render);
+                                    if (renderResponse.ok) {
+                                        const renderCode = await renderResponse.text();
+                                        // 执行渲染器代码
+                                        try {
+                                            eval(renderCode);
+                                            // 根据组件类型获取渲染器
+                                            const rendererName = componentType.charAt(0).toUpperCase() + componentType.slice(1).replace(/-([a-z])/g, (match, letter) => letter.toUpperCase()) + 'Renderer';
+                                            if (window[rendererName]) {
+                                                this.componentRenderers[componentType] = window[rendererName];
+                                            }
+                                        } catch (renderError) {
+                                            console.warn(`Failed to load renderer for ${componentType}:`, renderError);
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.warn(`Failed to fetch renderer for ${componentType}:`, error);
+                                }
+                            }
+                        }
+                        
+                        console.log('Loaded component definitions:', Object.keys(this.componentDefinitions));
+                        console.log('Loaded component renderers:', Object.keys(this.componentRenderers));
+                    }
+                } catch (error) {
+                    console.error('Failed to load component definitions:', error);
+                }
+            }
+
+            async loadCategories() {
+                try {
+                    const response = await fetch(`${this.apiBase}/luis/categories`);
+                    
+                    // 检查HTTP状态
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.categories = result.data;
+                        console.log('分类加载成功:', this.categories);
+                    } else {
+                        console.warn('从API加载分类失败:', result.error);
+                        // 使用默认分类
+                        this.loadDefaultCategories();
+                    }
+                } catch (error) {
+                    console.error('加载分类失败:', error);
+                    // 使用默认分类
+                    this.loadDefaultCategories();
+                }
+            }
+
+            loadDefaultCategories() {
+                this.categories = {
+                    'office': '办公助手',
+                    'data': '数据分析',
+                    'design': '设计工具',
+                    'dev': '开发工具',
+                    'automation': '自动化',
+                    'finance': '金融工具'
+                };
+            }
+
+            // 加载LUI详情
+            async loadLUIDetail() {
+                try {
+                    const response = await fetch(`${this.apiBase}/luis/${this.luiId}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        this.renderLUIDetail(data.data);
+                    } else {
+                        throw new Error(data.error || 'LUI not found');
+                    }
+                } catch (error) {
+                    console.error('Error loading LUI detail:', error);
+                    throw error;
+                }
+            }
+
+            // 渲染LUI详情
+            renderLUIDetail(lui) {
+                this.currentLUI = lui; // Store the current LUI for preview modes
+                
+                // 更新基本信息
+                document.getElementById('lui-icon').innerHTML = `
+                    <span class="text-4xl">${lui.icon || '🎨'}</span>
+                `;
+                
+                document.getElementById('lui-name').textContent = lui.name;
+                document.getElementById('lui-description').textContent = lui.description;
+                document.getElementById('lui-author').textContent = `作者: ${lui.author || 'Unknown'}`;
+                document.getElementById('lui-usage').textContent = `使用: ${lui.usageCount || 0} 次`;
+                
+                // 更新版本和更新时间
+                document.getElementById('version-text').textContent = lui.version || 'v1.0.0';
+                document.getElementById('updated-text').textContent = `更新于 ${lui.lastUpdated || '未知'}`;
+                
+                // 更新分类
+                const categoryName = this.categories[lui.category] || lui.category || '默认分类';
+                document.getElementById('category-text').textContent = categoryName;
+                
+                // 渲染标签
+                this.renderTags(lui.tags || []);
+                
+                // 渲染布局信息
+                this.renderLayoutInfo(lui.layout || {});
+                
+                // 渲染布局预览
+                this.renderLayoutPreview(lui.layout || {}, lui.components || []);
+                
+                // 初始化数据预览
+                this.initializeDataPreview();
+                
+                // 渲染文档内容
+                this.renderDocumentation(lui.documentation || '暂无使用文档');
+                
+                // 显示内容，隐藏加载状态
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('detail-content').classList.remove('hidden');
+            }
+
+            // 渲染标签
+            renderTags(tags) {
+                const container = document.getElementById('tags-container');
+                if (tags.length === 0) {
+                    container.innerHTML = '<span class="tag">暂无标签</span>';
+                    return;
+                }
+
+                container.innerHTML = tags.map(tag => `
+                    <span class="tag">${tag}</span>
+                `).join('');
+            }
+
+            // 渲染布局信息
+            renderLayoutInfo(layout) {
+                const rows = layout.rows || 3;
+                const cols = layout.cols || 4;
+                const gap = layout.gridGap || 16;
+
+                document.getElementById('layout-size').textContent = `${rows}×${cols}`;
+                document.getElementById('layout-gap').textContent = `${gap}px`;
+            }
+
+            // 渲染布局预览
+            renderLayoutPreview(layout, components) {
+                const container = document.getElementById('layout-preview');
+                const rows = layout.rows || 3;
+                const cols = layout.cols || 4;
+                const gap = layout.gridGap || 8;
+                
+                // 设置网格样式
+                container.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+                container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+                container.style.gap = `${gap}px`;
+                
+                // 清空现有内容
+                container.innerHTML = '';
+
+                // 统计组件数量
+                const componentCount = Array.isArray(components) ? 
+                    components.filter(c => c && c !== null).length : 0;
+                document.getElementById('components-count').textContent = `${componentCount}个`;
+
+                // 创建网格布局映射 - 支持新的position-based组件结构
+                const cellComponentMap = {};
+                if (Array.isArray(components)) {
+                    components.forEach(component => {
+                        if (component && component !== null && component.position) {
+                            const startIndex = component.position.row * cols + component.position.col;
+                            const rowSpan = component.position.rowSpan || 1;
+                            const colSpan = component.position.colSpan || 1;
+                            
+                            for (let r = 0; r < rowSpan; r++) {
+                                for (let c = 0; c < colSpan; c++) {
+                                    const cellIndex = startIndex + r * cols + c;
+                                    cellComponentMap[cellIndex] = component;
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 生成网格单元格
+                for (let i = 0; i < rows * cols; i++) {
+                    const component = cellComponentMap[i];
+                    if (component) {
+                        const row = Math.floor(i / cols);
+                        const col = i % cols;
+                        const isMainCell = component.position.row === row && component.position.col === col;
+                        
+                        if (isMainCell) {
+                            const cell = document.createElement('div');
+                            cell.className = 'preview-component has-component';
+                            cell.style.gridRowEnd = `span ${component.position.rowSpan || 1}`;
+                            cell.style.gridColumnEnd = `span ${component.position.colSpan || 1}`;
+                            
+                            cell.innerHTML = `
+                                <span class="mr-2">${this.getComponentIcon(component.type)}</span>
+                                <span class="text-xs">${this.getComponentName(component.type)}</span>
+                            `;
+                            cell.title = `${this.getComponentName(component.type)} - ${component.id || ''}`;
+                            container.appendChild(cell);
+                        }
+                        // 跨度单元格不需要创建额外元素
+                    } else {
+                        const cell = document.createElement('div');
+                        cell.className = 'preview-component';
+                        cell.textContent = `${i + 1}`;
+                        cell.title = '空位置';
+                        container.appendChild(cell);
+                    }
+                }
+            }
+
+            // 获取组件图标
+            getComponentIcon(type) {
+                const icons = {
+                    'title': '📄',
+                    'image': '🖼️',
+                    'paragraph': '📝',
+                    'button': '🔘',
+                    'chart': '📊',
+                    'table': '📋',
+                    'title-content': '📄',
+                    'line-chart': '📈',
+                    'bar-chart': '📊',
+                    'pie-chart': '🥧',
+                    'gauge-chart': '⏲️'
+                };
+                return icons[type] || '📦';
+            }
+
+            // 获取组件名称
+            getComponentName(type) {
+                const names = {
+                    'title': '标题',
+                    'image': '图片',
+                    'paragraph': '段落',
+                    'button': '按钮',
+                    'chart': '图表',
+                    'table': '表格',
+                    'title-content': '标题+内容',
+                    'line-chart': '折线图',
+                    'bar-chart': '柱状图',
+                    'pie-chart': '饼图',
+                    'gauge-chart': '仪表盘'
+                };
+                return names[type] || '组件';
+            }
+
+            // 初始化数据预览
+            initializeDataPreview() {
+                if (!this.currentLUI) return;
+                
+                // 生成示例数据
+                const sampleData = this.generatePreviewData();
+                const jsonEditor = document.getElementById('preview-json-data');
+                if (jsonEditor) {
+                    jsonEditor.value = JSON.stringify(sampleData, null, 2);
+                }
+            }
+
+            // 生成预览数据
+            generatePreviewData() {
+                if (!this.currentLUI || !this.currentLUI.components) return {};
+                
+                const variables = {};
+                this.currentLUI.components.forEach(component => {
+                    if (component && component.variables) {
+                        component.variables.forEach(varName => {
+                            // 清理变量名，移除可能的花括号
+                            const cleanVarName = varName.replace(/^\\{\\{|\\}\\}$/g, '');
+                            if (!variables[cleanVarName]) {
+                                // 根据变量名生成合适的示例数据
+                                if (cleanVarName.includes('title') || cleanVarName.includes('name')) {
+                                    variables[cleanVarName] = '示例标题';
+                                } else if (cleanVarName.includes('content') || cleanVarName.includes('text')) {
+                                    variables[cleanVarName] = '这是示例内容文本';
+                                } else if (cleanVarName.includes('url') || cleanVarName.includes('image')) {
+                                    variables[cleanVarName] = '/console/img/agreeLogo.png';
+                                } else if (cleanVarName.includes('data')) {
+                                    variables[cleanVarName] = '[1, 2, 3, 4, 5]';
+                                } else if (cleanVarName.includes('action')) {
+                                    variables[cleanVarName] = 'alert("按钮被点击了！")';
+                                } else if (cleanVarName.includes('count')) {
+                                    variables[cleanVarName] = '5';
+                                } else {
+                                    variables[cleanVarName] = '示例数据';
+                                }
+                            }
+                        });
+                    }
+                });
+                return variables;
+            }
+
+            // 切换预览模式
+            togglePreviewMode() {
+                const layoutMode = document.getElementById('layout-preview-mode');
+                const dataMode = document.getElementById('data-preview-mode');
+                const toggleBtn = document.getElementById('toggle-preview-mode');
+                
+                if (this.previewMode === 'layout') {
+                    // 切换到数据预览模式
+                    layoutMode.classList.add('hidden');
+                    dataMode.classList.remove('hidden');
+                    toggleBtn.textContent = '切换到布局预览';
+                    this.previewMode = 'data';
+                    this.updateDataPreview();
+                } else {
+                    // 切换到布局预览模式
+                    dataMode.classList.add('hidden');
+                    layoutMode.classList.remove('hidden');
+                    toggleBtn.textContent = '切换到数据预览';
+                    this.previewMode = 'layout';
+                }
+            }
+
+            // 更新数据预览
+            updateDataPreview() {
+                if (!this.currentLUI) return;
+                
+                const jsonData = document.getElementById('preview-json-data').value;
+                const previewDisplay = document.getElementById('data-preview-display');
+                
+                try {
+                    const data = JSON.parse(jsonData);
+                    
+                    // 创建网格布局容器
+                    const layout = this.currentLUI.layout || {};
+                    const rows = layout.rows || 3;
+                    const cols = layout.cols || 4;
+                    const gap = layout.gridGap || 8;
+                    
+                    const gridStyle = `
+                        display: grid;
+                        grid-template-rows: repeat(${rows}, 1fr);
+                        grid-template-columns: repeat(${cols}, 1fr);
+                        gap: ${gap}px;
+                        min-height: 400px;
+                    `;
+                    
+                    let previewHtml = `<div class="data-preview-grid" style="${gridStyle}">`;
+                    
+                    // 创建网格布局映射
+                    const cellComponentMap = {};
+                    const components = this.currentLUI.components || [];
+                    components.forEach(component => {
+                        if (component && component.position) {
+                            const startIndex = component.position.row * cols + component.position.col;
+                            const rowSpan = component.position.rowSpan || 1;
+                            const colSpan = component.position.colSpan || 1;
+                            
+                            for (let r = 0; r < rowSpan; r++) {
+                                for (let c = 0; c < colSpan; c++) {
+                                    const cellIndex = startIndex + r * cols + c;
+                                    cellComponentMap[cellIndex] = component;
+                                }
+                            }
+                        }
+                    });
+                    
+                    // 生成网格单元格
+                    for (let i = 0; i < rows * cols; i++) {
+                        const component = cellComponentMap[i];
+                        if (component) {
+                            const row = Math.floor(i / cols);
+                            const col = i % cols;
+                            const isMainCell = component.position.row === row && component.position.col === col;
+                            
+                            if (isMainCell) {
+                                const renderedContent = this.renderComponentPreview(component, data);
+                                previewHtml += `
+                                    <div class="data-preview-cell" style="
+                                        grid-row-end: span ${component.position.rowSpan || 1};
+                                        grid-column-end: span ${component.position.colSpan || 1};
+                                    ">
+                                        ${renderedContent}
+                                    </div>
+                                `;
+                            }
+                        } else {
+                            previewHtml += `
+                                <div class="data-preview-cell" style="
+                                    background: #f1f5f9;
+                                    border: 1px dashed #cbd5e0;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    color: #94a3b8;
+                                    font-size: 12px;
+                                ">${i + 1}</div>
+                            `;
+                        }
+                    }
+                    
+                    previewHtml += `</div>`;
+                    previewDisplay.innerHTML = previewHtml;
+                    
+                } catch (error) {
+                    previewDisplay.innerHTML = `<div class="text-center text-red-600 py-8"><div class="text-4xl mb-2">❌</div><p>JSON格式错误: ${error.message}</p></div>`;
+                }
+            }
+
+            // 渲染组件预览
+            renderComponentPreview(component, data) {
+                const { type, content } = component;
+                
+                // 将content转换为properties格式
+                const properties = content || {};
+                
+                // 处理变量替换
+                const processedProps = {};
+                Object.entries(properties).forEach(([key, value]) => {
+                    if (typeof value === 'string') {
+                        processedProps[key] = value.replace(/\\{\\{([^}]+)\\}\\}/g, (match, varName) => {
+                            return data[varName] !== undefined ? data[varName] : match;
+                        });
+                    } else {
+                        processedProps[key] = value;
+                    }
+                });
+                
+                // 如果有专用的渲染器，使用渲染器
+                if (this.componentRenderers[type] && this.componentRenderers[type].render) {
+                    try {
+                        const renderedContent = this.componentRenderers[type].render(data, processedProps);
+                        return `<div style="padding: 16px; height: 100%;">${renderedContent}</div>`;
+                    } catch (error) {
+                        console.warn(`Renderer error for ${type}:`, error);
+                        // 降级到默认渲染
+                    }
+                }
+                
+                // 降级到默认渲染逻辑
+                const componentName = this.getComponentName(type);
+                
+                switch (type) {
+                    case 'title-content':
+                        return `
+                            <div style="padding: 16px; height: 100%;">
+                                <h3 style="${processedProps.titleStyle || 'font-size: 18px; font-weight: bold; margin: 0 0 8px 0; color: #1a202c;'}">${processedProps.title || '标题'}</h3>
+                                <div style="${processedProps.contentStyle || 'font-size: 14px; line-height: 1.5; color: #4a5568;'}">${processedProps.content || '内容'}</div>
+                            </div>
+                        `;
+                    case 'title':
+                        return `
+                            <div style="padding: 16px; height: 100%;">
+                                <h3 style="${processedProps.titleStyle || 'font-size: 18px; font-weight: bold; margin: 0; color: #1a202c;'}">${processedProps.title || '标题'}</h3>
+                            </div>
+                        `;
+                    case 'image':
+                        return `
+                            <div style="padding: 16px; height: 100%; display: flex; align-items: center; justify-content: center;">
+                                <img src="${processedProps.url || '/console/img/agreeLogo.png'}" 
+                                     alt="${processedProps.alt || '图片'}" 
+                                     style="max-width: 100%; max-height: 100%; object-fit: ${processedProps.objectFit || 'cover'}; border-radius: ${processedProps.borderRadius || '4px'};" />
+                            </div>
+                        `;
+                    case 'paragraph':
+                        return `
+                            <div style="padding: 16px; height: 100%;">
+                                <p style="font-size: ${processedProps.fontSize || '14px'}; line-height: ${processedProps.lineHeight || '1.6'}; color: ${processedProps.color || '#1a202c'}; text-align: ${processedProps.textAlign || 'left'}; margin: 0;">${processedProps.text || '段落内容'}</p>
+                            </div>
+                        `;
+                    case 'button':
+                        const buttonStyle = `
+                            padding: 8px 16px;
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-weight: 500;
+                            background: ${processedProps.type === 'primary' ? '#2970FF' : '#f5f7fa'};
+                            color: ${processedProps.type === 'primary' ? 'white' : '#1a202c'};
+                        `;
+                        const iconHtml = processedProps.icon ? `${processedProps.icon} ` : '';
+                        return `
+                            <div style="padding: 16px; height: 100%; display: flex; align-items: center; justify-content: center;">
+                                <button style="${buttonStyle}">
+                                    ${iconHtml}${processedProps.text || '按钮'}
+                                </button>
+                            </div>
+                        `;
+                    default:
+                        return `
+                            <div style="padding: 16px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                                <div style="font-size: 24px; margin-bottom: 8px;">${this.getComponentIcon(type)}</div>
+                                <p style="color: #64748b; font-size: 12px; margin: 0;">${componentName} 组件</p>
+                            </div>
+                        `;
+                }
+            }
+
+            // 渲染文档内容
+            renderDocumentation(documentation) {
+                const container = document.getElementById('documentation-content');
+                
+                if (!documentation || documentation.trim() === '') {
+                    container.innerHTML = '<p class="text-white/60 italic">暂无使用文档</p>';
+                    return;
+                }
+                
+                // 简单的Markdown渲染
+                let html = documentation
+                    .replace(/### (.*?)\n/g, '<h3>$1</h3>\n')
+                    .replace(/## (.*?)\n/g, '<h2>$1</h2>\n')
+                    .replace(/# (.*?)\n/g, '<h1>$1</h1>\n')
+                    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+                    .replace(/`([^`]+)`/g, '<code>$1</code>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n- (.*?)(?=\n|$)/g, '</p><ul><li>$1</li></ul><p>')
+                    .replace(/<\/ul><p><ul>/g, '')
+                    .replace(/^\s*/, '<p>')
+                    .replace(/\s*$/, '</p>');
+                
+                container.innerHTML = html;
+            }
+
+            // 显示错误状态
+            showError() {
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('detail-content').classList.add('hidden');
+                document.getElementById('error-state').classList.remove('hidden');
+            }
+        }
+
+        // 页面加载完成后初始化
+        let luiPreview;
+        document.addEventListener('DOMContentLoaded', function() {
+            luiPreview = new LUIPreview();
+        });
+    </script>
+</body>
+</html>
