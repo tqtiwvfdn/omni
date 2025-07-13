@@ -756,17 +756,41 @@
                 this.currentTemplate = template;
                 this.updateTitle(`编辑 - ${template.name}`);
                 
-                // 填充表单
+                // 填充表单，格式化显示内容
                 document.getElementById('template-name').value = template.name || '';
                 document.getElementById('template-category').value = template.category || 'office';
                 document.getElementById('template-author').value = template.author || '';
                 document.getElementById('template-version').value = template.version || '';
-                document.getElementById('prompt-content').value = template.content || '';
+                document.getElementById('prompt-content').value = this.formatContentForDisplay(template.content || '');
                 
                 this.updateCharCount();
                 
                 // 保存初始状态到历史记录
                 this.saveToHistory('加载模板', false);
+            }
+            
+            // 格式化内容用于显示 - 将转义字符转换为实际字符
+            formatContentForDisplay(content) {
+                if (!content) return '';
+                return content
+                    .replace(/\\n/g, '\n')        // 转义的换行符转为实际换行符
+                    .replace(/\\t/g, '\t')        // 转义的制表符转为实际制表符  
+                    .replace(/\\r/g, '\r')        // 转义的回车符转为实际回车符
+                    .replace(/\\"/g, '"')         // 转义的双引号转为实际双引号
+                    .replace(/\\'/g, "'")         // 转义的单引号转为实际单引号
+                    .replace(/\\\\/g, '\\');      // 转义的反斜杠转为实际反斜杠
+            }
+            
+            // 格式化内容用于保存 - 将特殊字符转换为JSON安全的格式
+            formatContentForStorage(content) {
+                if (!content) return '';
+                return content
+                    .replace(/\\/g, '\\\\')       // 反斜杠转为转义反斜杠
+                    .replace(/\n/g, '\\n')        // 换行符转为转义换行符
+                    .replace(/\t/g, '\\t')        // 制表符转为转义制表符
+                    .replace(/\r/g, '\\r')        // 回车符转为转义回车符
+                    .replace(/"/g, '\\"')         // 双引号转为转义双引号
+                    .replace(/'/g, "\\'");        // 单引号转为转义单引号
             }
             
             updateTitle(title) {
@@ -1745,7 +1769,7 @@ ${content}
                     description: formData.description || '提示词模板',
                     author: formData.author || 'User',
                     version: formData.version || '1.0.0',
-                    content: formData.content,
+                    content: formData.content, // 内容直接传输，不需要额外转义（API会处理）
                     variables: this.extractVariables(formData.content).map(name => ({
                         name,
                         description: `变量: ${name}`,
