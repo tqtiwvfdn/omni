@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>提示词模板编辑器 - 智言银行后台管理端</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --liquid-glass-bg: rgba(255, 255, 255, 0.1);
+            --liquid-glass-border: rgba(255, 255, 255, 0.2);
+            --liquid-glass-strong: rgba(255, 255, 255, 0.15);
+            --liquid-glass-subtle: rgba(255, 255, 255, 0.05);
+            --liquid-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --liquid-text-primary: rgba(255, 255, 255, 0.9);
+            --liquid-text-secondary: rgba(0, 0, 0, 0.7);
+            --liquid-text-tertiary: rgba(255, 255, 255, 0.5);
+            
+            /* Editor specific colors */
+            --editor-bg: rgba(255, 255, 255, 0.05);
+            --editor-panel-bg: rgba(255, 255, 255, 0.08);
+            --editor-border: rgba(255, 255, 255, 0.15);
+            --editor-text: rgba(255, 255, 255, 0.95);
+            --editor-text-muted: rgba(255, 255, 255, 0.7);
+        }
+
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: var(--liquid-text-primary);
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 编辑器布局 */
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        /* 顶部工具栏 */
+        .editor-header {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+        }
+
+        /* 左侧编辑区域 */
+        .editor-main {
+            background: var(--editor-panel-bg);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--editor-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin: 4px 0 4px 4px;
+            border-radius: 12px 0 0 12px;
+        }
+
+        /* 右侧预览区域 */
+        .editor-preview {
+            background: var(--editor-panel-bg);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin: 4px 4px 4px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        /* 左侧工具栏 */
+        .editor-toolbar {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--editor-border);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        /* 工具栏按钮精简样式 */
+        .toolbar-btn {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--liquid-glass-border);
+            background: var(--liquid-glass-bg);
+            color: var(--editor-text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .toolbar-btn:hover {
+            background: var(--liquid-glass-strong);
+            border-color: var(--dify-primary);
+        }
+        
+        .toolbar-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .toolbar-btn.btn-purple:not(:disabled) {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+        
+        .toolbar-btn.btn-purple:hover:not(:disabled) {
+            background: rgba(139, 92, 246, 0.2);
+        }
+        
+        /* Tooltip 样式 */
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 1000;
+            margin-bottom: 5px;
+        }
+        
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.9);
+        }
+        
+        .toolbar-btn:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* 分隔线样式 */
+        .toolbar-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--editor-border);
+            margin: 0 4px;
+        }
+
+        /* 编辑区域 */
+        .editor-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 20px;
+            gap: 16px;
+        }
+
+        .global-settings {
+            background: var(--liquid-glass-subtle);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .prompt-editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--liquid-glass-subtle);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .prompt-editor-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--liquid-glass-border);
+            background: var(--liquid-glass-bg);
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .prompt-editor {
+            flex: 1;
+            padding: 16px;
+            background: transparent;
+            border: none;
+            color: var(--editor-text);
+            font-size: 14px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+
+        .prompt-editor::placeholder {
+            color: var(--liquid-text-tertiary);
+        }
+
+        /* 表单样式 */
+        .form-label {
+            display: block;
+            color: var(--editor-text);
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--liquid-glass-bg);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 6px;
+            color: var(--editor-text);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--dify-primary);
+            background: var(--liquid-glass-strong);
+        }
+
+        .form-input::placeholder {
+            color: var(--liquid-text-tertiary);
+        }
+
+        /* 按钮样式 */
+        .dify-btn {
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            padding: 6px 12px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: var(--dify-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e5bff;
+        }
+
+        .btn-secondary {
+            background: var(--liquid-glass-bg);
+            color: var(--editor-text);
+            border: 1px solid var(--liquid-glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--liquid-glass-strong);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-purple {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-purple:hover {
+            background: #7c3aed;
+        }
+
+        /* Chat预览样式 */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--liquid-glass-subtle);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 8px;
+            margin: 20px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--liquid-glass-border);
+            background: var(--liquid-glass-bg);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-input-container {
+            padding: 16px;
+            border-top: 1px solid var(--liquid-glass-border);
+            background: var(--liquid-glass-bg);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 8px 12px;
+            background: var(--liquid-glass-subtle);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 6px;
+            color: var(--editor-text);
+            font-size: 14px;
+            resize: none;
+            min-height: 36px;
+            max-height: 120px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--dify-primary);
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+        }
+
+        .chat-message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .chat-message.assistant {
+            align-self: flex-start;
+        }
+
+        .chat-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+
+        .chat-avatar.user {
+            background: var(--dify-primary);
+            color: white;
+        }
+
+        .chat-avatar.assistant {
+            background: var(--liquid-glass-bg);
+            color: var(--editor-text);
+        }
+
+        .chat-bubble {
+            background: var(--liquid-glass-bg);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--editor-text);
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .chat-message.user .chat-bubble {
+            background: var(--dify-primary);
+            color: white;
+            border-color: var(--dify-primary);
+        }
+
+        .chat-message.assistant .chat-bubble {
+            background: var(--liquid-glass-subtle);
+        }
+
+        /* 变量高亮 */
+        .variable-highlight {
+            background: rgba(41, 112, 255, 0.2);
+            color: #60a5fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        /* 加载动画 */
+        .loading-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .loading-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--liquid-text-tertiary);
+            animation: loadingDot 1.4s infinite ease-in-out;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+        .loading-dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes loadingDot {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--liquid-glass-border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--liquid-glass-strong);
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .editor-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 1fr 300px;
+            }
+            
+            .editor-main {
+                margin: 4px 4px 0 4px;
+                border-radius: 12px 12px 0 0;
+            }
+            
+            .editor-preview {
+                margin: 0 4px 4px 4px;
+                border-radius: 0 0 12px 12px;
+                border-top: 1px solid var(--editor-border);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-layout">
+        <!-- 顶部工具栏 -->
+        <div class="editor-header">
+            <div class="flex items-center space-x-3">
+                <button class="dify-btn btn-secondary" onclick="returnToTemplates()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    返回列表
+                </button>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="text-xl">🎯</span>
+                <span id="editor-title" class="text-lg font-semibold">提示词模板编辑器</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="dify-btn btn-success" onclick="saveTemplate()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    保存
+                </button>
+            </div>
+        </div>
+
+        <!-- 左侧编辑区域 -->
+        <div class="editor-main">
+            <!-- 工具栏 -->
+            <div class="editor-toolbar">
+                <button class="toolbar-btn btn-purple" onclick="optimizePrompt('clarity')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <div class="tooltip">优化清晰度</div>
+                </button>
+                <button class="toolbar-btn btn-purple" onclick="optimizePrompt('structure')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                    </svg>
+                    <div class="tooltip">优化结构</div>
+                </button>
+                <button class="toolbar-btn btn-purple" onclick="optimizePrompt('examples')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    <div class="tooltip">改进示例</div>
+                </button>
+                
+                <div class="toolbar-divider"></div>
+                
+                <button class="toolbar-btn" onclick="editor.undo()" id="undo-btn" disabled>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                    </svg>
+                    <div class="tooltip">撤销 (Ctrl+Z)</div>
+                </button>
+                <button class="toolbar-btn" onclick="editor.redo()" id="redo-btn" disabled>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6"></path>
+                    </svg>
+                    <div class="tooltip">重做 (Ctrl+Y)</div>
+                </button>
+                
+                <div class="toolbar-divider"></div>
+                
+                <button class="toolbar-btn" onclick="insertVariable()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM7 3H5a2 2 0 00-2 2v12a4 4 0 004 4h2"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 3h2a2 2 0 012 2v12a4 4 0 01-4 4h-2"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 21a4 4 0 004-4V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4z"></path>
+                    </svg>
+                    <div class="tooltip">插入变量</div>
+                </button>
+                <button class="toolbar-btn" onclick="formatPrompt()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                    </svg>
+                    <div class="tooltip">格式化</div>
+                </button>
+                <button class="toolbar-btn" onclick="editor.showDebugComparison()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="tooltip">调试对比</div>
+                </button>
+            </div>
+
+            <!-- 编辑内容 -->
+            <div class="editor-content">
+                <!-- 全局设置 -->
+                <div class="global-settings">
+                    <h3 class="text-sm font-semibold text-white mb-3">全局设置</h3>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="form-label">模板名称 *</label>
+                            <input type="text" id="template-name" class="form-input" placeholder="请输入模板名称" required>
+                        </div>
+                        <div>
+                            <label class="form-label">分类</label>
+                            <select id="template-category" class="form-input">
+                                <option value="office">办公助手</option>
+                                <option value="banking">银行业务</option>
+                                <option value="service">客服场景</option>
+                                <option value="marketing">营销场景</option>
+                                <option value="risk">风险控制</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="form-label">作者</label>
+                            <input type="text" id="template-author" class="form-input" placeholder="作者名称">
+                        </div>
+                        <div>
+                            <label class="form-label">版本</label>
+                            <input type="text" id="template-version" class="form-input" placeholder="v1.0.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 提示词编辑器 -->
+                <div class="prompt-editor-container">
+                    <div class="prompt-editor-header">
+                        <h3 class="text-sm font-semibold text-white">提示词内容</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400" id="char-count">0 字符</span>
+                            <button class="dify-btn btn-secondary text-xs" onclick="toggleFullscreen()">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="prompt-content" class="prompt-editor" placeholder="请输入提示词内容...
+
+使用 {{variable_name}} 格式定义变量，例如：
+- {{user_name}} - 用户名称
+- {{query_content}} - 查询内容
+- {{current_date}} - 当前日期
+
+提示词编写技巧：
+1. 明确角色定义：你是一个专业的...
+2. 具体任务描述：请根据...进行...
+3. 输出格式要求：请以...格式输出
+4. 示例说明：例如..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧预览区域 -->
+        <div class="editor-preview">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-white">提示词调试</h3>
+                        <button class="dify-btn btn-secondary text-xs" onclick="clearChat()">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            清空
+                        </button>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-2">在这里测试您的提示词效果</div>
+                </div>
+
+                <div class="chat-messages" id="chat-messages">
+                    <div class="chat-message assistant">
+                        <div class="chat-avatar assistant">🤖</div>
+                        <div class="chat-bubble">
+                            <div class="text-sm text-gray-400 mb-2">系统提示</div>
+                            <div>你好！我是提示词调试助手。请在下方输入消息来测试您的提示词效果。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <textarea id="chat-input" class="chat-input" placeholder="输入测试消息..." rows="1"></textarea>
+                        <button class="dify-btn btn-primary" onclick="sendMessage()">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PromptTemplateEditor {
+            constructor() {
+                this.templateId = this.getTemplateIdFromURL();
+                this.isEditMode = !!this.templateId;
+                this.currentTemplate = null;
+                this.templates = {};
+                this.chatHistory = [];
+                this.aiApiBase = '/raw-ai';
+                this.defaultModel = 'Qwen3-32B';
+                
+                // Undo/Redo functionality
+                this.history = [];
+                this.currentHistoryIndex = -1;
+                this.maxHistorySize = 50;
+                
+                // Debug before/after comparison
+                this.debugHistory = [];
+                
+                this.init();
+            }
+            
+            getTemplateIdFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('id');
+            }
+            
+            async init() {
+                await this.loadTemplates();
+                this.setupEventListeners();
+                
+                if (this.isEditMode) {
+                    await this.loadTemplate();
+                } else {
+                    this.updateTitle('新建提示词模板');
+                    // 为新模板保存初始状态到历史记录
+                    this.saveToHistory('新建模板', false);
+                }
+                
+                this.updateCharCount();
+                this.updateUndoRedoButtons();
+            }
+            
+            async loadTemplates() {
+                try {
+                    const response = await fetch('/omni-api/prompt-templates');
+                    const result = await response.json();
+                    if (result.success) {
+                        // 转换数组格式为对象格式以兼容现有代码
+                        this.templates = {};
+                        result.data.forEach(template => {
+                            this.templates[template.id] = template;
+                        });
+                    } else {
+                        throw new Error(result.error || '加载模板失败');
+                    }
+                } catch (error) {
+                    console.error('加载模板失败:', error);
+                    this.templates = {};
+                }
+            }
+            
+            async loadTemplate() {
+                if (!this.templateId || !this.templates[this.templateId]) {
+                    this.showMessage('模板不存在', 'error');
+                    return;
+                }
+                
+                const template = this.templates[this.templateId];
+                this.currentTemplate = template;
+                this.updateTitle(`编辑 - ${template.name}`);
+                
+                // 填充表单
+                document.getElementById('template-name').value = template.name || '';
+                document.getElementById('template-category').value = template.category || 'office';
+                document.getElementById('template-author').value = template.author || '';
+                document.getElementById('template-version').value = template.version || '';
+                document.getElementById('prompt-content').value = template.content || '';
+                
+                this.updateCharCount();
+                
+                // 保存初始状态到历史记录
+                this.saveToHistory('加载模板', false);
+            }
+            
+            updateTitle(title) {
+                document.getElementById('editor-title').textContent = title;
+            }
+            
+            setupEventListeners() {
+                // 内容变化时更新字符统计和历史记录
+                const promptEditor = document.getElementById('prompt-content');
+                let inputTimeout;
+                promptEditor.addEventListener('input', () => {
+                    this.updateCharCount();
+                    this.saveToLocalStorage();
+                    
+                    // 防抖保存历史记录
+                    clearTimeout(inputTimeout);
+                    inputTimeout = setTimeout(() => {
+                        this.saveToHistory('编辑内容');
+                    }, 1000);
+                });
+                
+                // 键盘快捷键
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.undo();
+                    } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                        e.preventDefault();
+                        this.redo();
+                    }
+                });
+                
+                // 聊天输入框回车发送
+                const chatInput = document.getElementById('chat-input');
+                chatInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                // 自适应高度
+                chatInput.addEventListener('input', () => {
+                    chatInput.style.height = 'auto';
+                    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+                });
+                
+                // 表单变化时自动保存到本地存储
+                const formInputs = document.querySelectorAll('input, textarea, select');
+                formInputs.forEach(input => {
+                    if (input.id !== 'chat-input') {
+                        input.addEventListener('input', () => {
+                            this.saveToLocalStorage();
+                        });
+                    }
+                });
+            }
+            
+            updateCharCount() {
+                const content = document.getElementById('prompt-content').value;
+                const charCount = content.length;
+                document.getElementById('char-count').textContent = `${charCount} 字符`;
+            }
+            
+            // Undo/Redo functionality
+            saveToHistory(action = '编辑', skipIfSame = true) {
+                const currentState = this.getCurrentEditorState();
+                
+                // 跳过相同的状态
+                if (skipIfSame && this.history.length > 0) {
+                    const lastState = this.history[this.currentHistoryIndex];
+                    if (lastState && JSON.stringify(lastState.state) === JSON.stringify(currentState)) {
+                        return;
+                    }
+                }
+                
+                // 如果当前不在历史记录的末尾，删除之后的记录
+                if (this.currentHistoryIndex < this.history.length - 1) {
+                    this.history = this.history.slice(0, this.currentHistoryIndex + 1);
+                }
+                
+                // 添加新状态
+                this.history.push({
+                    state: currentState,
+                    action: action,
+                    timestamp: Date.now()
+                });
+                
+                // 限制历史记录大小
+                if (this.history.length > this.maxHistorySize) {
+                    this.history.shift();
+                } else {
+                    this.currentHistoryIndex++;
+                }
+                
+                this.updateUndoRedoButtons();
+            }
+            
+            getCurrentEditorState() {
+                return {
+                    name: document.getElementById('template-name').value,
+                    category: document.getElementById('template-category').value,
+                    author: document.getElementById('template-author').value,
+                    version: document.getElementById('template-version').value,
+                    content: document.getElementById('prompt-content').value
+                };
+            }
+            
+            restoreEditorState(state) {
+                document.getElementById('template-name').value = state.name || '';
+                document.getElementById('template-category').value = state.category || 'office';
+                document.getElementById('template-author').value = state.author || '';
+                document.getElementById('template-version').value = state.version || '';
+                document.getElementById('prompt-content').value = state.content || '';
+                this.updateCharCount();
+            }
+            
+            undo() {
+                if (this.currentHistoryIndex > 0) {
+                    this.currentHistoryIndex--;
+                    const previousState = this.history[this.currentHistoryIndex];
+                    this.restoreEditorState(previousState.state);
+                    this.updateUndoRedoButtons();
+                    this.showMessage(`撤销: ${previousState.action}`, 'info');
+                }
+            }
+            
+            redo() {
+                if (this.currentHistoryIndex < this.history.length - 1) {
+                    this.currentHistoryIndex++;
+                    const nextState = this.history[this.currentHistoryIndex];
+                    this.restoreEditorState(nextState.state);
+                    this.updateUndoRedoButtons();
+                    this.showMessage(`重做: ${nextState.action}`, 'info');
+                }
+            }
+            
+            updateUndoRedoButtons() {
+                const undoBtn = document.getElementById('undo-btn');
+                const redoBtn = document.getElementById('redo-btn');
+                
+                if (undoBtn) {
+                    undoBtn.disabled = this.currentHistoryIndex <= 0;
+                }
+                
+                if (redoBtn) {
+                    redoBtn.disabled = this.currentHistoryIndex >= this.history.length - 1;
+                }
+            }
+            
+            async sendMessage() {
+                const chatInput = document.getElementById('chat-input');
+                const message = chatInput.value.trim();
+                
+                if (!message) return;
+                
+                // 保存调试前的状态
+                const beforeDebug = {
+                    prompt: document.getElementById('prompt-content').value,
+                    userInput: message,
+                    timestamp: Date.now()
+                };
+                
+                // 添加用户消息
+                this.addChatMessage('user', message);
+                chatInput.value = '';
+                chatInput.style.height = 'auto';
+                
+                // 获取当前提示词
+                const promptContent = document.getElementById('prompt-content').value;
+                
+                if (!promptContent.trim()) {
+                    this.addChatMessage('assistant', '请先在左侧编辑区域输入提示词内容。');
+                    return;
+                }
+                
+                // 显示加载状态
+                const loadingId = this.addChatMessage('assistant', '', true);
+                
+                try {
+                    // 调用AI API
+                    const response = await this.callAI(promptContent, message);
+                    this.removeChatMessage(loadingId);
+                    this.addChatMessage('assistant', response);
+                    
+                    // 保存调试后的结果
+                    const afterDebug = {
+                        prompt: promptContent,
+                        userInput: message,
+                        aiResponse: response,
+                        timestamp: Date.now()
+                    };
+                    
+                    // 添加到调试历史
+                    this.debugHistory.push({
+                        before: beforeDebug,
+                        after: afterDebug
+                    });
+                    
+                    // 限制调试历史记录
+                    if (this.debugHistory.length > 20) {
+                        this.debugHistory.shift();
+                    }
+                    
+                } catch (error) {
+                    this.removeChatMessage(loadingId);
+                    this.addChatMessage('assistant', '抱歉，调用AI时出现错误：' + error.message);
+                }
+            }
+            
+            // 显示调试对比
+            showDebugComparison() {
+                if (this.debugHistory.length === 0) {
+                    this.showMessage('暂无调试历史记录', 'warning');
+                    return;
+                }
+                
+                // 创建调试对比弹窗
+                const dialog = document.createElement('div');
+                dialog.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex items-center justify-center';
+                dialog.innerHTML = `
+                    <div class="bg-[#505050] backdrop-blur-sm border border-white/20 rounded-lg p-6 max-w-6xl mx-4 w-full max-h-[90vh] overflow-hidden flex flex-col">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-medium text-white">调试历史对比</h3>
+                            <button class="close-btn p-2 text-white/60 hover:text-white rounded-lg">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="flex flex-col flex-1 overflow-hidden">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-4">
+                                    <label class="text-white/80 text-sm">选择调试记录:</label>
+                                    <select id="debug-record-select" class="px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white">
+                                        ${this.debugHistory.map((record, index) => `
+                                            <option value="${index}">
+                                                #${index + 1} - ${new Date(record.after.timestamp).toLocaleString()}
+                                            </option>
+                                        `).reverse().join('')}
+                                    </select>
+                                </div>
+                                <div class="text-sm text-white/60">
+                                    共 ${this.debugHistory.length} 条记录
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 overflow-hidden">
+                                <!-- 调试前 -->
+                                <div class="flex flex-col overflow-hidden">
+                                    <h4 class="text-lg font-medium text-white mb-3">调试前</h4>
+                                    <div class="space-y-4 flex-1 overflow-hidden">
+                                        <div>
+                                            <label class="block text-sm font-medium text-white/80 mb-2">提示词内容</label>
+                                            <div id="before-prompt" class="bg-black/20 rounded-lg p-3 text-white text-sm font-mono h-48 overflow-y-auto border border-white/10"></div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-white/80 mb-2">用户输入</label>
+                                            <div id="before-input" class="bg-black/20 rounded-lg p-3 text-white text-sm h-20 overflow-y-auto border border-white/10"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 调试后 -->
+                                <div class="flex flex-col overflow-hidden">
+                                    <h4 class="text-lg font-medium text-white mb-3">调试后</h4>
+                                    <div class="space-y-4 flex-1 overflow-hidden">
+                                        <div>
+                                            <label class="block text-sm font-medium text-white/80 mb-2">提示词内容</label>
+                                            <div id="after-prompt" class="bg-black/20 rounded-lg p-3 text-white text-sm font-mono h-48 overflow-y-auto border border-white/10"></div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-white/80 mb-2">AI回复</label>
+                                            <div id="after-response" class="bg-black/20 rounded-lg p-3 text-white text-sm h-20 overflow-y-auto border border-white/10"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-white/10">
+                            <button class="clear-history-btn px-4 py-2 text-red-400 hover:text-red-300 transition-colors">清空历史</button>
+                            <button class="close-btn px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">关闭</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(dialog);
+                
+                // 显示第一条记录
+                this.displayDebugRecord(dialog, this.debugHistory.length - 1);
+                
+                // 事件处理
+                const closeBtn = dialog.querySelector('.close-btn');
+                const clearBtn = dialog.querySelector('.clear-history-btn');
+                const selectEl = dialog.querySelector('#debug-record-select');
+                
+                closeBtn.addEventListener('click', () => dialog.remove());
+                
+                clearBtn.addEventListener('click', () => {
+                    if (confirm('确定要清空所有调试历史记录吗？')) {
+                        this.debugHistory = [];
+                        dialog.remove();
+                        this.showMessage('调试历史已清空', 'success');
+                    }
+                });
+                
+                selectEl.addEventListener('change', (e) => {
+                    const index = parseInt(e.target.value);
+                    this.displayDebugRecord(dialog, index);
+                });
+            }
+            
+            displayDebugRecord(dialog, index) {
+                if (index < 0 || index >= this.debugHistory.length) return;
+                
+                const record = this.debugHistory[index];
+                
+                dialog.querySelector('#before-prompt').textContent = record.before.prompt || '无提示词内容';
+                dialog.querySelector('#before-input').textContent = record.before.userInput || '无用户输入';
+                dialog.querySelector('#after-prompt').textContent = record.after.prompt || '无提示词内容';
+                dialog.querySelector('#after-response').textContent = record.after.aiResponse || '无AI回复';
+            }
+            
+            async callAI(prompt, userMessage) {
+                try {
+                    // 处理变量替换
+                    let processedPrompt = prompt;
+                    const variables = this.extractVariables(prompt);
+                    
+                    // 简单的变量替换
+                    variables.forEach(variable => {
+                        const placeholder = `{{${variable}}}`;
+                        if (processedPrompt.includes(placeholder)) {
+                            processedPrompt = processedPrompt.replace(new RegExp(placeholder, 'g'), this.getVariableValue(variable, userMessage));
+                        }
+                    });
+                    
+                    const messages = [
+                        {
+                            role: 'system',
+                            content: processedPrompt
+                        },
+                        {
+                            role: 'user',
+                            content: userMessage
+                        }
+                    ];
+
+                    const response = await fetch(`${this.aiApiBase}/v1/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: this.defaultModel,
+                            messages: messages,
+                            stream: false,
+                            temperature: 0.7,
+                            max_tokens: 1000,
+                            top_p: 0.95,
+                            "chat_template_kwargs": { "enable_thinking": false }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API请求失败: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.choices && result.choices.length > 0) {
+                        return result.choices[0].message.content;
+                    } else {
+                        throw new Error('API返回数据格式错误');
+                    }
+                } catch (error) {
+                    console.error('AI API调用失败:', error);
+                    throw new Error(`AI调用失败: ${error.message}`);
+                }
+            }
+            
+            extractVariables(content) {
+                const matches = content.match(/\{\{([^}]+)\}\}/g) || [];
+                return [...new Set(matches.map(match => match.replace(/^\{\{|\}\}$/g, '')))];
+            }
+            
+            getVariableValue(variable, userMessage) {
+                // 简单的变量值生成逻辑
+                const variableMap = {
+                    'user_name': '用户',
+                    'current_date': new Date().toLocaleDateString('zh-CN'),
+                    'query_content': userMessage,
+                    'user_message': userMessage
+                };
+                
+                return variableMap[variable] || `[${variable}]`;
+            }
+            
+            addChatMessage(role, content, isLoading = false) {
+                const messagesContainer = document.getElementById('chat-messages');
+                const messageId = 'msg_' + Date.now();
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${role}`;
+                messageDiv.id = messageId;
+                
+                const avatar = role === 'user' ? '👤' : '🤖';
+                const bubbleClass = role === 'user' ? 'user' : 'assistant';
+                
+                let bubbleContent = content;
+                if (isLoading) {
+                    bubbleContent = '<div class="loading-dots"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>';
+                }
+                
+                messageDiv.innerHTML = `
+                    <div class="chat-avatar ${role}">${avatar}</div>
+                    <div class="chat-bubble">${bubbleContent}</div>
+                `;
+                
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                return messageId;
+            }
+            
+            removeChatMessage(messageId) {
+                const message = document.getElementById(messageId);
+                if (message) {
+                    message.remove();
+                }
+            }
+            
+            clearChat() {
+                const messagesContainer = document.getElementById('chat-messages');
+                messagesContainer.innerHTML = `
+                    <div class="chat-message assistant">
+                        <div class="chat-avatar assistant">🤖</div>
+                        <div class="chat-bubble">
+                            <div class="text-sm text-gray-400 mb-2">系统提示</div>
+                            <div>你好！我是提示词调试助手。请在下方输入消息来测试您的提示词效果。</div>
+                        </div>
+                    </div>
+                `;
+                this.chatHistory = [];
+            }
+            
+            async optimizePrompt(type) {
+                const promptEditor = document.getElementById('prompt-content');
+                const currentContent = promptEditor.value.trim();
+                
+                if (!currentContent) {
+                    this.showMessage('请先输入提示词内容', 'error');
+                    return;
+                }
+                
+                // 显示优化中状态
+                const optimizeBtn = event.target;
+                const originalText = optimizeBtn.innerHTML;
+                optimizeBtn.innerHTML = '<div class="loading-dots"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div> 优化中...';
+                optimizeBtn.disabled = true;
+                
+                try {
+                    // 调用AI优化API
+                    const optimizedContent = await this.callOptimizeAPI(currentContent, type);
+                    promptEditor.value = optimizedContent;
+                    this.updateCharCount();
+                    
+                    // 保存到历史记录
+                    const actionMap = {
+                        'clarity': '优化清晰度',
+                        'structure': '优化结构', 
+                        'examples': '改进示例'
+                    };
+                    this.saveToHistory(actionMap[type] || '优化提示词', false);
+                    
+                    this.showMessage('提示词优化完成', 'success');
+                } catch (error) {
+                    this.showMessage('优化失败：' + error.message, 'error');
+                } finally {
+                    optimizeBtn.innerHTML = originalText;
+                    optimizeBtn.disabled = false;
+                }
+            }
+            
+            async callOptimizeAPI(content, type) {
+                try {
+                    let optimizationPrompt = '';
+                    
+                    switch (type) {
+                        case 'clarity':
+                            optimizationPrompt = `请优化以下提示词的清晰度，使指令更加明确、具体和易于理解。保持原有的功能和变量不变，只改进表达方式：
+
+原提示词：
+${content}
+
+请返回优化后的提示词，要求：
+1. 指令更加清晰明确
+2. 避免歧义表达
+3. 保持原有变量格式{{variable_name}}
+4. 保持原有功能完整`;
+                            break;
+                        case 'structure':
+                            optimizationPrompt = `请优化以下提示词的结构组织，使其逻辑更清晰、层次更分明：
+
+原提示词：
+${content}
+
+请返回结构优化后的提示词，要求：
+1. 合理组织内容层次
+2. 添加适当的标题和分段
+3. 保持原有变量格式{{variable_name}}
+4. 逻辑流程更加顺畅`;
+                            break;
+                        case 'examples':
+                            optimizationPrompt = `请为以下提示词改进或添加更好的示例，使AI能更好地理解期望的输出格式：
+
+原提示词：
+${content}
+
+请返回添加/改进示例后的提示词，要求：
+1. 示例更加具体、实用
+2. 覆盖不同场景
+3. 保持原有变量格式{{variable_name}}
+4. 示例格式规范`;
+                            break;
+                        default:
+                            optimizationPrompt = `请优化以下提示词，使其更加专业、清晰、易用：
+
+原提示词：
+${content}
+
+请返回优化后的提示词。`;
+                    }
+
+                    const messages = [
+                        {
+                            role: 'system',
+                            content: '你是专业的提示词工程师，擅长优化和改进AI提示词。请直接返回优化后的提示词内容，不要添加额外的解释或说明。'
+                        },
+                        {
+                            role: 'user',
+                            content: optimizationPrompt
+                        }
+                    ];
+
+                    const response = await fetch(`${this.aiApiBase}/v1/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: this.defaultModel,
+                            messages: messages,
+                            stream: false,
+                            temperature: 0.3,
+                            max_tokens: 2000,
+                            top_p: 0.95,
+                            "chat_template_kwargs": { "enable_thinking": false }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API请求失败: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.choices && result.choices.length > 0) {
+                        return result.choices[0].message.content.trim();
+                    } else {
+                        throw new Error('API返回数据格式错误');
+                    }
+                } catch (error) {
+                    console.error('优化API调用失败:', error);
+                    throw new Error(`优化失败: ${error.message}`);
+                }
+            }
+            
+            insertVariable() {
+                const promptEditor = document.getElementById('prompt-content');
+                const currentContent = promptEditor.value;
+                
+                // 如果有内容，尝试AI智能推荐变量
+                if (currentContent.trim()) {
+                    this.showVariableRecommendationDialog(currentContent, promptEditor);
+                } else {
+                    // 如果没有内容，直接手动输入
+                    this.insertManualVariable(promptEditor);
+                }
+            }
+            
+            async showVariableRecommendationDialog(content, promptEditor) {
+                // 创建变量推荐对话框
+                const dialog = document.createElement('div');
+                dialog.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex items-center justify-center';
+                dialog.innerHTML = `
+                    <div class="bg-[#505050] backdrop-blur-sm border border-white/20 rounded-lg p-6 max-w-md mx-4 w-full">
+                        <h3 class="text-lg font-medium text-white mb-4">插入变量</h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-white/80 mb-2">手动输入变量名</label>
+                                <input type="text" id="manual-variable-input" class="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50" placeholder="例如: user_name">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-white/80 mb-2">AI推荐变量</label>
+                                <div id="ai-variable-recommendations" class="space-y-2 min-h-[100px] max-h-[200px] overflow-y-auto bg-black/20 rounded-lg p-3">
+                                    <div class="text-center text-white/60">
+                                        <div class="loading-dots inline-flex gap-1">
+                                            <div class="loading-dot"></div>
+                                            <div class="loading-dot"></div>
+                                            <div class="loading-dot"></div>
+                                        </div>
+                                        <div class="mt-2">AI正在分析推荐变量...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button class="cancel-btn px-4 py-2 text-white/80 hover:text-white transition-colors">取消</button>
+                            <button class="confirm-btn px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">插入</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(dialog);
+                
+                // 获取AI推荐变量
+                this.getAIVariableRecommendations(content, dialog);
+                
+                // 事件处理
+                const cancelBtn = dialog.querySelector('.cancel-btn');
+                const confirmBtn = dialog.querySelector('.confirm-btn');
+                const manualInput = dialog.querySelector('#manual-variable-input');
+                
+                cancelBtn.addEventListener('click', () => dialog.remove());
+                
+                confirmBtn.addEventListener('click', () => {
+                    const variableName = manualInput.value.trim();
+                    if (variableName) {
+                        this.doInsertVariable(promptEditor, variableName);
+                        dialog.remove();
+                    }
+                });
+                
+                manualInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        confirmBtn.click();
+                    }
+                });
+                
+                manualInput.focus();
+            }
+            
+            async getAIVariableRecommendations(content, dialog) {
+                try {
+                    const recommendPrompt = `请分析以下提示词内容，推荐5-8个最适合的变量名。变量应该是用户在使用这个提示词时需要动态替换的内容。
+
+提示词内容：
+${content}
+
+请以JSON格式返回推荐的变量列表，每个变量包含name和description：
+{
+  "variables": [
+    {"name": "variable_name", "description": "变量描述"},
+    ...
+  ]
+}
+
+要求：
+1. 变量名使用英文，采用snake_case格式
+2. 变量名要简洁明了
+3. 描述要准确说明变量的用途
+4. 优先推荐最常用、最有价值的变量
+5. 只返回JSON，不要其他文字`;
+
+                    const messages = [
+                        {
+                            role: 'system',
+                            content: '你是专业的提示词工程师，擅长分析提示词并推荐合适的变量。请严格按照要求返回JSON格式的结果。'
+                        },
+                        {
+                            role: 'user',
+                            content: recommendPrompt
+                        }
+                    ];
+
+                    const response = await fetch(`${this.aiApiBase}/v1/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: this.defaultModel,
+                            messages: messages,
+                            stream: false,
+                            temperature: 0.3,
+                            max_tokens: 1000,
+                            top_p: 0.95,
+                            "chat_template_kwargs": { "enable_thinking": false }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API请求失败: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.choices && result.choices.length > 0) {
+                        const aiResponse = result.choices[0].message.content.trim();
+                        try {
+                            const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+                            if (jsonMatch) {
+                                const recommendations = JSON.parse(jsonMatch[0]);
+                                this.displayVariableRecommendations(recommendations.variables, dialog);
+                            } else {
+                                throw new Error('无法解析AI返回的JSON');
+                            }
+                        } catch (parseError) {
+                            throw new Error('AI返回格式错误');
+                        }
+                    } else {
+                        throw new Error('AI返回数据为空');
+                    }
+                } catch (error) {
+                    console.error('获取AI推荐失败:', error);
+                    const recommendationsDiv = dialog.querySelector('#ai-variable-recommendations');
+                    recommendationsDiv.innerHTML = `
+                        <div class="text-center text-red-400">
+                            <div>获取AI推荐失败</div>
+                            <div class="text-sm mt-1">${error.message}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            displayVariableRecommendations(variables, dialog) {
+                const recommendationsDiv = dialog.querySelector('#ai-variable-recommendations');
+                const manualInput = dialog.querySelector('#manual-variable-input');
+                
+                recommendationsDiv.innerHTML = variables.map(variable => `
+                    <div class="variable-suggestion bg-white/10 hover:bg-white/20 rounded-lg p-3 cursor-pointer transition-colors border border-white/10" data-variable="${variable.name}">
+                        <div class="text-white font-medium text-sm">{{${variable.name}}}</div>
+                        <div class="text-white/70 text-xs mt-1">${variable.description}</div>
+                    </div>
+                `).join('');
+                
+                // 添加点击事件
+                recommendationsDiv.querySelectorAll('.variable-suggestion').forEach(suggestion => {
+                    suggestion.addEventListener('click', () => {
+                        const variableName = suggestion.getAttribute('data-variable');
+                        manualInput.value = variableName;
+                        
+                        // 高亮选中的推荐
+                        recommendationsDiv.querySelectorAll('.variable-suggestion').forEach(s => s.classList.remove('bg-blue-600/30'));
+                        suggestion.classList.add('bg-blue-600/30');
+                    });
+                });
+            }
+            
+            insertManualVariable(promptEditor) {
+                const variableName = prompt('请输入变量名称：', 'variable_name');
+                if (variableName) {
+                    this.doInsertVariable(promptEditor, variableName);
+                }
+            }
+            
+            doInsertVariable(promptEditor, variableName) {
+                const cursorPosition = promptEditor.selectionStart;
+                const textBefore = promptEditor.value.substring(0, cursorPosition);
+                const textAfter = promptEditor.value.substring(cursorPosition);
+                
+                const variableText = `{{${variableName}}}`;
+                promptEditor.value = textBefore + variableText + textAfter;
+                promptEditor.focus();
+                promptEditor.setSelectionRange(cursorPosition + variableText.length, cursorPosition + variableText.length);
+                this.updateCharCount();
+                
+                // 保存到历史记录
+                this.saveToHistory(`插入变量: ${variableName}`, false);
+            }
+            
+            formatPrompt() {
+                const promptEditor = document.getElementById('prompt-content');
+                let content = promptEditor.value;
+                
+                if (!content.trim()) {
+                    this.showMessage('请先输入提示词内容', 'error');
+                    return;
+                }
+                
+                // 调用AI进行智能格式化
+                this.formatPromptWithAI(content);
+            }
+            
+            async formatPromptWithAI(content) {
+                const formatBtn = event.target;
+                const originalText = formatBtn.innerHTML;
+                formatBtn.innerHTML = '<div class="loading-dots"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div> 格式化中...';
+                formatBtn.disabled = true;
+                
+                try {
+                    const formatPrompt = `请对以下提示词进行格式化优化，使其结构更清晰、易读：
+
+原提示词：
+${content}
+
+请返回格式化后的提示词，要求：
+1. 合理使用标题、分段和列表
+2. 保持原有变量格式{{variable_name}}
+3. 保持原有功能和逻辑不变
+4. 结构层次清晰
+5. 易于阅读和理解`;
+
+                    const messages = [
+                        {
+                            role: 'system',
+                            content: '你是专业的文档格式化专家，擅长整理和优化文本结构。请直接返回格式化后的内容，不要添加额外的解释。'
+                        },
+                        {
+                            role: 'user',
+                            content: formatPrompt
+                        }
+                    ];
+
+                    const response = await fetch(`${this.aiApiBase}/v1/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: this.defaultModel,
+                            messages: messages,
+                            stream: false,
+                            temperature: 0.2,
+                            max_tokens: 2000,
+                            top_p: 0.95,
+                            "chat_template_kwargs": { "enable_thinking": false }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API请求失败: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.choices && result.choices.length > 0) {
+                        const formattedContent = result.choices[0].message.content.trim();
+                        document.getElementById('prompt-content').value = formattedContent;
+                        this.updateCharCount();
+                        
+                        // 保存到历史记录
+                        this.saveToHistory('AI格式化', false);
+                        this.showMessage('AI格式化完成', 'success');
+                    } else {
+                        throw new Error('API返回数据格式错误');
+                    }
+                } catch (error) {
+                    console.error('格式化失败:', error);
+                    this.showMessage('格式化失败：' + error.message, 'error');
+                    
+                    // 如果AI格式化失败，使用简单的规则格式化
+                    const simpleFormatted = content
+                        .replace(/\n\s*\n\s*\n/g, '\n\n') // 删除多余空行
+                        .replace(/([。！？])\s*([^\n])/g, '$1\n$2') // 句号后换行
+                        .replace(/(\d+\.)\s*/g, '\n$1 ') // 数字列表格式化
+                        .trim();
+                    
+                    document.getElementById('prompt-content').value = simpleFormatted;
+                    this.updateCharCount();
+                    
+                    // 保存到历史记录
+                    this.saveToHistory('基础格式化', false);
+                    this.showMessage('使用基础规则格式化完成', 'success');
+                } finally {
+                    formatBtn.innerHTML = originalText;
+                    formatBtn.disabled = false;
+                }
+            }
+            
+            toggleFullscreen() {
+                const container = document.querySelector('.prompt-editor-container');
+                const editor = document.querySelector('.editor-main');
+                
+                if (container.classList.contains('fullscreen')) {
+                    container.classList.remove('fullscreen');
+                    editor.style.position = '';
+                    editor.style.top = '';
+                    editor.style.left = '';
+                    editor.style.width = '';
+                    editor.style.height = '';
+                    editor.style.zIndex = '';
+                    editor.style.background = '';
+                } else {
+                    container.classList.add('fullscreen');
+                    editor.style.position = 'fixed';
+                    editor.style.top = '0';
+                    editor.style.left = '0';
+                    editor.style.width = '100vw';
+                    editor.style.height = '100vh';
+                    editor.style.zIndex = '9997';
+                    editor.style.background = '#505050';
+                }
+            }
+            
+            async saveTemplate() {
+                const formData = this.getFormData();
+                
+                if (!this.validateForm(formData)) {
+                    return;
+                }
+                
+                try {
+                    // 保存到后端API
+                    const result = await this.saveToFile();
+                    
+                    this.showMessage('保存成功！', 'success');
+                    
+                    // 如果是新建模板，更新URL和状态
+                    if (!this.isEditMode && result.data) {
+                        const newId = result.data.id;
+                        window.history.pushState({}, '', `?id=${newId}`);
+                        this.templateId = newId;
+                        this.isEditMode = true;
+                        this.currentTemplate = result.data;
+                        this.updateTitle(`编辑 - ${result.data.name}`);
+                    }
+                    
+                    // 清除本地存储的草稿
+                    localStorage.removeItem('prompt_template_draft');
+                    
+                } catch (error) {
+                    console.error('保存失败:', error);
+                    this.showMessage('保存失败：' + error.message, 'error');
+                }
+            }
+            
+            async saveToFile() {
+                try {
+                    const templateData = this.getCurrentTemplateData();
+                    const isNew = !this.isEditMode;
+                    
+                    // 使用正确的API端点
+                    const url = isNew ? '/omni-api/prompt-templates' : `/omni-api/prompt-templates/${this.templateId}`;
+                    const method = isNew ? 'POST' : 'PUT';
+                    
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(templateData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`保存失败: HTTP ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    if (result.success === false) {
+                        throw new Error(result.error || '保存失败');
+                    }
+                    
+                    console.log('模板数据已保存:', result.data);
+                    return result;
+                } catch (error) {
+                    console.error('保存失败:', error);
+                    throw new Error(`保存失败: ${error.message}`);
+                }
+            }
+            
+            getCurrentTemplateData() {
+                const formData = this.getFormData();
+                return {
+                    name: formData.name,
+                    category: formData.category,
+                    description: formData.description || '提示词模板',
+                    author: formData.author || 'User',
+                    version: formData.version || '1.0.0',
+                    content: formData.content,
+                    variables: this.extractVariables(formData.content).map(name => ({
+                        name,
+                        description: `变量: ${name}`,
+                        type: 'string',
+                        required: false
+                    })),
+                    tags: [],
+                    status: 'published'
+                };
+            }
+            
+            getFormData() {
+                return {
+                    name: document.getElementById('template-name').value.trim(),
+                    category: document.getElementById('template-category').value,
+                    description: document.getElementById('template-description')?.value?.trim() || '',
+                    author: document.getElementById('template-author').value.trim(),
+                    version: document.getElementById('template-version').value.trim(),
+                    content: document.getElementById('prompt-content').value.trim()
+                };
+            }
+            
+            validateForm(data) {
+                if (!data.name) {
+                    this.showMessage('请输入模板名称', 'error');
+                    return false;
+                }
+                
+                if (!data.content) {
+                    this.showMessage('请输入提示词内容', 'error');
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            saveToLocalStorage() {
+                const formData = this.getFormData();
+                localStorage.setItem('prompt_template_draft', JSON.stringify(formData));
+            }
+            
+            showMessage(message, type = 'info') {
+                const colors = {
+                    success: 'bg-green-600/90',
+                    error: 'bg-red-600/90',
+                    info: 'bg-blue-600/90'
+                };
+                
+                const msgEl = document.createElement('div');
+                msgEl.className = `fixed top-4 right-4 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg z-[9999]`;
+                msgEl.textContent = message;
+                document.body.appendChild(msgEl);
+                
+                setTimeout(() => msgEl.remove(), 3000);
+            }
+        }
+        
+        // 全局函数
+        function returnToTemplates() {
+            window.open('/development/ability-center/prompt-template.html', '_self');
+        }
+        
+        function saveTemplate() {
+            editor.saveTemplate();
+        }
+        
+        function optimizePrompt(type) {
+            editor.optimizePrompt(type);
+        }
+        
+        function insertVariable() {
+            editor.insertVariable();
+        }
+        
+        function formatPrompt() {
+            editor.formatPrompt();
+        }
+        
+        function toggleFullscreen() {
+            editor.toggleFullscreen();
+        }
+        
+        function sendMessage() {
+            editor.sendMessage();
+        }
+        
+        function clearChat() {
+            editor.clearChat();
+        }
+        
+        // 初始化
+        let editor;
+        document.addEventListener('DOMContentLoaded', function() {
+            editor = new PromptTemplateEditor();
+        });
+    </script>
+</body>
+</html>
