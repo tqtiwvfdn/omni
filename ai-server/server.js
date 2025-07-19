@@ -119,7 +119,34 @@ const createAppSchema = Joi.object({
     template: Joi.string().required(),
     gitRepo: Joi.string().uri().optional(),
     developer: Joi.string().default('开发团队'),
-    features: Joi.array().items(Joi.string()).default([])
+    features: Joi.array().items(Joi.string()).default([]),
+    // 新增的元数据字段
+    metadata: Joi.object({
+        tenantId: Joi.string().required(),
+        knowledgeBaseId: Joi.string().optional().allow(''),
+        vectorConfigId: Joi.string().optional().allow(''),
+        assistantConfig: Joi.object({
+            logo: Joi.string().optional().allow(''),
+            theme: Joi.string().optional().allow(''),
+            welcomeMessage: Joi.string().optional().allow(''),
+            presetQuestions: Joi.array().items(Joi.string()).default([]),
+            mainIntentEntry: Joi.string().optional().allow('')
+        }).optional().default({}),
+        environments: Joi.object({
+            dev: Joi.object({
+                url: Joi.string().optional().allow(''),
+                status: Joi.string().default('inactive')
+            }).optional(),
+            sit: Joi.object({
+                url: Joi.string().optional().allow(''),
+                status: Joi.string().default('inactive')
+            }).optional(),
+            uat: Joi.object({
+                url: Joi.string().optional().allow(''),
+                status: Joi.string().default('inactive')
+            }).optional()
+        }).optional().default({})
+    }).required()
 });
 
 const updateAppSchema = Joi.object({
@@ -130,7 +157,34 @@ const updateAppSchema = Joi.object({
     version: Joi.string(),
     developer: Joi.string(),
     features: Joi.array().items(Joi.string()),
-    gitRepo: Joi.string().uri()
+    gitRepo: Joi.string().uri(),
+    // 新增的元数据字段更新
+    metadata: Joi.object({
+        tenantId: Joi.string(),
+        knowledgeBaseId: Joi.string().optional().allow(''),
+        vectorConfigId: Joi.string().optional().allow(''),
+        assistantConfig: Joi.object({
+            logo: Joi.string().optional().allow(''),
+            theme: Joi.string().optional().allow(''),
+            welcomeMessage: Joi.string().optional().allow(''),
+            presetQuestions: Joi.array().items(Joi.string()),
+            mainIntentEntry: Joi.string().optional().allow('')
+        }).optional(),
+        environments: Joi.object({
+            dev: Joi.object({
+                url: Joi.string().optional().allow(''),
+                status: Joi.string()
+            }).optional(),
+            sit: Joi.object({
+                url: Joi.string().optional().allow(''),
+                status: Joi.string()
+            }).optional(),
+            uat: Joi.object({
+                url: Joi.string().optional().allow(''),
+                status: Joi.string()
+            }).optional()
+        }).optional()
+    }).optional()
 });
 
 // Utility functions
@@ -287,7 +341,34 @@ app.post('/api/applications', async (req, res) => {
             workspace: `/development/app-workspace/${value.name.toLowerCase().replace(/\\s+/g, '-')}`,
             gitRepo: value.gitRepo || `https://git.company.com/ai-apps/${value.name.toLowerCase().replace(/\\s+/g, '-')}.git`,
             createdAt: moment().format('YYYY-MM-DD'),
-            updatedAt: moment().format('YYYY-MM-DD')
+            updatedAt: moment().format('YYYY-MM-DD'),
+            // 新增的元数据字段
+            metadata: {
+                tenantId: value.metadata.tenantId,
+                knowledgeBaseId: value.metadata.knowledgeBaseId || '',
+                vectorConfigId: value.metadata.vectorConfigId || '',
+                assistantConfig: {
+                    logo: value.metadata.assistantConfig?.logo || '',
+                    theme: value.metadata.assistantConfig?.theme || 'default',
+                    welcomeMessage: value.metadata.assistantConfig?.welcomeMessage || `欢迎使用${value.name}`,
+                    presetQuestions: value.metadata.assistantConfig?.presetQuestions || [],
+                    mainIntentEntry: value.metadata.assistantConfig?.mainIntentEntry || ''
+                },
+                environments: {
+                    dev: {
+                        url: value.metadata.environments?.dev?.url || '',
+                        status: value.metadata.environments?.dev?.status || 'inactive'
+                    },
+                    sit: {
+                        url: value.metadata.environments?.sit?.url || '',
+                        status: value.metadata.environments?.sit?.status || 'inactive'
+                    },
+                    uat: {
+                        url: value.metadata.environments?.uat?.url || '',
+                        status: value.metadata.environments?.uat?.status || 'inactive'
+                    }
+                }
+            }
         };
         
         apps.push(newApp);
@@ -1653,6 +1734,29 @@ async function updateStats() {
         throw error;
     }
 }
+
+// API 路由别名 - 将 /omni-api/* 映射到 /api/*
+// 通过重新注册所有路由来实现别名
+const originalRoutes = [];
+app._router.stack.forEach(layer => {
+    if (layer.route && layer.route.path && layer.route.path.startsWith('/api/')) {
+        originalRoutes.push({
+            path: layer.route.path,
+            methods: layer.route.methods,
+            handler: layer.route.stack[0].handle
+        });
+    }
+});
+
+// 为每个 /api/* 路由创建对应的 /omni-api/* 路由
+originalRoutes.forEach(route => {
+    const omniPath = route.path.replace(/^\/api/, '/omni-api');
+    Object.keys(route.methods).forEach(method => {
+        if (method !== '_all') {
+            app[method](omniPath, route.handler);
+        }
+    });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -926,14 +926,125 @@
 
     <!-- JavaScript -->
     <script>
+        // Global app metadata
+        window.appMetadata = null;
+        const tenantId = localStorage.getItem('tenantId') || 'lAseKW';
+        
         // Get app info from URL parameters
         function getAppInfoFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const appName = urlParams.get('app') || '应用工作台';
             const appId = urlParams.get('appId') || 'dev-workspace-001';
+            const id = urlParams.get('id'); // 应用数据库ID
             
             document.getElementById('app-title').textContent = `${appName} - 应用开发工作台`;
             document.getElementById('app-id').textContent = `App ID: ${appId}`;
+            
+            return { appName, appId, id };
+        }
+
+        // Load app metadata from server
+        async function loadAppMetadata() {
+            try {
+                const { id, appId } = getAppInfoFromURL();
+                
+                if (!id && !appId) {
+                    console.warn('No app ID provided, using default metadata');
+                    return;
+                }
+                
+                let url = '';
+
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'x-tenant-id': tenantId
+                };
+                
+                if (id) {
+                    // 通过数据库ID获取应用信息
+                    url = `/omni-api/applications/${id}`;
+                } else if (appId) {
+                    // 通过应用ID获取应用信息 (需要先获取所有应用然后筛选)
+                    url = `/omni-api/applications?search=${appId}`;
+                }
+                
+                console.log('Loading app metadata from:', url);
+                
+                const response = await fetch(url, { headers });
+                const result = await response.json();
+                
+                if (result.success) {
+                    let appData = null;
+                    
+                    if (id) {
+                        // 直接获取单个应用
+                        appData = result.data;
+                    } else {
+                        // 从搜索结果中找到匹配的应用
+                        appData = result.data.find(app => app.appId === appId);
+                    }
+                    
+                    if (appData) {
+                        // 将应用元数据存储到 window 对象
+                        window.appMetadata = appData;
+                        
+                        // 更新页面显示
+                        updatePageWithMetadata(appData);
+                        
+                        console.log('App metadata loaded successfully:', appData);
+                    } else {
+                        console.error('App not found in search results');
+                    }
+                } else {
+                    console.error('Failed to load app metadata:', result.error);
+                }
+            } catch (error) {
+                console.error('Error loading app metadata:', error);
+            }
+        }
+        
+        // Update page with loaded metadata
+        function updatePageWithMetadata(appData) {
+            // 更新页面标题和基本信息
+            document.getElementById('app-title').textContent = `${appData.name} - 应用开发工作台`;
+            document.getElementById('app-id').textContent = `App ID: ${appData.appId}`;
+            
+            // 更新状态指示器
+            const statusElement = document.querySelector('.status-development');
+            if (statusElement) {
+                statusElement.className = `status-${appData.status}`;
+                const statusText = {
+                    'development': '🔵 开发中',
+                    'testing': '🟡 测试中',
+                    'production': '🟢 生产中',
+                    'planned': '⚪ 计划中'
+                };
+                statusElement.textContent = statusText[appData.status] || '🔵 开发中';
+            }
+            
+            // 更新页面title
+            document.title = `${appData.name} - 应用工作台(开发侧)`;
+            
+            // 更新图标
+            const iconElement = document.querySelector('.w-10.h-10 .from-blue-400');
+            if (iconElement) {
+                iconElement.textContent = appData.icon || '🤖';
+            }
+            
+            // 如果有助手配置，可以进一步自定义页面
+            if (appData.metadata && appData.metadata.assistantConfig) {
+                const assistantConfig = appData.metadata.assistantConfig;
+                
+                // 可以根据主题设置页面样式
+                if (assistantConfig.theme) {
+                    document.body.setAttribute('data-theme', assistantConfig.theme);
+                }
+                
+                // 可以显示欢迎消息
+                if (assistantConfig.welcomeMessage) {
+                    console.log('Welcome message:', assistantConfig.welcomeMessage);
+                }
+            }
         }
 
         // Initialize background
@@ -1203,24 +1314,14 @@
         });
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             initializeBackground();
             
-            // Get app info from URL
-            getAppInfoFromURL();
+            // 首先加载应用元数据
+            await loadAppMetadata();
             
-            // Default load document management page
+            // 然后加载默认页面
             loadPage('/development/data-process/knowledge.html');
-            
-            // Get application info from URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            const appName = urlParams.get('app');
-            const appId = urlParams.get('appId');
-            
-            if (appName) {
-                document.title = `${appName} - 应用工作台(开发侧)`;
-                // You can use appName and appId to customize the workspace
-            }
         });
     </script>
 </body>

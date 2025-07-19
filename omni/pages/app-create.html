@@ -274,7 +274,34 @@
                 template: selectedTemplate,
                 gitRepo: finalGitRepo,
                 developer: '开发团队',
-                features: getTemplateFeatures(selectedTemplate)
+                features: getTemplateFeatures(selectedTemplate),
+                // 新增元数据字段，与后端接口对齐
+                metadata: {
+                    tenantId: localStorage.getItem('tenantId') || 'lAseKW',
+                    knowledgeBaseId: '',
+                    vectorConfigId: '',
+                    assistantConfig: {
+                        logo: '',
+                        theme: 'default',
+                        welcomeMessage: `欢迎使用${appName}`,
+                        presetQuestions: [],
+                        mainIntentEntry: ''
+                    },
+                    environments: {
+                        dev: {
+                            url: '',
+                            status: 'inactive'
+                        },
+                        sit: {
+                            url: '',
+                            status: 'inactive'
+                        },
+                        uat: {
+                            url: '',
+                            status: 'inactive'
+                        }
+                    }
+                }
             };
 
             // 显示创建中状态
@@ -282,11 +309,15 @@
 
             try {
                 // 调用后端API创建应用
+                const tenantId = localStorage.getItem('tenantId') || 'lAseKW';
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'X-Tenant-Id': tenantId
+                };
+                
                 const response = await fetch(`${API_BASE_URL}/applications`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: headers,
                     body: JSON.stringify(appData)
                 });
 
@@ -339,8 +370,13 @@
             return loadingOverlay;
         }
 
+        // 存储创建的应用数据
+        let createdAppData = null;
+        
         // 显示成功状态
         function showSuccessOverlay(appData) {
+            createdAppData = appData; // 存储应用数据
+            
             const successOverlay = document.createElement('div');
             successOverlay.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
             successOverlay.innerHTML = `
@@ -448,104 +484,6 @@
             selectedTemplate = templateId;
         }
 
-        // 创建应用
-        function createApp() {
-            const appName = document.getElementById('app-name').value.trim();
-            const appCategory = document.getElementById('app-category').value;
-            const appDescription = document.getElementById('app-description').value.trim();
-            const gitRepo = document.getElementById('git-repo').value.trim();
-
-            if (!appName) {
-                alert('请输入应用名称');
-                return;
-            }
-
-            if (!appCategory) {
-                alert('请选择应用分类');
-                return;
-            }
-
-            if (!appDescription) {
-                alert('请输入应用描述');
-                return;
-            }
-
-            if (!selectedTemplate) {
-                alert('请选择应用模板');
-                return;
-            }
-
-            // 如果没有填写Git仓库地址，自动生成
-            let finalGitRepo = gitRepo;
-            if (!finalGitRepo) {
-                const repoName = appName.toLowerCase()
-                    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
-                    .replace(/^-+|-+$/g, '')
-                    .replace(/智能/g, '')
-                    .replace(/助手/g, '-assistant')
-                    .replace(/--+/g, '-');
-                finalGitRepo = `https://git.company.com/ai-apps/${repoName}.git`;
-            }
-
-            // 生成AppID
-            const appId = generateAppId(appName, appCategory);
-
-            // 模拟创建应用
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
-            loadingOverlay.innerHTML = `
-                <div class="glass-strong rounded-2xl p-6 text-center">
-                    <div class="w-12 h-12 border-3 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <div class="space-y-2">
-                        <p class="text-white font-medium">正在创建应用...</p>
-                        <p class="text-white/70 text-sm">初始化代码仓库: ${finalGitRepo}</p>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(loadingOverlay);
-
-            setTimeout(() => {
-                document.body.removeChild(loadingOverlay);
-                
-                // 创建成功提示
-                const successOverlay = document.createElement('div');
-                successOverlay.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
-                successOverlay.innerHTML = `
-                    <div class="glass-strong rounded-2xl p-6 text-center max-w-md">
-                        <div class="w-16 h-16 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-white mb-2">应用创建成功！</h3>
-                        <div class="text-left space-y-2 mb-4">
-                            <div class="text-white/70 text-sm">
-                                <span class="font-medium">应用名称:</span> ${appName}
-                            </div>
-                            <div class="text-white/70 text-sm">
-                                <span class="font-medium">AppID:</span> 
-                                <span class="bg-black/20 px-2 py-1 rounded font-mono text-xs">${appId}</span>
-                            </div>
-                            <div class="text-white/70 text-sm">
-                                <span class="font-medium">Git仓库:</span> 
-                                <span class="text-xs break-all">${finalGitRepo}</span>
-                            </div>
-                        </div>
-                        <p class="text-white/70 text-sm mb-6">您可以开始配置和开发了。</p>
-                        <div class="flex space-x-4">
-                            <button onclick="goToAppManagement()" class="flex-1 omni-btn px-4 py-2 glass text-white hover:bg-white/20">
-                                查看应用列表
-                            </button>
-                            <button onclick="goToWorkspace()" class="flex-1 omni-btn px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">
-                                进入工作台
-                            </button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(successOverlay);
-            }, 2000);
-        }
-
         // 生成AppID
         function generateAppId(appName, category) {
             const categoryMap = {
@@ -594,14 +532,15 @@
 
         // 前往工作台
         function goToWorkspace() {
-            if (window.parent && window.parent !== window) {
-                window.parent.postMessage({
-                    type: 'navigate',
-                    url: '/development/app-workspace/new-app'
-                }, '*');
-            } else {
-                window.location.href = '/development/app-workspace/new-app';
+            if (!createdAppData) {
+                alert('未找到应用数据');
+                return;
             }
+            
+            // 构建工作台URL，包含应用ID
+            const workspaceUrl = `/omni/app-workspace-dev.html?id=${createdAppData.id}&app=${encodeURIComponent(createdAppData.name)}&appId=${encodeURIComponent(createdAppData.appId)}`;
+            
+            window.open(workspaceUrl, '_blank');
         }
     </script>
 </body>

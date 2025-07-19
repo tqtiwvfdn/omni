@@ -1,3 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目资源浏览器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked@4.2.12/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/highlight.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            secondary: '#36BFFA',
+            neutral: '#F5F7FA',
+            dark: '#1D2129',
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .transition-transform-opacity {
+        transition-property: transform, opacity;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 300ms;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-inter text-dark min-h-screen flex flex-col">
+  <!-- 顶部导航 -->
+  <header class="bg-white shadow-md sticky top-0 z-50 transition-all duration-300">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-folder-open text-primary text-2xl"></i>
+        <h1 class="text-xl md:text-2xl font-bold text-primary">项目资源浏览器</h1>
+      </div>
+      <div class="hidden md:flex items-center space-x-4">
+        <button id="toggleTheme" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <i class="fa fa-moon-o text-gray-600"></i>
+        </button>
+        <button id="refreshBtn" class="flex items-center space-x-1 text-sm px-3 py-1.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+          <i class="fa fa-refresh"></i>
+          <span>刷新</span>
+        </button>
+      </div>
+    </div>
+  </header>
 
+  <div class="flex flex-1 overflow-hidden">
+    <!-- 侧边栏 - 项目结构 -->
+    <aside class="w-full md:w-80 bg-white shadow-md overflow-y-auto transition-all duration-300 md:border-r border-gray-200">
+      <div class="p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold text-lg">项目结构</h2>
+          <button id="toggleSidebar" class="md:hidden p-2 rounded-full hover:bg-gray-100">
+            <i class="fa fa-bars text-gray-600"></i>
+          </button>
+        </div>
+        
+        <div class="space-y-2">
+          <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+            <i class="fa fa-folder text-primary mr-2"></i>
+            <span>afa-v6</span>
+          </div>
+          
+          <div class="pl-4 space-y-2">
+            <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+              <i class="fa fa-folder text-primary mr-2"></i>
+              <span>img</span>
+            </div>
+            
+            <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+              <i class="fa fa-folder text-primary mr-2"></i>
+              <span>v_2.0.0</span>
+            </div>
+            
+            <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+              <i class="fa fa-folder text-primary mr-2"></i>
+              <span>00_工具包</span>
+            </div>
+            
+            <div class="pl-4 space-y-2">
+              <div class="file-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center text-blue-600" data-path="00_工具包/readme.md">
+                <i class="fa fa-file-text-o text-gray-500 mr-2"></i>
+                <span>readme.md</span>
+              </div>
+              
+              <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+                <i class="fa fa-folder text-primary mr-2"></i>
+                <span>01_主机代理</span>
+              </div>
+              
+              <div class="pl-4 space-y-2">
+                <div class="file-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center text-blue-600" data-path="00_工具包/01_主机代理/安装主机代理.md">
+                  <i class="fa fa-file-text-o text-gray-500 mr-2"></i>
+                  <span>安装主机代理.md</span>
+                </div>
+                <div class="file-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center text-blue-600" data-path="00_工具包/01_主机代理/readme.md">
+                  <i class="fa fa-file-text-o text-gray-500 mr-2"></i>
+                  <span>readme.md</span>
+                </div>
+              </div>
+              
+              <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+                <i class="fa fa-folder text-primary mr-2"></i>
+                <span>03_依赖组件</span>
+              </div>
+              
+              <div class="pl-4 space-y-2">
+                <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+                  <i class="fa fa-folder text-primary mr-2"></i>
+                  <span>01_nacos</span>
+                </div>
+                <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+                  <i class="fa fa-folder text-primary mr-2"></i>
+                  <span>02_zookeeper</span>
+                </div>
+                <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+                  <i class="fa fa-folder text-primary mr-2"></i>
+                  <span>03_elasticsearch</span>
+                </div>
+                <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+                  <i class="fa fa-folder text-primary mr-2"></i>
+                  <span>04_skywalking</span>
+                </div>
+              </div>
+              
+              <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+                <i class="fa fa-folder text-primary mr-2"></i>
+                <span>04_管理端</span>
+              </div>
+              
+              <div class="pl-4 space-y-2">
+                <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+                  <i class="fa fa-folder text-primary mr-2"></i>
+                  <span>backend</span>
+                </div>
+                <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+                  <i class="fa fa-folder text-primary mr-2"></i>
+                  <span>frontend</span>
+                </div>
+                <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+                  <i class="fa fa-folder text-primary mr-2"></i>
+                  <span>nginx</span>
+                </div>
+                <div class="file-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center text-blue-600" data-path="00_工具包/04_管理端/管理端安装文档.md">
+                  <i class="fa fa-file-text-o text-gray-500 mr-2"></i>
+                  <span>管理端安装文档.md</span>
+                </div>
+              </div>
+              
+              <div class="folder-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center">
+                <i class="fa fa-folder text-primary mr-2"></i>
+                <span>05_微服务网关</span>
+              </div>
+              
+              <div class="pl-4 space-y-2">
+                <div class="file-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center text-blue-600" data-path="00_工具包/05_微服务网关/微服务网关安装文档.md">
+                  <i class="fa fa-file-text-o text-gray-500 mr-2"></i>
+                  <span>微服务网关安装文档.md</span>
+                </div>
+                <div class="file-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center text-blue-600" data-path="00_工具包/05_微服务网关/readme.md">
+                  <i class="fa fa-file-text-o text-gray-500 mr-2"></i>
+                  <span>readme.md</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="file-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center text-blue-600" data-path="index.html">
+              <i class="fa fa-file-code-o text-gray-500 mr-2"></i>
+              <span>index.html</span>
+            </div>
+            
+            <div class="file-item cursor-pointer p-2 rounded hover:bg-gray-100 flex items-center text-blue-600" data-path="readme.md">
+              <i class="fa fa-file-text-o text-gray-500 mr-2"></i>
+              <span>readme.md</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
 
-Hell world
+    <!-- 主内容区 - Markdown 预览 -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">
+      <div id="loadingIndicator" class="hidden fixed inset-0 flex items-center justify-center bg-white/80 z-40">
+        <div class="flex flex-col items-center">
+          <div class="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+          <p class="text-gray-600">正在加载文档...</p>
+        </div>
+      </div>
+      
+      <div id="markdownContent" class="bg-white rounded-lg shadow-md p-6 max-w-4xl mx-auto transition-all duration-300 transform opacity-100">
+        <div class="text-center py-12 text-gray-500">
+          <i class="fa fa-book text-5xl mb-4 opacity-30"></i>
+          <h2 class="text-xl font-medium">请从左侧选择一个 Markdown 文件</h2>
+          <p class="mt-2">点击项目结构中的 <span class="text-blue-600">.md 文件</span> 以查看内容</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer class="bg-white border-t border-gray-200 py-4">
+    <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+      <p>项目资源浏览器 &copy; 2023</p>
+    </div>
+  </footer>
+
+  <script>
+    // 初始化 Marked 配置
+    marked.setOptions({
+      highlight: function(code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+          return hljs.highlight(code, { language: lang }).value;
+        }
+        return hljs.highlightAuto(code).value;
+      },
+      breaks: true,
+      gfm: true
+    });
+
+    // 侧边栏折叠/展开
+    const toggleSidebar = document.getElementById('toggleSidebar');
+    const sidebar = document.querySelector('aside');
+    
+    toggleSidebar?.addEventListener('click', () => {
+      sidebar.classList.toggle('hidden');
+      sidebar.classList.toggle('w-80');
+      sidebar.classList.toggle('w-full');
+    });
+
+    // 主题切换
+    const toggleTheme = document.getElementById('toggleTheme');
+    let darkMode = false;
+    
+    toggleTheme?.addEventListener('click', () => {
+      darkMode = !darkMode;
+      document.body.classList.toggle('bg-gray-900', darkMode);
+      document.body.classList.toggle('text-white', darkMode);
+      
+      const markdownContent = document.getElementById('markdownContent');
+      markdownContent.classList.toggle('bg-gray-800', darkMode);
+      markdownContent.classList.toggle('bg-white', !darkMode);
+      
+      toggleTheme.innerHTML = darkMode ? 
+        '<i class="fa fa-sun-o text-yellow-400"></i>' : 
+        '<i class="fa fa-moon-o text-gray-600"></i>';
+    });
+
+    // 刷新按钮
+    const refreshBtn = document.getElementById('refreshBtn');
+    refreshBtn?.addEventListener('click', () => {
+      const currentPath = document.querySelector('.file-item.bg-blue-100')?.getAttribute('data-path');
+      if (currentPath) {
+        loadMarkdown(currentPath);
+      }
+    });
+
+    // 加载 Markdown 文件
+    function loadMarkdown(path) {
+      const markdownContent = document.getElementById('markdownContent');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      
+      // 显示加载状态
+      loadingIndicator.classList.remove('hidden');
+      markdownContent.classList.add('opacity-0', 'scale-95');
+      
+      // 移除之前的高亮
+      document.querySelectorAll('.file-item.bg-blue-100').forEach(el => {
+        el.classList.remove('bg-blue-100');
+      });
+      
+      // 添加高亮到当前选中的文件
+      const currentFile = document.querySelector(`.file-item[data-path="${path}"]`);
+      currentFile?.classList.add('bg-blue-100');
+      
+      // 模拟加载延迟，实际使用时可移除
+      setTimeout(() => {
+        fetch(path)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Failed to load ${path}: ${response.status}`);
+            }
+            return response.text();
+          })
+          .then(text => {
+            // 解析 Markdown 并渲染
+            const html = marked.parse(text);
+            markdownContent.innerHTML = html;
+            
+            // 为代码块添加高亮
+            document.querySelectorAll('pre code').forEach((block) => {
+              hljs.highlightElement(block);
+            });
+            
+            // 为标题添加锚点
+            document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(header => {
+              const id = header.textContent.trim().toLowerCase().replace(/[^\w]+/g, '-');
+              header.id = id;
+              header.innerHTML = `<a href="#${id}" class="text-primary hover:underline">#</a> ${header.textContent}`;
+            });
+          })
+          .catch(error => {
+            console.error('Error loading Markdown:', error);
+            markdownContent.innerHTML = `
+              <div class="text-center py-12 text-red-500">
+                <i class="fa fa-exclamation-triangle text-5xl mb-4"></i>
+                <h2 class="text-xl font-medium">加载文档失败</h2>
+                <p class="mt-2">无法加载文件: ${path}</p>
+                <p class="mt-1 text-sm">错误信息: ${error.message}</p>
+              </div>
+            `;
+          })
+          .finally(() => {
+            // 隐藏加载状态
+            loadingIndicator.classList.add('hidden');
+            markdownContent.classList.remove('opacity-0', 'scale-95');
+            
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+      }, 300); // 模拟延迟
+    }
+
+    // 为所有 Markdown 文件添加点击事件
+    document.querySelectorAll('.file-item[data-path$=".md"]').forEach(item => {
+      item.addEventListener('click', () => {
+        const path = item.getAttribute('data-path');
+        loadMarkdown(path);
+      });
+    });
+
+    // 初始加载根目录的 readme.md
+    window.addEventListener('DOMContentLoaded', () => {
+      // 为折叠/展开文件夹添加动画效果
+      document.querySelectorAll('.folder-item').forEach(folder => {
+        folder.addEventListener('click', () => {
+          const subItems = folder.parentElement.querySelectorAll('.pl-4');
+          subItems.forEach(item => {
+            item.classList.toggle('hidden');
+          });
+          folder.querySelector('i').classList.toggle('fa-folder');
+          folder.querySelector('i').classList.toggle('fa-folder-open');
+        });
+      });
+      
+      // 默认展开一些主要文件夹
+      setTimeout(() => {
+        document.querySelectorAll('.folder-item').forEach(folder => {
+          if (folder.textContent.includes('00_工具包')) {
+            folder.click(); // 展开工具包
+            setTimeout(() => {
+              document.querySelectorAll('.folder-item').forEach(subFolder => {
+                if (subFolder.textContent.includes('04_管理端')) {
+                  subFolder.click(); // 展开管理端
+                }
+              });
+            }, 100);
+          }
+        });
+      }, 300);
+    });
+  </script>
+</body>
+</html>
