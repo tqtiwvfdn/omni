@@ -816,14 +816,83 @@
 
     <!-- JavaScript -->
     <script>
+        // Global app metadata
+        window.appMetadata = null;
+        const tenantId = localStorage.getItem('tenantId') || 'lAseKW';
+        
         // Get app info from URL parameters
         function getAppInfoFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const appName = urlParams.get('app') || '智能助手';
             const appId = urlParams.get('appId') || 'qa-assistant-prod-001';
+            const id = urlParams.get('id'); // 应用数据库ID
             
             document.getElementById('app-title').textContent = `${appName} - 应用运维运营工作台`;
             document.getElementById('app-id').textContent = `App ID: ${appId}`;
+            
+            return { appName, appId, id };
+        }
+
+        // Load app metadata from server
+        async function loadAppMetadata() {
+            try {
+                const { id, appId } = getAppInfoFromURL();
+                
+                if (!appId && !id) {
+                    console.warn('No app ID provided, using default metadata');
+                    return;
+                }
+                
+                let url = '';
+
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'x-tenant-id': tenantId
+                };
+                
+                // 优先使用appId作为唯一标识
+                if (appId) {
+                    // 通过appId直接获取应用信息
+                    url = `/api/applications/by-appid/${appId}`;
+                } else if (id) {
+                    // 兼容旧的ID方式
+                    url = `/api/applications/${id}`;
+                }
+                
+                console.log('Loading app metadata from:', url);
+                
+                const response = await fetch(url, { headers });
+                const result = await response.json();
+                
+                if (result.success) {
+                    const appData = result.data;
+                    
+                    if (appData) {
+                        // 将应用元数据存储到 window 对象
+                        window.appMetadata = appData;
+                        
+                        // 更新页面显示
+                        updatePageWithMetadata(appData);
+                        
+                        console.log('App metadata loaded successfully:', appData);
+                    } else {
+                        console.error('App not found');
+                    }
+                } else {
+                    console.error('Failed to load app metadata:', result.error);
+                }
+            } catch (error) {
+                console.error('Error loading app metadata:', error);
+            }
+        }
+
+        function updatePageWithMetadata(appData) {
+            // 更新页面标题和基本信息
+            document.getElementById('app-title').textContent = `${appData.name} - 应用运维运营工作台`;
+            document.getElementById('app-id').textContent = `App ID: ${appData.appId}`;
+            
+            // 更新页面title
+            document.title = `${appData.name} - 应用工作台(运维运营侧)`;
         }
 
         // Background functionality
@@ -1014,12 +1083,12 @@
         });
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // Initialize background
             initializeBackground();
             
-            // Get app info from URL
-            getAppInfoFromURL();
+            // Load app metadata from server
+            await loadAppMetadata();
             
             // Initialize with first submenu open
             toggleKnowledgeSubmenu();

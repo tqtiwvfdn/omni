@@ -308,6 +308,15 @@
             const loadingOverlay = showLoadingOverlay('正在创建应用...', `初始化代码仓库: ${finalGitRepo}`);
 
             try {
+                // 首先创建知识库分类
+                const appId = generateAppId(appName, appCategory);
+                const knowledgeCategoryResult = await createKnowledgeCategory(appName+ '-' +appId);
+                
+                // 更新应用数据中的知识库分类ID
+                if (knowledgeCategoryResult && knowledgeCategoryResult.success) {
+                    appData.metadata.knowledgeBaseId = knowledgeCategoryResult.data.id;
+                }
+                
                 // 调用后端API创建应用
                 const tenantId = localStorage.getItem('tenantId') || 'lAseKW';
                 const headers = {
@@ -340,13 +349,14 @@
                 // 使用本地模拟创建
                 const mockApp = {
                     id: Date.now(),
-                    appId: generateAppId(appName, appCategory),
+                    appId,
                     name: appName,
                     description: appDescription,
                     category: appCategory,
                     gitRepo: finalGitRepo,
                     version: 'v0.1.0-alpha',
-                    status: 'development'
+                    status: 'development',
+                    metadata: appData.metadata
                 };
                 
                 showSuccessOverlay(mockApp);
@@ -412,6 +422,52 @@
                 </div>
             `;
             document.body.appendChild(successOverlay);
+        }
+
+        // 创建知识库分类
+        async function createKnowledgeCategory(appId) {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    console.warn('No token found, skipping knowledge category creation');
+                    return null;
+                }
+
+                const response = await fetch('/ai/v1/rag/category', {
+                    method: 'PUT',
+                    headers: {
+                        'authorization': `bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: appId
+                    }),
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+                
+                if (result.code === '000000') {
+                    console.log('Knowledge category created:', result.data);
+                    return {
+                        success: true,
+                        data: result.data
+                    };
+                } else {
+                    console.warn('Failed to create knowledge category:', result.message);
+                    return {
+                        success: false,
+                        error: result.message
+                    };
+                }
+            } catch (error) {
+                console.error('Error creating knowledge category:', error);
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
         }
 
         // 根据模板获取功能列表
@@ -537,8 +593,8 @@
                 return;
             }
             
-            // 构建工作台URL，包含应用ID
-            const workspaceUrl = `/omni/app-workspace-dev.html?id=${createdAppData.id}&app=${encodeURIComponent(createdAppData.name)}&appId=${encodeURIComponent(createdAppData.appId)}`;
+            // 构建工作台URL，统一使用appId作为唯一标识
+            const workspaceUrl = `/omni/app-workspace-dev.html?appId=${encodeURIComponent(createdAppData.appId)}`;
             
             window.open(workspaceUrl, '_blank');
         }

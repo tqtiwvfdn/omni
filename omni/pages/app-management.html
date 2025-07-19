@@ -477,7 +477,8 @@
                     headers['X-Tenant-Id'] = tenantId;
                 }
                 
-                const response = await fetch(`${API_BASE_URL}/applications/${appId}`, {
+                // 使用appId作为唯一标识符删除应用
+                const response = await fetch(`${API_BASE_URL}/applications/by-appid/${appId}`, {
                     method: 'DELETE',
                     headers: headers
                 });
@@ -625,7 +626,7 @@
                     
                     <div class="pt-4 border-t border-white/20 flex justify-between items-center">
                         <button class="omni-btn px-3 py-1 bg-red-600/80 text-white text-sm hover:bg-red-600" 
-                                onclick="event.stopPropagation(); deleteApp(${app.id}, '${app.name}')"
+                                onclick="event.stopPropagation(); deleteApp('${app.appId}', '${app.name}')"
                                 title="删除应用">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -776,8 +777,8 @@
                 return;
             }
 
-            // 使用 window.open 打开应用工作台（开发侧）
-            const workspaceUrl = `/omni/app-workspace-dev.html?id=${app.id}&app=${encodeURIComponent(app.name)}&appId=${encodeURIComponent(app.appId)}`;
+            // 使用 window.open 打开应用工作台（开发侧），统一使用appId作为唯一标识
+            const workspaceUrl = `/omni/app-workspace-dev.html?appId=${encodeURIComponent(app.appId)}`;
             window.open(workspaceUrl, '_blank');
             
             closeModal();

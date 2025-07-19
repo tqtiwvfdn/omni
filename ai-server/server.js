@@ -278,13 +278,41 @@ app.get('/api/applications', async (req, res) => {
     }
 });
 
-// Get single application (with tenant support)
+// Get single application by ID (with tenant support)
 app.get('/api/applications/:id', async (req, res) => {
     try {
         const tenantId = req.headers['x-tenant-id'] || 'lAseKW';
         const appsData = await fs.readJson(APPS_FILE);
         const apps = appsData[tenantId] || [];
         const app = apps.find(a => a.id === parseInt(req.params.id));
+        
+        if (!app) {
+            return res.status(404).json({
+                success: false,
+                error: 'Application not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: app,
+            tenant: tenantId
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get single application by appId (with tenant support)
+app.get('/api/applications/by-appid/:appId', async (req, res) => {
+    try {
+        const tenantId = req.headers['x-tenant-id'] || 'lAseKW';
+        const appsData = await fs.readJson(APPS_FILE);
+        const apps = appsData[tenantId] || [];
+        const app = apps.find(a => a.appId === req.params.appId);
         
         if (!app) {
             return res.status(404).json({
@@ -442,6 +470,56 @@ app.put('/api/applications/:id', async (req, res) => {
     }
 });
 
+// Update application by appId (with tenant support)
+app.put('/api/applications/by-appid/:appId', async (req, res) => {
+    try {
+        const { error, value } = updateAppSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                error: error.details[0].message
+            });
+        }
+        
+        const tenantId = req.headers['x-tenant-id'] || 'lAseKW';
+        const appsData = await fs.readJson(APPS_FILE);
+        const apps = appsData[tenantId] || [];
+        const appIndex = apps.findIndex(a => a.appId === req.params.appId);
+        
+        if (appIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Application not found'
+            });
+        }
+        
+        // Update the application
+        apps[appIndex] = {
+            ...apps[appIndex],
+            ...value,
+            updatedAt: moment().format('YYYY-MM-DD')
+        };
+        
+        appsData[tenantId] = apps;
+        await fs.writeJson(APPS_FILE, appsData, { spaces: 2 });
+        
+        // Update stats
+        await updateStats();
+        
+        res.json({
+            success: true,
+            data: apps[appIndex],
+            tenant: tenantId,
+            message: 'Application updated successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Delete application (with tenant support)
 app.delete('/api/applications/:id', async (req, res) => {
     try {
@@ -449,6 +527,42 @@ app.delete('/api/applications/:id', async (req, res) => {
         const appsData = await fs.readJson(APPS_FILE);
         const apps = appsData[tenantId] || [];
         const appIndex = apps.findIndex(a => a.id === parseInt(req.params.id));
+        
+        if (appIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Application not found'
+            });
+        }
+        
+        const deletedApp = apps.splice(appIndex, 1)[0];
+        appsData[tenantId] = apps;
+        await fs.writeJson(APPS_FILE, appsData, { spaces: 2 });
+        
+        // Update stats
+        await updateStats();
+        
+        res.json({
+            success: true,
+            data: deletedApp,
+            tenant: tenantId,
+            message: 'Application deleted successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Delete application by appId (with tenant support)
+app.delete('/api/applications/by-appid/:appId', async (req, res) => {
+    try {
+        const tenantId = req.headers['x-tenant-id'] || 'lAseKW';
+        const appsData = await fs.readJson(APPS_FILE);
+        const apps = appsData[tenantId] || [];
+        const appIndex = apps.findIndex(a => a.appId === req.params.appId);
         
         if (appIndex === -1) {
             return res.status(404).json({

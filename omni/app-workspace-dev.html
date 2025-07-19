@@ -948,7 +948,7 @@
             try {
                 const { id, appId } = getAppInfoFromURL();
                 
-                if (!id && !appId) {
+                if (!appId && !id) {
                     console.warn('No app ID provided, using default metadata');
                     return;
                 }
@@ -960,12 +960,13 @@
                     'x-tenant-id': tenantId
                 };
                 
-                if (id) {
-                    // 通过数据库ID获取应用信息
-                    url = `/omni-api/applications/${id}`;
-                } else if (appId) {
-                    // 通过应用ID获取应用信息 (需要先获取所有应用然后筛选)
-                    url = `/omni-api/applications?search=${appId}`;
+                // 优先使用appId作为唯一标识
+                if (appId) {
+                    // 通过appId直接获取应用信息
+                    url = `/api/applications/by-appid/${appId}`;
+                } else if (id) {
+                    // 兼容旧的ID方式
+                    url = `/api/applications/${id}`;
                 }
                 
                 console.log('Loading app metadata from:', url);
@@ -974,15 +975,7 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    let appData = null;
-                    
-                    if (id) {
-                        // 直接获取单个应用
-                        appData = result.data;
-                    } else {
-                        // 从搜索结果中找到匹配的应用
-                        appData = result.data.find(app => app.appId === appId);
-                    }
+                    const appData = result.data;
                     
                     if (appData) {
                         // 将应用元数据存储到 window 对象
