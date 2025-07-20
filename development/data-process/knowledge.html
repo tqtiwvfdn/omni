@@ -23,6 +23,35 @@
             --text-primary: rgba(255, 255, 255, 0.95);
         }
 
+        /* 加载动画 */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-spinner {
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-left: 2px solid var(--dify-primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* 加载更多提示 */
+        .load-more-trigger {
+            padding: 12px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
         * {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -117,24 +146,41 @@
         /* 文档表格样式 */
         .doc-table {
             border-radius: 12px;
-            overflow: hidden;
+            overflow: auto;
+            min-width: 800px;
+        }
+
+        .doc-table table {
+            width: 100%;
+            min-width: 800px;
         }
 
         .doc-table th {
             background: rgba(255, 255, 255, 0.1);
             color: rgba(255, 255, 255, 0.8);
             font-weight: 500;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            padding: 12px 16px;
+            padding: 8px 12px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            white-space: nowrap;
         }
 
         .doc-table td {
-            padding: 16px;
+            padding: 10px 12px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             color: rgba(255, 255, 255, 0.9);
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .doc-table td.filename-col {
+            white-space: normal;
+            min-width: 200px;
+            max-width: 300px;
         }
 
         .doc-table tr:hover {
@@ -143,6 +189,12 @@
 
         .doc-table tr:last-child td {
             border-bottom: none;
+        }
+
+        /* 表格容器支持横向滚动 */
+        .table-container {
+            overflow-x: auto;
+            overflow-y: visible;
         }
 
         /* 状态标签样式 */
@@ -223,6 +275,20 @@
             visibility: visible;
         }
 
+        /* 多层模态框z-index管理 */
+        .modal-overlay.slice-list-modal {
+            z-index: 10000;
+        }
+
+        .modal-overlay.slice-content-modal {
+            z-index: 10001;
+            background: rgba(0, 0, 0, 0.7); /* 更深的背景 */
+        }
+
+        .modal-overlay.upload-progress-modal {
+            z-index: 10002;
+        }
+
         .modal-content {
             /* background: var(--liquid-glass-strong); */
             background-color: #505050;
@@ -294,6 +360,18 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
+        .btn:disabled,
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-init {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
         /* 文件图标样式 */
         .file-icon {
             width: 20px;
@@ -317,23 +395,37 @@
         .pagination {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding: 16px 0;
+        }
+
+        .pagination-info {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
             gap: 8px;
-            margin-top: 24px;
         }
 
         .pagination button {
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            background: white;
-            color: #374151;
+            padding: 6px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
+            font-size: 13px;
+            min-width: 32px;
         }
 
         .pagination button:hover:not(:disabled) {
-            background: #f3f4f6;
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
         .pagination button.active {
@@ -343,8 +435,131 @@
         }
 
         .pagination button:disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
+        }
+
+        .pagination .page-ellipsis {
+            color: rgba(255, 255, 255, 0.5);
+            padding: 6px 4px;
+            font-size: 13px;
+        }
+
+        .page-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 16px;
+        }
+
+        .page-size-selector select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 4px 8px;
+            color: white;
+            font-size: 13px;
+        }
+
+        /* 上传进度条样式 */
+        .progress-bar-container {
+            width: 100%;
+            margin: 16px 0;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--dify-primary), #4CAF50);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            min-width: 0;
+        }
+
+        .upload-progress-modal .modal-container {
+            pointer-events: all;
+        }
+
+        .upload-progress-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        /* 通用模态框样式 */
+        .modal-container {
+            background: #505050;
+            border-radius: 16px;
+            width: 90vw;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .modal-header h2 {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .modal-close-btn {
+            color: rgba(255, 255, 255, 0.6);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: color 0.2s ease;
+            flex-shrink: 0;
+            margin-left: 16px;
+        }
+
+        .modal-close-btn:hover {
+            color: white;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            background: #505050;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            flex-shrink: 0;
+            background: #505050;
         }
     </style>
 </head>
@@ -367,19 +582,16 @@
                         <p class="text-sm text-white/60">智能知识库分类管理</p>
                     </div>
 
-                    <!-- 全部文档 -->
-                    <div class="menu-item flex items-center specular-highlight active" data-library="" onclick="knowledgeManager.selectLibrary('')">
-                        <span class="mr-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                            </svg>
-                        </span>
-                        <span class="flex-1">全部文档</span>
-                    </div>
 
                     <!-- 知识库列表 -->
                     <div id="libraries-list">
                         <!-- 知识库项将通过 JavaScript 动态生成 -->
+                    </div>
+                    
+                    <!-- 加载更多提示 -->
+                    <div id="load-more-trigger" class="load-more-trigger hidden">
+                        <span class="load-more-text">正在加载更多...</span>
+                        <div class="loading-spinner hidden"></div>
                     </div>
                 </nav>
             </div>
@@ -391,23 +603,24 @@
             <div class="liquid-glass px-6 py-4 m-4 mt-4 rounded-lg">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <h1 id="current-library-title" class="text-xl font-semibold text-white">全部文档</h1>
+                        <h1 id="current-library-title" class="text-xl font-semibold text-white">文档管理</h1>
                         <div class="ml-4 flex items-center space-x-2">
-                            <button class="action-btn" title="刷新" onclick="knowledgeManager.loadLibraries()">
+                            <button class="action-btn" title="刷新" onclick="knowledgeManager.loadDocuments(knowledgeManager.selectedLibraryId)">
                                 刷新
                             </button>
-                            <button class="action-btn danger" title="删除" onclick="knowledgeManager.deleteSelectedDocuments()">
-                                删除
+                            <button class="action-btn danger" title="删除选中文档" onclick="knowledgeManager.deleteSelectedDocuments()">
+                                批量删除
                             </button>
-                            <button class="action-btn" title="标签管理">
-                                标签管理
+                            <button class="action-btn primary" title="批量切片" onclick="knowledgeManager.batchSliceSelected()">
+                                批量切片
                             </button>
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <button class="action-btn primary">
+                        <button class="action-btn primary" onclick="knowledgeManager.showUploadModal()">
                             导入知识文档
                         </button>
+                        <input type="file" id="file-upload" multiple accept=".txt,.pdf,.docx,.pptx,.xlsx" style="display: none" onchange="knowledgeManager.handleFileUpload(this)">
                         <div class="relative">
                             <input type="text" placeholder="请输入文档名称" class="form-input w-64">
                         </div>
@@ -416,25 +629,32 @@
             </div>
 
             <!-- 文档表格 -->
-            <div class="flex-1 overflow-auto m-4 mt-0">
-                <div class="doc-table liquid-glass">
-                    <table class="min-w-full">
+            <div class="flex-1 m-4 mt-0 flex flex-col overflow-hidden">
+                <div class="table-container flex-1 overflow-auto">
+                    <div class="doc-table liquid-glass">
+                        <table class="min-w-full">
                         <thead>
                             <tr>
-                                <th class="text-left">文件名</th>
-                                <th class="text-left w-24">文件大小</th>
-                                <th class="text-left w-20">状态</th>
-                                <th class="text-left w-32">切片策略</th>
-                                <th class="text-left w-20">时效</th>
-                                <th class="text-left w-20">标签</th>
-                                <th class="text-left w-32">创建时间</th>
-                                <th class="text-right w-24">操作</th>
+                                <th class="text-left">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="select-all-docs" onchange="knowledgeManager.toggleSelectAll(this.checked)" class="mr-2">
+                                        文件名
+                                    </div>
+                                </th>
+                                <th class="text-left" style="width: 80px;">文件大小</th>
+                                <th class="text-left" style="width: 80px;">状态</th>
+                                <th class="text-left" style="width: 100px;">切片策略</th>
+                                <th class="text-left" style="width: 80px;">时效</th>
+                                <th class="text-left" style="width: 60px;">标签</th>
+                                <th class="text-left" style="width: 120px;">创建时间</th>
+                                <th class="text-right" style="width: 120px;">操作</th>
                             </tr>
                         </thead>
                         <tbody id="documents-table-body">
                             <!-- 文档列表将由 JavaScript 动态生成 -->
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- 分页 -->
@@ -496,6 +716,14 @@
                 this.pageSize = 10;
                 this.totalPages = 0;
                 this.totalDocuments = 0;
+                
+                // 滚动加载相关
+                this.librariesCurrentPage = 1;
+                this.librariesPageSize = 10;
+                this.librariesTotalPages = 0;
+                this.librariesTotalElements = 0;
+                this.isLoadingLibraries = false;
+                this.allLibrariesLoaded = false;
 
                 this.init();
             }
@@ -564,10 +792,46 @@
                 document.getElementById('close-library-modal').addEventListener('click', () => this.closeLibraryModal());
                 document.getElementById('cancel-library').addEventListener('click', () => this.closeLibraryModal());
                 document.getElementById('library-form').addEventListener('submit', (e) => this.saveLibraryHandler(e));
+                
+                // 滚动加载监听
+                this.initScrollLoading();
+            }
+            
+            // 初始化滚动加载
+            initScrollLoading() {
+                const menuContainer = document.querySelector('.menu-container');
+                if (menuContainer) {
+                    menuContainer.addEventListener('scroll', () => {
+                        // 检查是否滚动到底部
+                        const scrollTop = menuContainer.scrollTop;
+                        const scrollHeight = menuContainer.scrollHeight;
+                        const clientHeight = menuContainer.clientHeight;
+                        
+                        // 当滚动到距离底部50px时开始加载
+                        if (scrollTop + clientHeight >= scrollHeight - 50) {
+                            this.loadMoreLibraries();
+                        }
+                    });
+                }
             }
 
-            // 加载知识库列表
+            // 加载知识库列表（初始加载）
             async loadLibraries() {
+                this.librariesCurrentPage = 1;
+                this.libraries = [];
+                this.allLibrariesLoaded = false;
+                await this.loadMoreLibraries();
+            }
+            
+            // 加载更多知识库
+            async loadMoreLibraries() {
+                if (this.isLoadingLibraries || this.allLibrariesLoaded) {
+                    return;
+                }
+                
+                this.isLoadingLibraries = true;
+                this.showLibrariesLoading();
+                
                 try {
                     const token = localStorage.getItem('token');
                     if (!token) {
@@ -575,7 +839,7 @@
                         return;
                     }
 
-                    const response = await fetch(`/ai/v1/rag/knowledge/library/list?categoryId=${this.currentCategoryId}&pageNum=1&pageSize=20`, {
+                    const response = await fetch(`/ai/v1/rag/knowledge/library/list?categoryId=${this.currentCategoryId}&pageNum=${this.librariesCurrentPage}&pageSize=${this.librariesPageSize}`, {
                         method: 'GET',
                         headers: {
                             'authorization': `bearer ${token}`
@@ -589,23 +853,66 @@
                     const result = await response.json();
                     
                     if (result.code === '000000') {
-                        this.libraries = result.data.result;
-                        this.renderLibraries();
-                        console.log('知识库加载成功:', this.libraries);
+                        const newLibraries = result.data.result || [];
+                        this.librariesTotalPages = result.data.totalPage || 0;
+                        this.librariesTotalElements = result.data.totalElements || 0;
                         
-                        // 如果有知识库，默认选中第一个
-                        if (this.libraries.length > 0) {
-                            this.selectLibrary(this.libraries[0].id, this.libraries[0].name);
+                        // 添加新的知识库到列表
+                        this.libraries.push(...newLibraries);
+                        
+                        // 使用totalElements判断是否已加载完所有数据
+                        if (this.libraries.length >= this.librariesTotalElements || newLibraries.length === 0) {
+                            this.allLibrariesLoaded = true;
                         } else {
-                            this.selectLibrary('', '全部文档');
+                            this.librariesCurrentPage++;
+                        }
+                        
+                        this.renderLibraries();
+                        console.log(`知识库加载成功 - 页码: ${this.librariesCurrentPage - 1}, 新增: ${newLibraries.length}, 总计: ${this.libraries.length}`);
+                        
+                        // 如果是首次加载且有知识库，默认选中第一个
+                        if (this.librariesCurrentPage === 2 && this.libraries.length > 0) {
+                            this.selectLibrary(this.libraries[0].id, this.libraries[0].name);
                         }
                     } else {
                         console.error('Failed to load knowledge libraries:', result.message);
-                        this.showNoKnowledgeBaseMessage();
+                        if (this.librariesCurrentPage === 1) {
+                            this.showNoKnowledgeBaseMessage();
+                        }
                     }
                 } catch (error) {
                     console.error('Error loading knowledge libraries:', error);
-                    this.showNoKnowledgeBaseMessage();
+                    if (this.librariesCurrentPage === 1) {
+                        this.showNoKnowledgeBaseMessage();
+                    }
+                } finally {
+                    this.isLoadingLibraries = false;
+                    this.hideLibrariesLoading();
+                }
+            }
+            
+            // 显示知识库加载状态
+            showLibrariesLoading() {
+                const loadMoreTrigger = document.getElementById('load-more-trigger');
+                if (loadMoreTrigger) {
+                    loadMoreTrigger.classList.remove('hidden');
+                    loadMoreTrigger.classList.add('loading');
+                    loadMoreTrigger.querySelector('.loading-spinner').classList.remove('hidden');
+                    loadMoreTrigger.querySelector('.load-more-text').textContent = '正在加载更多...';
+                }
+            }
+            
+            // 隐藏知识库加载状态
+            hideLibrariesLoading() {
+                const loadMoreTrigger = document.getElementById('load-more-trigger');
+                if (loadMoreTrigger) {
+                    if (this.allLibrariesLoaded) {
+                        loadMoreTrigger.classList.add('hidden');
+                    } else {
+                        loadMoreTrigger.classList.remove('loading');
+                        loadMoreTrigger.querySelector('.loading-spinner').classList.add('hidden');
+                        loadMoreTrigger.querySelector('.load-more-text').textContent = '向下滚动加载更多';
+                    }
                 }
             }
 
@@ -655,7 +962,7 @@
                 // 更新标题
                 const titleElement = document.getElementById('current-library-title');
                 if (titleElement) {
-                    titleElement.textContent = libraryName || '全部文档';
+                    titleElement.textContent = libraryName || '文档管理';
                 }
                 
                 // 加载文档列表
@@ -671,13 +978,14 @@
                         return;
                     }
 
-                    let url;
-                    if (libraryId) {
-                        url = `/ai/v1/rag/knowledge/document/list?libraryId=${libraryId}&pageNum=${this.currentPage}&pageSize=${this.pageSize}`;
-                    } else {
-                        // 获取全部文档，需要遍历所有知识库
-                        url = `/ai/v1/rag/knowledge/document/list?categoryId=${this.currentCategoryId}&pageNum=${this.currentPage}&pageSize=${this.pageSize}`;
+                    // 现在总是需要libraryId，因为已经移除了"全部文档"选项
+                    if (!libraryId) {
+                        console.error('No library selected for loading documents');
+                        this.renderEmptyDocuments();
+                        return;
                     }
+                    
+                    const url = `/ai/v1/rag/knowledge/document/list?libraryId=${libraryId}&pageNum=${this.currentPage}&pageSize=${this.pageSize}`;
 
                     const response = await fetch(url, {
                         method: 'GET',
@@ -720,37 +1028,40 @@
 
                 tbody.innerHTML = this.documents.map(doc => `
                     <tr>
-                        <td>
+                        <td class="filename-col">
                             <div class="flex items-center">
-                                <svg class="file-icon ${this.getFileIconClass(doc.contentType)}" fill="currentColor" viewBox="0 0 20 20">
+                                <input type="checkbox" class="doc-checkbox mr-2" value="${doc.id}">
+                                <svg class="file-icon ${this.getFileIconClass(doc.contentType)}" fill="currentColor" viewBox="0 0 16 16" style="width: 16px; height: 16px; margin-right: 8px;">
                                     ${this.getFileIcon(doc.contentType)}
                                 </svg>
                                 <div>
-                                    <div class="font-medium text-white">${doc.name}</div>
-                                    <div class="text-sm text-white/60">ID: ${doc.id}</div>
+                                    <div class="font-medium text-white text-sm cursor-pointer hover:text-blue-300 transition-colors" 
+                                         title="${doc.name}" 
+                                         onclick="knowledgeManager.previewDocument('${doc.id}')">${doc.name}</div>
+                                    <div class="text-xs text-white/60">ID: ${doc.id}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="text-sm text-white/80">${doc.size}</td>
+                        <td>${doc.size}</td>
                         <td>
                             <span class="status-tag ${this.getStatusClass(doc.status)}">
                                 ${this.getStatusText(doc.status)}
                             </span>
                         </td>
-                        <td class="text-sm text-white/80">
-                            <div>按分隔符划表</div>
-                            <div>切分</div>
-                        </td>
-                        <td class="text-sm text-white/80">长期有效</td>
-                        <td class="text-sm text-white/80">-</td>
-                        <td class="text-sm text-white/80">${this.formatDateTime(doc.createdAt)}</td>
+                        <td>递归切分</td>
+                        <td>长期有效</td>
+                        <td>-</td>
+                        <td title="${this.formatDateTime(doc.createdAt)}">${this.formatDateTime(doc.createdAt)}</td>
                         <td class="text-right">
                             <div class="flex items-center justify-end space-x-1">
-                                <button class="action-btn" title="切片">
-                                    切片
+                                <button class="action-btn ${doc.status === 'init' ? 'primary' : ''}" title="切片" onclick="knowledgeManager.executeDocumentSlicing('${doc.id}')" ${doc.status === 'processing' ? 'disabled' : ''}>
+                                    ${doc.status === 'init' ? '切片' : '重切'}
                                 </button>
-                                <button class="action-btn" title="更多操作">
-                                    操作
+                                <button class="action-btn secondary" title="查看切片" onclick="knowledgeManager.viewSlices('${doc.id}', '${doc.name}')" ${doc.status === 'init' || doc.status === 'failed' ? 'disabled' : ''}>
+                                    查看切片
+                                </button>
+                                <button class="action-btn danger" title="删除文档" onclick="knowledgeManager.deleteDocument('${doc.id}', '${doc.name}')">
+                                    删除
                                 </button>
                             </div>
                         </td>
@@ -772,7 +1083,7 @@
                                 </svg>
                                 <h3 class="text-lg font-medium text-white mb-2">暂无文档</h3>
                                 <p class="text-white/60 mb-4">当前知识库还没有任何文档</p>
-                                <button class="action-btn primary">
+                                <button class="action-btn primary" onclick="knowledgeManager.showUploadModal()">
                                     导入文档
                                 </button>
                             </div>
@@ -784,37 +1095,86 @@
             // 渲染分页
             renderPagination() {
                 const container = document.getElementById('pagination-container');
-                if (!container || this.totalPages <= 1) {
-                    container.innerHTML = '';
+                if (!container) return;
+
+                if (this.totalPages <= 1) {
+                    container.innerHTML = `
+                        <div class="pagination-info">
+                            共 ${this.totalDocuments} 条记录
+                        </div>
+                    `;
                     return;
                 }
 
-                let pagination = `
+                const startRecord = (this.currentPage - 1) * this.pageSize + 1;
+                const endRecord = Math.min(this.currentPage * this.pageSize, this.totalDocuments);
+
+                let paginationControls = `
+                    <button ${this.currentPage === 1 ? 'disabled' : ''} onclick="knowledgeManager.goToPage(1)">首页</button>
                     <button ${this.currentPage === 1 ? 'disabled' : ''} onclick="knowledgeManager.goToPage(${this.currentPage - 1})">上一页</button>
                 `;
 
                 // 页码按钮
-                for (let i = 1; i <= this.totalPages; i++) {
-                    if (i === this.currentPage) {
-                        pagination += `<button class="active">${i}</button>`;
-                    } else if (i === 1 || i === this.totalPages || Math.abs(i - this.currentPage) <= 2) {
-                        pagination += `<button onclick="knowledgeManager.goToPage(${i})">${i}</button>`;
-                    } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
-                        pagination += `<span>...</span>`;
+                let startPage = Math.max(1, this.currentPage - 2);
+                let endPage = Math.min(this.totalPages, this.currentPage + 2);
+
+                if (startPage > 1) {
+                    paginationControls += `<button onclick="knowledgeManager.goToPage(1)">1</button>`;
+                    if (startPage > 2) {
+                        paginationControls += `<span class="page-ellipsis">...</span>`;
                     }
                 }
 
-                pagination += `
+                for (let i = startPage; i <= endPage; i++) {
+                    if (i === this.currentPage) {
+                        paginationControls += `<button class="active">${i}</button>`;
+                    } else {
+                        paginationControls += `<button onclick="knowledgeManager.goToPage(${i})">${i}</button>`;
+                    }
+                }
+
+                if (endPage < this.totalPages) {
+                    if (endPage < this.totalPages - 1) {
+                        paginationControls += `<span class="page-ellipsis">...</span>`;
+                    }
+                    paginationControls += `<button onclick="knowledgeManager.goToPage(${this.totalPages})">${this.totalPages}</button>`;
+                }
+
+                paginationControls += `
                     <button ${this.currentPage === this.totalPages ? 'disabled' : ''} onclick="knowledgeManager.goToPage(${this.currentPage + 1})">下一页</button>
+                    <button ${this.currentPage === this.totalPages ? 'disabled' : ''} onclick="knowledgeManager.goToPage(${this.totalPages})">末页</button>
                 `;
 
-                container.innerHTML = pagination;
+                container.innerHTML = `
+                    <div class="pagination-info">
+                        第 ${startRecord}-${endRecord} 条，共 ${this.totalDocuments} 条记录，第 ${this.currentPage}/${this.totalPages} 页
+                    </div>
+                    <div class="pagination-controls">
+                        ${paginationControls}
+                        <div class="page-size-selector">
+                            <span style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">每页</span>
+                            <select onchange="knowledgeManager.changePageSize(this.value)" value="${this.pageSize}">
+                                <option value="10" ${this.pageSize === 10 ? 'selected' : ''}>10</option>
+                                <option value="20" ${this.pageSize === 20 ? 'selected' : ''}>20</option>
+                                <option value="50" ${this.pageSize === 50 ? 'selected' : ''}>50</option>
+                            </select>
+                            <span style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">条</span>
+                        </div>
+                    </div>
+                `;
             }
 
             // 跳转页面
             async goToPage(page) {
                 if (page < 1 || page > this.totalPages || page === this.currentPage) return;
                 this.currentPage = page;
+                await this.loadDocuments(this.selectedLibraryId);
+            }
+
+            // 改变每页条数
+            async changePageSize(newPageSize) {
+                this.pageSize = parseInt(newPageSize);
+                this.currentPage = 1; // 重置到第一页
                 await this.loadDocuments(this.selectedLibraryId);
             }
 
@@ -872,7 +1232,7 @@
                 const embeddingModel = document.getElementById('library-embedding-model').value;
 
                 if (!name) {
-                    alert('请输入知识库名称');
+                    this.showInfoDialog('请输入知识库名称', '验证失败');
                     return;
                 }
 
@@ -890,7 +1250,7 @@
                     }
                 } catch (error) {
                     console.error('保存知识库失败:', error);
-                    alert('保存失败，请重试');
+                    this.showInfoDialog('保存失败，请重试', '错误');
                 }
             }
 
@@ -898,7 +1258,7 @@
                 try {
                     const token = localStorage.getItem('token');
                     if (!token) {
-                        alert('认证令牌不存在');
+                        this.showInfoDialog('认证令牌不存在', '认证错误');
                         return false;
                     }
 
@@ -920,16 +1280,16 @@
                     
                     if (result.code === '000000') {
                         console.log('知识库创建成功:', result.data);
-                        alert('知识库创建成功');
+                        this.showNotification('知识库创建成功', 'success');
                         return true;
                     } else {
                         console.error('知识库创建失败:', result.message);
-                        alert('创建失败: ' + result.message);
+                        this.showInfoDialog('创建失败: ' + result.message, '错误');
                         return false;
                     }
                 } catch (error) {
                     console.error('创建知识库失败:', error);
-                    alert('创建失败，请重试');
+                    this.showInfoDialog('创建失败，请重试', '错误');
                     return false;
                 }
             }
@@ -938,7 +1298,7 @@
                 try {
                     const token = localStorage.getItem('token');
                     if (!token) {
-                        alert('认证令牌不存在');
+                        this.showInfoDialog('认证令牌不存在', '认证错误');
                         return false;
                     }
 
@@ -960,16 +1320,16 @@
                     
                     if (result.code === '000000') {
                         console.log('知识库更新成功:', result.data);
-                        alert('知识库更新成功');
+                        this.showNotification('知识库更新成功', 'success');
                         return true;
                     } else {
                         console.error('知识库更新失败:', result.message);
-                        alert('更新失败: ' + result.message);
+                        this.showInfoDialog('更新失败: ' + result.message, '错误');
                         return false;
                     }
                 } catch (error) {
                     console.error('更新知识库失败:', error);
-                    alert('更新失败，请重试');
+                    this.showInfoDialog('更新失败，请重试', '错误');
                     return false;
                 }
             }
@@ -977,14 +1337,18 @@
             async deleteLibrary(libraryId, libraryName) {
                 const message = `确定要删除知识库"${libraryName}"吗？\n\n注意：删除知识库后，该知识库下的所有文档将被永久删除。`;
                 
-                if (!confirm(message)) {
-                    return;
-                }
+                this.showConfirmDialog(message, async () => {
+                    await this.executeDeleteLibrary(libraryId, libraryName);
+                });
+                return;
+            }
+
+            async executeDeleteLibrary(libraryId, libraryName) {
 
                 try {
                     const token = localStorage.getItem('token');
                     if (!token) {
-                        alert('认证令牌不存在');
+                        this.showInfoDialog('认证令牌不存在', '认证错误');
                         return;
                     }
 
@@ -999,21 +1363,23 @@
                     
                     if (result.code === '000000') {
                         console.log('知识库删除成功:', libraryId);
-                        alert('知识库删除成功');
+                        this.showNotification('知识库删除成功', 'success');
                         
-                        // 如果当前选中的是被删除的知识库，切换到全部
+                        // 如果当前选中的是被删除的知识库，切换到第一个
                         if (this.selectedLibraryId === libraryId) {
-                            this.selectLibrary('', '全部文档');
+                            if (this.libraries.length > 0) {
+                                this.selectLibrary(this.libraries[0].id, this.libraries[0].name);
+                            }
                         }
                         
                         await this.loadLibraries();
                     } else {
                         console.error('知识库删除失败:', result.message);
-                        alert('删除失败: ' + result.message);
+                        this.showInfoDialog('删除失败: ' + result.message, '错误');
                     }
                 } catch (error) {
                     console.error('删除知识库失败:', error);
-                    alert('删除失败，请重试');
+                    this.showInfoDialog('删除失败，请重试', '错误');
                 }
             }
 
@@ -1021,9 +1387,519 @@
                 this.showLibraryModal(libraryId, name, description);
             }
 
-            // 删除选中的文档（占位方法）
-            deleteSelectedDocuments() {
-                alert('删除选中文档功能待实现');
+            // 删除选中的文档
+            async deleteSelectedDocuments() {
+                const selectedDocs = this.getSelectedDocuments();
+                if (selectedDocs.length === 0) {
+                    this.showInfoDialog('请先选择要删除的文档', '提示');
+                    return;
+                }
+
+                const message = `确定要删除所选的 ${selectedDocs.length} 个文档吗？\n\n删除后将无法恢复。`;
+                this.showConfirmDialog(message, async () => {
+                    await this.executeDeleteSelectedDocuments(selectedDocs);
+                });
+                return;
+            }
+
+            async executeDeleteSelectedDocuments(selectedDocs) {
+
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        this.showInfoDialog('认证令牌不存在', '认证错误');
+                        return;
+                    }
+
+                    // 逐个删除文档
+                    let successCount = 0;
+                    let failedCount = 0;
+
+                    for (const docId of selectedDocs) {
+                        try {
+                            const response = await fetch(`/ai/v1/rag/knowledge/document/${docId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'authorization': `bearer ${token}`
+                                }
+                            });
+
+                            const result = await response.json();
+                            if (result.code === '000000') {
+                                successCount++;
+                            } else {
+                                failedCount++;
+                                console.error(`删除文档 ${docId} 失败:`, result.message);
+                            }
+                        } catch (error) {
+                            failedCount++;
+                            console.error(`删除文档 ${docId} 失败:`, error);
+                        }
+                    }
+
+                    // 显示结果
+                    if (failedCount === 0) {
+                        this.showNotification(`成功删除 ${successCount} 个文档`, 'success');
+                    } else {
+                        this.showInfoDialog(`删除完成：成功 ${successCount} 个，失败 ${failedCount} 个`, '删除结果');
+                    }
+
+                    // 重新加载文档列表
+                    await this.loadDocuments(this.selectedLibraryId);
+                } catch (error) {
+                    console.error('删除文档失败:', error);
+                    this.showInfoDialog('删除失败，请重试', '错误');
+                }
+            }
+
+            // 删除单个文档
+            async deleteDocument(documentId, documentName) {
+                const message = `确定要删除文档"${documentName}"吗？\n\n删除后将无法恢复。`;
+                this.showConfirmDialog(message, async () => {
+                    await this.executeDeleteDocument(documentId, documentName);
+                });
+                return;
+            }
+
+            async executeDeleteDocument(documentId, documentName) {
+
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        this.showInfoDialog('认证令牌不存在', '认证错误');
+                        return;
+                    }
+
+                    const response = await fetch(`/ai/v1/rag/knowledge/document/${documentId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'authorization': `bearer ${token}`
+                        }
+                    });
+
+                    const result = await response.json();
+                    if (result.code === '000000') {
+                        this.showNotification('文档删除成功', 'success');
+                        // 重新加载文档列表
+                        await this.loadDocuments(this.selectedLibraryId);
+                    } else {
+                        console.error('文档删除失败:', result.message);
+                        this.showInfoDialog('删除失败: ' + result.message, '错误');
+                    }
+                } catch (error) {
+                    console.error('删除文档失败:', error);
+                    this.showInfoDialog('删除失败，请重试', '错误');
+                }
+            }
+
+            // 预览文档
+            previewDocument(documentId) {
+                if (!documentId) {
+                    this.showInfoDialog('文档ID无效', '错误');
+                    return;
+                }
+                
+                const previewUrl = `/knowledge/preview/${documentId}`;
+                window.open(previewUrl, '_blank');
+            }
+
+            // 查看文档切片
+            async viewSlices(documentId, documentName) {
+                if (!documentId) {
+                    this.showInfoDialog('文档ID无效', '错误');
+                    return;
+                }
+                
+                if (!this.selectedLibraryId) {
+                    this.showInfoDialog('请先选择知识库', '错误');
+                    return;
+                }
+                
+                this.showSlicesModal(documentId, documentName);
+            }
+
+            // 显示切片列表模态框
+            async showSlicesModal(documentId, documentName) {
+                // 创建切片模态框
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay slice-list-modal active';
+                modal.innerHTML = `
+                    <div class="modal-container">
+                        <div class="modal-header">
+                            <h2>文档切片 - ${documentName}</h2>
+                            <button class="modal-close-btn" onclick="this.closest('.modal-overlay').remove()">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="slices-loading" class="text-center py-8">
+                                <div class="loading-spinner"></div>
+                                <p class="text-white/60 mt-2">正在加载切片数据...</p>
+                            </div>
+                            <div id="slices-content" class="hidden h-full flex flex-col">
+                                <div class="px-6 py-4 border-b border-white/10 flex-shrink-0">
+                                    <div class="flex items-center justify-between">
+                                        <div id="slices-stats" class="text-sm text-white/60"></div>
+                                        <div class="page-size-selector">
+                                            <span style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">每页</span>
+                                            <select id="slices-page-size" onchange="knowledgeManager.changeSlicesPageSize(this.value)" value="20">
+                                                <option value="10">10</option>
+                                                <option value="20" selected>20</option>
+                                                <option value="50">50</option>
+                                            </select>
+                                            <span style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">条</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slices-list flex-1 overflow-y-auto">
+                                    <div id="slices-table-body"></div>
+                                </div>
+                                <div id="slices-pagination" class="pagination px-6 py-4 border-t border-white/10 flex-shrink-0"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // 添加backdrop点击关闭功能
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
+
+                // 添加ESC键关闭功能
+                const handleEscKey = (e) => {
+                    if (e.key === 'Escape') {
+                        modal.remove();
+                        document.removeEventListener('keydown', handleEscKey);
+                    }
+                };
+                document.addEventListener('keydown', handleEscKey);
+                
+                // 初始化切片数据
+                this.currentSlicesDocumentId = documentId;
+                this.slicesCurrentPage = 1;
+                this.slicesPageSize = 20;
+                this.slicesTotalPages = 0;
+                this.slicesTotalElements = 0;
+                this.slices = [];
+                
+                // 加载切片数据
+                await this.loadSlices();
+            }
+
+            // 加载切片数据
+            async loadSlices() {
+                if (!this.currentSlicesDocumentId || !this.selectedLibraryId) return;
+                
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        this.showInfoDialog('认证令牌不存在', '认证错误');
+                        return;
+                    }
+
+                    const response = await fetch(`/ai/v1/rag/knowledge/document/slices?knowledgeId=${this.currentSlicesDocumentId}&libraryId=${this.selectedLibraryId}&pageNumber=${this.slicesCurrentPage}&pageSize=${this.slicesPageSize}`, {
+                        method: 'GET',
+                        headers: {
+                            'authorization': `bearer ${token}`
+                        }
+                    });
+
+                    const result = await response.json();
+                    console.log('Slices API response:', result);
+                    
+                    if (result.code === '000000') {
+                        this.slices = result.data.result || [];
+                        this.slicesTotalPages = result.data.totalPage || 0;
+                        this.slicesTotalElements = result.data.totalElements || 0;
+                        
+                        console.log('Loaded slices:', this.slices);
+                        console.log('Total elements:', this.slicesTotalElements);
+                        console.log('Total pages:', this.slicesTotalPages);
+                        
+                        this.renderSlices();
+                    } else {
+                        console.error('Failed to load slices:', result.message);
+                        this.showInfoDialog('加载切片失败: ' + result.message, '错误');
+                    }
+                } catch (error) {
+                    console.error('Error loading slices:', error);
+                    this.showInfoDialog('加载切片失败，请重试', '错误');
+                } finally {
+                    // 隐藏加载状态
+                    const loadingDiv = document.getElementById('slices-loading');
+                    const contentDiv = document.getElementById('slices-content');
+                    if (loadingDiv) loadingDiv.classList.add('hidden');
+                    if (contentDiv) contentDiv.classList.remove('hidden');
+                }
+            }
+
+            // 渲染切片列表
+            renderSlices() {
+                const tbody = document.getElementById('slices-table-body');
+                const statsDiv = document.getElementById('slices-stats');
+                
+                console.log('renderSlices called');
+                console.log('tbody:', tbody);
+                console.log('statsDiv:', statsDiv);
+                console.log('this.slices:', this.slices);
+                console.log('this.slices.length:', this.slices.length);
+                
+                if (!tbody || !statsDiv) {
+                    console.log('Missing tbody or statsDiv elements');
+                    return;
+                }
+                
+                // 更新统计信息
+                statsDiv.textContent = `共 ${this.slicesTotalElements} 个切片，第 ${this.slicesCurrentPage}/${this.slicesTotalPages} 页`;
+                
+                if (this.slices.length === 0) {
+                    console.log('No slices found, showing empty message');
+                    tbody.innerHTML = `
+                        <div class="text-center py-8">
+                            <p class="text-white/60">该文档暂无切片数据</p>
+                        </div>
+                    `;
+                } else {
+                    console.log('Rendering', this.slices.length, 'slices');
+                    tbody.innerHTML = this.slices.map((slice, index) => `
+                        <div class="slice-item border-b border-white/10 p-4 hover:bg-white/5 transition-colors">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-2">
+                                        <span class="text-sm font-medium text-white">切片 #${(this.slicesCurrentPage - 1) * this.slicesPageSize + index + 1}</span>
+                                        <span class="ml-2 text-xs text-white/60">ID: ${slice.id}</span>
+                                    </div>
+                                    <div class="text-sm text-white/80 leading-relaxed max-h-24 overflow-y-auto cursor-pointer hover:bg-white/5 rounded p-2 transition-colors" 
+                                         title="点击查看完整内容" 
+                                         onclick="knowledgeManager.viewSliceContent('${slice.id}', ${(this.slicesCurrentPage - 1) * this.slicesPageSize + index + 1})">
+                                        ${slice.segmentContent ? slice.segmentContent.substring(0, 200) + (slice.segmentContent.length > 200 ? '...' : '') : '无内容'}
+                                    </div>
+                                </div>
+                                <button class="action-btn secondary ml-4" onclick="knowledgeManager.viewSliceContent('${slice.id}', ${(this.slicesCurrentPage - 1) * this.slicesPageSize + index + 1})">
+                                    查看详情
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                this.renderSlicesPagination();
+            }
+
+            // 渲染切片分页
+            renderSlicesPagination() {
+                const container = document.getElementById('slices-pagination');
+                if (!container) return;
+
+                if (this.slicesTotalPages <= 1) {
+                    container.innerHTML = `
+                        <div class="pagination-info">
+                            共 ${this.slicesTotalElements} 个切片
+                        </div>
+                    `;
+                    return;
+                }
+
+                const startRecord = (this.slicesCurrentPage - 1) * this.slicesPageSize + 1;
+                const endRecord = Math.min(this.slicesCurrentPage * this.slicesPageSize, this.slicesTotalElements);
+
+                let paginationControls = `
+                    <button ${this.slicesCurrentPage === 1 ? 'disabled' : ''} onclick="knowledgeManager.goToSlicesPage(1)">首页</button>
+                    <button ${this.slicesCurrentPage === 1 ? 'disabled' : ''} onclick="knowledgeManager.goToSlicesPage(${this.slicesCurrentPage - 1})">上一页</button>
+                `;
+
+                let startPage = Math.max(1, this.slicesCurrentPage - 2);
+                let endPage = Math.min(this.slicesTotalPages, this.slicesCurrentPage + 2);
+
+                if (startPage > 1) {
+                    paginationControls += `<button onclick="knowledgeManager.goToSlicesPage(1)">1</button>`;
+                    if (startPage > 2) {
+                        paginationControls += `<span class="page-ellipsis">...</span>`;
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    if (i === this.slicesCurrentPage) {
+                        paginationControls += `<button class="active">${i}</button>`;
+                    } else {
+                        paginationControls += `<button onclick="knowledgeManager.goToSlicesPage(${i})">${i}</button>`;
+                    }
+                }
+
+                if (endPage < this.slicesTotalPages) {
+                    if (endPage < this.slicesTotalPages - 1) {
+                        paginationControls += `<span class="page-ellipsis">...</span>`;
+                    }
+                    paginationControls += `<button onclick="knowledgeManager.goToSlicesPage(${this.slicesTotalPages})">${this.slicesTotalPages}</button>`;
+                }
+
+                paginationControls += `
+                    <button ${this.slicesCurrentPage === this.slicesTotalPages ? 'disabled' : ''} onclick="knowledgeManager.goToSlicesPage(${this.slicesCurrentPage + 1})">下一页</button>
+                    <button ${this.slicesCurrentPage === this.slicesTotalPages ? 'disabled' : ''} onclick="knowledgeManager.goToSlicesPage(${this.slicesTotalPages})">末页</button>
+                `;
+
+                container.innerHTML = `
+                    <div class="pagination-info">
+                        第 ${startRecord}-${endRecord} 个，共 ${this.slicesTotalElements} 个切片，第 ${this.slicesCurrentPage}/${this.slicesTotalPages} 页
+                    </div>
+                    <div class="pagination-controls">
+                        ${paginationControls}
+                        <div class="page-size-selector">
+                            <span style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">每页</span>
+                            <select onchange="knowledgeManager.changeSlicesPageSize(this.value)" value="${this.slicesPageSize}">
+                                <option value="10" ${this.slicesPageSize === 10 ? 'selected' : ''}>10</option>
+                                <option value="20" ${this.slicesPageSize === 20 ? 'selected' : ''}>20</option>
+                                <option value="50" ${this.slicesPageSize === 50 ? 'selected' : ''}>50</option>
+                            </select>
+                            <span style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">个</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 切片分页跳转
+            async goToSlicesPage(page) {
+                if (page < 1 || page > this.slicesTotalPages || page === this.slicesCurrentPage) return;
+                this.slicesCurrentPage = page;
+                await this.loadSlices();
+            }
+
+            // 改变切片页面大小
+            async changeSlicesPageSize(newSize) {
+                this.slicesPageSize = parseInt(newSize);
+                this.slicesCurrentPage = 1;
+                await this.loadSlices();
+            }
+
+            // 查看切片详细内容
+            async viewSliceContent(sliceId, sliceNumber) {
+                if (!sliceId) {
+                    this.showInfoDialog('切片ID无效', '错误');
+                    return;
+                }
+                
+                // 创建切片内容模态框
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay slice-content-modal active';
+                
+                const safeSliceId = sliceId.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                modal.innerHTML = `
+                    <div class="modal-container" style="width: 80vw; height: 70vh;">
+                        <div class="modal-header">
+                            <h2>切片详情 #${sliceNumber}</h2>
+                            <button class="modal-close-btn" onclick="this.closest('.modal-overlay').remove()">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-white mb-2">切片ID</label>
+                                <div class="text-sm text-white/60 bg-white/10 rounded p-2">${safeSliceId}</div>
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium text-white mb-2">切片内容</label>
+                                <div id="slice-content-display" class="text-sm text-white/80 bg-white/10 rounded p-4 h-96 overflow-y-auto leading-relaxed whitespace-pre-wrap">
+                                    <div class="text-center py-8">
+                                        <div class="loading-spinner"></div>
+                                        <p class="text-white/60 mt-2">正在加载切片内容...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="action-btn secondary" id="copy-slice-content-btn" disabled>
+                                复制内容
+                            </button>
+                            <button class="action-btn primary" onclick="this.closest('.modal-overlay').remove()">
+                                关闭
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // 添加backdrop点击关闭功能
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
+
+                // 添加ESC键关闭功能
+                const handleEscKey = (e) => {
+                    if (e.key === 'Escape') {
+                        modal.remove();
+                        document.removeEventListener('keydown', handleEscKey);
+                    }
+                };
+                document.addEventListener('keydown', handleEscKey);
+                
+                // 加载切片内容
+                await this.loadSliceContent(sliceId, modal);
+            }
+
+            // 加载单个切片的详细内容
+            async loadSliceContent(sliceId, modal) {
+               const content = this.slices.find(e=>e.id===sliceId).segmentContent;
+                        
+                if (!content) {
+                    this.displaySliceContentError('该切片没有内容');
+                    return;
+                }
+                
+                // 安全地处理内容
+                const safeContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                // 更新内容显示
+                const contentDisplay = modal.querySelector('#slice-content-display');
+                if (contentDisplay) {
+                    contentDisplay.innerHTML = safeContent;
+                }
+                
+                // 启用复制按钮并添加事件监听器
+                const copyBtn = modal.querySelector('#copy-slice-content-btn');
+                if (copyBtn) {
+                    copyBtn.disabled = false;
+                    copyBtn.addEventListener('click', async () => {
+                        try {
+                            await navigator.clipboard.writeText(content);
+                            this.showNotification('内容已复制到剪贴板', 'success');
+                        } catch (error) {
+                            console.error('复制失败:', error);
+                            this.showNotification('复制失败，请手动复制', 'error');
+                        }
+                    });
+                }
+            }
+
+            // 显示切片内容加载错误
+            displaySliceContentError(message) {
+                const contentDisplay = document.getElementById('slice-content-display');
+                if (contentDisplay) {
+                    contentDisplay.innerHTML = `
+                        <div class="text-center py-8">
+                            <p class="text-red-400">${message}</p>
+                        </div>
+                    `;
+                }
+            }
+
+            // 获取选中的文档ID列表
+            getSelectedDocuments() {
+                const checkboxes = document.querySelectorAll('.doc-checkbox:checked');
+                return Array.from(checkboxes).map(checkbox => checkbox.value);
             }
 
             // 工具方法
@@ -1059,6 +1935,8 @@
                         return 'status-processing';
                     case 'failed':
                         return 'status-failed';
+                    case 'init':
+                        return 'status-init';
                     default:
                         return 'status-processing';
                 }
@@ -1072,6 +1950,8 @@
                         return '处理中';
                     case 'failed':
                         return '处理失败';
+                    case 'init':
+                        return '待处理';
                     default:
                         return '未知状态';
                 }
@@ -1086,6 +1966,450 @@
                     day: '2-digit',
                     hour: '2-digit',
                     minute: '2-digit'
+                });
+            }
+
+            // 显示文件上传模态框
+            showUploadModal() {
+                if (!this.selectedLibraryId) {
+                    this.showInfoDialog('请先选择一个知识库', '提示');
+                    return;
+                }
+                document.getElementById('file-upload').click();
+            }
+
+            // 处理文件上传
+            async handleFileUpload(input) {
+                const files = input.files;
+                if (!files || files.length === 0) {
+                    return;
+                }
+
+                if (!this.selectedLibraryId) {
+                    this.showInfoDialog('请先选择一个知识库', '提示');
+                    return;
+                }
+
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        this.showInfoDialog('认证令牌不存在', '认证错误');
+                        return;
+                    }
+
+                    let successCount = 0;
+                    let failedCount = 0;
+                    const uploadedDocuments = [];
+
+                    // 显示上传进度
+                    this.showUploadProgress(true, 0, files.length, '准备上传...');
+
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        try {
+                            console.log(`正在上传文件 ${i + 1}/${files.length}: ${file.name}`);
+                            
+                            // 更新进度显示
+                            this.updateUploadProgress(i, files.length, file.name);
+                            
+                            // 第一步：上传文件
+                            const uploadResult = await this.uploadFile(file, token);
+                            if (uploadResult.success) {
+                                uploadedDocuments.push(uploadResult.documentId);
+                                successCount++;
+                                console.log(`文件 ${file.name} 上传成功，文档ID: ${uploadResult.documentId}`);
+                            } else {
+                                failedCount++;
+                                console.error(`文件 ${file.name} 上传失败:`, uploadResult.error);
+                            }
+                        } catch (error) {
+                            failedCount++;
+                            console.error(`文件 ${file.name} 上传失败:`, error);
+                        }
+                    }
+
+                    // 更新为完成状态
+                    this.updateUploadProgress(files.length, files.length, '上传完成');
+
+                    this.showUploadProgress(false);
+
+                    // 显示上传结果
+                    if (failedCount === 0) {
+                        this.showNotification(`成功上传 ${successCount} 个文件`, 'success');
+                    } else {
+                        this.showInfoDialog(`上传完成：成功 ${successCount} 个，失败 ${failedCount} 个`, '上传结果');
+                    }
+
+                    // 清空文件输入
+                    input.value = '';
+
+                    // 重新加载文档列表
+                    await this.loadDocuments(this.selectedLibraryId);
+
+                    // 自动开始切片处理（如果有成功上传的文档）
+                    if (uploadedDocuments.length > 0) {
+                        this.showConfirmDialog(`文件上传成功！是否立即开始文档切片处理？`, async () => {
+                            await this.batchExecuteSlicing(uploadedDocuments);
+                        });
+                    }
+
+                } catch (error) {
+                    this.showUploadProgress(false);
+                    console.error('批量上传失败:', error);
+                    this.showInfoDialog('上传失败，请重试', '错误');
+                }
+            }
+
+            // 上传单个文件
+            async uploadFile(file, token) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('libraryId', this.selectedLibraryId);
+
+                    const response = await fetch('/ai/v1/rag/knowledge/document/upload', {
+                        method: 'POST',
+                        headers: {
+                            'authorization': `bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.code === '000000' && result.data) {
+                        return {
+                            success: true,
+                            documentId: result.data.id
+                        };
+                    } else {
+                        return {
+                            success: false,
+                            error: result.message || '上传失败'
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
+            }
+
+            // 显示/隐藏上传进度
+            showUploadProgress(show, current = 0, total = 0, fileName = '') {
+                const existingModal = document.querySelector('.upload-progress-modal');
+                
+                if (show) {
+                    // 如果已存在进度模态框，直接更新
+                    if (existingModal) {
+                        this.updateUploadProgress(current, total, fileName);
+                        return;
+                    }
+                    
+                    // 创建上传进度模态框
+                    const modal = document.createElement('div');
+                    modal.className = 'modal-overlay active upload-progress-modal';
+                    modal.innerHTML = `
+                        <div class="modal-container" style="max-width: 500px;max-height:320px;">
+                            <div class="modal-header">
+                                <h2>文档上传中</h2>
+                            </div>
+                            <div class="modal-body">
+                                <div class="upload-progress-info mb-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-sm text-white/80">正在上传:</span>
+                                        <span id="upload-current-file" class="text-sm text-white/60">${fileName}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-4">
+                                        <span class="text-sm text-white/80">进度:</span>
+                                        <span id="upload-progress-text" class="text-sm text-white/60">${current}/${total}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-bg">
+                                        <div id="upload-progress-bar" class="progress-bar-fill" style="width: ${total > 0 ? (current / total) * 100 : 0}%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 text-center">
+                                    <div class="loading-spinner" style="display:inline-block"></div>
+                                    <p class="text-white/60 mt-2 text-sm">请稍候，文件正在上传...</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(modal);
+                } else {
+                    // 隐藏进度模态框
+                    if (existingModal) {
+                        existingModal.remove();
+                    }
+                }
+            }
+
+            // 更新上传进度
+            updateUploadProgress(current, total, fileName) {
+                const progressBar = document.getElementById('upload-progress-bar');
+                const progressText = document.getElementById('upload-progress-text');
+                const currentFileSpan = document.getElementById('upload-current-file');
+                
+                if (progressBar && total > 0) {
+                    const percentage = (current / total) * 100;
+                    progressBar.style.width = `${percentage}%`;
+                }
+                
+                if (progressText) {
+                    progressText.textContent = `${current}/${total}`;
+                }
+                
+                if (currentFileSpan && fileName) {
+                    currentFileSpan.textContent = fileName;
+                }
+            }
+
+            // 批量执行文档切片
+            async batchExecuteSlicing(documentIds) {
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        this.showInfoDialog('认证令牌不存在', '认证错误');
+                        return;
+                    }
+
+                    let successCount = 0;
+                    let failedCount = 0;
+
+                    for (const documentId of documentIds) {
+                        try {
+                            const success = await this.executeDocumentSlicing(documentId, false); // false表示不显示成功提示
+                            if (success) {
+                                successCount++;
+                            } else {
+                                failedCount++;
+                            }
+                        } catch (error) {
+                            failedCount++;
+                            console.error(`文档 ${documentId} 切片失败:`, error);
+                        }
+                    }
+
+                    // 显示批量切片结果
+                    if (failedCount === 0) {
+                        this.showNotification(`成功启动 ${successCount} 个文档的切片处理`, 'success');
+                    } else {
+                        this.showInfoDialog(`切片处理启动完成：成功 ${successCount} 个，失败 ${failedCount} 个`, '切片结果');
+                    }
+
+                    // 重新加载文档列表以更新状态
+                    await this.loadDocuments(this.selectedLibraryId);
+
+                } catch (error) {
+                    console.error('批量切片失败:', error);
+                    this.showInfoDialog('批量切片失败，请重试', '错误');
+                }
+            }
+
+            // 执行文档切片
+            async executeDocumentSlicing(documentId, showAlert = true) {
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        if (showAlert) this.showInfoDialog('认证令牌不存在', '认证错误');
+                        return false;
+                    }
+
+                    const response = await fetch('/ai/v1/rag/knowledge/document/execute', {
+                        method: 'POST',
+                        headers: {
+                            'authorization': `bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify([{
+                            "id": documentId,
+                            "splitterType": "recursive"
+                        }])
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.code === '000000') {
+                        if (showAlert) {
+                            this.showNotification('文档切片处理已启动', 'success');
+                        }
+                        console.log(`文档 ${documentId} 切片处理启动成功`);
+                        
+                        // 重新加载文档列表以更新状态
+                        await this.loadDocuments(this.selectedLibraryId);
+                        return true;
+                    } else {
+                        console.error('文档切片失败:', result.message);
+                        if (showAlert) {
+                            this.showInfoDialog('切片失败: ' + result.message, '错误');
+                        }
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('执行文档切片失败:', error);
+                    if (showAlert) {
+                        this.showInfoDialog('切片失败，请重试', '错误');
+                    }
+                    return false;
+                }
+            }
+
+            // 批量切片选中的文档
+            async batchSliceSelected() {
+                const selectedDocs = this.getSelectedDocuments();
+                if (selectedDocs.length === 0) {
+                    this.showInfoDialog('请先选择要切片的文档', '提示');
+                    return;
+                }
+
+                const message = `确定要对所选的 ${selectedDocs.length} 个文档进行切片处理吗？`;
+                this.showConfirmDialog(message, async () => {
+                    await this.batchExecuteSlicing(selectedDocs);
+                });
+            }
+
+            // 全选/取消全选
+            toggleSelectAll(checked) {
+                const checkboxes = document.querySelectorAll('.doc-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = checked;
+                });
+            }
+
+            // 显示通知
+            showNotification(message, type = 'info') {
+                // 创建通知元素
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg border transition-all duration-300 transform translate-x-full opacity-0`;
+                
+                if (type === 'success') {
+                    notification.classList.add('bg-green-500/90', 'border-green-400', 'text-white');
+                } else if (type === 'error') {
+                    notification.classList.add('bg-red-500/90', 'border-red-400', 'text-white');
+                } else if (type === 'warning') {
+                    notification.classList.add('bg-yellow-500/90', 'border-yellow-400', 'text-white');
+                } else {
+                    notification.classList.add('bg-blue-500/90', 'border-blue-400', 'text-white');
+                }
+
+                notification.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="mr-3">${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</span>
+                        <span>${message}</span>
+                        <button class="ml-3 text-white/80 hover:text-white" onclick="this.parentElement.parentElement.remove()">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+
+                document.body.appendChild(notification);
+
+                // 显示动画
+                setTimeout(() => {
+                    notification.classList.remove('translate-x-full', 'opacity-0');
+                }, 100);
+
+                // 自动消失
+                setTimeout(() => {
+                    notification.classList.add('translate-x-full', 'opacity-0');
+                    setTimeout(() => {
+                        if (notification.parentElement) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }, 5000);
+            }
+
+            // 显示确认对话框
+            showConfirmDialog(message, onConfirm, onCancel = null) {
+                // 创建确认对话框
+                const dialog = document.createElement('div');
+                dialog.className = 'fixed inset-0 z-50 flex items-center justify-center';
+                dialog.style.background = 'rgba(0, 0, 0, 0.5)';
+                dialog.style.backdropFilter = 'blur(10px)';
+                
+                dialog.innerHTML = `
+                    <div class="rounded-2xl p-6 max-w-md w-full mx-4" style="background: #505050; border: none; backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
+                        <div class="text-center">
+                            <div class="text-4xl mb-4">⚠️</div>
+                            <h3 class="text-xl font-bold text-white mb-4">确认操作</h3>
+                            <p class="text-white/80 mb-6 whitespace-pre-line">${message}</p>
+                            <div class="flex space-x-4">
+                                <button id="confirm-cancel-btn" class="flex-1 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors">
+                                    取消
+                                </button>
+                                <button id="confirm-ok-btn" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                                    确认
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(dialog);
+                
+                // 绑定事件
+                dialog.querySelector('#confirm-cancel-btn').addEventListener('click', () => {
+                    dialog.remove();
+                    if (onCancel) onCancel();
+                });
+                
+                dialog.querySelector('#confirm-ok-btn').addEventListener('click', () => {
+                    dialog.remove();
+                    if (onConfirm) onConfirm();
+                });
+                
+                // 点击背景关闭
+                dialog.addEventListener('click', (e) => {
+                    if (e.target === dialog) {
+                        dialog.remove();
+                        if (onCancel) onCancel();
+                    }
+                });
+            }
+
+            // 显示信息对话框
+            showInfoDialog(message, title = '提示') {
+                const dialog = document.createElement('div');
+                dialog.className = 'fixed inset-0 z-50 flex items-center justify-center';
+                dialog.style.background = 'rgba(0, 0, 0, 0.5)';
+                dialog.style.backdropFilter = 'blur(10px)';
+                
+                dialog.innerHTML = `
+                    <div class="rounded-2xl p-6 max-w-md w-full mx-4" style="background: #505050; border: none; backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
+                        <div class="text-center">
+                            <div class="text-4xl mb-4">ℹ️</div>
+                            <h3 class="text-xl font-bold text-white mb-4">${title}</h3>
+                            <p class="text-white/80 mb-6 whitespace-pre-line">${message}</p>
+                            <div class="flex justify-center">
+                                <button id="info-ok-btn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                                    确定
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(dialog);
+                
+                // 绑定事件
+                dialog.querySelector('#info-ok-btn').addEventListener('click', () => {
+                    dialog.remove();
+                });
+                
+                // 点击背景关闭
+                dialog.addEventListener('click', (e) => {
+                    if (e.target === dialog) {
+                        dialog.remove();
+                    }
                 });
             }
         }
