@@ -93,15 +93,16 @@
         .menu-item {
             display: flex;
             align-items: center;
-            padding: 12px 24px;
+            padding: 8px 12px;
             color: rgba(255, 255, 255, 0.8);
             text-decoration: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            border-radius: 8px;
-            margin: 4px 12px;
+            border-radius: 12px;
+            margin: 2px 8px;
             position: relative;
             overflow: hidden;
+            font-size:14px;
         }
 
         .menu-item:hover {
@@ -251,6 +252,16 @@
         .action-btn.danger {
             background: #dc2626;
             border-color: #dc2626;
+        }
+
+        .action-btn.info {
+            background: #0ea5e9;
+            border-color: #0ea5e9;
+        }
+
+        .action-btn.success {
+            background: #059669;
+            border-color: #059669;
         }
 
         /* 模态框样式 */
@@ -607,7 +618,7 @@
         </div>
 
         <!-- 右侧文档列表 -->
-        <div class="flex-1 flex flex-col">
+        <div id="contentPanel" class="flex-1 flex flex-col hidden">
             <!-- 顶部工具栏 -->
             <div class="liquid-glass px-6 py-4 m-4 mt-4 rounded-lg">
                 <div class="flex items-center justify-between">
@@ -623,6 +634,9 @@
                             <button class="action-btn primary" title="批量切片" onclick="knowledgeManager.batchSliceSelected()">
                                 批量切片
                             </button>
+                            <button class="action-btn info" title="向量检索配置" onclick="knowledgeManager.openVectorConfig()">
+                                向量检索配置
+                            </button>
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">
@@ -633,6 +647,30 @@
                         <div class="relative">
                             <input type="text" placeholder="请输入文档名称" class="form-input w-64">
                         </div>
+                    </div>
+                </div>
+
+                <!-- 向量检索配置信息 -->
+                <div id="vector-config-info" class="hidden liquid-glass m-4 p-3 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-white rounded-full"></div>
+                            <span class="text-sm font-medium text-white">向量检索配置</span>
+                        </div>
+                        <button onclick="knowledgeManager.toggleVectorConfigDetails()" class="text-blue-300 hover:text-blue-100 text-xs">
+                            详情
+                        </button>
+                    </div>
+                    <div id="vector-config-summary" class="text-xs text-white mt-1"></div>
+                    <div id="vector-config-details" class="hidden mt-2 text-xs text-white grid grid-cols-2 gap-2">
+                        <div>嵌入模型: <span id="embedding-model"></span></div>
+                        <div>重排模型: <span id="rerank-model"></span></div>
+                        <div>分片大小: <span id="chunk-size"></span></div>
+                        <div>分片重叠: <span id="chunk-overlap"></span></div>
+                        <div>Top K: <span id="top-k"></span></div>
+                        <div>相似度阈值: <span id="similarity-threshold"></span></div>
+                        <div>状态: <span id="config-status"></span></div>
+                        <div>更新时间: <span id="updated-at"></span></div>
                     </div>
                 </div>
             </div>
@@ -725,6 +763,10 @@
                 this.pageSize = 10;
                 this.totalPages = 0;
                 this.totalDocuments = 0;
+                
+                // 向量检索配置相关
+                this.currentVectorConfigs = [];
+                this.hasVectorConfig = false;
                 
                 // 滚动加载相关
                 this.librariesCurrentPage = 1;
@@ -962,6 +1004,8 @@
                 document.querySelectorAll('.menu-item').forEach(el => {
                     el.classList.remove('active');
                 });
+
+                document.getElementById('contentPanel').classList.remove('hidden');
                 
                 const selectedElement = document.querySelector(`[data-library="${libraryId}"]`);
                 if (selectedElement) {
@@ -974,8 +1018,102 @@
                     titleElement.textContent = libraryName || '文档管理';
                 }
                 
+                // 加载向量检索配置
+                await this.loadVectorConfigs(libraryId);
+                
                 // 加载文档列表
                 await this.loadDocuments(libraryId);
+                
+                // 更新向量检索配置按钮状态
+                this.updateVectorConfigButton();
+            }
+
+            // 加载向量检索配置
+            async loadVectorConfigs(libraryId) {
+                try {
+                    this.currentVectorConfigs = await this.getVectorConfigsByLibraryId(libraryId);
+                    this.hasVectorConfig = this.currentVectorConfigs && this.currentVectorConfigs.length > 0;
+                    
+                    if (this.hasVectorConfig) {
+                        console.log('找到向量检索配置:', this.currentVectorConfigs);
+                        this.displayVectorConfigInfo();
+                    } else {
+                        console.log('未找到向量检索配置');
+                        this.clearVectorConfigInfo();
+                    }
+                } catch (error) {
+                    console.error('加载向量检索配置失败:', error);
+                    this.hasVectorConfig = false;
+                    this.currentVectorConfigs = [];
+                }
+            }
+
+            // 更新向量检索配置按钮状态
+            updateVectorConfigButton() {
+                const vectorConfigBtn = document.querySelector('button[onclick*="openVectorConfig"]');
+                if (vectorConfigBtn) {
+                    if (this.hasVectorConfig) {
+                        vectorConfigBtn.classList.remove('action-btn');
+                        vectorConfigBtn.classList.add('action-btn', 'success');
+                        vectorConfigBtn.title = '查看向量检索配置';
+                        vectorConfigBtn.innerHTML = '检索配置✓';
+                    } else {
+                        vectorConfigBtn.classList.remove('success');
+                        vectorConfigBtn.classList.add('action-btn', 'info');
+                        vectorConfigBtn.title = '创建向量检索配置';
+                        vectorConfigBtn.innerHTML = '向量检索配置';
+                    }
+                }
+            }
+
+            // 显示向量检索配置信息
+            displayVectorConfigInfo() {
+                const infoContainer = document.getElementById('vector-config-info');
+                const summaryElement = document.getElementById('vector-config-summary');
+                
+                if (infoContainer && summaryElement && this.currentVectorConfigs.length > 0) {
+                    const config = this.currentVectorConfigs[0];
+                    
+                    // 显示摘要信息
+                    summaryElement.innerHTML = `${config.name} | ${config.embeddingModel} | ${config.status === 'draft' ? '草稿' : config.status}`;
+                    
+                    // 填充详细信息
+                    document.getElementById('embedding-model').textContent = config.embeddingModel || '-';
+                    document.getElementById('rerank-model').textContent = config.rerankModel || '-';
+                    document.getElementById('chunk-size').textContent = config.chunkSize || '-';
+                    document.getElementById('chunk-overlap').textContent = config.chunkOverlap || '-';
+                    document.getElementById('top-k').textContent = config.topK || '-';
+                    document.getElementById('similarity-threshold').textContent = config.similarityThreshold || '-';
+                    document.getElementById('config-status').textContent = config.status === 'draft' ? '草稿' : config.status;
+                    document.getElementById('updated-at').textContent = config.updatedAt || '-';
+                    
+                    // 显示容器
+                    infoContainer.classList.remove('hidden');
+                }
+            }
+
+            // 清除向量检索配置信息
+            clearVectorConfigInfo() {
+                const infoContainer = document.getElementById('vector-config-info');
+                if (infoContainer) {
+                    infoContainer.classList.add('hidden');
+                }
+            }
+
+            // 切换向量检索配置详情显示
+            toggleVectorConfigDetails() {
+                const detailsElement = document.getElementById('vector-config-details');
+                const toggleBtn = document.querySelector('button[onclick*="toggleVectorConfigDetails"]');
+                
+                if (detailsElement && toggleBtn) {
+                    if (detailsElement.classList.contains('hidden')) {
+                        detailsElement.classList.remove('hidden');
+                        toggleBtn.textContent = '收起';
+                    } else {
+                        detailsElement.classList.add('hidden');
+                        toggleBtn.textContent = '详情';
+                    }
+                }
             }
 
             // 加载文档列表
@@ -1292,7 +1430,15 @@
                     
                     if (result.code === '000000') {
                         console.log('知识库创建成功:', result.data);
-                        this.showNotification('知识库创建成功', 'success');
+                        
+                        // 同步创建向量检索配置
+                        const vectorConfigSuccess = await this.createVectorConfig(result.data.id, name, description);
+                        if (vectorConfigSuccess) {
+                            this.showNotification('知识库和向量检索配置创建成功', 'success');
+                        } else {
+                            console.warn('向量检索配置创建失败，但知识库创建成功');
+                            this.showNotification('知识库创建成功，但向量检索配置创建失败', 'warning');
+                        }
                         return true;
                     } else {
                         console.error('知识库创建失败:', result.message);
@@ -1347,7 +1493,7 @@
             }
 
             async deleteLibrary(libraryId, libraryName) {
-                const message = `确定要删除知识库"${libraryName}"吗？\n\n注意：删除知识库后，该知识库下的所有文档将被永久删除。`;
+                const message = `确定要删除知识库"${libraryName}"吗？\n\n注意：删除知识库后，该知识库下的所有文档和对应的向量检索配置将被永久删除。`;
                 
                 this.showConfirmDialog(message, async () => {
                     await this.executeDeleteLibrary(libraryId, libraryName);
@@ -1363,6 +1509,9 @@
                         this.showInfoDialog('认证令牌不存在', '认证错误');
                         return;
                     }
+
+                    // 先尝试删除对应的向量检索配置
+                    await this.deleteVectorConfig(libraryId);
 
                     const response = await fetch(`/ai/v1/rag/knowledge/library/${libraryId}`, {
                         method: 'DELETE',
@@ -1397,6 +1546,163 @@
 
             editLibrary(libraryId, name, description) {
                 this.showLibraryModal(libraryId, name, description);
+            }
+
+            // 创建向量检索配置
+            async createVectorConfig(libraryId, name, description) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const tenantId = localStorage.getItem('tenantId');
+                    
+                    if (!token) {
+                        console.error('认证令牌不存在');
+                        return false;
+                    }
+
+                    const response = await fetch('/ai/v1/rag/scenario/', {
+                        method: 'POST',
+                        headers: {
+                            'authorization': `bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            description: description || name,
+                            embeddingModel: "BAAI/bge-m3",
+                            rerankModel: "BAAI/bge-reranker-v2-m3",
+                            libraryId: libraryId,
+                            chunkSize: 2048,
+                            splitterType: "recursive",
+                            chunkOverlap: 0.1,
+                            topK: 5,
+                            similarityThreshold: 0.75,
+                            embedRatio: 0.6,
+                            contentRatio: 0.4,
+                            templateCode: "internal-knowledge"
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.code === '000000') {
+                        console.log('向量检索配置创建成功:', result.data);
+                        // 可以在这里保存配置ID到本地存储或内存中，以便后续使用
+                        // localStorage.setItem(`vectorConfig_${libraryId}`, result.data.id);
+                        return result.data.id;
+                    } else {
+                        console.error('向量检索配置创建失败:', result.message);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('创建向量检索配置失败:', error);
+                    return false;
+                }
+            }
+
+            // 打开向量检索配置页面
+            openVectorConfig() {
+                if (!this.selectedLibraryId) {
+                    this.showInfoDialog('请先选择一个知识库', '提示');
+                    return;
+                }
+                
+                if (this.hasVectorConfig && this.currentVectorConfigs.length > 0) {
+                    // 如果已有配置，打开配置详情页面
+                    const configId = this.currentVectorConfigs[0].id;
+                    const configUrl = `/development/data-process/scenario-detail.html?configId=${configId}&libraryId=${this.selectedLibraryId}`;
+                    window.open(configUrl, '_self');
+                    console.log('打开向量检索配置详情页面:', configUrl);
+                } else {
+                    // 如果没有配置，提示用户先创建配置
+                    this.showInfoDialog('当前知识库还没有向量检索配置，请先在知识库创建时自动生成配置', '提示');
+                }
+            }
+
+            // 删除向量检索配置
+            async deleteVectorConfig(libraryId) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const tenantId = localStorage.getItem('tenantId');
+                    
+                    if (!token) {
+                        console.error('认证令牌不存在');
+                        return false;
+                    }
+
+                    // 首先获取对应的向量检索配置ID
+                    const vectorConfigId = await this.getVectorConfigIdByLibraryId(libraryId);
+                    if (!vectorConfigId) {
+                        console.log('未找到对应的向量检索配置，跳过删除');
+                        return true;
+                    }
+
+                    const response = await fetch(`/ai/v1/rag/scenario/${vectorConfigId}?tenantId=${tenantId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'authorization': `bearer ${token}`
+                        }
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.code === '000000') {
+                        console.log('向量检索配置删除成功:', vectorConfigId);
+                        return true;
+                    } else {
+                        console.error('向量检索配置删除失败:', result.message);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('删除向量检索配置失败:', error);
+                    return false;
+                }
+            }
+
+            // 根据知识库ID获取向量检索配置ID
+            async getVectorConfigIdByLibraryId(libraryId) {
+                try {
+                    const vectorConfigs = await this.getVectorConfigsByLibraryId(libraryId);
+                    if (vectorConfigs && vectorConfigs.length > 0) {
+                        return vectorConfigs[0].id;
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('获取向量检索配置ID失败:', error);
+                    return null;
+                }
+            }
+
+            // 根据知识库ID获取向量检索配置列表
+            async getVectorConfigsByLibraryId(libraryId, pageNum = 1, pageSize = 12) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const tenantId = localStorage.getItem('tenantId');
+                    
+                    if (!token) {
+                        console.error('认证令牌不存在');
+                        return null;
+                    }
+
+                    const response = await fetch(`/ai/v1/rag/scenario/list?tenantId=${tenantId}&pageNum=${pageNum}&pageSize=${pageSize}&keyword=&libraryId=${libraryId}&status=`, {
+                        method: 'GET',
+                        headers: {
+                            'authorization': `bearer ${token}`
+                        }
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.code === '000000' && result.data && result.data.result) {
+                        console.log('成功获取向量检索配置:', result.data);
+                        return result.data.result.filter(e=>e.libraryId===libraryId);
+                    } else {
+                        console.log('未找到对应的向量检索配置');
+                        return [];
+                    }
+                } catch (error) {
+                    console.error('获取向量检索配置失败:', error);
+                    return [];
+                }
             }
 
             // 删除选中的文档
@@ -2609,11 +2915,11 @@
                     const modal = document.createElement('div');
                     modal.className = 'modal-overlay active upload-progress-modal';
                     modal.innerHTML = `
-                        <div class="modal-container" style="max-width: 500px;max-height:320px;">
+                        <div class="modal-container" style="max-width: 560px;max-height:320px;">
                             <div class="modal-header">
                                 <h2>文档上传中</h2>
                             </div>
-                            <div class="modal-body">
+                            <div class="modal-body m-4">
                                 <div class="upload-progress-info mb-4">
                                     <div class="flex justify-between items-center mb-2">
                                         <span class="text-sm text-white/80">正在上传:</span>

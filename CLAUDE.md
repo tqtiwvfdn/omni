@@ -64,6 +64,16 @@ pm2 start 0
 
 ## 核心功能模块
 
+1. 全局可以从localStorage.getItem('token')获取token，在请求的时候带上，如：
+
+fetch(api, {
+"headers": {
+  "authorization": `bearer ${localStorage.getItem('token')}`
+});
+
+2. 租户ID可以从localStorage.getItem('tenantId')获取
+
+
 ### 开发门户功能
 - **工作台**: 常用应用卡片、新建应用入口、应用统计仪表板
 - **应用管理**: 应用列表和全生命周期管理
@@ -73,6 +83,9 @@ pm2 start 0
 - **提示词模版**: 提示词模板
 
 ### 应用工作台 - 开发侧
+
+可以从window.top.appMetadata获取应用元数据
+
 - **知识库 RAG**: 文档管理、问答对管理、向量检索配置
 - **智能体编排**: Agent 配置管理、多智能体评测
 - **MCP服务集成**: 外部工具接入、API服务配置

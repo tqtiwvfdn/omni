@@ -368,4 +368,188 @@ fetch(`/ai/v1/rag/knowledge/document/slices?knowledgeId=${documentId}&libraryId=
   - 下面是问答对列表，你先生成10条模拟数据；
   - 用户可以点击某一个问答对，然后进行编辑修改；
 
-2. 
+
+任务：实现“知识库”和“向量检索配置”的功能联动、前后端对接和界面风格统一
+1. 当在\development\data-process\knowledge.html左侧新建分类的时候，同时新建向量检索配置：
+
+请求：
+fetch("/ai/v1/rag/scenario/", {
+  "headers": {
+    "authorization": `bearer ${localStorage.getItem('token')}`
+  },
+  "body": `{"name":"分类名称","description":"分类描述","embeddingModel":"BAAI/bge-m3","rerankModel":"BAAI/bge-reranker-v2-m3","libraryId":"分类Id","chunkSize":2048,"splitterType":"recursive","chunkOverlap":0.1,"topK":5,"similarityThreshold":0.75,"embedRatio":0.6,"contentRatio":0.4,"templateCode":"internal-knowledge"}`,
+  "method": "POST",
+});
+
+响应：
+{
+    "code": "000000",
+    "message": "操作成功",
+    "data": {
+        "id": "304522391315443712",//向量检索配置的Id
+        "templateCode": "internal-knowledge",
+        "name": "名称",
+        "description": "描述",
+        "embeddingModel": "BAAI/bge-m3",
+        "rerankModel": "BAAI/bge-reranker-v2-m3",
+        "libraryId": "分类Id",
+        "status": "draft",
+        "chunkSize": 2048,
+        "splitterType": "recursive",
+        "chunkOverlap": 0.1,
+        "topK": 5,
+        "similarityThreshold": 0.75,
+        "embedRatio": 0.6,
+        "contentRatio": 0.4,
+        "createdAt": null,
+        "author": "A3805-黎健成",
+        "updatedAt": null,
+        "updater": "A3805-黎健成"
+    }
+}
+
+2. 然后在批量删除、批量切片隔壁增加“向量检索配置”的入口，点击交互等下说。
+
+3. 当删除分类前，先删除向量检索配置
+
+请求：
+fetch(`/ai/v1/rag/scenario/${id}?tenantId=${tenantId}`, {
+  "headers": {
+
+   "authorization": `bearer ${localStorage.getItem('token')}`
+  },
+  "method": "DELETE",
+});
+
+响应
+{
+    "code": "000000",
+    "message": "操作成功",
+    "data": null
+}
+
+
+当二次打开页面的时候，可以通过接口fetch(`/ai/v1/rag/scenario/list?tenantId=${tenantId}&pageNum=1&pageSize=12&keyword=&libraryId=${分类Id}&status=", {
+  "headers": {
+     "authorization": `bearer ${localStorage.getItem('token')}`
+  },
+  "method": "GET",
+});
+
+
+查询到对应分类下的向量检索配置信息
+{
+    "code": "000000",
+    "message": "操作成功",
+    "data": {
+        "result": [
+            {
+                "id": "304514318651781120",
+                "templateCode": "internal-knowledge",
+                "name": "助手名称",
+                "description": "助手描述",
+                "embeddingModel": "BAAI/bge-m3",
+                "rerankModel": "BAAI/bge-reranker-v2-m3",
+                "libraryId": "303355085340160000",
+                "status": "draft",
+                "chunkSize": 2048,
+                "splitterType": "paragraph",
+                "chunkOverlap": 0.1,
+                "topK": 5,
+                "similarityThreshold": 0.75,
+                "embedRatio": 0.6,
+                "contentRatio": 0.4,
+                "createdAt": "2025-07-20 20:12:11",
+                "author": "A3805-黎健成",
+                "updatedAt": "2025-07-20 20:12:11",
+                "updater": "A3805-黎健成"
+            }
+        ],
+        "totalElements": 1,
+        "totalPage": 1,
+        "pageSize": 12,
+        "pageNum": 1
+    }
+}
+
+
+任务：完成知识库下的向量配置的交互
+1. 当在知识库点击“向量检索配置的时候”，通过window.open self的形式，打开向量检索配置界面/development/data-process/scenario-detail.html，并通过queryString把向量检索配置ID带过去，页面加载后能通过ID调用api查询fetch(`/ai/v1/rag/scenario/${向量检索配置ID}`, {
+  "headers": {
+     "authorization": `bearer ${localStorage.getItem('token')}`
+  },
+  "method": "GET",
+});加载到配置项{
+    "code": "000000",
+    "message": "操作成功",
+    "data": {
+        "id": "304529521640632320",
+        "templateCode": "internal-knowledge",
+        "name": "公司制度0720",
+        "description": "公司制度0720",
+        "embeddingModel": "BAAI/bge-m3",
+        "rerankModel": "BAAI/bge-reranker-v2-m3",
+        "libraryId": "304529519551868928",
+        "status": "draft",
+        "chunkSize": 2048,
+        "splitterType": "recursive",
+        "chunkOverlap": 0.1,
+        "topK": 5,
+        "similarityThreshold": 0.75,
+        "embedRatio": 0.6,
+        "contentRatio": 0.4,
+        "createdAt": "2025-07-20 21:12:35",
+        "author": "A3805-黎健成",
+        "updatedAt": "2025-07-20 21:12:35",
+        "updater": "A3805-黎健成"
+    }
+}，并进行页面回显。
+
+
+任务：完善页面/development/data-process/scenario-detail.html
+1. 将页面的视觉风格进行统一；
+2. 将后端返回的配置参数如实地回显到界面；
+3. 保存按钮真实可用
+
+请求：
+
+fetch("`/ai/v1/rag/scenario/${向量检索配置ID}`, {
+  "headers": {
+     "authorization": `bearer ${localStorage.getItem('token')}`
+  },
+  "body": `{"id":"${向量检索配置ID}","templateCode":"internal-knowledge","name":"公司制度-Agree","description":"公司制度-Agree","embeddingModel":"BAAI/bge-m3","rerankModel":"BAAI/bge-reranker-v2-m3","libraryId":"304531079489024000","status":"draft","chunkSize":2048,"splitterType":"recursive","chunkOverlap":0.1,"topK":5,"similarityThreshold":0.75,"embedRatio":0.6,"contentRatio":0.4,"createdAt":"2025-07-20 21:18:47","author":"A3805-黎健成","updatedAt":"2025-07-20 21:18:47","updater":"A3805-黎健成"}`,
+  "method": "PUT",
+});
+
+返回
+{
+    "code": "000000",
+    "message": "操作成功",
+    "data": {
+        "id": "304531081540038656",
+        "templateCode": "internal-knowledge",
+        "name": "公司制度-Agree",
+        "description": "公司制度-Agree",
+        "embeddingModel": "BAAI/bge-m3",
+        "rerankModel": "BAAI/bge-reranker-v2-m3",
+        "libraryId": "304531079489024000",
+        "status": "draft",
+        "chunkSize": 2048,
+        "splitterType": "recursive",
+        "chunkOverlap": 0.1,
+        "topK": 5,
+        "similarityThreshold": 0.75,
+        "embedRatio": 0.6,
+        "contentRatio": 0.4,
+        "createdAt": "2025-07-20 21:18:47",
+        "author": "A3805-黎健成",
+        "updatedAt": "2025-07-20 21:54:09",
+        "updater": "A3805-黎健成"
+    }
+}
+
+1. 我把背景色去掉了，请你把字体颜色进行用白色，按钮用透明，参考/development/ability-center/prompt-template-editor.html的视觉风格，但是不要有transfromY的动画
+2. 页面上的静态配置可能跟后端返回的数据匹配，请你以后端返回的配置为准，改下前端的静态配置项，包括但不限于：Embedding 模型选择、Rerank 模型选择等。
+
+
+1.bg-white的按钮基本不可见
