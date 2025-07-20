@@ -360,3 +360,12 @@ fetch(`/ai/v1/rag/knowledge/document/slices?knowledgeId=${documentId}&libraryId=
 1. 切片列表应该像文档表格那样，有个pagination-container那个的功能；
 2. viewSliceContent只需要传ID就行了，通过ID去查segmentContent的内容；
 3. 多重弹窗，z-index和backdrop；
+
+
+
+“查看切片”隔壁，增加一个问答对的入口
+  - 点击之后，进入生成问答对，配置项直接参考 /development/data-process/qa-generation.html 问答对生成配置 部分；
+  - 下面是问答对列表，你先生成10条模拟数据；
+  - 用户可以点击某一个问答对，然后进行编辑修改；
+
+2. 

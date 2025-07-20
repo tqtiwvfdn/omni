@@ -289,6 +289,15 @@
             z-index: 10002;
         }
 
+        .modal-overlay.qa-pairs-modal {
+            z-index: 10000;
+        }
+
+        .modal-overlay.qa-edit-modal {
+            z-index: 10001;
+            background: rgba(0, 0, 0, 0.7);
+        }
+
         .modal-content {
             /* background: var(--liquid-glass-strong); */
             background-color: #505050;
@@ -1060,6 +1069,9 @@
                                 <button class="action-btn secondary" title="查看切片" onclick="knowledgeManager.viewSlices('${doc.id}', '${doc.name}')" ${doc.status === 'init' || doc.status === 'failed' ? 'disabled' : ''}>
                                     查看切片
                                 </button>
+                                <button class="action-btn primary" title="问答对" onclick="knowledgeManager.viewQAPairs('${doc.id}', '${doc.name}')" ${doc.status === 'init' || doc.status === 'failed' ? 'disabled' : ''}>
+                                    问答对
+                                </button>
                                 <button class="action-btn danger" title="删除文档" onclick="knowledgeManager.deleteDocument('${doc.id}', '${doc.name}')">
                                     删除
                                 </button>
@@ -1516,6 +1528,492 @@
                 }
                 
                 this.showSlicesModal(documentId, documentName);
+            }
+
+            // 查看文档问答对
+            async viewQAPairs(documentId, documentName) {
+                if (!documentId) {
+                    this.showInfoDialog('文档ID无效', '错误');
+                    return;
+                }
+                
+                if (!this.selectedLibraryId) {
+                    this.showInfoDialog('请先选择知识库', '错误');
+                    return;
+                }
+                
+                this.showQAPairsModal(documentId, documentName);
+            }
+
+            // 显示问答对模态框
+            async showQAPairsModal(documentId, documentName) {
+                // 创建问答对模态框
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay qa-pairs-modal active';
+                modal.innerHTML = `
+                    <div class="modal-container">
+                        <div class="modal-header">
+                            <h2>问答对管理 - ${documentName}</h2>
+                            <button class="modal-close-btn" onclick="this.closest('.modal-overlay').remove()">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- 问答对生成配置 -->
+                            <div class="bg-white/5 rounded-lg m-4 p-4  mb-6">
+                                <h3 class="text-lg font-medium text-white mb-4">问答对生成配置</h3>
+                                <div class="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-white mb-2">生成数量</label>
+                                        <select id="qa-generation-count" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-sm text-white focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="auto">自动检测</option>
+                                            <option value="10" selected>10个问答对</option>
+                                            <option value="20">20个问答对</option>
+                                            <option value="50">50个问答对</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-white mb-2">问答类型</label>
+                                        <select id="qa-type" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-sm text-white focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="general" selected>通用问答</option>
+                                            <option value="business">业务流程</option>
+                                            <option value="product">产品介绍</option>
+                                            <option value="operation">操作说明</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-white mb-2">质量等级</label>
+                                        <select id="qa-quality" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-sm text-white focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="standard" selected>标准</option>
+                                            <option value="precise">精准</option>
+                                            <option value="detailed">详细</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-white mb-2">语言风格</label>
+                                        <select id="qa-style" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-sm text-white focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="formal" selected>正式</option>
+                                            <option value="conversational">口语化</option>
+                                            <option value="service">客服化</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-6 flex justify-end">
+                                    <button class="action-btn primary" onclick="knowledgeManager.generateQAPairs('${documentId}')">
+                                        生成问答对
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 问答对列表 -->
+                            <div class="qa-pairs-section m-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-medium text-white">问答对列表</h3>
+                                    <div id="qa-pairs-stats" class="text-sm text-white/60"></div>
+                                </div>
+                                <div class="qa-pairs-list bg-white/5 rounded-lg overflow-hidden">
+                                    <div id="qa-pairs-table-body" class="divide-y divide-white/10"></div>
+                                </div>
+                                <div id="qa-pairs-pagination" class="pagination px-6 py-4 border-t border-white/10 flex-shrink-0"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // 添加backdrop点击关闭功能
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
+
+                // 添加ESC键关闭功能
+                const handleEscKey = (e) => {
+                    if (e.key === 'Escape') {
+                        modal.remove();
+                        document.removeEventListener('keydown', handleEscKey);
+                    }
+                };
+                document.addEventListener('keydown', handleEscKey);
+                
+                // 初始化问答对数据
+                this.currentQADocumentId = documentId;
+                this.qaCurrentPage = 1;
+                this.qaPageSize = 10;
+                this.qaTotalPages = 0;
+                this.qaTotalElements = 0;
+                this.qaPairs = [];
+                
+                // 加载模拟问答对数据
+                await this.loadQAPairs();
+            }
+
+            // 加载问答对数据（模拟数据）
+            async loadQAPairs() {
+                try {
+                    // 模拟API延迟
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // 生成模拟问答对数据
+                    const mockQAPairs = [
+                        {
+                            id: 'qa_001',
+                            question: '如何申请银行信用卡？',
+                            answer: '申请银行信用卡需要提供身份证、收入证明等材料，可通过网上银行、手机银行或到网点柜台办理。',
+                            category: '产品服务',
+                            status: 'active',
+                            createdAt: '2024-01-15T10:30:00Z',
+                            updatedAt: '2024-01-15T10:30:00Z'
+                        },
+                        {
+                            id: 'qa_002',
+                            question: '网上银行密码忘记了怎么办？',
+                            answer: '网上银行密码忘记可通过以下方式重置：1、登录官网点击"忘记密码"；2、致电客服热线；3、携带身份证到银行网点办理。',
+                            category: '账户管理',
+                            status: 'active',
+                            createdAt: '2024-01-15T11:00:00Z',
+                            updatedAt: '2024-01-15T11:00:00Z'
+                        },
+                        {
+                            id: 'qa_003',
+                            question: '银行卡被盗刷怎么处理？',
+                            answer: '发现银行卡被盗刷应立即：1、拨打银行客服电话挂失；2、到就近ATM或银行证明卡片在身边；3、向银行申请调取监控；4、向公安机关报案。',
+                            category: '安全防护',
+                            status: 'active',
+                            createdAt: '2024-01-15T11:30:00Z',
+                            updatedAt: '2024-01-15T11:30:00Z'
+                        },
+                        {
+                            id: 'qa_004',
+                            question: '手机银行转账限额是多少？',
+                            answer: '手机银行转账限额根据认证方式不同：短信验证单笔5万、日累计10万；U盾认证单笔100万、日累计100万。',
+                            category: '转账汇款',
+                            status: 'active',
+                            createdAt: '2024-01-15T12:00:00Z',
+                            updatedAt: '2024-01-15T12:00:00Z'
+                        },
+                        {
+                            id: 'qa_005',
+                            question: '定期存款可以提前支取吗？',
+                            answer: '定期存款可以提前支取，但会按活期利率计息。建议部分提前支取，剩余部分继续按定期利率计息。',
+                            category: '存款业务',
+                            status: 'active',
+                            createdAt: '2024-01-15T12:30:00Z',
+                            updatedAt: '2024-01-15T12:30:00Z'
+                        },
+                        {
+                            id: 'qa_006',
+                            question: '银行理财产品有风险吗？',
+                            answer: '银行理财产品根据风险等级分为R1-R5级，R1、R2级风险较低，R3级以上风险递增。投资前请仔细阅读产品说明书。',
+                            category: '理财投资',
+                            status: 'active',
+                            createdAt: '2024-01-15T13:00:00Z',
+                            updatedAt: '2024-01-15T13:00:00Z'
+                        },
+                        {
+                            id: 'qa_007',
+                            question: '房贷利率如何计算？',
+                            answer: '房贷利率分为固定利率和浮动利率。浮动利率=LPR+加点，其中LPR每月公布，加点在合同期内固定不变。',
+                            category: '贷款业务',
+                            status: 'active',
+                            createdAt: '2024-01-15T13:30:00Z',
+                            updatedAt: '2024-01-15T13:30:00Z'
+                        },
+                        {
+                            id: 'qa_008',
+                            question: '如何查询个人征信报告？',
+                            answer: '查询个人征信报告有三种方式：1、登录央行征信中心官网；2、到人民银行征信中心或分支机构查询；3、部分银行网点提供自助查询。',
+                            category: '征信服务',
+                            status: 'active',
+                            createdAt: '2024-01-15T14:00:00Z',
+                            updatedAt: '2024-01-15T14:00:00Z'
+                        },
+                        {
+                            id: 'qa_009',
+                            question: '银行卡年费如何收取？',
+                            answer: '银行卡年费标准：借记卡一般10-20元/年，信用卡普卡80-200元/年，金卡200-600元/年。部分银行提供免年费政策。',
+                            category: '费用说明',
+                            status: 'active',
+                            createdAt: '2024-01-15T14:30:00Z',
+                            updatedAt: '2024-01-15T14:30:00Z'
+                        },
+                        {
+                            id: 'qa_010',
+                            question: '如何开通短信通知服务？',
+                            answer: '开通短信通知服务可通过：1、网上银行在线申请；2、手机银行设置开通；3、致电客服热线；4、到银行网点柜台办理。',
+                            category: '增值服务',
+                            status: 'active',
+                            createdAt: '2024-01-15T15:00:00Z',
+                            updatedAt: '2024-01-15T15:00:00Z'
+                        }
+                    ];
+
+                    // 模拟分页
+                    this.qaTotalElements = mockQAPairs.length;
+                    this.qaTotalPages = Math.ceil(this.qaTotalElements / this.qaPageSize);
+                    
+                    const startIndex = (this.qaCurrentPage - 1) * this.qaPageSize;
+                    const endIndex = startIndex + this.qaPageSize;
+                    this.qaPairs = mockQAPairs.slice(startIndex, endIndex);
+                    
+                    console.log('Loaded QA pairs:', this.qaPairs);
+                    console.log('Total elements:', this.qaTotalElements);
+                    console.log('Total pages:', this.qaTotalPages);
+                    
+                    this.renderQAPairs();
+                } catch (error) {
+                    console.error('Error loading QA pairs:', error);
+                    this.showInfoDialog('加载问答对失败，请重试', '错误');
+                }
+            }
+
+            // 渲染问答对列表
+            renderQAPairs() {
+                const tbody = document.getElementById('qa-pairs-table-body');
+                const statsDiv = document.getElementById('qa-pairs-stats');
+                
+                if (!tbody || !statsDiv) return;
+                
+                // 更新统计信息
+                statsDiv.textContent = `共 ${this.qaTotalElements} 个问答对，第 ${this.qaCurrentPage}/${this.qaTotalPages} 页`;
+                
+                if (this.qaPairs.length === 0) {
+                    tbody.innerHTML = `
+                        <div class="text-center py-8">
+                            <p class="text-white/60">暂无问答对数据</p>
+                        </div>
+                    `;
+                } else {
+                    tbody.innerHTML = this.qaPairs.map((qa, index) => `
+                        <div class="qa-item p-4 hover:bg-white/5 transition-colors cursor-pointer" onclick="knowledgeManager.editQAPair('${qa.id}')">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-2">
+                                        <span class="text-sm font-medium text-white">问答对 #${(this.qaCurrentPage - 1) * this.qaPageSize + index + 1}</span>
+                                        <span class="ml-2 text-xs text-white/60">ID: ${qa.id}</span>
+                                        <span class="ml-2 px-2 py-1 text-xs bg-blue-500/20 text-blue-300 rounded">${qa.category}</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="text-sm font-medium text-blue-300 mb-1">问题:</div>
+                                        <div class="text-sm text-white/80">${qa.question}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-medium text-green-300 mb-1">答案:</div>
+                                        <div class="text-sm text-white/80 max-h-20 overflow-y-auto">
+                                            ${qa.answer.length > 100 ? qa.answer.substring(0, 100) + '...' : qa.answer}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="ml-4 flex flex-col space-y-2">
+                                    <button class="action-btn secondary text-xs" onclick="event.stopPropagation(); knowledgeManager.editQAPair('${qa.id}')">
+                                        编辑
+                                    </button>
+                                    <button class="action-btn danger text-xs" onclick="event.stopPropagation(); knowledgeManager.deleteQAPair('${qa.id}')">
+                                        删除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                this.renderQAPairsPagination();
+            }
+
+            // 渲染问答对分页
+            renderQAPairsPagination() {
+                const container = document.getElementById('qa-pairs-pagination');
+                if (!container) return;
+
+                if (this.qaTotalPages <= 1) {
+                    container.innerHTML = `
+                        <div class="pagination-info">
+                            共 ${this.qaTotalElements} 个问答对
+                        </div>
+                    `;
+                    return;
+                }
+
+                const startRecord = (this.qaCurrentPage - 1) * this.qaPageSize + 1;
+                const endRecord = Math.min(this.qaCurrentPage * this.qaPageSize, this.qaTotalElements);
+
+                let paginationControls = `
+                    <button ${this.qaCurrentPage === 1 ? 'disabled' : ''} onclick="knowledgeManager.goToQAPage(1)">首页</button>
+                    <button ${this.qaCurrentPage === 1 ? 'disabled' : ''} onclick="knowledgeManager.goToQAPage(${this.qaCurrentPage - 1})">上一页</button>
+                `;
+
+                let startPage = Math.max(1, this.qaCurrentPage - 2);
+                let endPage = Math.min(this.qaTotalPages, this.qaCurrentPage + 2);
+
+                if (startPage > 1) {
+                    paginationControls += `<button onclick="knowledgeManager.goToQAPage(1)">1</button>`;
+                    if (startPage > 2) {
+                        paginationControls += `<span class="page-ellipsis">...</span>`;
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    if (i === this.qaCurrentPage) {
+                        paginationControls += `<button class="active">${i}</button>`;
+                    } else {
+                        paginationControls += `<button onclick="knowledgeManager.goToQAPage(${i})">${i}</button>`;
+                    }
+                }
+
+                if (endPage < this.qaTotalPages) {
+                    if (endPage < this.qaTotalPages - 1) {
+                        paginationControls += `<span class="page-ellipsis">...</span>`;
+                    }
+                    paginationControls += `<button onclick="knowledgeManager.goToQAPage(${this.qaTotalPages})">${this.qaTotalPages}</button>`;
+                }
+
+                paginationControls += `
+                    <button ${this.qaCurrentPage === this.qaTotalPages ? 'disabled' : ''} onclick="knowledgeManager.goToQAPage(${this.qaCurrentPage + 1})">下一页</button>
+                    <button ${this.qaCurrentPage === this.qaTotalPages ? 'disabled' : ''} onclick="knowledgeManager.goToQAPage(${this.qaTotalPages})">末页</button>
+                `;
+
+                container.innerHTML = `
+                    <div class="pagination-info">
+                        第 ${startRecord}-${endRecord} 个，共 ${this.qaTotalElements} 个问答对，第 ${this.qaCurrentPage}/${this.qaTotalPages} 页
+                    </div>
+                    <div class="pagination-controls">
+                        ${paginationControls}
+                        <div class="page-size-selector">
+                            <span style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">每页</span>
+                            <select onchange="knowledgeManager.changeQAPageSize(this.value)" value="${this.qaPageSize}">
+                                <option value="5" ${this.qaPageSize === 5 ? 'selected' : ''}>5</option>
+                                <option value="10" ${this.qaPageSize === 10 ? 'selected' : ''}>10</option>
+                                <option value="20" ${this.qaPageSize === 20 ? 'selected' : ''}>20</option>
+                            </select>
+                            <span style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">个</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 问答对分页跳转
+            async goToQAPage(page) {
+                if (page < 1 || page > this.qaTotalPages || page === this.qaCurrentPage) return;
+                this.qaCurrentPage = page;
+                await this.loadQAPairs();
+            }
+
+            // 改变问答对页面大小
+            async changeQAPageSize(newSize) {
+                this.qaPageSize = parseInt(newSize);
+                this.qaCurrentPage = 1;
+                await this.loadQAPairs();
+            }
+
+            // 生成问答对
+            async generateQAPairs(documentId) {
+                const count = document.getElementById('qa-generation-count').value;
+                const type = document.getElementById('qa-type').value;
+                const quality = document.getElementById('qa-quality').value;
+                const style = document.getElementById('qa-style').value;
+                
+                console.log('Generating QA pairs with config:', { count, type, quality, style });
+                this.showNotification('问答对生成功能开发中...', 'info');
+            }
+
+            // 编辑问答对
+            editQAPair(qaId) {
+                console.log('Editing QA pair:', qaId);
+                this.showQAEditModal(qaId);
+            }
+
+            // 删除问答对
+            deleteQAPair(qaId) {
+                this.showConfirmDialog('确定要删除这个问答对吗？', () => {
+                    console.log('Deleting QA pair:', qaId);
+                    this.showNotification('删除成功', 'success');
+                    // 重新加载问答对列表
+                    this.loadQAPairs();
+                });
+            }
+
+            // 显示问答对编辑模态框
+            showQAEditModal(qaId) {
+                // 查找要编辑的问答对
+                const qa = this.qaPairs.find(item => item.id === qaId);
+                if (!qa) {
+                    this.showInfoDialog('问答对不存在', '错误');
+                    return;
+                }
+
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay qa-edit-modal active';
+                modal.style.zIndex = '10002';
+                modal.innerHTML = `
+                    <div class="modal-container" style="width: 80vw; height: 70vh;">
+                        <div class="modal-header">
+                            <h2>编辑问答对</h2>
+                            <button class="modal-close-btn" onclick="this.closest('.modal-overlay').remove()">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="grid grid-cols-1 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">问题</label>
+                                    <textarea id="edit-question" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-sm text-white h-24 resize-none" placeholder="请输入问题...">${qa.question}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">答案</label>
+                                    <textarea id="edit-answer" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-sm text-white h-32 resize-none" placeholder="请输入答案...">${qa.answer}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">分类</label>
+                                    <input id="edit-category" type="text" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-sm text-white" value="${qa.category}" placeholder="请输入分类...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="action-btn secondary" onclick="this.closest('.modal-overlay').remove()">
+                                取消
+                            </button>
+                            <button class="action-btn primary" onclick="knowledgeManager.saveQAEdit('${qaId}', this.closest('.modal-overlay'))">
+                                保存
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                // 添加backdrop点击关闭功能
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
+            }
+
+            // 保存问答对编辑
+            saveQAEdit(qaId, modal) {
+                const question = document.getElementById('edit-question').value.trim();
+                const answer = document.getElementById('edit-answer').value.trim();
+                const category = document.getElementById('edit-category').value.trim();
+
+                if (!question || !answer) {
+                    this.showInfoDialog('问题和答案不能为空', '提示');
+                    return;
+                }
+
+                console.log('Saving QA edit:', { qaId, question, answer, category });
+                this.showNotification('保存成功', 'success');
+                modal.remove();
+                
+                // 重新加载问答对列表
+                this.loadQAPairs();
             }
 
             // 显示切片列表模态框
