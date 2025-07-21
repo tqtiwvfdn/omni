@@ -605,3 +605,6 @@ fetch("`/ai/v1/rag/scenario/${向量检索配置ID}`, {
 
 
 还是不对，“embeddingModel”是"BAAI/bge-m3"，"rerankModel"才是"BAAI/bge-reranker-v2-m3",请你继续检查逻辑是否有问题
+
+
+任务：统一向量检索评估效果界面/data-process/evaluation.html与向量配置界面development\data-process\scenario-detail.html视觉统一
