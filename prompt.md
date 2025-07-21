@@ -552,4 +552,56 @@ fetch("`/ai/v1/rag/scenario/${向量检索配置ID}`, {
 2. 页面上的静态配置可能跟后端返回的数据匹配，请你以后端返回的配置为准，改下前端的静态配置项，包括但不限于：Embedding 模型选择、Rerank 模型选择等。
 
 
-1.bg-white的按钮基本不可见
+
+任务：修复向量配置界面development\data-process\scenario-detail.html数据回显和保存问题
+描述：点击“保存为草稿”的时候，提示"向量模型: BAAI/bge-reranker-v2-m3不存在"，通过调用“ai/v1/rag/scenario/${configId}”查询到的返回内容是：{
+  "code": "000000",
+  "message": "操作成功",
+  "data": {
+    "id": "304531133528436736",
+    "templateCode": "internal-knowledge",
+    "name": "部门制度-Agree",
+    "description": "部门制度-Agree",
+    "embeddingModel": "BAAI/bge-m3",
+    "rerankModel": "BAAI/bge-reranker-v2-m3",
+    "libraryId": "304531126905630720",
+    "status": "draft",
+    "chunkSize": 2048,
+    "splitterType": "recursive",
+    "chunkOverlap": 0.1,
+    "topK": 5,
+    "similarityThreshold": 0.75,
+    "embedRatio": 0.6,
+    "contentRatio": 0.4,
+    "createdAt": "2025-07-20 21:19:00",
+    "author": "A3805-黎健成",
+    "updatedAt": "2025-07-20 21:19:00",
+    "updater": "A3805-黎健成"
+  }
+}，保存的时候，提交的内容是：{
+  "id": "304531133528436736",
+  "templateCode": "internal-knowledge",
+  "name": "部门制度-Agree",
+  "description": "部门制度-Agree",
+  "embeddingModel": "BAAI/bge-reranker-v2-m3",
+  "rerankModel": "BAAI/bge-reranker-v2-m3",
+  "libraryId": "304531126905630720",
+  "status": "draft",
+  "chunkSize": 2000,
+  "splitterType": "recursive",
+  "chunkOverlap": 0.1,
+  "topK": 5,
+  "similarityThreshold": 0.75,
+  "embedRatio": 0.6,
+  "contentRatio": 0.4,
+  "createdAt": "2025-07-20 21:19:00",
+  "author": "A3805-黎健成",
+  "updatedAt": "2025-07-20 21:19:00",
+  "updater": "A3805-黎健成"
+}
+原因：
+  - 1. 数据回显出了问题，目前界面上配置没有严格按照返回的数据进行一比一显示在界面上，例如embeddingModel、rerankModel、chunkSize，实际上界面上都是示例假数据，你可以按照实际情况动态重新生成的；
+  - 2. 保存的时候，从配置项获取没有从界面上重新获取，或者获取错误。
+
+
+还是不对，“embeddingModel”是"BAAI/bge-m3"，"rerankModel"才是"BAAI/bge-reranker-v2-m3",请你继续检查逻辑是否有问题
