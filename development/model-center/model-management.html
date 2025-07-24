@@ -457,18 +457,20 @@
                     </tbody>
                 </table>
             </div>
-            <div class="px-6 py-4 flex items-center justify-between border-t border-white/20">
-                <div class="text-sm text-white/60">
-                    显示 <span class="font-medium">1</span> 到 <span class="font-medium">7</span> 共 <span class="font-medium">7</span> 条
+            <div id="pagination-container" class="px-6 py-4 flex items-center justify-between border-t border-white/20">
+                <div id="pagination-info" class="text-sm text-white/60">
+                    显示 <span class="font-medium">-</span> 到 <span class="font-medium">-</span> 共 <span class="font-medium">-</span> 条
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button class="px-3 py-1 rounded border border-white/30 bg-white/10 text-white/60 text-sm hover:bg-white/20 disabled:opacity-50" disabled>
+                <div id="pagination-controls" class="flex items-center space-x-2">
+                    <button id="prev-page" class="px-3 py-1 rounded border border-white/30 bg-white/10 text-white/60 text-sm hover:bg-white/20 disabled:opacity-50" disabled>
                         上一页
                     </button>
-                    <button class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">
-                        1
-                    </button>
-                    <button class="px-3 py-1 rounded border border-white/30 bg-white/10 text-white/60 text-sm hover:bg-white/20 disabled:opacity-50" disabled>
+                    <div id="page-numbers" class="flex items-center space-x-1">
+                        <button class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">
+                            1
+                        </button>
+                    </div>
+                    <button id="next-page" class="px-3 py-1 rounded border border-white/30 bg-white/10 text-white/60 text-sm hover:bg-white/20 disabled:opacity-50" disabled>
                         下一页
                     </button>
                 </div>
@@ -1250,15 +1252,16 @@
         });
 
         // Load model data from API
-        async function loadModelData() {
+        async function loadModelData(page = 1, pageSize = 10) {
             try {
                 showLoadingState();
-                const response = await fetch('/omni-api/models');
+                const response = await fetch(`/omni-api/models?page=${page}&pageSize=${pageSize}`);
                 const result = await response.json();
                 
                 if (result.success) {
                     updateModelTable(result.data.models);
                     updateStatistics(result.data.summary);
+                    updatePagination(result.data.summary);
                 } else {
                     showErrorState(result.error);
                 }
@@ -1625,6 +1628,109 @@
                     }, 300);
                 }
             }, 4000);
+        }
+
+        // Update pagination display
+        function updatePagination(pagination) {
+            if (!pagination) return;
+            
+            const { currentPage, totalPages, totalItems, pageSize, startItem, endItem} = {
+                currentPage:0,
+                totalPages:1,
+                totalItems:pagination.totalModels,
+                pageSize:1,
+                startItem:0,
+                endItem:pagination.totalModels
+            };
+            
+            // Update pagination info
+            const paginationInfo = document.getElementById('pagination-info');
+            if (paginationInfo) {
+                paginationInfo.innerHTML = `
+                    显示 <span class="font-medium">${startItem || 1}</span> 到 <span class="font-medium">${endItem || 0}</span> 共 <span class="font-medium">${totalItems || 0}</span> 条
+                `;
+            }
+            
+            // Update pagination controls
+            updatePaginationControls(currentPage || 1, totalPages || 1);
+        }
+        
+        // Update pagination controls
+        function updatePaginationControls(currentPage, totalPages) {
+            const prevButton = document.getElementById('prev-page');
+            const nextButton = document.getElementById('next-page');
+            const pageNumbers = document.getElementById('page-numbers');
+            
+            // Update prev button
+            if (prevButton) {
+                prevButton.disabled = currentPage <= 1;
+                prevButton.onclick = () => {
+                    if (currentPage > 1) {
+                        loadModelData(currentPage - 1);
+                    }
+                };
+            }
+            
+            // Update next button
+            if (nextButton) {
+                nextButton.disabled = currentPage >= totalPages;
+                nextButton.onclick = () => {
+                    if (currentPage < totalPages) {
+                        loadModelData(currentPage + 1);
+                    }
+                };
+            }
+            
+            // Update page numbers
+            if (pageNumbers) {
+                const pageButtonsHtml = generatePageButtons(currentPage, totalPages);
+                pageNumbers.innerHTML = pageButtonsHtml;
+            }
+        }
+        
+        // Generate page number buttons
+        function generatePageButtons(currentPage, totalPages) {
+            if (totalPages <= 1) {
+                return '<button class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">1</button>';
+            }
+            
+            let buttons = [];
+            const maxVisiblePages = 5;
+            
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            // Adjust start page if we're near the end
+            if (endPage - startPage < maxVisiblePages - 1) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            // Add first page and ellipsis if needed
+            if (startPage > 1) {
+                buttons.push(`<button onclick="loadModelData(1)" class="px-3 py-1 rounded border border-white/30 bg-white/10 text-white/60 text-sm hover:bg-white/20">1</button>`);
+                if (startPage > 2) {
+                    buttons.push('<span class="px-2 text-white/40">...</span>');
+                }
+            }
+            
+            // Add page number buttons
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === currentPage;
+                const buttonClass = isActive 
+                    ? 'px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700'
+                    : 'px-3 py-1 rounded border border-white/30 bg-white/10 text-white/60 text-sm hover:bg-white/20';
+                buttons.push(`<button onclick="loadModelData(${i})" class="${buttonClass}">${i}</button>`);
+            }
+            
+            // Add last page and ellipsis if needed
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    buttons.push('<span class="px-2 text-white/40">...</span>');
+                }
+                buttons.push(`<button onclick="loadModelData(${totalPages})" class="px-3 py-1 rounded border border-white/30 bg-white/10 text-white/60 text-sm hover:bg-white/20">${totalPages}</button>`);
+            }
+            
+            return buttons.join('');
         }
 
         // Refresh data button
