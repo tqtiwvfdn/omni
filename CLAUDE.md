@@ -247,11 +247,24 @@ fetch(api, {
   …
 }
 
+/* 弹窗 */
+.modal-backdrop{
+
+}
+
 /* 特效 */
 .liquid-glass {
     …
 }
 ```
+
+#### 1.4 统一引用样式
+
+padding 默认 p-4
+margin 默认 m-4
+圆角 rounded-2xl
+弹窗
+
 
 ### 2. JavaScript架构规范
 

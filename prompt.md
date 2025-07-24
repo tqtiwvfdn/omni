@@ -608,3 +608,23 @@ fetch("`/ai/v1/rag/scenario/${向量检索配置ID}`, {
 
 
 任务：统一向量检索评估效果界面/data-process/evaluation.html与向量配置界面development\data-process\scenario-detail.html视觉统一
+
+
+
+任务：让应用工作台（运维运营侧）/omni/app-workspace-ops.html工作台改造
+
+1.目前应用工作台没有单独的菜单，切换到其他菜单之后就不能重新进入了；
+2.工作台的卡片替换成以下内容： 
+（1）界面支持查询：通过埋点监控分析展示AI行员助手使用情况，追踪应用热点和效能，为业务支持及优化提供指引。
+（2）助手热度监控：按机构维度日、月、季、年统计TOP10高频检索关键词，用于发现业务瓶颈；
+（3）知识质量评估：统计不准确、未解决问题数量，并根据提问内容关键词聚类形成清单，用于识别业务操作流程不准确或业务制度的缺失空白后续修订；
+（4）知识效能追踪：统计AI行员助手使用情况及解决问题数量，以及平均问题解决时长，用于输出效能。
+3. 如果需要图表展示，可以用\console\style\echarts.min.js的echarts实现图表的展示。
+
+
+1. grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 改成 flex flex-cols mb-6
+2. 第一个 chart-container 改成 chart-container mr-3 p-4，第二个 chart-container 改成 chart-container ml-3 p-4
+3. .chart-container>div{width:90%;margin:auto};
+
+
+帮我生成PPT描述文案
