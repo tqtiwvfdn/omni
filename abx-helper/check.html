@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能复核 - 银行柜面系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 严格还原的顶部导航栏 */
+        .header {
+            background: linear-gradient(90deg, #1e88e5 0%, #1976d2 100%);
+            color: white;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1976d2;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .nav-icon:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .header-center {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 40px;
+        }
+
+        .search-box {
+            width: 100%;
+            background: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .search-box::placeholder {
+            color: #999;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .header-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .start-service {
+            background: #4caf50;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #fff;
+            color: #1976d2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* 主体内容容器 */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 左侧步骤面板 */
+        .steps-panel {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            overflow-y: auto;
+        }
+
+        .steps-header {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .steps-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            position: relative;
+        }
+
+        .step-item:hover {
+            background: #f8f9fa;
+        }
+
+        .step-item.active {
+            background: #e3f2fd;
+            border-left-color: #1976d2;
+            color: #1976d2;
+        }
+
+        .step-item.completed {
+            color: #4caf50;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #999;
+        }
+
+        .step-item.active .step-number {
+            background: #1976d2;
+            color: white;
+        }
+
+        .step-item.completed .step-number {
+            background: #4caf50;
+            color: white;
+        }
+
+        .step-text {
+            font-size: 14px;
+        }
+
+        /* 中间内容区域 */
+        .content-area {
+            flex: 1;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 24px 32px 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .content-main {
+            flex: 1;
+            padding: 24px 32px;
+            overflow-y: auto;
+        }
+
+        /* 业务场景选择 */
+        .business-section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .business-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .business-tab {
+            padding: 8px 16px;
+            border: 1px solid #d9d9d9;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .business-tab.active {
+            background: #1976d2;
+            color: white;
+            border-color: #1976d2;
+        }
+
+        .business-tab:hover:not(.active) {
+            border-color: #1976d2;
+            color: #1976d2;
+        }
+
+        /* 复核规则配置 */
+        .review-rules {
+            background: #fafafa;
+            border: 1px solid #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .rules-header {
+            background: #f5f5f5;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e5e5;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .rules-content {
+            padding: 16px;
+        }
+
+        .rule-row {
+            display: grid;
+            grid-template-columns: 120px 150px 1fr 120px;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            align-items: center;
+        }
+
+        .rule-row:last-child {
+            border-bottom: none;
+        }
+
+        .rule-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .rule-value {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .rule-desc {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .rule-status {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-success {
+            background: #4caf50;
+        }
+
+        .status-warning {
+            background: #ff9800;
+        }
+
+        .status-error {
+            background: #f44336;
+        }
+
+        /* 实时统计面板 */
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #f0f0f0;
+            border-radius: 4px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* 操作按钮区域 */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding-top: 24px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #1976d2;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1565c0;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #666;
+            border: 1px solid #d9d9d9;
+        }
+
+        .btn-secondary:hover {
+            border-color: #1976d2;
+            color: #1976d2;
+        }
+
+        /* 右侧智能助手面板 */
+        .assistant-panel {
+            width: 380px;
+            background: white;
+            border-left: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .assistant-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            background: #fafafa;
+        }
+
+        .assistant-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-id {
+            text-align: right;
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .assistant-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .chat-bubble {
+            background: #f0f0f0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .recognition-result {
+            background: #e8f5e8;
+            border-left: 3px solid #4caf50;
+            margin-bottom: 16px;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 8px;
+        }
+
+        .result-item {
+            margin-bottom: 6px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .suggestions-section {
+            margin-top: 16px;
+        }
+
+        .suggestions-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .suggestion-item {
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: #e3f2fd;
+            border-color: #1976d2;
+        }
+
+        .input-area {
+            padding: 16px 20px;
+            border-top: 1px solid #f0f0f0;
+            background: #fafafa;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .voice-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid #d9d9d9;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- 严格还原的顶部导航栏 -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">A</div>
+                AgreeTech
+            </div>
+            <div class="nav-menu">
+                <div class="nav-icon" title="应用菜单">⊞</div>
+                <div class="nav-icon" title="用户">👤</div>
+                <div class="nav-icon" title="锁定">🔒</div>
+                <div class="nav-icon" title="文档">📄</div>
+            </div>
+        </div>
+        
+        <div class="header-center">
+            <input type="text" class="search-box" placeholder="搜索">
+        </div>
+        
+        <div class="header-right">
+            <div class="header-btn">🏠</div>
+            <div class="header-btn">📧</div>
+            <div class="header-btn">🔔</div>
+            <div class="header-btn">⚙️</div>
+            <div class="start-service">▶ 开始服务</div>
+            <div class="header-btn">🌐</div>
+            <div class="user-avatar">张</div>
+            <div class="header-btn">▼</div>
+        </div>
+    </div>
+
+    <!-- 主体内容 -->
+    <div class="main-container">
+        <!-- 左侧步骤面板 -->
+        <div class="steps-panel">
+            <div class="steps-header">
+                <div class="steps-title">智能复核流程</div>
+            </div>
+            
+            <div class="step-item completed">
+                <div class="step-number">✓</div>
+                <div class="step-text">信息查询</div>
+            </div>
+            <div class="step-item active">
+                <div class="step-number">2</div>
+                <div class="step-text">客户身份核查</div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-text">个人信息维护或新建</div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">4</div>
+                <div class="step-text">业务信息确认</div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">5</div>
+                <div class="step-text">凭证复核</div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">6</div>
+                <div class="step-text">智能审核</div>
+            </div>
+        </div>
+
+        <!-- 中间内容区域 -->
+        <div class="content-area">
+            <div class="content-header">
+                <div class="page-title">智能复核系统</div>
+            </div>
+            
+            <div class="content-main">
+                <!-- 业务场景选择 -->
+                <div class="business-section">
+                    <div class="section-title">业务场景</div>
+                    <div class="business-tabs">
+                        <div class="business-tab active">个人开户</div>
+                        <div class="business-tab">企业开户</div>
+                        <div class="business-tab">转账汇款</div>
+                        <div class="business-tab">理财业务</div>
+                    </div>
+                </div>
+
+                <!-- 实时统计面板 -->
+                <div class="stats-panel">
+                    <div class="stat-card">
+                        <div class="stat-value">96.8%</div>
+                        <div class="stat-label">身份识别准确率</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">94.2%</div>
+                        <div class="stat-label">凭证复核通过率</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">87.5%</div>
+                        <div class="stat-label">智能审核通过率</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">152</div>
+                        <div class="stat-label">今日处理笔数</div>
+                    </div>
+                </div>
+
+                <!-- 复核规则配置 -->
+                <div class="review-rules">
+                    <div class="rules-header">身份证复核规则 - 实时检测结果</div>
+                    <div class="rules-content">
+                        <div class="rule-row">
+                            <div class="rule-label">证件号码</div>
+                            <div class="rule-value">110101199001011234</div>
+                            <div class="rule-desc">18位数字、身份证合法性校验、与出生日期匹配</div>
+                            <div class="rule-status">
+                                <div class="status-dot status-success"></div>
+                                <span style="font-size: 12px; color: #4caf50;">通过</span>
+                            </div>
+                        </div>
+                        
+                        <div class="rule-row">
+                            <div class="rule-label">姓名</div>
+                            <div class="rule-value">张三</div>
+                            <div class="rule-desc">汉字、拉丁文点、半角英文大写字母，与框架客户信息一致</div>
+                            <div class="rule-status">
+                                <div class="status-dot status-success"></div>
+                                <span style="font-size: 12px; color: #4caf50;">通过</span>
+                            </div>
+                        </div>
+                        
+                        <div class="rule-row">
+                            <div class="rule-label">证件有效期</div>
+                            <div class="rule-value">20291201</div>
+                            <div class="rule-desc">根据出生年月日计算，年龄对应有效期规则检查</div>
+                            <div class="rule-status">
+                                <div class="status-dot status-warning"></div>
+                                <span style="font-size: 12px; color: #ff9800;">待核实</span>
+                            </div>
+                        </div>
+                        
+                        <div class="rule-row">
+                            <div class="rule-label">民族</div>
+                            <div class="rule-value">汉</div>
+                            <div class="rule-desc">民族信息完整性检查</div>
+                            <div class="rule-status">
+                                <div class="status-dot status-success"></div>
+                                <span style="font-size: 12px; color: #4caf50;">通过</span>
+                            </div>
+                        </div>
+                        
+                        <div class="rule-row">
+                            <div class="rule-label">发证机关地点</div>
+                            <div class="rule-value">北京市朝阳区公安局</div>
+                            <div class="rule-desc">发证机关信息完整性检查</div>
+                            <div class="rule-status">
+                                <div class="status-dot status-success"></div>
+                                <span style="font-size: 12px; color: #4caf50;">通过</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="action-buttons">
+                    <button class="btn btn-secondary">重新检测</button>
+                    <button class="btn btn-secondary">人工复核</button>
+                    <button class="btn btn-primary">确认通过</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧智能助手面板 -->
+        <div class="assistant-panel">
+            <div class="assistant-header">
+                <div class="assistant-title">智能柜员</div>
+                <div class="user-id">用户0623</div>
+            </div>
+            
+            <div class="assistant-content">
+                <div class="chat-bubble recognition-result">
+                    <div class="result-title">智能复核完成</div>
+                    <div class="result-item">
+                        <span style="color: #4caf50;">✓</span>
+                        <span>身份证件识别：通过</span>
+                    </div>
+                    <div class="result-item">
+                        <span style="color: #4caf50;">✓</span>
+                        <span>客户信息一致性：通过</span>
+                    </div>
+                    <div class="result-item">
+                        <span style="color: #ff9800;">⚠</span>
+                        <span>证件有效期：需人工确认</span>
+                    </div>
+                    <div class="result-item">
+                        <span style="color: #4caf50;">✓</span>
+                        <span>业务合规性：通过</span>
+                    </div>
+                </div>
+                
+                <div class="suggestions-section">
+                    <div class="suggestions-title">智能建议：</div>
+                    <div class="suggestion-item">📋 自动填充开户表单信息</div>
+                    <div class="suggestion-item">🔍 建议核实证件有效期</div>
+                    <div class="suggestion-item">📞 发起外呼验证客户意愿</div>
+                    <div class="suggestion-item">📄 准备下一步业务材料</div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <div class="input-group">
+                    <input type="text" class="chat-input" placeholder="询问智能助手任何问题...">
+                    <div class="voice-btn">🎤</div>
+                    <div class="send-btn">▶</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能表单 - 银行柜面系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .nav-items {
+            display: flex;
+            gap: 16px;
+        }
+
+        .nav-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .search-box {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            width: 300px;
+        }
+
+        .search-box::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .start-service {
+            background: #4caf50;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .start-service:hover {
+            background: #45a049;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1565c0;
+            font-weight: 600;
+        }
+
+        /* 主体内容区域 */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 左侧步骤面板 */
+        .steps-panel {
+            width: 280px;
+            background: white;
+            padding: 24px;
+            border-right: 1px solid #e5e7eb;
+            overflow-y: auto;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .step-item.active {
+            background: #e3f2fd;
+            border-left-color: #1565c0;
+            color: #1565c0;
+        }
+
+        .step-item.completed {
+            background: #e8f5e8;
+            border-left-color: #4caf50;
+            color: #4caf50;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .step-item.active .step-number {
+            background: #1565c0;
+            color: white;
+        }
+
+        .step-item.completed .step-number {
+            background: #4caf50;
+            color: white;
+        }
+
+        .step-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* 中间内容区域 */
+        .content-area {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .content-header {
+            margin-bottom: 24px;
+        }
+
+        .content-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .content-subtitle {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* 上传区域 */
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #1565c0;
+            background: #f8faff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #9ca3af;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        /* 识别结果区域 */
+        .recognition-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-processing {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input {
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #1565c0;
+            box-shadow: 0 0 0 3px rgba(21,101,192,0.1);
+        }
+
+        .confidence-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .confidence-value {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4caf50;
+            transition: width 0.3s;
+        }
+
+        /* 右侧智能助手 */
+        .assistant-panel {
+            width: 360px;
+            background: white;
+            border-left: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .assistant-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: between;
+        }
+
+        .assistant-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .assistant-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .user-id {
+            text-align: right;
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .chat-message {
+            background: #f3f4f6;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .assistant-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #1565c0;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            background: #f8faff;
+            border: 1px solid #e3f2fd;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .suggestion-item:hover {
+            background: #e3f2fd;
+            border-color: #1565c0;
+        }
+
+        .input-area {
+            padding: 16px 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            padding: 12px 16px;
+            font-size: 14px;
+        }
+
+        .send-btn {
+            background: #1565c0;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #1565c0;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1253a0;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
+                    <path d="M2 17L12 22L22 17"/>
+                    <path d="M2 12L12 17L22 12"/>
+                </svg>
+                AgreeTech
+            </div>
+            <div class="nav-items">
+                <div class="nav-item">首页</div>
+                <div class="nav-item">转账</div>
+                <div class="nav-item">智能表单</div>
+            </div>
+        </div>
+        <input type="text" class="search-box" placeholder="搜索">
+        <div class="header-right">
+            <div class="start-service">🎯 开始服务</div>
+            <div class="user-info">
+                <div class="avatar">张</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主体内容 -->
+    <div class="main-container">
+        <!-- 左侧步骤面板 -->
+        <div class="steps-panel">
+            <div class="step-item completed">
+                <div class="step-number">✓</div>
+                <div class="step-text">影像采集</div>
+            </div>
+            <div class="step-item active">
+                <div class="step-number">2</div>
+                <div class="step-text">版式识别</div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-text">要素提取</div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">4</div>
+                <div class="step-text">规则检查</div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">5</div>
+                <div class="step-text">准确率分析</div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">6</div>
+                <div class="step-text">结果确认</div>
+            </div>
+        </div>
+
+        <!-- 中间内容区域 -->
+        <div class="content-area">
+            <div class="content-header">
+                <div class="content-title">智能表单识别</div>
+                <div class="content-subtitle">自动识别客户提交的各类表单和证件，提取关键信息并验证准确性</div>
+            </div>
+
+            <!-- 上传区域 -->
+            <div class="upload-section">
+                <div class="upload-area">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">拖拽文件到此处，或点击选择文件</div>
+                    <div class="upload-hint">支持 JPG、PNG、PDF 格式，单个文件不超过10MB</div>
+                </div>
+            </div>
+
+            <!-- 识别结果区域 -->
+            <div class="recognition-section">
+                <div class="section-title">
+                    身份证识别结果
+                    <span class="status-badge status-success">识别完成</span>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">姓名</label>
+                        <input type="text" class="form-input" value="张三" readonly>
+                        <div class="confidence-bar">
+                            <span class="confidence-value">置信度: 98%</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 98%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">身份证号码</label>
+                        <input type="text" class="form-input" value="110101199001011234" readonly>
+                        <div class="confidence-bar">
+                            <span class="confidence-value">置信度: 96%</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 96%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">性别</label>
+                        <input type="text" class="form-input" value="男" readonly>
+                        <div class="confidence-bar">
+                            <span class="confidence-value">置信度: 99%</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 99%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">出生日期</label>
+                        <input type="text" class="form-input" value="1990年01月01日" readonly>
+                        <div class="confidence-bar">
+                            <span class="confidence-value">置信度: 95%</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 95%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">民族</label>
+                        <input type="text" class="form-input" value="汉" readonly>
+                        <div class="confidence-bar">
+                            <span class="confidence-value">置信度: 97%</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 97%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">住址</label>
+                        <input type="text" class="form-input" value="北京市朝阳区某某街道123号" readonly>
+                        <div class="confidence-bar">
+                            <span class="confidence-value">置信度: 92%</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 92%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary">确认信息</button>
+                    <button class="btn btn-secondary">人工校正</button>
+                    <button class="btn btn-secondary">重新识别</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧智能助手 -->
+        <div class="assistant-panel">
+            <div class="assistant-header">
+                <div class="assistant-title">
+                    🤖 智能柜员
+                </div>
+            </div>
+            
+            <div class="user-id">用户0623</div>
+            
+            <div class="assistant-content">
+                <div style="display: flex; align-items: flex-start; gap: 8px;">
+                    <div class="assistant-avatar">🤖</div>
+                    <div class="chat-message">
+                        已完成身份证影像识别，检测到以下信息：
+                        <br><br>
+                        ✅ 证件类型：中华人民共和国居民身份证
+                        <br>✅ 证件完整性：完整
+                        <br>✅ 图像质量：良好
+                        <br>⚠️ 地址信息置信度较低，建议人工核实
+                    </div>
+                </div>
+                
+                <div class="suggestions">
+                    <div style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">智能建议：</div>
+                    <div class="suggestion-item">📋 自动填充开户申请表</div>
+                    <div class="suggestion-item">🔍 核实客户地址信息</div>
+                    <div class="suggestion-item">📸 采集人脸照片进行比对</div>
+                    <div class="suggestion-item">📄 准备下一步业务材料</div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <input type="text" class="chat-input" placeholder="询问智能助手任何问题...">
+                <button class="send-btn">➤</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
