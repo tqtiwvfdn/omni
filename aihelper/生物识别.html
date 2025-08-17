@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>银行柜面系统 - 智能生物识别</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .emotion-indicator {
+            transition: all 0.3s ease;
+        }
+        .scanning-line {
+            animation: scanning 3s infinite;
+        }
+        @keyframes scanning {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(300%); }
+        }
+        .detection-zone {
+            border: 2px dashed #3b82f6;
+            animation: detection-pulse 2s infinite;
+        }
+        @keyframes detection-pulse {
+            0%, 100% { border-color: #3b82f6; }
+            50% { border-color: #10b981; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航栏 -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="flex items-center justify-between px-6 py-3">
+            <div class="flex items-center space-x-4">
+                <div class="text-blue-600 font-bold text-lg">🏦 柜面助手</div>
+                <div class="text-sm text-gray-500">客户服务 | 内部服务 | 基础服务</div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-sm text-gray-600">工号：110184 测试员</div>
+                <button class="text-sm text-blue-600 hover:text-blue-800">退出</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex h-screen">
+        <!-- 主要内容区域 -->
+        <div class="flex-1 p-6">
+            <!-- 进度条 -->
+            <div class="bg-white rounded-lg p-6 mb-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-8">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">1</div>
+                            <span class="ml-2 text-sm font-medium text-blue-600">基本信息</span>
+                        </div>
+                        <div class="w-16 h-0.5 bg-gray-300"></div>
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm">2</div>
+                            <span class="ml-2 text-sm text-gray-600">身份信息</span>
+                        </div>
+                        <div class="w-16 h-0.5 bg-gray-300"></div>
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm">3</div>
+                            <span class="ml-2 text-sm text-gray-600">生物识别</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生物识别功能区 -->
+            <div class="grid grid-cols-2 gap-6">
+                <!-- 情绪识别模块 -->
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="p-6 border-b">
+                        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2 pulse-animation"></span>
+                            情绪识别系统
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <!-- 摄像头视图 -->
+                        <div class="relative bg-gray-900 rounded-lg h-48 mb-4 overflow-hidden">
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="w-32 h-32 border-2 border-blue-400 rounded-full flex items-center justify-center">
+                                    <div class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <span class="text-white text-sm">👤</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="scanning-line absolute w-full h-0.5 bg-blue-400 opacity-70"></div>
+                            <div class="absolute top-2 left-2 text-green-400 text-xs">● 正在识别</div>
+                            <div class="absolute top-2 right-2 text-white text-xs" id="timestamp">00:00:00</div>
+                        </div>
+
+                        <!-- 情绪分析结果 -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">当前情绪：</span>
+                                <span class="text-sm font-medium text-green-600" id="current-emotion">平静</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span>愉悦度</span>
+                                    <span id="happiness-score">75%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full transition-all duration-500" style="width: 75%" id="happiness-bar"></div>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span>紧张度</span>
+                                    <span id="stress-score">25%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-yellow-500 h-2 rounded-full transition-all duration-500" style="width: 25%" id="stress-bar"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 推荐话术 -->
+                        <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                            <div class="text-xs text-blue-600 font-medium mb-1">💬 推荐话术</div>
+                            <div class="text-sm text-gray-700" id="recommended-script">
+                                "您好！感谢您选择我们银行，我将为您提供专业的服务。"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 物品遗留检测模块 -->
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="p-6 border-b">
+                        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2 pulse-animation"></span>
+                            物品遗留检测
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <!-- 检测区域视图 -->
+                        <div class="relative bg-gray-100 rounded-lg h-48 mb-4 detection-zone">
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                        <span class="text-2xl">📹</span>
+                                    </div>
+                                    <div class="text-sm text-gray-600">柜台检测区域</div>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-2 left-2 text-blue-600 text-xs">● 监控中</div>
+                            <div class="absolute bottom-2 right-2">
+                                <div class="w-3 h-3 bg-green-500 rounded-full pulse-animation"></div>
+                            </div>
+                        </div>
+
+                        <!-- 检测状态 -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">检测状态：</span>
+                                <span class="text-sm font-medium text-green-600" id="detection-status">正常监控</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">客户状态：</span>
+                                <span class="text-sm font-medium text-blue-600" id="customer-status">在座</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">检测到物品：</span>
+                                <span class="text-sm font-medium text-gray-600" id="detected-items">无</span>
+                            </div>
+                        </div>
+
+                        <!-- 检测历史 -->
+                        <div class="mt-4">
+                            <div class="text-xs text-gray-500 mb-2">检测记录</div>
+                            <div class="space-y-1 max-h-20 overflow-y-auto" id="detection-log">
+                                <div class="text-xs text-gray-400">14:30:15 - 客户就座</div>
+                                <div class="text-xs text-gray-400">14:30:20 - 检测到手机</div>
+                                <div class="text-xs text-gray-400">14:32:10 - 检测到文件袋</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 实时提醒区域 -->
+            <div class="mt-6 bg-white rounded-lg shadow-sm">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">🔔 实时提醒</h3>
+                    <div class="space-y-2" id="alerts-container">
+                        <div class="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center">
+                            <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                            <span class="text-sm text-green-700">系统运行正常，所有检测功能已启用</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧智能助手 -->
+        <div class="w-80 bg-white border-l shadow-sm">
+            <div class="p-4 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                <h3 class="font-semibold">智能助手</h3>
+                <p class="text-sm opacity-90">AI生物识别助手为您服务</p>
+            </div>
+            
+            <div class="p-4 space-y-4">
+                <!-- 服务建议 -->
+                <div class="bg-blue-50 rounded-lg p-3">
+                    <div class="text-sm font-medium text-blue-800 mb-2">🤖 服务建议</div>
+                    <div class="text-xs text-blue-700" id="service-suggestion">
+                        根据客户情绪分析，建议采用亲切友好的服务态度，可适当放缓说话速度。
+                    </div>
+                </div>
+
+                <!-- 风险提示 -->
+                <div class="bg-yellow-50 rounded-lg p-3">
+                    <div class="text-sm font-medium text-yellow-800 mb-2">⚠️ 风险提示</div>
+                    <div class="text-xs text-yellow-700">
+                        请注意提醒客户收好随身物品，离开时检查是否有遗留。
+                    </div>
+                </div>
+
+                <!-- 操作指南 -->
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="text-sm font-medium text-gray-800 mb-2">📋 操作指南</div>
+                    <div class="space-y-1">
+                        <div class="text-xs text-gray-600">• 情绪识别自动运行</div>
+                        <div class="text-xs text-gray-600">• 物品检测持续监控</div>
+                        <div class="text-xs text-gray-600">• 异常情况自动提醒</div>
+                    </div>
+                </div>
+
+                <!-- 设置选项 -->
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="text-sm font-medium text-gray-800 mb-3">🔧 检测设置</div>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" checked class="mr-2 text-blue-600" id="emotion-detection">
+                            <span class="text-xs text-gray-700">情绪识别</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" checked class="mr-2 text-blue-600" id="object-detection">
+                            <span class="text-xs text-gray-700">物品检测</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" checked class="mr-2 text-blue-600" id="voice-analysis">
+                            <span class="text-xs text-gray-700">语音分析</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟实时数据更新
+        let emotionData = {
+            emotions: ['平静', '愉悦', '专注', '轻松', '谨慎'],
+            happiness: [75, 80, 70, 85, 65],
+            stress: [25, 15, 30, 10, 35],
+            scripts: [
+                "您好！感谢您选择我们银行，我将为您提供专业的服务。",
+                "看起来您心情不错，让我们开始办理业务吧！",
+                "请您放心，我会仔细为您处理每一个细节。",
+                "今天的服务让您满意吗？有什么需要改进的地方请告诉我。",
+                "请您慢慢考虑，不用着急，我们有充足的时间。"
+            ]
+        };
+
+        let detectionStates = ['正常监控', '检测异常', '发现遗留物品'];
+        let customerStates = ['在座', '离开', '即将离开'];
+        let itemsList = ['无', '手机', '文件袋', '钥匙', '雨伞'];
+
+        // 更新时间戳
+        function updateTimestamp() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-CN', { hour12: false });
+            document.getElementById('timestamp').textContent = timeString;
+        }
+
+        // 更新情绪数据
+        function updateEmotionData() {
+            const index = Math.floor(Math.random() * emotionData.emotions.length);
+            
+            document.getElementById('current-emotion').textContent = emotionData.emotions[index];
+            document.getElementById('happiness-score').textContent = emotionData.happiness[index] + '%';
+            document.getElementById('stress-score').textContent = emotionData.stress[index] + '%';
+            document.getElementById('recommended-script').textContent = emotionData.scripts[index];
+            
+            document.getElementById('happiness-bar').style.width = emotionData.happiness[index] + '%';
+            document.getElementById('stress-bar').style.width = emotionData.stress[index] + '%';
+            
+            // 更新服务建议
+            let suggestion = '';
+            if (emotionData.happiness[index] > 70) {
+                suggestion = '客户情绪良好，可以正常进行业务办理，保持现有服务节奏。';
+            } else if (emotionData.stress[index] > 30) {
+                suggestion = '客户略显紧张，建议放缓说话速度，多给予解释和安慰。';
+            } else {
+                suggestion = '客户状态平稳，按标准流程进行服务即可。';
+            }
+            document.getElementById('service-suggestion').textContent = suggestion;
+        }
+
+        // 更新物品检测数据
+        function updateDetectionData() {
+            const detectionIndex = Math.floor(Math.random() * detectionStates.length);
+            const customerIndex = Math.floor(Math.random() * customerStates.length);
+            const itemIndex = Math.floor(Math.random() * itemsList.length);
+            
+            document.getElementById('detection-status').textContent = detectionStates[detectionIndex];
+            document.getElementById('customer-status').textContent = customerStates[customerIndex];
+            document.getElementById('detected-items').textContent = itemsList[itemIndex];
+            
+            // 如果客户离开且有物品，显示警告
+            if (customerStates[customerIndex] === '离开' && itemsList[itemIndex] !== '无') {
+                addAlert('warning', `⚠️ 客户已离开但检测到遗留物品：${itemsList[itemIndex]}`);
+            }
+            
+            // 添加检测日志
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-CN', { hour12: false });
+            const logEntry = `${timeString} - ${detectionStates[detectionIndex]}`;
+            
+            const logContainer = document.getElementById('detection-log');
+            const newLogEntry = document.createElement('div');
+            newLogEntry.className = 'text-xs text-gray-400';
+            newLogEntry.textContent = logEntry;
+            logContainer.appendChild(newLogEntry);
+            
+            // 保持最新5条记录
+            if (logContainer.children.length > 5) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        // 添加提醒
+        function addAlert(type, message) {
+            const alertsContainer = document.getElementById('alerts-container');
+            const alertDiv = document.createElement('div');
+            
+            let bgColor = 'bg-blue-50 border-blue-200';
+            let textColor = 'text-blue-700';
+            let dotColor = 'bg-blue-500';
+            
+            if (type === 'warning') {
+                bgColor = 'bg-yellow-50 border-yellow-200';
+                textColor = 'text-yellow-700';
+                dotColor = 'bg-yellow-500';
+            } else if (type === 'error') {
+                bgColor = 'bg-red-50 border-red-200';
+                textColor = 'text-red-700';
+                dotColor = 'bg-red-500';
+            }
+            
+            alertDiv.className = `p-3 ${bgColor} border rounded-lg flex items-center`;
+            alertDiv.innerHTML = `
+                <div class="w-2 h-2 ${dotColor} rounded-full mr-3"></div>
+                <span class="text-sm ${textColor}">${message}</span>
+            `;
+            
+            alertsContainer.appendChild(alertDiv);
+            
+            // 自动移除旧提醒
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+
+        // 设置切换功能
+        document.getElementById('emotion-detection').addEventListener('change', function(e) {
+            if (!e.target.checked) {
+                addAlert('info', '情绪识别功能已关闭');
+            } else {
+                addAlert('info', '情绪识别功能已开启');
+            }
+        });
+
+        document.getElementById('object-detection').addEventListener('change', function(e) {
+            if (!e.target.checked) {
+                addAlert('info', '物品检测功能已关闭');
+            } else {
+                addAlert('info', '物品检测功能已开启');
+            }
+        });
+
+        document.getElementById('voice-analysis').addEventListener('change', function(e) {
+            if (!e.target.checked) {
+                addAlert('info', '语音分析功能已关闭');
+            } else {
+                addAlert('info', '语音分析功能已开启');
+            }
+        });
+
+        // 启动定时更新
+        setInterval(updateTimestamp, 1000);
+        setInterval(updateEmotionData, 3000);
+        setInterval(updateDetectionData, 5000);
+
+        // 初始化
+        updateTimestamp();
+        updateEmotionData();
+        updateDetectionData();
+
+        // 模拟突发事件
+        setTimeout(() => {
+            addAlert('warning', '🎯 检测到客户准备离开，请提醒检查随身物品');
+        }, 8000);
+
+        setTimeout(() => {
+            addAlert('error', '🚨 发现遗留物品：手机，请立即通知客户');
+        }, 15000);
+    </script>
+</body>
+</html>

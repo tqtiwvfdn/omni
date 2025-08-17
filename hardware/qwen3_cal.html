@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM 性能计算器</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定义样式，用于美化输入框等 */
+        .form-input, .form-select {
+            @apply w-full px-3 py-2 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500;
+        }
+        .result-card {
+            @apply bg-white p-6 rounded-xl shadow-md transition-all duration-300 hover:shadow-lg;
+        }
+        .result-title {
+            @apply text-lg font-semibold text-gray-500 mb-2;
+        }
+        .result-value {
+            @apply text-3xl font-bold text-indigo-600;
+        }
+        .result-unit {
+            @apply text-lg ml-2 text-gray-500;
+        }
+        .error-message {
+            @apply bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-md;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-gray-900">LLM 性能计算器</h1>
+            <p class="mt-2 text-lg text-gray-600">分析大语言模型的训练与推理性能指标</p>
+        </header>
+
+        <!-- 控制面板 -->
+        <section id="controls" class="p-6 bg-white rounded-xl shadow-md mb-10">
+            <h2 class="text-2xl font-bold mb-6 border-b pb-3">配置参数</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- 模型选择 -->
+                <div>
+                    <label for="model-select" class="block text-sm font-medium text-gray-700 mb-1">模型</label>
+                    <select id="model-select" class="form-select">
+                        <option value="qwen3-32b">Qwen3 32B</option>
+                        <option value="qwen3-0.6b">Qwen3 0.5B</option>
+                    </select>
+                </div>
+                <!-- GPU 选择 -->
+                <div>
+                    <label for="gpu-select" class="block text-sm font-medium text-gray-700 mb-1">GPU 型号</label>
+                    <select id="gpu-select" class="form-select">
+                        <option value="ali-ppu">阿里 PPU</option>
+                        <option value="h100">NVIDIA H100</option>
+                        <option value="h20">NVIDIA H20</option>
+                        <option value="h20-141">NVIDIA H20-141</option>
+                        <option value="910b">昇腾 910B</option>
+                    </select>
+                </div>
+                <!-- 批大小 -->
+                <div>
+                    <label for="batch-size" class="block text-sm font-medium text-gray-700 mb-1">批大小 (Batch Size)/并发量</label>
+                    <input type="number" id="batch-size" class="form-input" value="128">
+                </div>
+                <!-- 序列长度 -->
+                <div>
+                    <label for="seq-len" class="block text-sm font-medium text-gray-700 mb-1">序列长度 (Sequence Length)/上下文</label>
+                    <input type="number" id="seq-len" class="form-input" value="16384">
+                </div>
+                 <!-- GPU 数量 -->
+                <div>
+                    <label for="gpu-count" class="block text-sm font-medium text-gray-700 mb-1">GPU 数量</label>
+                    <input type="number" id="gpu-count" class="form-input" value="8">
+                </div>
+            </div>
+        </section>
+
+        <!-- 结果展示 -->
+        <section id="results">
+            <h2 class="text-2xl font-bold mb-6 border-b pb-3">分析结果</h2>
+            
+            <div id="error-container" class="mb-6"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 性能瓶颈 -->
+                <div class="result-card md:col-span-2 lg:col-span-3" id="bottleneck-card">
+                    <h3 class="result-title">性能瓶颈分析</h3>
+                    <div class="flex items-baseline">
+                        <p id="bottleneck-value" class="text-3xl font-bold">--</p>
+                    </div>
+                    <p id="bottleneck-details" class="text-md text-gray-600 mt-2">--</p>
+                </div>
+                
+                <!-- 吞吐量 -->
+                <div class="result-card">
+                    <h3 class="result-title">系统吞吐量</h3>
+                    <div class="flex items-baseline">
+                        <p id="throughput-value" class="result-value">--</p>
+                        <span class="result-unit">tokens/s</span>
+                    </div>
+                </div>
+
+                <!-- 单卡等效吞吐量 -->
+                <div class="result-card">
+                    <h3 class="result-title">单卡等效吞吐量</h3>
+                    <div class="flex items-baseline">
+                        <p id="throughput-per-gpu-value" class="result-value">--</p>
+                        <span class="result-unit">tokens/s</span>
+                    </div>
+                </div>
+
+                <!-- 模型参数量 -->
+                <div class="result-card">
+                    <h3 class="result-title">模型参数量</h3>
+                    <div class="flex items-baseline">
+                        <p id="params-value" class="result-value">--</p>
+                        <span class="result-unit">B</span>
+                    </div>
+                </div>
+
+                <!-- 显存占用 -->
+                <div class="result-card">
+                    <h3 class="result-title">总预估显存 (VRAM)</h3>
+                    <div class="flex items-baseline">
+                        <p id="vram-value" class="result-value">--</p>
+                        <span class="result-unit">GB</span>
+                    </div>
+                     <p id="vram-details" class="text-sm text-gray-500 mt-2">--</p>
+                </div>
+
+                <!-- FLOPs -->
+                <div class="result-card">
+                    <h3 class="result-title">单 Token 生成 FLOPs</h3>
+                    <div class="flex items-baseline">
+                        <p id="flops-value" class="result-value">--</p>
+                        <span class="result-unit">GFLOPs</span>
+                    </div>
+                </div>
+
+                <!-- KV Cache -->
+                <div class="result-card">
+                    <h3 class="result-title">每 Token 的 KV 缓存</h3>
+                    <div class="flex items-baseline">
+                        <p id="kvcache-value" class="result-value">--</p>
+                        <span class="result-unit">Bytes</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // --- 数据配置 ---
+
+        const modelConfigs = {
+            "qwen3-0.6b": {
+                "architectures": ["Qwen3ForCausalLM"], "attention_bias": false, "attention_dropout": 0.0, "bos_token_id": 151643, "eos_token_id": 151645, "head_dim": 128, "hidden_act": "silu", "hidden_size": 1024, "initializer_range": 0.02, "intermediate_size": 3072, "max_position_embeddings": 40960, "max_window_layers": 28, "model_type": "qwen3", "num_attention_heads": 16, "num_hidden_layers": 28, "num_key_value_heads": 8, "rms_norm_eps": 1e-06, "rope_scaling": null, "rope_theta": 1000000, "sliding_window": null, "tie_word_embeddings": true, "torch_dtype": "bfloat16", "transformers_version": "4.51.0", "use_cache": true, "use_sliding_window": false, "vocab_size": 151936
+            },
+            "qwen3-32b": {
+                "architectures": ["Qwen3ForCausalLM"], "attention_bias": false, "attention_dropout": 0.0, "bos_token_id": 151643, "eos_token_id": 151645, "head_dim": 128, "hidden_act": "silu", "hidden_size": 5120, "initializer_range": 0.02, "intermediate_size": 25600, "max_position_embeddings": 40960, "max_window_layers": 64, "model_type": "qwen3", "num_attention_heads": 64, "num_hidden_layers": 64, "num_key_value_heads": 8, "rms_norm_eps": 1e-06, "rope_scaling": null, "rope_theta": 1000000, "sliding_window": null, "tie_word_embeddings": false, "torch_dtype": "float16", "transformers_version": "4.51.3", "use_cache": true, "use_sliding_window": false, "vocab_size": 151936
+            }
+        };
+
+        const gpuConfigs = {
+            "ali-ppu": { name: "阿里 PPU", vramPerGpu: 96, vramBandwidth: 2765, tflopsPerGpu: 118 },
+            "h100": { name: "NVIDIA H100", vramPerGpu: 80, vramBandwidth: 3350, tflopsPerGpu: 989 },
+            "h20": { name: "NVIDIA H20", vramPerGpu: 96, vramBandwidth: 4000, tflopsPerGpu: 148 },
+            "h20-141": { name: "NVIDIA H20-141", vramPerGpu: 141, vramBandwidth: 4800, tflopsPerGpu: 148 },
+            "910b": { name: "昇腾 910B", vramPerGpu: 64, vramBandwidth: 1935, tflopsPerGpu: 320 }
+        };
+
+        // --- DOM 元素引用 ---
+        
+        const ui = {
+            modelSelect: document.getElementById('model-select'),
+            gpuSelect: document.getElementById('gpu-select'),
+            batchSizeInput: document.getElementById('batch-size'),
+            seqLenInput: document.getElementById('seq-len'),
+            gpuCountInput: document.getElementById('gpu-count'),
+            errorContainer: document.getElementById('error-container'),
+            paramsValue: document.getElementById('params-value'),
+            kvCacheValue: document.getElementById('kvcache-value'),
+            vramValue: document.getElementById('vram-value'),
+            vramDetails: document.getElementById('vram-details'),
+            flopsValue: document.getElementById('flops-value'),
+            bottleneckCard: document.getElementById('bottleneck-card'),
+            bottleneckValue: document.getElementById('bottleneck-value'),
+            bottleneckDetails: document.getElementById('bottleneck-details'),
+            throughputValue: document.getElementById('throughput-value'),
+            throughputPerGpuValue: document.getElementById('throughput-per-gpu-value'),
+        };
+
+        // --- 计算函数 ---
+
+        function calculateFlops(config, batchSize, sequenceLength) {
+            const { hidden_size: hiddenSize, num_attention_heads: numAttentionHeads, head_dim: headDim, num_key_value_heads: numKeyValueHeads, intermediate_size: intermediateSize, num_hidden_layers: numHiddenLayers, vocab_size: vocabSize } = config;
+            const qFlops = 2 * batchSize * 1 * hiddenSize * numAttentionHeads * headDim;
+            const kFlops = 2 * batchSize * 1 * hiddenSize * numKeyValueHeads * headDim;
+            const vFlops = 2 * batchSize * 1 * hiddenSize * numKeyValueHeads * headDim;
+            const qkFlops = 2 * batchSize * numAttentionHeads * 1 * headDim * sequenceLength;
+            const qkvFlops = 2 * batchSize * numAttentionHeads * 1 * sequenceLength * headDim;
+            const oFlops = 2 * batchSize * 1 * numAttentionHeads * headDim * hiddenSize;
+            const attnFlops = qFlops + kFlops + vFlops + qkFlops + qkvFlops + oFlops;
+            const gateFlops = 2 * batchSize * 1 * hiddenSize * intermediateSize;
+            const upFlops = 2 * batchSize * 1 * hiddenSize * intermediateSize;
+            const gateUpFlops = batchSize * 1 * intermediateSize;
+            const downFlops = 2 * batchSize * 1 * intermediateSize * hiddenSize;
+            const mlpFlops = gateFlops + upFlops + gateUpFlops + downFlops;
+            const layerFlops = attnFlops + mlpFlops;
+            const allLayersFlops = numHiddenLayers * layerFlops;
+            const lmHeadFlops = 2 * batchSize * 1 * hiddenSize * vocabSize;
+            return allLayersFlops + lmHeadFlops;
+        }
+
+        function calculateParameters(config) {
+            const { hidden_size: hiddenSize, num_attention_heads: numAttentionHeads, head_dim: headDim, num_key_value_heads: numKeyValueHeads, intermediate_size: intermediateSize, tie_word_embeddings: tieWordEmbeddings, vocab_size: vocabSize, num_hidden_layers: numHiddenLayers } = config;
+            const qParams = hiddenSize * numAttentionHeads * headDim;
+            const kParams = hiddenSize * numKeyValueHeads * headDim;
+            const vParams = hiddenSize * numKeyValueHeads * headDim;
+            const oParams = numAttentionHeads * headDim * hiddenSize;
+            const qNormParams = headDim;
+            const kNormParams = headDim;
+            const attnParams = qParams + kParams + vParams + oParams + qNormParams + kNormParams;
+            const gateParams = hiddenSize * intermediateSize;
+            const upParams = hiddenSize * intermediateSize;
+            const downParams = intermediateSize * hiddenSize;
+            const mlpParams = gateParams + upParams + downParams;
+            const inputLayerNormParams = hiddenSize;
+            const postAttentionLayerNormParams = hiddenSize;
+            const decoderLayerParams = inputLayerNormParams + postAttentionLayerNormParams + attnParams + mlpParams;
+            const embedTokensParams = vocabSize * hiddenSize;
+            const allLayersParams = numHiddenLayers * decoderLayerParams;
+            const finalNormParams = hiddenSize;
+            let modelParams = embedTokensParams + allLayersParams + finalNormParams;
+            if (!tieWordEmbeddings) {
+                const lmHeadParams = vocabSize * hiddenSize;
+                modelParams += lmHeadParams;
+            }
+            return modelParams;
+        }
+
+        function calculateKvCachePerToken(config) {
+            const { num_hidden_layers: numHiddenLayers, num_key_value_heads: numKeyValueHeads, head_dim: headDim, torch_dtype: dtypeStr } = config;
+            const dtypeBytesMap = { "bfloat16": 2, "float16": 2, "float32": 4, "int8": 1 };
+            const bytesPerParam = dtypeBytesMap[dtypeStr] || 2;
+            return numHiddenLayers * 2 * numKeyValueHeads * headDim * bytesPerParam;
+        }
+
+        function calculateTotalVram(totalParams, bytesPerToken, batchSize, sequenceLength) {
+            const bytesForParams = totalParams * 2; // Assuming bf16/fp16
+            const bytesForKvCache = bytesPerToken * sequenceLength * batchSize;
+            const otherVramBytes = 4 * 1024 * 1024 * 1024; // 4GB overhead
+            const totalVramBytes = bytesForParams + bytesForKvCache + otherVramBytes;
+            return {
+                totalGb: totalVramBytes / (1024 ** 3),
+                paramsGb: bytesForParams / (1024 ** 3),
+                kvCacheGb: bytesForKvCache / (1024 ** 3)
+            };
+        }
+
+        function analyzePerformance(totalParams, bytesPerToken, totalFlops, hwConfig) {
+            const { batchSize, sequenceLength, gpuCount, vramBandwidth, tflopsPerGpu } = hwConfig;
+            const bytesForParams = totalParams * 2;
+            const bytesForKvCache = bytesPerToken * sequenceLength * batchSize;
+            
+            const timeMemoryMs = ((bytesForParams + bytesForKvCache) / (1024 ** 3)) / (vramBandwidth * gpuCount) * 1000;
+            const timeComputeMs = (totalFlops / 1e12) / (tflopsPerGpu * gpuCount) * 1000;
+
+            let result = {};
+            if (timeComputeMs > timeMemoryMs) {
+                const throughput = batchSize / (timeComputeMs / 1000);
+                result = {
+                    type: "计算瓶颈 (Compute-Bound)",
+                    details: `计算时间 (${timeComputeMs.toFixed(2)}ms) > 带宽加载时间 (${timeMemoryMs.toFixed(2)}ms)`,
+                    throughput: throughput,
+                    throughputPerGpu: throughput / gpuCount,
+                    isComputeBound: true
+                };
+            } else {
+                const throughput = batchSize / (timeMemoryMs / 1000);
+                result = {
+                    type: "带宽瓶颈 (Memory-Bound)",
+                    details: `带宽加载时间 (${timeMemoryMs.toFixed(2)}ms) > 计算时间 (${timeComputeMs.toFixed(2)}ms)`,
+                    throughput: throughput,
+                    throughputPerGpu: throughput / gpuCount,
+                    isComputeBound: false
+                };
+            }
+            return result;
+        }
+
+        // --- 主分析与更新函数 ---
+        
+        function runAnalysis() {
+            // 1. 获取用户输入
+            const modelKey = ui.modelSelect.value;
+            const gpuKey = ui.gpuSelect.value;
+            const batchSize = parseInt(ui.batchSizeInput.value, 10);
+            const sequenceLength = parseInt(ui.seqLenInput.value, 10);
+            const gpuCount = parseInt(ui.gpuCountInput.value, 10);
+            
+            const currentModelConfig = modelConfigs[modelKey];
+            const currentGpuConfig = gpuConfigs[gpuKey];
+            
+            const hardwareConfig = { ...currentGpuConfig, batchSize, sequenceLength, gpuCount };
+
+            // 清除上一条错误信息
+            ui.errorContainer.innerHTML = '';
+
+            // 2. 执行计算
+            const totalParams = calculateParameters(currentModelConfig);
+            const bytesPerToken = calculateKvCachePerToken(currentModelConfig);
+            const vram = calculateTotalVram(totalParams, bytesPerToken, batchSize, sequenceLength);
+            const totalFlops = calculateFlops(currentModelConfig, batchSize, sequenceLength);
+            const analysis = analyzePerformance(totalParams, bytesPerToken, totalFlops, hardwareConfig);
+
+            // 3. 检查显存是否足够
+            const availableVramGb = hardwareConfig.vramPerGpu * hardwareConfig.gpuCount;
+            if (vram.totalGb > availableVramGb) {
+                ui.errorContainer.innerHTML = `
+                    <div class="error-message">
+                        <p class="font-bold">显存不足!</p>
+                        <p>预估需要 ${vram.totalGb.toFixed(2)} GB 显存, 但 ${gpuCount} 张 ${currentGpuConfig.name} 总共只有 ${availableVramGb.toFixed(2)} GB 可用。</p>
+                    </div>
+                `;
+            }
+
+            // 4. 更新UI显示
+            ui.paramsValue.textContent = (totalParams / 1e9).toFixed(2);
+            ui.kvCacheValue.textContent = bytesPerToken.toFixed(0);
+            ui.vramValue.textContent = vram.totalGb.toFixed(2);
+            ui.vramDetails.textContent = `(模型: ${vram.paramsGb.toFixed(2)} GB, KV缓存: ${vram.kvCacheGb.toFixed(2)} GB)`;
+            ui.flopsValue.textContent = (totalFlops / 1e9).toFixed(2);
+            
+            ui.bottleneckValue.textContent = analysis.type;
+            ui.bottleneckDetails.textContent = analysis.details;
+            ui.throughputValue.textContent = analysis.throughput.toFixed(2);
+            ui.throughputPerGpuValue.textContent = analysis.throughputPerGpu.toFixed(2);
+            
+            // 根据瓶颈类型改变卡片颜色
+            if(analysis.isComputeBound) {
+                ui.bottleneckCard.classList.remove('border-yellow-500');
+                ui.bottleneckCard.classList.add('border-red-500');
+                ui.bottleneckValue.classList.remove('text-yellow-600');
+                ui.bottleneckValue.classList.add('text-red-600');
+            } else {
+                ui.bottleneckCard.classList.remove('border-red-500');
+                ui.bottleneckCard.classList.add('border-yellow-500');
+                 ui.bottleneckValue.classList.remove('text-red-600');
+                ui.bottleneckValue.classList.add('text-yellow-600');
+            }
+            ui.bottleneckCard.classList.add('border-2');
+        }
+
+        // --- 事件监听 ---
+        
+        [ui.modelSelect, ui.gpuSelect, ui.batchSizeInput, ui.seqLenInput, ui.gpuCountInput].forEach(element => {
+            element.addEventListener('change', runAnalysis);
+        });
+
+        // --- 初始加载 ---
+        
+        document.addEventListener('DOMContentLoaded', runAnalysis);
+
+    </script>
+</body>
+</html>

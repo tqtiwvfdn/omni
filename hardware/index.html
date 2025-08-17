@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM推理显存与GPU需求计算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .input-focus:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .select-arrow {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        .result-highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .memory-breakdown {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-white border-b border-gray-200 px-4 py-3">
+        <div class="flex items-center text-sm text-gray-600">
+            <span>🏠</span>
+            <span class="mx-2">></span>
+            <span class="text-blue-600 font-medium">AI工具</span>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto p-6">
+        <!-- 标题 -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">LLM推理显存与GPU需求计算器</h1>
+            <p class="text-gray-600">精确计算部署AI大模型需要多少张显卡，支持NVIDIA/AMD/华为昇腾/Mac M系列全平台</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 左侧：参数配置 -->
+            <div class="space-y-6">
+                <!-- 模型选择 -->
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center mb-4">
+                        <label class="text-lg font-semibold text-gray-900">模型选择</label>
+                        <span class="ml-2 text-gray-400">ℹ️</span>
+                    </div>
+                    <select id="modelPreset" class="w-full p-3 border border-gray-300 rounded-lg select-arrow input-focus appearance-none bg-white">
+                        <option value="qwen3-32b">DeepSeek-R1-Distill-Qwen-32B</option>
+                        <option value="qwen2-72b">Qwen2-72B</option>
+                        <option value="llama3-70b">Llama3-70B</option>
+                        <option value="mixtral-8x7b">Mixtral 8x7B</option>
+                        <option value="custom">自定义配置</option>
+                    </select>
+                </div>
+
+                <!-- 模型参数量 -->
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center mb-4">
+                        <label class="text-lg font-semibold text-gray-900">模型参数量（单位：十亿）</label>
+                        <span class="ml-2 text-gray-400">ℹ️</span>
+                    </div>
+                    <input type="number" id="paramCount" value="32" class="w-full p-3 border border-gray-300 rounded-lg input-focus" readonly>
+                </div>
+
+                <!-- 计算精度和上下文长度 -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white rounded-lg p-6 card-shadow">
+                        <div class="flex items-center mb-4">
+                            <label class="text-lg font-semibold text-gray-900">计算精度</label>
+                            <span class="ml-2 text-gray-400">ℹ️</span>
+                        </div>
+                        <select id="precision" class="w-full p-3 border border-gray-300 rounded-lg select-arrow input-focus appearance-none bg-white">
+                            <option value="FP16">FP16</option>
+                            <option value="BF16">BF16</option>
+                            <option value="INT8">INT8</option>
+                            <option value="INT4">INT4</option>
+                        </select>
+                    </div>
+                    <div class="bg-white rounded-lg p-6 card-shadow">
+                        <div class="flex items-center mb-4">
+                            <label class="text-lg font-semibold text-gray-900">平均上下文长度</label>
+                            <span class="ml-2 text-gray-400">ℹ️</span>
+                        </div>
+                        <select id="contextLength" class="w-full p-3 border border-gray-300 rounded-lg select-arrow input-focus appearance-none bg-white">
+                            <option value="4096">4K tokens</option>
+                            <option value="8192">8K tokens</option>
+                            <option value="16384">16K tokens</option>
+                            <option value="32768">32K tokens</option>
+                            <option value="65536">64K tokens</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- GPU型号 -->
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <label class="text-lg font-semibold text-gray-900">GPU型号</label>
+                            <span class="ml-2 text-gray-400">ℹ️</span>
+                        </div>
+                        <span class="text-blue-600 font-medium">64GB</span>
+                    </div>
+                    <select id="gpuType" class="w-full p-3 border border-gray-300 rounded-lg select-arrow input-focus appearance-none bg-white">
+                        <option value="910B">Huawei Ascend 910B</option>
+                        <option value="A800">NVIDIA A800</option>
+                        <option value="H20">NVIDIA H20</option>
+                        <option value="L20">NVIDIA L20</option>
+                        <option value="4090">NVIDIA RTX 4090</option>
+                    </select>
+                </div>
+
+                <!-- 并发用户数 -->
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center mb-4">
+                        <label class="text-lg font-semibold text-gray-900">并发用户数</label>
+                        <span class="ml-2 text-gray-400">ℹ️</span>
+                    </div>
+                    <input type="number" id="concurrentUsers" value="3000" class="w-full p-3 border border-gray-300 rounded-lg input-focus">
+                </div>
+
+                <!-- GPU数量 -->
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <div class="flex items-center mb-4">
+                        <label class="text-lg font-semibold text-gray-900">GPU数量</label>
+                        <span class="ml-2 text-gray-400">ℹ️</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <input type="number" id="gpuCount" value="190" class="flex-1 p-3 border border-gray-300 rounded-lg input-focus">
+                        <button class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">自动</button>
+                        <span class="text-blue-600 font-medium">张卡</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：计算结果 -->
+            <div class="space-y-6">
+                <!-- 显存需求总结 -->
+                <div class="result-highlight rounded-lg p-6 text-white">
+                    <h2 class="text-2xl font-bold mb-4 text-center">
+                        显存需求 <span id="totalMemory">12108.78</span> GB
+                    </h2>
+                    <p class="text-center text-lg">
+                        需要 <span id="requiredGPUs" class="font-bold">190</span> 张显卡（基于显存容量）
+                    </p>
+                </div>
+
+                <!-- 显存分解 -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white rounded-lg p-4 card-shadow text-center">
+                        <div class="text-2xl font-bold text-blue-600" id="modelMemory">64 GB</div>
+                        <div class="text-gray-600 text-sm mt-1">模型显存</div>
+                        <div class="text-gray-500 text-xs">所有模型权重</div>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 card-shadow text-center">
+                        <div class="text-2xl font-bold text-green-600" id="kvMemory">12009.38 GB</div>
+                        <div class="text-gray-600 text-sm mt-1">KV 缓存</div>
+                        <div class="text-gray-500 text-xs">对话历史缓存</div>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 card-shadow text-center">
+                        <div class="text-2xl font-bold text-purple-600" id="activationMemory">29.5 GB</div>
+                        <div class="text-gray-600 text-sm mt-1">激活显存</div>
+                        <div class="text-gray-500 text-xs">专家模型优化</div>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 card-shadow text-center">
+                        <div class="text-2xl font-bold text-orange-600" id="computeMemory">5.9 GB</div>
+                        <div class="text-gray-600 text-sm mt-1">计算缓存</div>
+                        <div class="text-gray-500 text-xs">临时计算缓存</div>
+                    </div>
+                </div>
+
+                <!-- 性能分析 -->
+                <div class="bg-white rounded-lg p-6 card-shadow">
+                    <h3 class="text-lg font-semibold mb-4">性能分析</h3>
+                    <div id="performanceResults">
+                        <div class="space-y-3 text-sm text-gray-600">
+                            <p>请配置参数后查看详细性能分析</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 高级配置按钮 -->
+                <button id="advancedToggle" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                    高级配置 ▼
+                </button>
+
+                <!-- 高级配置面板 -->
+                <div id="advancedPanel" class="hidden bg-white rounded-lg p-6 card-shadow">
+                    <h3 class="text-lg font-semibold mb-4">高级参数配置</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">隐藏层数</label>
+                            <input type="number" id="numLayers" value="64" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">隐藏维度</label>
+                            <input type="number" id="hiddenSize" value="5120" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">注意力头数</label>
+                            <input type="number" id="attentionHeads" value="40" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">键值头数</label>
+                            <input type="number" id="kvHeads" value="8" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">中间层维度</label>
+                            <input type="number" id="intermediateSize" value="27392" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">词汇表大小</label>
+                            <input type="number" id="vocabSize" value="152064" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">专家总数</label>
+                            <input type="number" id="numExperts" value="0" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">激活专家数</label>
+                            <input type="number" id="expertsPerTok" value="0" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">批量大小</label>
+                            <input type="number" id="batchSize" value="32" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">显存带宽(GB/s)</label>
+                            <input type="number" id="bandwidth" value="1200" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">算力(TFLOPs)</label>
+                            <input type="number" id="tflops" value="256" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">卡间带宽(GB/s)</label>
+                            <input type="number" id="interconnect" value="900" class="w-full p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模型预设配置
+        const modelPresets = {
+            'qwen3-32b': {
+                num_hidden_layers: 64,
+                hidden_size: 5120,
+                num_attention_heads: 40,
+                num_key_value_heads: 8,
+                intermediate_size: 27392,
+                vocab_size: 152064,
+                num_experts: 0,
+                num_experts_per_tok: 0,
+                model_type: 'Qwen3',
+                param_count: 32
+            },
+            'qwen2-72b': {
+                num_hidden_layers: 80,
+                hidden_size: 8192,
+                num_attention_heads: 64,
+                num_key_value_heads: 8,
+                intermediate_size: 29568,
+                vocab_size: 152064,
+                num_experts: 0,
+                num_experts_per_tok: 0,
+                model_type: 'Qwen2',
+                param_count: 72
+            },
+            'llama3-70b': {
+                num_hidden_layers: 80,
+                hidden_size: 8192,
+                num_attention_heads: 64,
+                num_key_value_heads: 8,
+                intermediate_size: 28672,
+                vocab_size: 128256,
+                num_experts: 0,
+                num_experts_per_tok: 0,
+                model_type: 'Llama3',
+                param_count: 70
+            },
+            'mixtral-8x7b': {
+                num_hidden_layers: 32,
+                hidden_size: 4096,
+                num_attention_heads: 32,
+                num_key_value_heads: 8,
+                intermediate_size: 14336,
+                vocab_size: 32000,
+                num_experts: 8,
+                num_experts_per_tok: 2,
+                model_type: 'Mixtral',
+                param_count: 47
+            }
+        };
+
+        // GPU配置预设
+        const gpuConfigs = {
+            '910B': { vram: 64, bandwidth: 1200, tflops: 256 },
+            'A800': { vram: 80, bandwidth: 2039, tflops: 312 },
+            'H20': { vram: 96, bandwidth: 3900, tflops: 296 },
+            'L20': { vram: 48, bandwidth: 864, tflops: 119 },
+            '4090': { vram: 24, bandwidth: 1008, tflops: 165 }
+        };
+
+        // 精度配置
+        const precisionBytes = {
+            'FP16': 2,
+            'BF16': 2,
+            'INT8': 1,
+            'INT4': 0.5
+        };
+
+        // 事件监听器
+        document.getElementById('modelPreset').addEventListener('change', function() {
+            const preset = modelPresets[this.value];
+            if (preset) {
+                document.getElementById('paramCount').value = preset.param_count;
+                document.getElementById('numLayers').value = preset.num_hidden_layers;
+                document.getElementById('hiddenSize').value = preset.hidden_size;
+                document.getElementById('attentionHeads').value = preset.num_attention_heads;
+                document.getElementById('kvHeads').value = preset.num_key_value_heads;
+                document.getElementById('intermediateSize').value = preset.intermediate_size;
+                document.getElementById('vocabSize').value = preset.vocab_size;
+                document.getElementById('numExperts').value = preset.num_experts;
+                document.getElementById('expertsPerTok').value = preset.num_experts_per_tok;
+            }
+            calculate();
+        });
+
+        document.getElementById('gpuType').addEventListener('change', function() {
+            const config = gpuConfigs[this.value];
+            if (config) {
+                document.getElementById('bandwidth').value = config.bandwidth;
+                document.getElementById('tflops').value = config.tflops;
+                // 更新显示的显存大小
+                document.querySelector('#gpuType').nextElementSibling.textContent = config.vram + 'GB';
+            }
+            calculate();
+        });
+
+        document.getElementById('advancedToggle').addEventListener('click', function() {
+            const panel = document.getElementById('advancedPanel');
+            const isHidden = panel.classList.contains('hidden');
+            
+            if (isHidden) {
+                panel.classList.remove('hidden');
+                this.innerHTML = '高级配置 ▲';
+            } else {
+                panel.classList.add('hidden');
+                this.innerHTML = '高级配置 ▼';
+            }
+        });
+
+        // 实时计算
+        ['contextLength', 'concurrentUsers', 'gpuCount', 'precision'].forEach(id => {
+            document.getElementById(id).addEventListener('change', calculate);
+        });
+
+        // 高级配置实时计算
+        ['numLayers', 'hiddenSize', 'attentionHeads', 'kvHeads', 'intermediateSize', 'vocabSize', 'numExperts', 'expertsPerTok', 'batchSize', 'bandwidth', 'tflops', 'interconnect'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calculate);
+        });
+
+        function getConfig() {
+            const modelType = document.getElementById('modelPreset').value;
+            const preset = modelPresets[modelType];
+            
+            return {
+                num_hidden_layers: parseInt(document.getElementById('numLayers').value),
+                hidden_size: parseInt(document.getElementById('hiddenSize').value),
+                num_attention_heads: parseInt(document.getElementById('attentionHeads').value),
+                num_key_value_heads: parseInt(document.getElementById('kvHeads').value),
+                intermediate_size: parseInt(document.getElementById('intermediateSize').value),
+                vocab_size: parseInt(document.getElementById('vocabSize').value),
+                num_experts: parseInt(document.getElementById('numExperts').value),
+                num_experts_per_tok: parseInt(document.getElementById('expertsPerTok').value),
+                model_type: preset ? preset.model_type : 'Custom'
+            };
+        }
+
+        function getParams() {
+            const gpuType = document.getElementById('gpuType').value;
+            const gpuConfig = gpuConfigs[gpuType];
+            const precision = document.getElementById('precision').value;
+            
+            return {
+                VRAM: gpuConfig.vram,
+                W: parseFloat(document.getElementById('bandwidth').value),
+                TFLOPs: parseFloat(document.getElementById('tflops').value),
+                N: parseInt(document.getElementById('gpuCount').value),
+                W_interconnect: parseFloat(document.getElementById('interconnect').value),
+                B: parseInt(document.getElementById('batchSize').value),
+                S: parseInt(document.getElementById('contextLength').value),
+                P_bytes: precisionBytes[precision],
+                concurrent_users: parseInt(document.getElementById('concurrentUsers').value)
+            };
+        }
+
+        function calculateDenseMetrics(config, params) {
+            const L = config.num_hidden_layers || 0;
+            const H = config.hidden_size || 0;
+            const A = config.num_attention_heads || 0;
+            const K = config.num_key_value_heads || A;
+            const D = H / A;
+            const I = config.intermediate_size || 0;
+            const V = config.vocab_size || 0;
+
+            const p_attn = L * ((H * A * D) + (H * K * D) * 2 + (A * D * H));
+            const p_ffn = L * ((H * I) * 2);
+            const p_embed = V * H;
+            const P_total_bytes = p_attn + p_ffn + p_embed;
+            
+            const results = {
+                P_total_approx: P_total_bytes / 1e9
+            };
+
+            // 显存计算
+            const overhead_gb = 4.0;
+            let weights_mem_gb, kv_cache_mem_gb;
+
+            if (params.N === 1) {
+                weights_mem_gb = (P_total_bytes * params.P_bytes) / (1024 ** 3);
+                const size_kv_token_bytes = L * K * D * 2 * params.P_bytes;
+                kv_cache_mem_gb = params.B * params.S * size_kv_token_bytes / (1024 ** 3);
+            } else {
+                weights_mem_gb = (P_total_bytes / params.N) * params.P_bytes / (1024 ** 3);
+                const size_kv_token_bytes_per_gpu = L * (K / params.N) * D * 2 * params.P_bytes;
+                kv_cache_mem_gb = (params.B / params.N) * params.S * size_kv_token_bytes_per_gpu / (1024 ** 3);
+            }
+
+            // 考虑并发用户的KV缓存
+            const concurrent_kv_cache = (params.concurrent_users * params.S * L * K * D * 2 * params.P_bytes) / (1024 ** 3);
+            kv_cache_mem_gb = Math.max(kv_cache_mem_gb, concurrent_kv_cache / params.N);
+
+            const total_mem_gb = weights_mem_gb + kv_cache_mem_gb + overhead_gb;
+            results.total_mem_gb = total_mem_gb;
+            results.weights_mem_gb = weights_mem_gb;
+            results.kv_cache_mem_gb = kv_cache_mem_gb;
+            results.activation_mem_gb = overhead_gb * 0.75; // 激活显存
+            results.compute_mem_gb = overhead_gb * 0.25; // 计算缓存
+            results.is_oom = total_mem_gb > params.VRAM;
+
+            // 性能计算
+            let time_comm_ms = 0;
+            let time_memory_ms;
+
+            if (params.N === 1) {
+                const d_total_gb = weights_mem_gb + kv_cache_mem_gb;
+                time_memory_ms = (d_total_gb / params.W) * 1000;
+            } else {
+                const d_total_per_gpu_gb = weights_mem_gb + kv_cache_mem_gb;
+                time_memory_ms = (d_total_per_gpu_gb / params.W) * 1000;
+
+                const comm_volume_per_step_gb = 2 * L * (params.B / params.N) * H * params.P_bytes / (1024 ** 3);
+                time_comm_ms = (2 * (params.N - 1) / params.N) * (comm_volume_per_step_gb / params.W_interconnect) * 1000;
+            }
+
+            const f_independent = 2 * L * H * (A * D + I);
+            const f_dependent = 2 * params.S * L * A * D;
+            const f_token = f_independent + f_dependent;
+            const f_total_gflops = params.B * f_token / 1e9;
+
+            const time_compute_ms = f_total_gflops / (params.N * params.TFLOPs);
+
+            const time_per_step_ms = Math.max(time_compute_ms, time_memory_ms + time_comm_ms);
+            const T_total = time_per_step_ms > 0 ? params.B / (time_per_step_ms / 1000) : Infinity;
+
+            results.time_memory = time_memory_ms;
+            results.time_comm = time_comm_ms;
+            results.time_compute = time_compute_ms;
+            results.T_bw = T_total;
+            results.bottleneck = time_comm_ms > time_compute_ms && time_comm_ms > time_memory_ms ? 
+                "通信瓶颈" : 
+                time_memory_ms > time_compute_ms ? "内存带宽瓶颈" : "计算能力瓶颈";
+            results.f_total_gflops = f_total_gflops;
+
+            return results;
+        }
+
+        function calculate() {
+            const config = getConfig();
+            const params = getParams();
+            
+            const isMoe = config.num_experts > 0;
+            const results = calculateDenseMetrics(config, params);
+            
+            // 计算总显存需求
+            const totalMemoryGB = results.weights_mem_gb * params.N + results.kv_cache_mem_gb * params.N;
+            const requiredGPUs = Math.ceil(totalMemoryGB / params.VRAM);
+            
+            // 更新界面
+            document.getElementById('totalMemory').textContent = totalMemoryGB.toFixed(2);
+            document.getElementById('requiredGPUs').textContent = requiredGPUs;
+            document.getElementById('modelMemory').textContent = (results.weights_mem_gb * params.N).toFixed(0) + ' GB';
+            document.getElementById('kvMemory').textContent = (results.kv_cache_mem_gb * params.N).toFixed(2) + ' GB';
+            document.getElementById('activationMemory').textContent = (results.activation_mem_gb * params.N).toFixed(1) + ' GB';
+            document.getElementById('computeMemory').textContent = (results.compute_mem_gb * params.N).toFixed(1) + ' GB';
+            
+            // 更新性能分析
+            let performanceHtml = '';
+            if (results.is_oom) {
+                performanceHtml = `
+                    <div class="bg-red-50 border border-red-200 rounded p-3 mb-3">
+                        <p class="text-red-800 font-semibold">⚠️ 显存不足警告</p>
+                        <p class="text-red-600 text-sm">单卡显存不足，需要${requiredGPUs}张显卡</p>
+                    </div>
+                `;
+            }
+            
+            performanceHtml += `
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">预估参数量:</span>
+                        <span class="font-semibold">${results.P_total_approx.toFixed(2)}B</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">理论吞吐量:</span>
+                        <span class="font-semibold text-green-600">${results.T_bw.toFixed(2)} tokens/s</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">性能瓶颈:</span>
+                        <span class="font-semibold text-orange-600">${results.bottleneck}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">计算时间:</span>
+                        <span>${results.time_compute.toFixed(2)}ms</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">内存读写:</span>
+                        <span>${results.time_memory.toFixed(2)}ms</span>
+                    </div>
+                    ${params.N > 1 ? `
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">通信时间:</span>
+                        <span>${results.time_comm.toFixed(2)}ms</span>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('performanceResults').innerHTML = performanceHtml;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置默认模型和GPU
+            document.getElementById('modelPreset').value = 'qwen3-32b';
+            document.getElementById('gpuType').value = '910B';
+            
+            // 触发初始计算
+            document.getElementById('modelPreset').dispatchEvent(new Event('change'));
+            document.getElementById('gpuType').dispatchEvent(new Event('change'));
+        });
+    </script>
+</body>
+</html>
