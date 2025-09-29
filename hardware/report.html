@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen2.5-72B 性能分析报告</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .formula-section {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .formula {
+            background-color: #fff;
+            padding: 10px;
+            border-left: 4px solid #3498db;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .highlight {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .compute-bound {
+            background-color: #e67e22;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Qwen2.5-72B 模型性能分析报告</h1>
+    <h2>基础配置</h2>
+    <table>
+        <tr>
+            <th>配置项</th>
+            <th>参数值</th>
+        </tr>
+        <tr>
+            <td>模型</td>
+            <td>Qwen2.5-72B</td>
+        </tr>
+        <tr>
+            <td>硬件</td>
+            <td>16 × NVIDIA H20-141G</td>
+        </tr>
+        <tr>
+            <td>序列长度</td>
+            <td>4096</td>
+        </tr>
+        <tr>
+            <td>性能瓶颈类型</td>
+            <td class="compute-bound">计算瓶颈 (Compute-Bound)</td>
+        </tr>
+    </table>
+
+    <h2>性能数据对比表</h2>
+    <table>
+        <tr>
+            <th>批大小 (Batch Size)</th>
+            <th>首Token延迟 (TTFT)</th>
+            <th>系统总TPS</th>
+            <th>单卡等效TPS</th>
+            <th>每个并发输出速度</th>
+            <th>总预估显存</th>
+            <th>单Token FLOPs</th>
+        </tr>
+        <tr>
+            <td>1000</td>
+            <td>64.89 ms</td>
+            <td>15,411 tokens/s</td>
+            <td>963.19 tokens/s</td>
+            <td>15.41 tokens/s</td>
+            <td>1,389.42 GB</td>
+            <td>153,656.50 GFLOPs</td>
+        </tr>
+        <tr>
+            <td>500</td>
+            <td>32.44 ms</td>
+            <td>15,411 tokens/s</td>
+            <td>963.19 tokens/s</td>
+            <td>30.82 tokens/s</td>
+            <td>764.42 GB</td>
+            <td>76,828.25 GFLOPs</td>
+        </tr>
+        <tr>
+            <td>300</td>
+            <td>19.47 ms</td>
+            <td>15,411 tokens/s</td>
+            <td>963.19 tokens/s</td>
+            <td>51.37 tokens/s</td>
+            <td>514.42 GB</td>
+            <td>46,096.95 GFLOPs</td>
+        </tr>
+    </table>
+
+    <h2>计算公式说明</h2>
+    
+    <div class="formula-section">
+        <h3>1. 首Token延迟 (TTFT) 计算</h3>
+        <p>在<strong>计算瓶颈 (Compute-Bound)</strong> 场景下：</p>
+        <div class="formula">
+            TTFT = max(计算时间, 带宽加载时间) = 计算时间
+        </div>
+        <p><strong>原因：</strong>计算时间 > 带宽加载时间，因此性能受限于计算能力</p>
+        
+        <h3>2. 系统总TPS计算</h3>
+        <div class="formula">
+            系统TPS = 批大小 / 计算时间 × 1000ms/s
+        </div>
+        <p><strong>验证：</strong></p>
+        <ul>
+            <li>批大小1000: 1000 ÷ 64.89ms × 1000 = 15,411 tokens/s ✓</li>
+            <li>批大小500: 500 ÷ 32.44ms × 1000 = 15,415 tokens/s ≈ 15,411 tokens/s ✓</li>
+            <li>批大小300: 300 ÷ 19.47ms × 1000 = 15,407 tokens/s ≈ 15,411 tokens/s ✓</li>
+        </ul>
+
+        <h3>3. 单卡等效TPS计算</h3>
+        <div class="formula">
+            单卡TPS = 系统TPS ÷ GPU数量 = 15,411 ÷ 16 = 963.19 tokens/s
+        </div>
+
+        <h3>4. 每个并发输出速度计算</h3>
+        <div class="formula">
+            每个并发输出速度 = 系统TPS ÷ 批大小
+        </div>
+        <p><strong>计算结果：</strong></p>
+        <ul>
+            <li>批大小1000: 15,411 ÷ 1000 = 15.41 tokens/s</li>
+            <li>批大小500: 15,411 ÷ 500 = 30.82 tokens/s</li>
+            <li>批大小300: 15,411 ÷ 300 = 51.37 tokens/s</li>
+        </ul>
+
+        <h3>5. KV缓存计算</h3>
+        <div class="formula">
+            每Token的KV缓存 = 327,680 Bytes = 320 KB/token (所有配置相同)
+        </div>
+        <div class="formula">
+            总KV缓存 = 每Token的KV缓存 × 序列长度 × 批大小
+        </div>
+    </div>
+
+    <h2>性能分析结论</h2>
+    <div class="formula-section">
+        <h3>核心发现</h3>
+        <ul>
+            <li><strong>系统TPS稳定：</strong>无论批大小如何变化，系统总TPS都稳定在15,411 tokens/s左右</li>
+            <li><strong>计算瓶颈特征：</strong>所有配置都表现为计算瓶颈，计算时间远大于带宽加载时间</li>
+            <li><strong>批大小与延迟权衡：</strong>较小批大小提供更低延迟但每个并发获得更高的输出速度</li>
+            <li><strong>显存消耗线性：</strong>显存需求与批大小成正比，最高配置需要1.39TB显存</li>
+        </ul>
+
+        <h3>推荐配置</h3>
+        <ul>
+            <li><strong>低延迟场景：</strong>批大小300，首Token延迟19.47ms，每用户51.37 tokens/s</li>
+            <li><strong>高吞吐场景：</strong>批大小1000，首Token延迟64.89ms，但系统总吞吐量最大化</li>
+            <li><strong>平衡配置：</strong>批大小500，首Token延迟32.44ms，每用户30.82 tokens/s</li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

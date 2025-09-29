@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>决策智能引擎 - 架构管控平台</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <script src="/console/style/chart.min.js"></script>
+    <script src="/console/style/echarts.min.js"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .liquid-glass-strong {
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+        
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+        
+        .decision-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+        }
+        
+        .decision-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .message-bubble {
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            margin-left: auto;
+            border-radius: 18px 18px 4px 18px;
+        }
+        
+        .assistant-message {
+            background: rgba(255, 255, 255, 0.95);
+            color: #374151;
+            margin-right: auto;
+            border-radius: 18px 18px 18px 4px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px 18px 18px 4px;
+            margin-right: auto;
+            max-width: 85%;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            max-width: 900px;
+            max-height: 85vh;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .risk-level-low {
+            background: rgba(34, 197, 94, 0.1);
+            color: #059669;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        
+        .risk-level-medium {
+            background: rgba(251, 191, 36, 0.1);
+            color: #d97706;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        
+        .risk-level-high {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .impact-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            min-width: 300px;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success {
+            border-left: 4px solid #10b981;
+        }
+        
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .toast.info {
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .simulation-step {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+        
+        .simulation-step.active {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        
+        .decision-metric {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .metric-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- 主界面 -->
+    <div class="flex-1 flex flex-col overflow-hidden w-full">
+        <!-- 顶部导航 -->
+        <div class="liquid-glass-strong rounded-t-lg p-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-4">
+                    <span class="text-white text-xl">🧠</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">决策智能引擎 DIE</h3>
+                    <p class="text-sm text-gray-500">架构决策智能辅助系统 · 基于历史案例与数据分析</p>
+                </div>
+            </div>
+            <button onclick="clearDecision()" class="liquid-glass specular-highlight rounded-lg px-4 py-2 text-sm font-medium text-gray-700">
+                新建决策会话
+            </button>
+        </div>
+        
+        <!-- 消息区域 -->
+        <div id="messages-container" class="flex-1 liquid-glass-strong p-6 overflow-y-auto">
+            <!-- 欢迎消息 -->
+            <div class="message-bubble assistant-message p-4 mb-4">
+                <div class="prose prose-sm max-w-none text-gray-700 mb-4">
+                    <p class="mb-3">我是架构决策智能引擎，融合了<span class="font-semibold text-indigo-600">历史决策案例库</span>、<span class="font-semibold text-indigo-600">影响分析模型</span>和<span class="font-semibold text-indigo-600">风险预测算法</span>，为您的架构决策提供数据驱动的智能支持。</p>
+                    <p class="text-sm text-gray-600">💡 <strong>核心能力：</strong>相似案例推荐、影响范围分析、风险智能预警、决策模拟推演</p>
+                </div>
+                <p class="text-gray-700 font-medium">请选择您的决策场景：</p>
+            </div>
+            
+            <!-- 决策场景卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="decision-card specular-highlight" onclick="startDecision('微服务改造')">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                            <span class="text-indigo-600 text-sm">🔄</span>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800 mb-1">微服务改造决策</h4>
+                            <p class="text-sm text-gray-600">评估单体应用拆分为微服务的可行性和风险</p>
+                            <div class="flex gap-2 mt-2">
+                                <span class="impact-badge risk-level-medium">中风险</span>
+                                <span class="text-xs text-gray-500">历史案例: 12个</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="decision-card specular-highlight" onclick="startDecision('技术栈升级')">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                            <span class="text-green-600 text-sm">⬆️</span>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800 mb-1">技术栈升级决策</h4>
+                            <p class="text-sm text-gray-600">评估技术栈升级的必要性和迁移方案</p>
+                            <div class="flex gap-2 mt-2">
+                                <span class="impact-badge risk-level-low">低风险</span>
+                                <span class="text-xs text-gray-500">历史案例: 23个</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="decision-card specular-highlight" onclick="startDecision('云原生迁移')">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                            <span class="text-purple-600 text-sm">☁️</span>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800 mb-1">云原生迁移决策</h4>
+                            <p class="text-sm text-gray-600">评估应用云原生改造的策略和路径</p>
+                            <div class="flex gap-2 mt-2">
+                                <span class="impact-badge risk-level-high">高风险</span>
+                                <span class="text-xs text-gray-500">历史案例: 8个</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="decision-card specular-highlight" onclick="startDecision('安全架构')">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                            <span class="text-cyan-600 text-sm">🔒</span>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800 mb-1">安全架构决策</h4>
+                            <p class="text-sm text-gray-600">评估安全架构升级和零信任架构实施</p>
+                            <div class="flex gap-2 mt-2">
+                                <span class="impact-badge risk-level-medium">中风险</span>
+                                <span class="text-xs text-gray-500">历史案例: 15个</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 输入区域 -->
+        <div class="liquid-glass-strong rounded-b-lg p-4">
+            <div class="flex items-end space-x-3">
+                <div class="flex-1">
+                    <input type="text" 
+                           id="message-input"
+                           placeholder="描述您的架构决策需求，AI将提供智能分析和建议..."
+                           class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
+                           onkeypress="if(event.key==='Enter') sendMessage()">
+                </div>
+                <button onclick="sendMessage()" 
+                        class="liquid-glass specular-highlight rounded-lg p-3 bg-indigo-500 text-white hover:bg-indigo-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 案例分析弹窗 -->
+    <div id="case-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 90%; max-width: 1200px;">
+            <!-- 弹窗头部 -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800">历史案例分析</h3>
+                <button onclick="closeCaseModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 弹窗内容 -->
+            <div class="p-6 overflow-y-auto" style="max-height: 60vh;">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 案例列表 -->
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-4">📚 相似案例</h4>
+                        <div id="case-list" class="space-y-3">
+                            <!-- 动态生成案例 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 案例详情 -->
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-4">📊 案例详情</h4>
+                        <div id="case-detail" class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-gray-500 text-center">请选择一个案例查看详情</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 影响分析弹窗 -->
+    <div id="impact-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 90%; max-width: 1000px;">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800">影响范围分析</h3>
+                <button onclick="closeImpactModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <!-- 影响图表 -->
+                <div id="impact-chart" class="chart-container"></div>
+                
+                <!-- 影响详情 -->
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-blue-800 mb-2">系统影响</h5>
+                        <div id="system-impact" class="space-y-2"></div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-green-800 mb-2">团队影响</h5>
+                        <div id="team-impact" class="space-y-2"></div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-purple-800 mb-2">业务影响</h5>
+                        <div id="business-impact" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 风险评估弹窗 -->
+    <div id="risk-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 90%; max-width: 900px;">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800">风险智能评估</h3>
+                <button onclick="closeRiskModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <!-- 风险矩阵 -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-3">风险矩阵</h4>
+                    <canvas id="risk-matrix" width="400" height="300"></canvas>
+                </div>
+                
+                <!-- 风险列表 -->
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-3">风险详情</h4>
+                    <div id="risk-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模拟推演弹窗 -->
+    <div id="simulation-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 90%; max-width: 1000px;">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800">决策模拟推演</h3>
+                <button onclick="closeSimulationModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <!-- 推演步骤 -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-3">推演步骤</h4>
+                    <div id="simulation-steps" class="space-y-2"></div>
+                </div>
+                
+                <!-- 推演结果 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col" style="height: 500px;max-height: 500px;overflow: hidden;">
+                        <h4 class="font-semibold text-gray-800 mb-3">成功概率分析</h4>
+                        <canvas id="success-chart"></canvas>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-3">关键指标预测</h4>
+                        <div id="metrics-prediction" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentDecisionContext = null;
+        let conversationHistory = [];
+        let isTyping = false;
+
+        // 决策知识库
+        const decisionKnowledgeBase = {
+            '微服务改造': {
+                cases: [
+                    { id: 1, name: '订单系统微服务化', success: true, duration: '6个月', team: '15人', risk: '中' },
+                    { id: 2, name: '用户中心服务拆分', success: true, duration: '4个月', team: '10人', risk: '低' },
+                    { id: 3, name: '支付系统重构', success: false, duration: '8个月', team: '20人', risk: '高' }
+                ],
+                impacts: {
+                    systems: ['订单系统', '库存系统', '支付系统', '用户系统'],
+                    teams: ['开发团队', '运维团队', '测试团队'],
+                    business: ['交易处理', '用户体验', '系统稳定性']
+                },
+                risks: [
+                    { name: '服务间通信延迟', probability: 0.6, impact: 0.7, mitigation: '引入服务网格技术' },
+                    { name: '数据一致性问题', probability: 0.7, impact: 0.8, mitigation: '采用Saga分布式事务' },
+                    { name: '运维复杂度增加', probability: 0.9, impact: 0.5, mitigation: '建设DevOps平台' }
+                ]
+            },
+            '技术栈升级': {
+                cases: [
+                    { id: 4, name: 'Java8升级到Java17', success: true, duration: '3个月', team: '8人', risk: '低' },
+                    { id: 5, name: 'Spring Boot升级', success: true, duration: '2个月', team: '5人', risk: '低' },
+                    { id: 6, name: '数据库版本升级', success: true, duration: '1个月', team: '3人', risk: '中' }
+                ],
+                impacts: {
+                    systems: ['核心业务系统', '外围系统'],
+                    teams: ['开发团队', 'DBA团队'],
+                    business: ['系统性能', '开发效率']
+                },
+                risks: [
+                    { name: 'API兼容性问题', probability: 0.4, impact: 0.6, mitigation: '充分测试和灰度发布' },
+                    { name: '第三方依赖冲突', probability: 0.5, impact: 0.5, mitigation: '依赖管理和版本控制' }
+                ]
+            }
+        };
+
+        // 开始决策流程
+        function startDecision(scenario) {
+            currentDecisionContext = scenario;
+            
+            // 隐藏决策卡片
+            document.querySelectorAll('.decision-card').forEach(card => {
+                card.style.display = 'none';
+            });
+            
+            // 添加用户消息
+            addMessage('user', `我需要进行${scenario}的架构决策评估`);
+            
+            // 模拟AI响应
+            setTimeout(() => {
+                showTypingIndicator();
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    generateDecisionAnalysis(scenario);
+                }, 2000);
+            }, 500);
+        }
+
+        // 生成决策分析
+        function generateDecisionAnalysis(scenario) {
+            const analysis = `基于历史数据和AI分析，为您的**${scenario}**决策提供以下智能洞察：
+
+## 📊 决策概览
+- **成功率预测**: 72%
+- **预计周期**: 4-6个月
+- **资源需求**: 10-15人团队
+- **总体风险**: 中等
+
+## 🎯 关键建议
+1. **渐进式实施**: 建议采用分阶段实施策略，降低风险
+2. **技术选型**: 推荐使用成熟的技术栈和框架
+3. **团队准备**: 需要提前进行技术培训和知识储备
+
+点击下方按钮查看详细分析：`;
+
+            const messageId = 'msg_' + Date.now();
+            const container = document.getElementById('messages-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-bubble assistant-message p-4 mb-4';
+            messageDiv.id = messageId;
+            
+            messageDiv.innerHTML = `
+                <div class="prose prose-sm max-w-none">${renderMarkdown(analysis)}</div>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <button onclick="showCaseAnalysis('${scenario}')" class="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors text-sm">
+                        📚 查看相似案例
+                    </button>
+                    <button onclick="showImpactAnalysis('${scenario}')" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm">
+                        🎯 影响范围分析
+                    </button>
+                    <button onclick="showRiskAssessment('${scenario}')" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors text-sm">
+                        ⚠️ 风险评估
+                    </button>
+                    <button onclick="showSimulation('${scenario}')" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm">
+                        🔮 模拟推演
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 显示案例分析
+        function showCaseAnalysis(scenario) {
+            const data = decisionKnowledgeBase[scenario];
+            if (!data) return;
+            
+            const caseList = document.getElementById('case-list');
+            caseList.innerHTML = '';
+            
+            data.cases.forEach(case_ => {
+                const caseItem = document.createElement('div');
+                caseItem.className = 'p-3 bg-white rounded-lg border border-gray-200 cursor-pointer hover:border-indigo-300 transition-colors';
+                caseItem.onclick = () => showCaseDetail(case_);
+                caseItem.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h5 class="font-medium text-gray-800">${case_.name}</h5>
+                            <p class="text-sm text-gray-600 mt-1">周期: ${case_.duration} | 团队: ${case_.team}</p>
+                        </div>
+                        <span class="impact-badge ${case_.success ? 'risk-level-low' : 'risk-level-high'}">
+                            ${case_.success ? '成功' : '失败'}
+                        </span>
+                    </div>
+                `;
+                caseList.appendChild(caseItem);
+            });
+            
+            document.getElementById('case-modal').classList.add('show');
+        }
+
+        // 显示案例详情
+        function showCaseDetail(case_) {
+            const detail = document.getElementById('case-detail');
+            detail.innerHTML = `
+                <h5 class="font-semibold text-gray-800 mb-3">${case_.name}</h5>
+                <div class="space-y-3">
+                    <div class="decision-metric">
+                        <span class="text-sm text-gray-600">实施周期</span>
+                        <span class="font-medium">${case_.duration}</span>
+                    </div>
+                    <div class="decision-metric">
+                        <span class="text-sm text-gray-600">团队规模</span>
+                        <span class="font-medium">${case_.team}</span>
+                    </div>
+                    <div class="decision-metric">
+                        <span class="text-sm text-gray-600">风险等级</span>
+                        <span class="impact-badge risk-level-${case_.risk === '高' ? 'high' : case_.risk === '中' ? 'medium' : 'low'}">
+                            ${case_.risk}风险
+                        </span>
+                    </div>
+                    <div class="decision-metric">
+                        <span class="text-sm text-gray-600">最终结果</span>
+                        <span class="font-medium ${case_.success ? 'text-green-600' : 'text-red-600'}">
+                            ${case_.success ? '✅ 成功完成' : '❌ 未达预期'}
+                        </span>
+                    </div>
+                </div>
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-blue-800">
+                        <strong>经验总结：</strong>
+                        ${case_.success ? '该项目通过充分的前期准备和风险控制，成功实现了预期目标。' : '项目遇到了技术债务和资源不足的问题，需要重新评估方案。'}
+                    </p>
+                </div>
+            `;
+        }
+
+        // 显示影响分析
+        function showImpactAnalysis(scenario) {
+            const data = decisionKnowledgeBase[scenario];
+            if (!data) return;
+            
+            // 系统影响
+            const systemImpact = document.getElementById('system-impact');
+            systemImpact.innerHTML = data.impacts.systems.map(sys => 
+                `<div class="text-sm text-blue-700">• ${sys}</div>`
+            ).join('');
+            
+            // 团队影响
+            const teamImpact = document.getElementById('team-impact');
+            teamImpact.innerHTML = data.impacts.teams.map(team => 
+                `<div class="text-sm text-green-700">• ${team}</div>`
+            ).join('');
+            
+            // 业务影响
+            const businessImpact = document.getElementById('business-impact');
+            businessImpact.innerHTML = data.impacts.business.map(biz => 
+                `<div class="text-sm text-purple-700">• ${biz}</div>`
+            ).join('');
+            
+            // 创建影响力图表
+            const chartContainer = document.getElementById('impact-chart');
+            chartContainer.innerHTML = '<div id="impact-echart" style="width: 100%; height: 300px;"></div>';
+            
+            const chart = echarts.init(document.getElementById('impact-echart'));
+            const option = {
+                tooltip: { trigger: 'item' },
+                series: [{
+                    type: 'graph',
+                    layout: 'force',
+                    data: [
+                        { name: scenario, symbolSize: 60, category: 0 },
+                        ...data.impacts.systems.map(s => ({ name: s, symbolSize: 40, category: 1 })),
+                        ...data.impacts.teams.map(t => ({ name: t, symbolSize: 40, category: 2 })),
+                        ...data.impacts.business.map(b => ({ name: b, symbolSize: 40, category: 3 }))
+                    ],
+                    links: [
+                        ...data.impacts.systems.map(s => ({ source: scenario, target: s })),
+                        ...data.impacts.teams.map(t => ({ source: scenario, target: t })),
+                        ...data.impacts.business.map(b => ({ source: scenario, target: b }))
+                    ],
+                    categories: [
+                        { name: '决策中心' },
+                        { name: '系统影响' },
+                        { name: '团队影响' },
+                        { name: '业务影响' }
+                    ],
+                    force: {
+                        repulsion: 100,
+                        edgeLength: 100
+                    }
+                }]
+            };
+            chart.setOption(option);
+            
+            document.getElementById('impact-modal').classList.add('show');
+        }
+
+        // 显示风险评估
+        function showRiskAssessment(scenario) {
+            const data = decisionKnowledgeBase[scenario];
+            if (!data) return;
+            
+            // 绘制风险矩阵
+            const canvas = document.getElementById('risk-matrix');
+            const ctx = canvas.getContext('2d');
+            
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制网格
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * 40, 0);
+                ctx.lineTo(i * 40, 300);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, i * 30);
+                ctx.lineTo(400, i * 30);
+                ctx.stroke();
+            }
+            
+            // 绘制风险点
+            data.risks.forEach((risk, index) => {
+                const x = risk.probability * 400;
+                const y = 300 - (risk.impact * 300);
+                
+                // 根据风险级别设置颜色
+                const riskLevel = risk.probability * risk.impact;
+                if (riskLevel > 0.5) {
+                    ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
+                } else if (riskLevel > 0.3) {
+                    ctx.fillStyle = 'rgba(251, 191, 36, 0.7)';
+                } else {
+                    ctx.fillStyle = 'rgba(34, 197, 94, 0.7)';
+                }
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 15, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // 绘制编号
+                ctx.fillStyle = 'white';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(index + 1, x, y);
+            });
+            
+            // 显示风险列表
+            const riskList = document.getElementById('risk-list');
+            riskList.innerHTML = data.risks.map((risk, index) => {
+                const riskLevel = risk.probability * risk.impact;
+                const levelClass = riskLevel > 0.5 ? 'risk-level-high' : riskLevel > 0.3 ? 'risk-level-medium' : 'risk-level-low';
+                
+                return `
+                    <div class="p-3 bg-white rounded-lg border border-gray-200">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex items-center">
+                                <span class="w-6 h-6 rounded-full ${levelClass} flex items-center justify-center text-xs font-bold mr-2">
+                                    ${index + 1}
+                                </span>
+                                <h5 class="font-medium text-gray-800">${risk.name}</h5>
+                            </div>
+                            <span class="impact-badge ${levelClass}">
+                                ${riskLevel > 0.5 ? '高' : riskLevel > 0.3 ? '中' : '低'}风险
+                            </span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <div>概率: ${(risk.probability * 100).toFixed(0)}% | 影响: ${(risk.impact * 100).toFixed(0)}%</div>
+                            <div class="mt-2 p-2 bg-blue-50 rounded text-blue-700">
+                                <strong>缓解措施:</strong> ${risk.mitigation}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('risk-modal').classList.add('show');
+        }
+
+        // 显示模拟推演
+        function showSimulation(scenario) {
+            // 推演步骤
+            const steps = [
+                { phase: '准备阶段', duration: '2周', status: 'completed' },
+                { phase: '技术验证', duration: '4周', status: 'completed' },
+                { phase: '试点实施', duration: '8周', status: 'active' },
+                { phase: '全面推广', duration: '12周', status: 'pending' },
+                { phase: '优化调整', duration: '4周', status: 'pending' }
+            ];
+            
+            const stepsContainer = document.getElementById('simulation-steps');
+            stepsContainer.innerHTML = steps.map(step => `
+                <div class="simulation-step ${step.status === 'active' ? 'active' : ''}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-6 h-6 rounded-full ${
+                                step.status === 'completed' ? 'bg-green-500' :
+                                step.status === 'active' ? 'bg-blue-500' : 'bg-gray-300'
+                            } mr-3"></span>
+                            <span class="font-medium">${step.phase}</span>
+                        </div>
+                        <span class="text-sm text-gray-600">${step.duration}</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            // 成功概率图表
+            const successChart = new Chart(document.getElementById('success-chart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['成功概率', '风险概率'],
+                    datasets: [{
+                        data: [72, 28],
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // 关键指标预测
+            const metrics = [
+                { name: '性能提升', current: 0, predicted: 35, unit: '%' },
+                { name: '成本优化', current: 0, predicted: 20, unit: '%' },
+                { name: '开发效率', current: 0, predicted: 45, unit: '%' },
+                { name: '系统稳定性', current: 85, predicted: 92, unit: '分' }
+            ];
+            
+            const metricsContainer = document.getElementById('metrics-prediction');
+            metricsContainer.innerHTML = metrics.map(metric => `
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-700">${metric.name}</span>
+                        <span class="text-sm text-gray-600">${metric.current}${metric.unit} → ${metric.predicted}${metric.unit}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-blue-400 to-green-500 h-2 rounded-full" style="width: ${metric.predicted}%"></div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('simulation-modal').classList.add('show');
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || isTyping) return;
+            
+            addMessage('user', message);
+            input.value = '';
+            
+            setTimeout(() => {
+                showTypingIndicator();
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    handleAssistantResponse(message);
+                }, 2000);
+            }, 500);
+        }
+
+        // 处理助手响应
+        function handleAssistantResponse(message) {
+            let response = '';
+            
+            if (message.includes('微服务') || message.includes('拆分')) {
+                response = `基于您的问题，我分析了相关的架构决策要素：
+
+**微服务拆分的关键考量点：**
+1. **服务边界划分** - 基于业务能力和数据一致性边界
+2. **通信机制选择** - 同步REST vs 异步消息队列
+3. **数据管理策略** - 数据库拆分和分布式事务处理
+4. **服务治理方案** - 服务发现、配置中心、链路追踪
+
+**推荐决策路径：**
+- 第一阶段：识别核心业务域，进行逻辑拆分
+- 第二阶段：搭建基础设施，包括服务网格和监控体系
+- 第三阶段：渐进式迁移，从边缘服务开始
+
+需要我为您展开具体的实施方案吗？`;
+            } else if (message.includes('风险') || message.includes('问题')) {
+                response = `关于架构决策的风险管理，我整理了以下要点：
+
+**主要风险类别：**
+- **技术风险** - 技术栈选择、性能瓶颈、可扩展性
+- **组织风险** - 团队能力、沟通成本、知识转移
+- **业务风险** - 业务中断、用户体验下降、合规问题
+
+**风险缓解策略：**
+1. 建立风险评估矩阵，量化风险影响
+2. 制定应急预案和回滚方案
+3. 采用灰度发布和A/B测试
+4. 加强监控和预警机制
+
+是否需要针对特定风险制定详细的应对方案？`;
+            } else {
+                response = `我理解您的需求。基于AI分析引擎，我可以提供以下决策支持：
+
+1. **历史案例匹配** - 从知识库中找到相似的成功/失败案例
+2. **影响评估分析** - 评估决策对系统、团队和业务的影响
+3. **风险预测模型** - 基于机器学习预测潜在风险
+4. **方案模拟推演** - 模拟不同方案的执行效果
+
+请告诉我您具体想要评估哪个方面的架构决策？`;
+            }
+            
+            addMessage('assistant', response);
+        }
+
+        // 添加消息
+        function addMessage(sender, content) {
+            const container = document.getElementById('messages-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-bubble ${sender}-message p-4 mb-4`;
+            
+            if (sender === 'assistant') {
+                messageDiv.innerHTML = `<div class="prose prose-sm max-w-none">${renderMarkdown(content)}</div>`;
+            } else {
+                messageDiv.textContent = content;
+            }
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Markdown渲染
+        function renderMarkdown(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold text-gray-800 mt-4 mb-3">$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-800 mt-4 mb-3">$1</h1>')
+                .replace(/^- (.*$)/gim, '<li class="ml-4">$1</li>')
+                .replace(/^(\d+)\. (.*$)/gim, '<li class="ml-4 list-decimal">$2</li>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // 显示输入指示器
+        function showTypingIndicator() {
+            isTyping = true;
+            const container = document.getElementById('messages-container');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'typing-indicator mb-4';
+            typingDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <span class="ml-2 text-sm text-gray-500">AI正在分析决策方案...</span>
+            `;
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 隐藏输入指示器
+        function hideTypingIndicator() {
+            isTyping = false;
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        // Toast提示
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <div class="mr-3">
+                        ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-800">${message}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 关闭弹窗
+        function closeCaseModal() {
+            document.getElementById('case-modal').classList.remove('show');
+        }
+
+        function closeImpactModal() {
+            document.getElementById('impact-modal').classList.remove('show');
+        }
+
+        function closeRiskModal() {
+            document.getElementById('risk-modal').classList.remove('show');
+        }
+
+        function closeSimulationModal() {
+            document.getElementById('simulation-modal').classList.remove('show');
+        }
+
+        // 清空决策会话
+        function clearDecision() {
+            location.reload();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('决策智能引擎已启动');
+            
+            // 点击弹窗外部关闭
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('show');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

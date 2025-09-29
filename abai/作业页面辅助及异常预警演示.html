@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赞同科技 - 柜面助手系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; }
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .form-label {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+        .required::before {
+            content: "*";
+            color: #ef4444;
+            margin-right: 4px;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(239, 68, 68, 0.5); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { border-color: rgba(239, 68, 68, 1); box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2); }
+        }
+        .pulse-error {
+            animation: pulse-border 2s infinite;
+        }
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .warning-message {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航栏 -->
+    <div class="bg-blue-600 text-white h-14 flex items-center px-4">
+        <div class="flex items-center flex-1">
+            <!-- Logo -->
+            <div class="flex items-center mr-8">
+                <span class="text-sm font-medium mr-1">🔺</span>
+                <span class="text-lg font-medium">AgreeTech</span>
+            </div>
+            
+            <!-- 导航按钮 -->
+            <div class="flex items-center space-x-1">
+                <button class="p-2 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 3h14v2H3V3zm0 4h14v2H3V7zm0 4h14v2H3v-2zm0 4h14v2H3v-2z"/>
+                    </svg>
+                </button>
+                <button class="p-2 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                    </svg>
+                </button>
+                <button class="p-2 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
+                    </svg>
+                </button>
+                <button class="p-2 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H6a2 2 0 100 4h4a2 2 0 100-4h-.5a1 1 0 000-2H14a2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 搜索框 -->
+            <div class="flex-1 max-w-md mx-8">
+                <input type="text" placeholder="搜索" class="w-full px-3 py-1.5 rounded text-gray-800 text-sm">
+            </div>
+
+            <!-- 右侧功能按钮 -->
+            <div class="flex items-center space-x-3">
+                <button class="p-2 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                    </svg>
+                </button>
+                <button class="p-2 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z"/>
+                        <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z"/>
+                    </svg>
+                </button>
+                <button class="p-2 hover:bg-blue-700 rounded relative">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z"/>
+                        <path d="M10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                    </svg>
+                    <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <button class="p-2 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+                <button class="px-3 py-1 bg-blue-500 hover:bg-blue-400 rounded text-sm">开始服务</button>
+                <button class="p-1.5 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M8 9a3 3 0 106 0 3 3 0 00-6 0z"/>
+                        <path d="M8 13a6 6 0 016 0"/>
+                    </svg>
+                </button>
+                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm">张</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二级导航 -->
+    <div class="bg-white border-b px-4 py-2 flex items-center justify-between">
+        <div class="flex items-center space-x-6 text-sm">
+            <span class="text-gray-700">东秀英</span>
+            <span class="text-gray-400">代理人信息</span>
+            <span class="text-gray-400">客户提醒</span>
+            <span class="text-gray-400">预填信息</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button class="px-4 py-1.5 bg-red-500 text-white rounded text-sm hover:bg-red-600">结束</button>
+            <button class="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50">关闭柜员助手</button>
+            <button class="p-1.5 hover:bg-gray-100 rounded">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- 面包屑导航 -->
+    <div class="bg-white px-4 py-2 border-b flex items-center text-sm text-gray-600">
+        <span>首页</span>
+        <span class="mx-2">/</span>
+        <span>柜账</span>
+        <span class="mx-2">/</span>
+        <span class="text-blue-600">客户信息维护</span>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="flex flex-1" style="height: calc(100vh - 140px);">
+        <!-- 左侧表单区 -->
+        <div class="flex-1 bg-white p-6 overflow-y-auto">
+            <!-- 基本信息 -->
+            <div class="mb-6">
+                <h3 class="text-base font-medium mb-4 pb-2 border-b border-gray-200">基本信息</h3>
+                <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+                    <div>
+                        <label class="form-label required">客户姓名</label>
+                        <input type="text" class="form-input" value="王杰" id="customerName">
+                    </div>
+                    <div>
+                        <label class="form-label">英文/拼音名称</label>
+                        <input type="text" class="form-input" value="wangjie">
+                    </div>
+                    <div>
+                        <label class="form-label required">证件类型</label>
+                        <select class="form-input" id="idType">
+                            <option>100-居民身份证</option>
+                            <option>101-护照</option>
+                            <option>102-军官证</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label required">证件号码</label>
+                        <input type="text" class="form-input" value="330701199007201234" id="idNumber">
+                    </div>
+                    <div>
+                        <label class="form-label required">性别</label>
+                        <select class="form-input">
+                            <option>1-男</option>
+                            <option>2-女</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label required">出生日期</label>
+                        <input type="date" class="form-input" value="1990-07-20">
+                    </div>
+                    <div>
+                        <label class="form-label">民族</label>
+                        <select class="form-input">
+                            <option>01-汉族</option>
+                            <option>02-满族</option>
+                            <option>03-回族</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label required">签发机关所在地</label>
+                        <input type="text" class="form-input" value="浙江省/金华市/婺城区">
+                    </div>
+                    <div>
+                        <label class="form-label">国家（地区）</label>
+                        <select class="form-input">
+                            <option>CHN-中国</option>
+                            <option>USA-美国</option>
+                            <option>JPN-日本</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">详细地址</label>
+                        <input type="text" class="form-input" value="婺阳乡黎阳村105号">
+                    </div>
+                    <div>
+                        <label class="form-label">现居住地址</label>
+                        <input type="text" class="form-input" value="婺城区">
+                    </div>
+                    <div>
+                        <label class="form-label">居住地邮编</label>
+                        <input type="text" class="form-input" value="321000">
+                    </div>
+                    <div>
+                        <label class="form-label">居住在国家（地区）</label>
+                        <select class="form-input">
+                            <option>CHN-中国</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">是否高风险国家/地区</label>
+                        <select class="form-input">
+                            <option>0-否</option>
+                            <option>1-是</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">永久居留证件号</label>
+                        <input type="text" class="form-input" placeholder="请输入永久居留证件号（可选）">
+                    </div>
+                    <div>
+                        <label class="form-label">NRA标志</label>
+                        <select class="form-input">
+                            <option>0-其他</option>
+                            <option>1-NRA</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 联系人信息 -->
+            <div class="mb-6">
+                <h3 class="text-base font-medium mb-4 pb-2 border-b border-gray-200">联系人信息</h3>
+                <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+                    <div>
+                        <label class="form-label required">手机号码</label>
+                        <input type="text" class="form-input" value="18813713888" id="phoneNumber">
+                    </div>
+                    <div>
+                        <label class="form-label">家庭电话</label>
+                        <input type="text" class="form-input" value="0579-87654321">
+                    </div>
+                    <div>
+                        <label class="form-label required">职业类型</label>
+                        <select class="form-input" id="jobType">
+                            <option>20200-工程技术人员</option>
+                            <option>20100-经营管理人员</option>
+                            <option>20300-教育工作者</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">E-mail</label>
+                        <input type="email" class="form-input" value="wangjie@email.com">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部按钮 -->
+            <div class="flex justify-center space-x-4 mt-8">
+                <button class="px-8 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">取消</button>
+                <button class="px-8 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onclick="submitForm()">提交</button>
+            </div>
+        </div>
+
+        <!-- 右侧智能助手区 -->
+        <div class="w-96 bg-gray-50 border-l flex flex-col">
+            <!-- 助手提示区 -->
+            <div class="bg-white m-4 rounded-lg shadow-sm flex-1 flex flex-col">
+                <div class="p-4 border-b">
+                    <h3 class="text-sm font-medium flex items-center">
+                        你好，我想进行个人申请修改。
+                        <span class="ml-auto flex items-center">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234F46E5'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E" 
+                             class="w-8 h-8 rounded-full" alt="用户">
+                        </span>
+                    </h3>
+                </div>
+
+                <!-- 智能提示内容 -->
+                <div class="flex-1 overflow-y-auto p-4" id="assistantContent">
+                    <div class="space-y-3">
+                        <!-- 页面匹配状态 -->
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3" id="pageMatchStatus">
+                            <div class="flex items-center mb-2">
+                                <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                                </svg>
+                                <span class="text-sm font-medium text-green-800">页面匹配正确</span>
+                            </div>
+                            <p class="text-sm text-green-700">客户需求：个人信息修改</p>
+                            <p class="text-sm text-green-700">当前页面：客户信息维护</p>
+                        </div>
+
+                        <!-- 智能识别提示 -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <h4 class="text-sm font-medium text-blue-900 mb-2">智能识别</h4>
+                            <ul class="text-sm text-blue-700 space-y-1">
+                                <li>• 已识别客户身份信息</li>
+                                <li>• 证件号码格式正确</li>
+                                <li>• 必填项已完成 <span class="ai-badge">AI填写</span></li>
+                            </ul>
+                        </div>
+
+                        <!-- 操作建议 -->
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <h4 class="text-sm font-medium text-gray-900 mb-2">操作建议</h4>
+                            <ol class="text-sm text-gray-600 space-y-1">
+                                <li>1. 核实客户身份证原件</li>
+                                <li>2. 确认修改内容准确性</li>
+                                <li>3. 提醒客户保管好回执单</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部状态栏 -->
+            <div class="p-4 bg-white border-t flex items-center justify-between text-xs text-gray-500">
+                <div class="flex items-center space-x-4">
+                    <span>柜员 Ctrl+1</span>
+                    <span>客户 Ctrl+2</span>
+                </div>
+                <button class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模拟控制面板 -->
+    <div class="fixed bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+        <h4 class="text-sm font-medium mb-3">模拟场景控制</h4>
+        <div class="space-y-2">
+            <button onclick="simulateCorrect()" class="w-full px-3 py-1.5 bg-green-500 text-white text-sm rounded hover:bg-green-600">
+                模拟正确匹配
+            </button>
+            <button onclick="simulateWrongPage()" class="w-full px-3 py-1.5 bg-red-500 text-white text-sm rounded hover:bg-red-600">
+                模拟页面错误
+            </button>
+            <button onclick="simulateDataError()" class="w-full px-3 py-1.5 bg-orange-500 text-white text-sm rounded hover:bg-orange-600">
+                模拟数据异常
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 模拟正确匹配
+        function simulateCorrect() {
+            document.querySelectorAll('.form-input').forEach(input => {
+                input.classList.remove('pulse-error', 'border-red-500');
+            });
+            
+            document.getElementById('assistantContent').innerHTML = `
+                <div class="space-y-3">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <div class="flex items-center mb-2">
+                            <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                            </svg>
+                            <span class="text-sm font-medium text-green-800">页面匹配正确</span>
+                        </div>
+                        <p class="text-sm text-green-700">客户需求：个人信息修改</p>
+                        <p class="text-sm text-green-700">当前页面：客户信息维护</p>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <h4 class="text-sm font-medium text-blue-900 mb-2">智能识别</h4>
+                        <ul class="text-sm text-blue-700 space-y-1">
+                            <li>• 已识别客户身份信息</li>
+                            <li>• 证件号码格式正确</li>
+                            <li>• 必填项已完成 <span class="ai-badge">AI填写</span></li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 模拟页面错误
+        function simulateWrongPage() {
+            document.getElementById('assistantContent').innerHTML = `
+                <div class="space-y-3 warning-message">
+                    <div class="bg-red-50 border-2 border-red-400 rounded-lg p-3 pulse-error">
+                        <div class="flex items-center mb-2">
+                            <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"/>
+                            </svg>
+                            <span class="text-sm font-medium text-red-800">页面错误预警</span>
+                        </div>
+                        <p class="text-sm text-red-700 font-medium">检测到页面不匹配！</p>
+                        <p class="text-sm text-red-600 mt-1">客户需求：活期存款</p>
+                        <p class="text-sm text-red-600">当前页面：客户信息维护</p>
+                    </div>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                        <h4 class="text-sm font-medium text-yellow-900 mb-2">建议操作</h4>
+                        <button class="w-full mt-2 px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
+                            点击切换至活期存款页面 →
+                        </button>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">提示</h4>
+                        <p class="text-sm text-gray-600">系统已自动记录此次操作异常，将作为培训案例</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 模拟数据异常
+        function simulateDataError() {
+            // 标记异常字段
+            document.getElementById('idNumber').classList.add('pulse-error', 'border-red-500');
+            document.getElementById('phoneNumber').classList.add('pulse-error', 'border-red-500');
+            
+            document.getElementById('assistantContent').innerHTML = `
+                <div class="space-y-3 warning-message">
+                    <div class="bg-orange-50 border-2 border-orange-400 rounded-lg p-3">
+                        <div class="flex items-center mb-2">
+                            <svg class="w-5 h-5 text-orange-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"/>
+                            </svg>
+                            <span class="text-sm font-medium text-orange-800">数据异常检测</span>
+                        </div>
+                        <div class="text-sm text-orange-700 space-y-1">
+                            <p>• 证件号码：出生日期不一致</p>
+                            <p>• 手机号码：号段异常（188137）</p>
+                        </div>
+                    </div>
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <h4 class="text-sm font-medium text-red-900 mb-2">风险提示</h4>
+                        <div class="text-sm text-red-700 space-y-1">
+                            <p>⚠️ 检测到潜在风险</p>
+                            <p>建议核实：</p>
+                            <ul class="ml-3 space-y-1">
+                                <li>1. 请客户出示身份证原件</li>
+                                <li>2. 核对证件照片</li>
+                                <li>3. 确认手机号码归属</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <h4 class="text-sm font-medium text-blue-900 mb-2">智能话术</h4>
+                        <p class="text-sm text-blue-700 italic">"您好，为了账户安全，请您出示身份证原件，我需要核实一下信息。"</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 提交表单
+        function submitForm() {
+            alert('表单提交成功！');
+        }
+    </script>
+</body>
+</html>

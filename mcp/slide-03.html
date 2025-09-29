@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP vs ESB vs ReAct 关键差异分析</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f1f3f4 100%); */
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+        }
+
+        .tech-blue {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        }
+
+        .tech-gradient {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+
+        .comparison-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .comparison-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .tech-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .mcp-color {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        }
+
+        .esb-color {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+
+        .react-color {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        }
+
+        .feature-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .badge-blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-red {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .badge-purple {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .comparison-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .relationship-arrow {
+            stroke: #1e40af;
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
+        }
+
+        .relationship-box {
+            fill: white;
+            stroke: #e0e0e0;
+            stroke-width: 1;
+            rx: 8;
+        }
+
+        .highlight-text {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="p-8">
+    <div class="mx-auto">
+        <!-- 标题部分 -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">MCP vs ESB vs ReAct 关键差异分析</h1>
+            <p class="text-gray-600">三种技术的定位、特点与相互关系</p>
+        </div>
+
+        <!-- 三大技术概览卡片 -->
+        <div class="grid grid-cols-3 gap-6 mb-8">
+            <!-- MCP 卡片 -->
+            <div class="comparison-card">
+                <div class="flex items-center mb-4">
+                    <div class="tech-icon mcp-color">
+                        🔗
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="font-bold text-lg">MCP</h3>
+                        <p class="text-sm text-gray-500">模型上下文协议</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-700 mb-3">AI与外部系统的标准化连接协议</p>
+                <div class="flex flex-wrap">
+                    <span class="feature-badge badge-blue">轻量级</span>
+                    <span class="feature-badge badge-blue">AI优化</span>
+                    <span class="feature-badge badge-blue">即插即用</span>
+                </div>
+            </div>
+
+            <!-- ESB 卡片 -->
+            <div class="comparison-card">
+                <div class="flex items-center mb-4">
+                    <div class="tech-icon esb-color">
+                        🚌
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="font-bold text-lg">ESB</h3>
+                        <p class="text-sm text-gray-500">企业服务总线</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-700 mb-3">企业系统间的数据与服务集成中间件</p>
+                <div class="flex flex-wrap">
+                    <span class="feature-badge badge-red">重量级</span>
+                    <span class="feature-badge badge-red">成熟稳定</span>
+                    <span class="feature-badge badge-red">流程编排</span>
+                </div>
+            </div>
+
+            <!-- ReAct 卡片 -->
+            <div class="comparison-card">
+                <div class="flex items-center mb-4">
+                    <div class="tech-icon react-color">
+                        🧠
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="font-bold text-lg">ReAct</h3>
+                        <p class="text-sm text-gray-500">推理-行动框架</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-700 mb-3">AI模型的思考与工具调用模式</p>
+                <div class="flex flex-wrap">
+                    <span class="feature-badge badge-purple">认知层</span>
+                    <span class="feature-badge badge-purple">决策框架</span>
+                    <span class="feature-badge badge-purple">任务规划</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 详细对比表格 -->
+        <div class="comparison-table mb-8">
+            <table class="w-full">
+                <thead class="table-header">
+                    <tr>
+                        <th class="px-6 py-4 text-left">维度</th>
+                        <th class="px-6 py-4 text-left">ESB（企业服务总线）</th>
+                        <th class="px-6 py-4 text-left">MCP（模型上下文协议）</th>
+                        <th class="px-6 py-4 text-left">ReAct（推理-行动框架）</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b">
+                        <td class="px-6 py-4 font-semibold text-gray-700">主要作用</td>
+                        <td class="px-6 py-4 text-sm">系统与系统之间的<br>数据与服务集成</td>
+                        <td class="px-6 py-4 text-sm">AI与外部系统的<br>上下文与能力接入</td>
+                        <td class="px-6 py-4 text-sm">AI模型的<br>推理和工具调用模式</td>
+                    </tr>
+                    <tr class="border-b bg-gray-50">
+                        <td class="px-6 py-4 font-semibold text-gray-700">应用场景</td>
+                        <td class="px-6 py-4 text-sm">
+                            • ERP、CRM、WMS集成<br>
+                            • 财务系统集成<br>
+                            • 企业流程编排
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            • AI助手能力扩展<br>
+                            • 智能客服系统<br>
+                            • 数据问答、自动化
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            • Agent任务规划<br>
+                            • 复杂问题求解<br>
+                            • 多步骤执行
+                        </td>
+                    </tr>
+                    <tr class="border-b">
+                        <td class="px-6 py-4 font-semibold text-gray-700">技术特点</td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="highlight-text">稳定、成熟</span><br>
+                            适合复杂企业流程编排
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="highlight-text">灵活、轻量</span><br>
+                            面向AI场景优化
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="highlight-text">智能决策</span><br>
+                            认知层面的框架
+                        </td>
+                    </tr>
+                    <tr class="border-b bg-gray-50">
+                        <td class="px-6 py-4 font-semibold text-gray-700">实现方式</td>
+                        <td class="px-6 py-4 text-sm">中间件服务器<br>消息队列、适配器</td>
+                        <td class="px-6 py-4 text-sm">JSON-RPC协议<br>声明式能力描述</td>
+                        <td class="px-6 py-4 text-sm">Prompt工程<br>思维链（CoT）</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 font-semibold text-gray-700">关系定位</td>
+                        <td class="px-6 py-4 text-sm">可作为MCP的<br>后端服务提供层</td>
+                        <td class="px-6 py-4 text-sm">调用ESB服务<br>为ReAct提供基础设施</td>
+                        <td class="px-6 py-4 text-sm">使用MCP调用<br>外部工具能力</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 关系示意图 -->
+        <div class="bg-white rounded-lg p-6 mb-8">
+            <h3 class="text-lg font-bold mb-4 text-gray-800">技术关系与协同</h3>
+            <svg viewBox="0 0 800 300" class="w-full">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#1e40af" />
+                    </marker>
+                </defs>
+                
+                <!-- ReAct 框 -->
+                <rect class="relationship-box" x="50" y="50" width="200" height="80" />
+                <text x="150" y="85" text-anchor="middle" class="font-bold fill-purple-700">ReAct</text>
+                <text x="150" y="105" text-anchor="middle" class="text-sm fill-gray-600">AI决策层</text>
+                
+                <!-- MCP 框 -->
+                <rect class="relationship-box" x="300" y="50" width="200" height="80" />
+                <text x="400" y="85" text-anchor="middle" class="font-bold fill-blue-700">MCP</text>
+                <text x="400" y="105" text-anchor="middle" class="text-sm fill-gray-600">连接协议层</text>
+                
+                <!-- ESB 框 -->
+                <rect class="relationship-box" x="550" y="50" width="200" height="80" />
+                <text x="650" y="85" text-anchor="middle" class="font-bold fill-red-700">ESB</text>
+                <text x="650" y="105" text-anchor="middle" class="text-sm fill-gray-600">系统集成层</text>
+                
+                <!-- 企业系统 -->
+                <rect class="relationship-box" x="300" y="180" width="450" height="60" />
+                <text x="525" y="205" text-anchor="middle" class="font-bold fill-gray-700">企业系统</text>
+                <text x="525" y="225" text-anchor="middle" class="text-sm fill-gray-500">ERP / CRM / 数据库 / API</text>
+                
+                <!-- 连接线 -->
+                <path class="relationship-arrow" d="M 250 90 L 300 90" />
+                <path class="relationship-arrow" d="M 500 90 L 550 90" />
+                <path class="relationship-arrow" d="M 400 130 L 400 180" />
+                <path class="relationship-arrow" d="M 650 130 L 650 180" />
+                
+                <!-- 标签 -->
+                <text x="275" y="80" text-anchor="middle" class="text-xs fill-gray-500">调用</text>
+                <text x="525" y="80" text-anchor="middle" class="text-xs fill-gray-500">对接</text>
+                <text x="380" y="160" text-anchor="middle" class="text-xs fill-gray-500">直连</text>
+                <text x="670" y="160" text-anchor="middle" class="text-xs fill-gray-500">集成</text>
+            </svg>
+        </div>
+
+        <!-- 核心差异总结 -->
+        <div class="grid grid-cols-2 gap-6">
+            <div class="tech-gradient rounded-lg p-6">
+                <h3 class="font-bold text-lg mb-3 text-blue-900">🎯 关键洞察</h3>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li>• ESB解决"<strong>系统如何互联</strong>"的问题</li>
+                    <li>• MCP解决"<strong>AI如何标准化访问外部能力</strong>"的问题</li>
+                    <li>• ReAct解决"<strong>AI如何思考和行动</strong>"的问题</li>
+                    <li>• 三者可协同工作，形成完整的AI应用架构</li>
+                </ul>
+            </div>
+            
+            <div class="bg-yellow-50 rounded-lg p-6">
+                <h3 class="font-bold text-lg mb-3 text-yellow-900">⚡ 选型建议</h3>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li>• <strong>已有ESB</strong>：通过MCP封装，供AI调用</li>
+                    <li>• <strong>新建系统</strong>：优先考虑MCP，轻量灵活</li>
+                    <li>• <strong>复杂流程</strong>：ESB + MCP组合方案</li>
+                    <li>• <strong>AI应用</strong>：ReAct + MCP标配组合</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>柜面助手 - 智能反诈场景识别</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.8); }
+        }
+        .danger-glow {
+            animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        @keyframes slide-up {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .slide-up {
+            animation: slide-up 0.3s ease-out;
+        }
+        .risk-meter {
+            transition: all 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- 顶部导航栏 -->
+    <div class="bg-blue-600 text-white h-14 flex items-center justify-between px-4">
+        <div class="flex items-center space-x-4">
+            <span class="text-white font-bold text-lg">AgreeTech</span>
+            <div class="flex items-center space-x-2">
+                <button class="p-2 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 max-w-xl mx-8">
+            <input type="text" placeholder="搜索" class="w-full px-4 py-1.5 rounded text-gray-800 text-sm">
+        </div>
+        <div class="flex items-center space-x-4">
+            <span class="text-sm bg-orange-500 px-3 py-1 rounded">反诈监控模式</span>
+            <button class="px-4 py-1.5 bg-red-500 hover:bg-red-700 rounded text-sm">紧急止付</button>
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23e5e7eb'/%3E%3Ccircle cx='50' cy='35' r='15' fill='%239ca3af'/%3E%3Cellipse cx='50' cy='70' rx='25' ry='20' fill='%239ca3af'/%3E%3C/svg%3E" 
+                 alt="用户头像" class="w-8 h-8 rounded-full">
+        </div>
+    </div>
+
+    <!-- 二级导航 -->
+    <div class="bg-white border-b px-4 py-2 flex items-center space-x-6">
+        <span class="text-gray-700">客户：李女士</span>
+        <span class="text-gray-700">身份证：3301****5678</span>
+        <span class="text-orange-600 font-medium">⚠ 转账业务</span>
+        <span class="text-red-600 font-medium">金额：￥50,000</span>
+        <button class="ml-auto px-6 py-1.5 bg-red-500 text-white rounded hover:bg-red-600">结束</button>
+    </div>
+
+    <!-- 主体内容区 -->
+    <div class="flex h-[calc(100vh-7rem)]">
+        <!-- 左侧：智能对话与风险分析 -->
+        <div class="w-96 bg-white border-r flex flex-col">
+            <!-- 风险评估仪表盘 -->
+            <div class="px-4 py-3 bg-gradient-to-r from-red-50 to-orange-50 border-b">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-medium text-gray-800">实时风险评估</h3>
+                    <span id="riskLevel" class="text-sm px-2 py-1 bg-green-100 text-green-700 rounded">低风险</span>
+                </div>
+                <div class="relative">
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="riskBar" class="risk-meter bg-green-500 h-2 rounded-full transition-all duration-500" style="width: 20%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>0</span>
+                        <span id="riskScore" class="font-bold text-green-600">20%</span>
+                        <span>100</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 多维度检测指标 -->
+            <div class="px-4 py-3 bg-gray-50 border-b">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">三层识别体系</h4>
+                <div class="space-y-2">
+                    <!-- 语义识别 -->
+                    <div class="flex items-center justify-between p-2 bg-white rounded border">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
+                            </svg>
+                            <span class="text-sm">语义识别</span>
+                        </div>
+                        <span id="semanticStatus" class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">正常</span>
+                    </div>
+                    <!-- 情绪分析 -->
+                    <div class="flex items-center justify-between p-2 bg-white rounded border">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                <path d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                            <span class="text-sm">情绪分析</span>
+                        </div>
+                        <span id="emotionStatus" class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">平静</span>
+                    </div>
+                    <!-- 逻辑检测 -->
+                    <div class="flex items-center justify-between p-2 bg-white rounded border">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M11 3a1 1 0 10-2 0v8a1 1 0 002 0V3z"/>
+                                <path d="M15.657 5.757a1 1 0 00-1.414-1.414l-5.657 5.657a1 1 0 001.414 1.414l5.657-5.657z"/>
+                            </svg>
+                            <span class="text-sm">逻辑一致性</span>
+                        </div>
+                        <span id="logicStatus" class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">一致</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 对话记录与分析 -->
+            <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
+                <!-- 客户对话 -->
+                <div class="flex items-start space-x-2">
+                    <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-white text-xs">客</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="bg-gray-100 rounded-lg p-3 max-w-xs">
+                            <p class="text-sm text-gray-800">我要转5万块钱给一个朋友</p>
+                        </div>
+                        <span class="text-xs text-gray-500 mt-1 block">10:30</span>
+                    </div>
+                </div>
+
+                <!-- 系统分析提示 -->
+                <div id="analysisResult" class="hidden">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                        <p class="text-xs font-medium text-yellow-800 mb-1">🔍 智能分析</p>
+                        <div class="text-xs text-yellow-700 space-y-1">
+                            <p>• 检测到关键词："朋友"、"转钱"</p>
+                            <p>• 金额：50,000元（大额转账）</p>
+                            <p>• 建议：询问详细信息</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 高风险警告 -->
+                <div id="highRiskWarning" class="hidden">
+                    <div class="bg-red-50 border-2 border-red-300 rounded-lg p-3 danger-glow">
+                        <div class="flex items-center mb-2">
+                            <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"/>
+                            </svg>
+                            <p class="text-sm font-bold text-red-800">高风险预警！</p>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="text-xs text-red-700">
+                                <p class="font-medium mb-1">检测到多重风险信号：</p>
+                                <ul class="space-y-1 ml-2">
+                                    <li>✗ 语义异常：提及"网上认识"、"投资项目"</li>
+                                    <li>✗ 情绪异常：语速加快，声音颤抖</li>
+                                    <li>✗ 逻辑矛盾：先说朋友后说不太熟</li>
+                                </ul>
+                            </div>
+                            <div class="bg-white rounded p-2 border border-red-200">
+                                <p class="text-xs font-medium text-gray-700">综合风险评分：</p>
+                                <p class="text-2xl font-bold text-red-600">85/100</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 话术推荐 -->
+                <div id="scriptSuggestion" class="hidden">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p class="text-xs font-medium text-blue-800 mb-2">💡 建议话术</p>
+                        <div class="space-y-2">
+                            <div class="bg-white rounded p-2 border border-blue-200">
+                                <p class="text-xs text-gray-600 mb-1">追问1：</p>
+                                <p class="text-sm text-blue-700 italic">"您和这位朋友是怎么认识的？认识多久了？"</p>
+                            </div>
+                            <div class="bg-white rounded p-2 border border-blue-200">
+                                <p class="text-xs text-gray-600 mb-1">追问2：</p>
+                                <p class="text-sm text-blue-700 italic">"这笔钱的具体用途是什么？有相关合同吗？"</p>
+                            </div>
+                            <div class="bg-white rounded p-2 border border-blue-200">
+                                <p class="text-xs text-gray-600 mb-1">追问3：</p>
+                                <p class="text-sm text-blue-700 italic">"对方有催您尽快转账吗？"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 场景模拟控制 -->
+            <div class="border-t p-3 bg-gray-50">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">场景模拟</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="simulateLowRisk()" class="px-3 py-2 bg-green-500 text-white text-xs rounded hover:bg-green-600">
+                        正常转账
+                    </button>
+                    <button onclick="simulateMediumRisk()" class="px-3 py-2 bg-yellow-500 text-white text-xs rounded hover:bg-yellow-600">
+                        可疑行为
+                    </button>
+                    <button onclick="simulateHighRisk()" class="px-3 py-2 bg-red-500 text-white text-xs rounded hover:bg-red-600">
+                        诈骗特征
+                    </button>
+                    <button onclick="showCaseStudy()" class="px-3 py-2 bg-purple-500 text-white text-xs rounded hover:bg-purple-600">
+                        案例学习
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：转账表单与风险详情 -->
+        <div class="flex-1 bg-gray-50 overflow-y-auto">
+            <div class="p-6">
+                <!-- 转账信息表单 -->
+                <div id="transferForm" class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <h3 class="text-lg font-medium mb-4 pb-2 border-b">转账信息</h3>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-red-500">*</span> 收款人姓名
+                            </label>
+                            <input type="text" id="receiverName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-red-500">*</span> 收款账号
+                            </label>
+                            <input type="text" id="receiverAccount" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-red-500">*</span> 转账金额
+                            </label>
+                            <input type="text" value="50000" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-red-500">*</span> 转账用途
+                            </label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>请选择</option>
+                                <option>货款</option>
+                                <option>借款</option>
+                                <option>投资</option>
+                                <option>其他</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">备注说明</label>
+                        <textarea rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                </div>
+
+                <!-- 风险检测详情 -->
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <h3 class="text-lg font-medium mb-4 pb-2 border-b">风险检测详情</h3>
+                    
+                    <div class="grid grid-cols-3 gap-4">
+                        <!-- 语义分析 -->
+                        <div class="border rounded-lg p-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
+                                </svg>
+                                语义分析
+                            </h4>
+                            <div id="semanticDetails" class="space-y-2 text-xs">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">关键词检测：</span>
+                                    <span id="keywordCount" class="font-medium">0个</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">风险词汇：</span>
+                                    <span id="riskWords" class="text-green-600">无</span>
+                                </div>
+                                <div id="keywordList" class="mt-2 p-2 bg-gray-50 rounded hidden">
+                                    <p class="text-xs text-gray-500">检测到的关键词：</p>
+                                    <div class="flex flex-wrap gap-1 mt-1">
+                                        <!-- 动态添加关键词标签 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 情绪分析 -->
+                        <div class="border rounded-lg p-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                </svg>
+                                情绪分析
+                            </h4>
+                            <div class="space-y-2">
+                                <div class="text-xs">
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-600">焦虑指数：</span>
+                                        <span id="anxietyLevel">0%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div id="anxietyBar" class="bg-green-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="text-xs">
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-600">紧张指数：</span>
+                                        <span id="nervousLevel">0%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div id="nervousBar" class="bg-green-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="text-xs">
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-600">回避指数：</span>
+                                        <span id="avoidLevel">0%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div id="avoidBar" class="bg-green-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 逻辑检测 -->
+                        <div class="border rounded-lg p-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M11 3a1 1 0 10-2 0v8a1 1 0 002 0V3z"/>
+                                </svg>
+                                逻辑检测
+                            </h4>
+                            <div id="logicDetails" class="space-y-2 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600">前后一致：</span>
+                                    <span id="consistencyCheck" class="text-green-600">✓</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600">信息完整：</span>
+                                    <span id="completenessCheck" class="text-green-600">✓</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600">时间逻辑：</span>
+                                    <span id="timeLogicCheck" class="text-green-600">✓</span>
+                                </div>
+                                <div id="logicIssues" class="mt-2 p-2 bg-red-50 rounded hidden">
+                                    <p class="text-xs text-red-700 font-medium">发现逻辑问题：</p>
+                                    <ul class="text-xs text-red-600 mt-1">
+                                        <!-- 动态添加逻辑问题 -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 案例学习弹窗 -->
+                <div id="caseStudyModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-lg shadow-xl p-6 max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <h3 class="text-lg font-bold mb-4">诈骗案例学习库</h3>
+                        <div class="space-y-4">
+                            <div class="border-l-4 border-red-500 pl-4">
+                                <h4 class="font-medium text-red-700">案例1：投资理财诈骗</h4>
+                                <p class="text-sm text-gray-600 mt-1">客户表现：提及高收益投资项目，声称网上认识的"专家"推荐</p>
+                                <p class="text-sm text-gray-600">识别要点：询问投资平台资质、是否有正规合同</p>
+                                <p class="text-sm text-blue-600 font-medium mt-2">有效话术："这个投资平台有金融牌照吗？"</p>
+                            </div>
+                            <div class="border-l-4 border-orange-500 pl-4">
+                                <h4 class="font-medium text-orange-700">案例2：冒充公检法</h4>
+                                <p class="text-sm text-gray-600 mt-1">客户表现：神色慌张，提到"安全账户"、"资金清查"</p>
+                                <p class="text-sm text-gray-600">识别要点：公检法不会要求转账到安全账户</p>
+                                <p class="text-sm text-blue-600 font-medium mt-2">有效话术："公安机关不会通过电话要求转账"</p>
+                            </div>
+                        </div>
+                        <button onclick="closeCaseStudy()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                            关闭
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="flex justify-center space-x-4">
+                    <button class="px-8 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                        取消交易
+                    </button>
+                    <button id="pauseBtn" class="px-8 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+                        暂缓办理
+                    </button>
+                    <button id="confirmBtn" class="px-8 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        确认转账
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟低风险场景
+        function simulateLowRisk() {
+            updateRiskLevel(20, 'green', '低风险');
+            document.getElementById('semanticStatus').textContent = '正常';
+            document.getElementById('semanticStatus').className = 'text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded';
+            document.getElementById('emotionStatus').textContent = '平静';
+            document.getElementById('emotionStatus').className = 'text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded';
+            document.getElementById('logicStatus').textContent = '一致';
+            document.getElementById('logicStatus').className = 'text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded';
+            
+            document.getElementById('analysisResult').classList.add('hidden');
+            document.getElementById('highRiskWarning').classList.add('hidden');
+            document.getElementById('scriptSuggestion').classList.add('hidden');
+            
+            // 更新详情
+            updateEmotionMeters(10, 5, 0);
+            document.getElementById('keywordCount').textContent = '0个';
+            document.getElementById('riskWords').textContent = '无';
+            document.getElementById('riskWords').className = 'text-green-600';
+            
+            document.getElementById('transferForm').classList.remove('danger-glow', 'border-red-500', 'border-4');
+        }
+
+        // 模拟中风险场景
+        function simulateMediumRisk() {
+            updateRiskLevel(55, 'yellow', '中风险');
+            document.getElementById('semanticStatus').textContent = '可疑';
+            document.getElementById('semanticStatus').className = 'text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded';
+            document.getElementById('emotionStatus').textContent = '紧张';
+            document.getElementById('emotionStatus').className = 'text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded';
+            
+            document.getElementById('analysisResult').classList.remove('hidden');
+            document.getElementById('scriptSuggestion').classList.remove('hidden');
+            document.getElementById('highRiskWarning').classList.add('hidden');
+            
+            // 更新详情
+            updateEmotionMeters(45, 60, 30);
+            document.getElementById('keywordCount').textContent = '3个';
+            document.getElementById('riskWords').textContent = '投资、朋友、网上';
+            document.getElementById('riskWords').className = 'text-yellow-600';
+        }
+
+        // 模拟高风险场景
+        function simulateHighRisk() {
+            updateRiskLevel(85, 'red', '高风险');
+            document.getElementById('semanticStatus').textContent = '异常';
+            document.getElementById('semanticStatus').className = 'text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded';
+            document.getElementById('emotionStatus').textContent = '焦虑';
+            document.getElementById('emotionStatus').className = 'text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded';
+            document.getElementById('logicStatus').textContent = '矛盾';
+            document.getElementById('logicStatus').className = 'text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded';
+            
+            document.getElementById('analysisResult').classList.remove('hidden');
+            document.getElementById('highRiskWarning').classList.remove('hidden');
+            document.getElementById('scriptSuggestion').classList.remove('hidden');
+            
+            // 更新详情
+            updateEmotionMeters(75, 80, 85);
+            document.getElementById('keywordCount').textContent = '5个';
+            document.getElementById('riskWords').textContent = '高收益、保证、专家、内幕、急';
+            document.getElementById('riskWords').className = 'text-red-600';
+            
+            // 更新逻辑检测
+            document.getElementById('consistencyCheck').textContent = '✗';
+            document.getElementById('consistencyCheck').className = 'text-red-600';
+            document.getElementById('timeLogicCheck').textContent = '✗';
+            document.getElementById('timeLogicCheck').className = 'text-red-600';
+            
+            document.getElementById('transferForm').classList.add('danger-glow', 'border-red-500', 'border-4');
+            
+            // 禁用确认按钮
+            document.getElementById('confirmBtn').disabled = true;
+            document.getElementById('confirmBtn').className = 'px-8 py-2 bg-gray-400 text-gray-200 rounded cursor-not-allowed';
+        }
+
+        // 更新风险等级
+        function updateRiskLevel(score, color, text) {
+            const riskBar = document.getElementById('riskBar');
+            const riskScore = document.getElementById('riskScore');
+            const riskLevel = document.getElementById('riskLevel');
+            
+            riskBar.style.width = score + '%';
+            riskScore.textContent = score + '%';
+            
+            // 更新颜色
+            const colorMap = {
+                'green': ['bg-green-500', 'text-green-600', 'bg-green-100 text-green-700'],
+                'yellow': ['bg-yellow-500', 'text-yellow-600', 'bg-yellow-100 text-yellow-700'],
+                'red': ['bg-red-500', 'text-red-600', 'bg-red-100 text-red-700']
+            };
+            
+            riskBar.className = `risk-meter ${colorMap[color][0]} h-2 rounded-full transition-all duration-500`;
+            riskScore.className = `font-bold ${colorMap[color][1]}`;
+            riskLevel.className = `text-sm px-2 py-1 rounded ${colorMap[color][2]}`;
+            riskLevel.textContent = text;
+        }
+
+        // 更新情绪指标
+        function updateEmotionMeters(anxiety, nervous, avoid) {
+            updateMeter('anxiety', anxiety);
+            updateMeter('nervous', nervous);
+            updateMeter('avoid', avoid);
+        }
+
+        function updateMeter(type, value) {
+            document.getElementById(type + 'Level').textContent = value + '%';
+            const bar = document.getElementById(type + 'Bar');
+            bar.style.width = value + '%';
+            
+            // 根据数值改变颜色
+            if (value < 30) {
+                bar.className = 'bg-green-500 h-1.5 rounded-full transition-all duration-500';
+            } else if (value < 60) {
+                bar.className = 'bg-yellow-500 h-1.5 rounded-full transition-all duration-500';
+            } else {
+                bar.className = 'bg-red-500 h-1.5 rounded-full transition-all duration-500';
+            }
+        }
+
+        // 显示案例学习
+        function showCaseStudy() {
+            document.getElementById('caseStudyModal').classList.remove('hidden');
+        }
+
+        // 关闭案例学习
+        function closeCaseStudy() {
+            document.getElementById('caseStudyModal').classList.add('hidden');
+        }
+
+        // 初始化
+        simulateLowRisk();
+    </script>
+</body>
+</html>

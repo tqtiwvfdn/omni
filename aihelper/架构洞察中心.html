@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架构洞察中心 - 赞同科技智能架构管控平台</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <script src="/console/style/chart.min.js"></script>
+    <script src="/console/style/echarts.min.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%); */
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.95); */
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+        
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-online { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-error { background: #ef4444; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            25% { transform: translateY(-4px); }
+            75% { transform: translateY(2px); }
+        }
+        
+        .trend-arrow {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .trend-up {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+        
+        .trend-down {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+        
+        .trend-neutral {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+        
+        .floating-button {
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .floating-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Toast 样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            min-width: 300px;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        /* 弹窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            max-width: 90%;
+            max-height: 90vh;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .sidebar-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            margin: 4px 8px;
+            /* position: relative; */
+        }
+        
+        .sidebar-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            transform: translateX(4px);
+        }
+        
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+
+        }
+    </style>
+</head>
+<body>
+    <!-- 主容器 -->
+    <div class="flex h-screen overflow-hidden">
+        <!-- 侧边栏 -->
+        <div class="w-64 liquid-glass-strong flex flex-col">
+            <!-- Logo区域 -->
+            <div class="p-6 border-b border-gray-200/20">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold">
+                        AI
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-800">架构洞察中心</h1>
+                        <p class="text-xs text-gray-500">智能分析预测平台</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 导航菜单 -->
+            <nav class="flex-1 py-4" style="position: relative;">
+                <div class="sidebar-item active" onclick="switchView('overview')">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        总览仪表盘
+                    </div>
+                </div>
+                <div class="sidebar-item" onclick="switchView('trend')">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                        </svg>
+                        趋势分析预测
+                        <span class="notification-badge ml-auto">3</span>
+                    </div>
+                </div>
+                <div class="sidebar-item" onclick="switchView('anomaly')">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        异常检测
+                    </div>
+                </div>
+                <div class="sidebar-item" onclick="switchView('impact')">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        关联影响分析
+                    </div>
+                </div>
+                <div class="sidebar-item" onclick="switchView('capacity')">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                        容量规划建议
+                    </div>
+                </div>
+                <div class="sidebar-item" onclick="switchView('knowledge')">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                        </svg>
+                        知识图谱
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- AI助手入口 -->
+            <div class="p-4 border-t border-gray-200/20">
+                <button onclick="openAIChat()" class="w-full liquid-glass floating-button rounded-lg p-3 text-sm font-medium text-gray-700 specular-highlight flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                    </svg>
+                    AI架构顾问
+                </button>
+            </div>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- 顶部导航栏 -->
+            <header class="liquid-glass-strong px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <h2 id="view-title" class="text-xl font-semibold text-gray-800">总览仪表盘</h2>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <span class="status-dot status-online"></span>
+                            <span class="text-gray-600">实时监控中</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <!-- 时间范围选择 -->
+                        <select id="time-range" class="liquid-glass rounded-lg px-4 py-2 text-sm" onchange="updateTimeRange(this.value)">
+                            <option value="1h">最近1小时</option>
+                            <option value="24h" selected>最近24小时</option>
+                            <option value="7d">最近7天</option>
+                            <option value="30d">最近30天</option>
+                        </select>
+                        
+                        <!-- 刷新按钮 -->
+                        <button onclick="refreshData()" class="liquid-glass floating-button rounded-lg p-2 specular-highlight">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- 导出报告 -->
+                        <button onclick="exportReport()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
+                            导出报告
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 内容区域 -->
+            <main id="main-content" class="flex-1 overflow-y-auto p-6">
+                <!-- 总览仪表盘视图 -->
+                <div id="overview-view" class="view-content">
+                    <!-- 关键指标卡片 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="metric-card specular-highlight">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="p-2 bg-blue-100 rounded-lg">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+                                    </svg>
+                                </div>
+                                <span class="trend-arrow trend-up">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                    </svg>
+                                    12.5%
+                                </span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-1">342</h3>
+                            <p class="text-sm text-gray-600">系统总数</p>
+                            <p class="text-xs text-gray-500 mt-2">健康率: 95.8%</p>
+                        </div>
+                        
+                        <div class="metric-card specular-highlight">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="p-2 bg-green-100 rounded-lg">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                                <span class="trend-arrow trend-neutral">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                    </svg>
+                                    0.2%
+                                </span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-1">99.95%</h3>
+                            <p class="text-sm text-gray-600">服务可用性</p>
+                            <p class="text-xs text-gray-500 mt-2">SLA达标: 100%</p>
+                        </div>
+                        
+                        <div class="metric-card specular-highlight">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="p-2 bg-purple-100 rounded-lg">
+                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                </div>
+                                <span class="trend-arrow trend-down">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                                    </svg>
+                                    23.1%
+                                </span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-1">12</h3>
+                            <p class="text-sm text-gray-600">安全风险</p>
+                            <p class="text-xs text-gray-500 mt-2">高危: 2 | 中危: 10</p>
+                        </div>
+                        
+                        <div class="metric-card specular-highlight">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="p-2 bg-orange-100 rounded-lg">
+                                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                </div>
+                                <span class="trend-arrow trend-up">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                    </svg>
+                                    8.7%
+                                </span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-1">78.2%</h3>
+                            <p class="text-sm text-gray-600">资源利用率</p>
+                            <p class="text-xs text-gray-500 mt-2">CPU: 72% | 内存: 84%</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 图表区域 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- 架构健康度趋势图 -->
+                        <div class="chart-container liquid-glass-strong flex flex-col" style="height: 500;max-height: 500px;overflow: hidden;">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">架构健康度趋势</h3>
+                            <canvas id="health-trend-chart" width="400" height="200"></canvas>
+                        </div>
+                        
+                        <!-- 系统负载分布 -->
+                        <div class="chart-container liquid-glass-strong">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">系统负载分布</h3>
+                            <div id="load-distribution-chart" style="width: 100%; height: 200px;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 实时告警列表 -->
+                    <div class="mt-6 liquid-glass-strong rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">实时告警</h3>
+                            <button class="text-sm text-blue-600 hover:text-blue-800">查看全部</button>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-start p-3 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                                <svg class="w-5 h-5 text-red-500 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="font-medium text-gray-800">数据库连接池达到上限</h4>
+                                        <span class="text-xs text-gray-500">2分钟前</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1">系统: CRM-PROD | 当前连接数: 500/500</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded-lg">
+                                <svg class="w-5 h-5 text-yellow-500 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="font-medium text-gray-800">API响应时间异常</h4>
+                                        <span class="text-xs text-gray-500">15分钟前</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1">服务: payment-gateway | 平均响应: 2.3s</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 其他视图内容（初始隐藏） -->
+                <div id="trend-view" class="view-content hidden">
+                    <div class="liquid-glass-strong rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">趋势分析预测</h3>
+                        <p class="text-gray-600 mb-4">基于历史数据和机器学习模型的未来趋势预测</p>
+                        
+                        <!-- 预测图表 -->
+                        <div class="chart-container">
+                            <canvas id="prediction-chart" width="400" height="300"></canvas>
+                        </div>
+                        
+                        <!-- 预测洞察 -->
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 bg-blue-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-800 mb-2">🔮 系统负载预测</h4>
+                                <p class="text-sm text-gray-600">预计下周三将出现流量高峰，建议提前扩容</p>
+                            </div>
+                            <div class="p-4 bg-green-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-800 mb-2">📈 性能趋势</h4>
+                                <p class="text-sm text-gray-600">响应时间呈下降趋势，优化措施效果显著</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="anomaly-view" class="view-content hidden">
+                    <div class="liquid-glass-strong rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">异常智能检测</h3>
+                        <div id="anomaly-list"></div>
+                    </div>
+                </div>
+                
+                <div id="impact-view" class="view-content hidden">
+                    <div class="liquid-glass-strong rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">关联影响分析</h3>
+                        <div id="impact-graph" style="width: 100%; height: 500px;"></div>
+                    </div>
+                </div>
+                
+                <div id="capacity-view" class="view-content hidden">
+                    <div class="liquid-glass-strong rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">容量规划建议</h3>
+                        <div id="capacity-recommendations"></div>
+                    </div>
+                </div>
+                
+                <div id="knowledge-view" class="view-content hidden">
+                    <div class="liquid-glass-strong rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">架构知识图谱</h3>
+                        <div id="knowledge-graph" style="width: 100%; height: 600px;"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- AI聊天弹窗 -->
+    <div id="ai-chat-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 800px; max-width: 90%;">
+            <!-- 聊天窗口头部 -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                        AI
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">AI架构顾问</h3>
+                        <p class="text-sm text-gray-500">智能分析与建议</p>
+                    </div>
+                </div>
+                <button onclick="closeAIChat()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 聊天内容区 -->
+            <div id="chat-messages" class="p-6 overflow-y-auto" style="height: 400px;">
+                <div class="text-center text-gray-500 text-sm mb-4">
+                    AI架构顾问已就绪，有什么可以帮助您的？
+                </div>
+            </div>
+            
+            <!-- 输入区 -->
+            <div class="p-4 border-t border-gray-200/50">
+                <div class="flex items-center space-x-3">
+                    <input type="text" 
+                           id="chat-input"
+                           placeholder="输入您的问题，例如：分析系统间的依赖关系..."
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                           onkeypress="if(event.key==='Enter') sendChatMessage()">
+                    <button onclick="sendChatMessage()" 
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                        发送
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化图表和数据
+        let healthTrendChart;
+        let predictionChart;
+        let currentView = 'overview';
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            initECharts();
+            updateRealTimeData();
+            setInterval(updateRealTimeData, 5000); // 每5秒更新实时数据
+        });
+        
+        // 初始化Chart.js图表
+        function initCharts() {
+            // 架构健康度趋势图
+            const healthCtx = document.getElementById('health-trend-chart');
+            if (healthCtx) {
+                healthTrendChart = new Chart(healthCtx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: generateTimeLabels(24),
+                        datasets: [{
+                            label: '健康度',
+                            data: generateRandomData(24, 85, 100),
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: '可用性',
+                            data: generateRandomData(24, 95, 100),
+                            borderColor: 'rgb(34, 197, 94)',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                min: 80,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // 初始化ECharts图表
+        function initECharts() {
+            // 系统负载分布
+            const loadChart = echarts.init(document.getElementById('load-distribution-chart'));
+            const loadOption = {
+                tooltip: {
+                    trigger: 'item'
+                },
+                series: [{
+                    name: '系统负载',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 10,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '20',
+                            fontWeight: 'bold'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: [
+                        {value: 45, name: '低负载', itemStyle: {color: '#10b981'}},
+                        {value: 30, name: '正常负载', itemStyle: {color: '#3b82f6'}},
+                        {value: 20, name: '高负载', itemStyle: {color: '#f59e0b'}},
+                        {value: 5, name: '超负载', itemStyle: {color: '#ef4444'}}
+                    ]
+                }]
+            };
+            loadChart.setOption(loadOption);
+            
+            // 响应式调整
+            window.addEventListener('resize', function() {
+                loadChart.resize();
+            });
+        }
+        
+        // 切换视图
+        function switchView(viewName) {
+            // 更新侧边栏激活状态
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.sidebar-item').classList.add('active');
+            
+            // 隐藏所有视图
+            document.querySelectorAll('.view-content').forEach(view => {
+                view.classList.add('hidden');
+            });
+            
+            // 显示选中视图
+            document.getElementById(`${viewName}-view`).classList.remove('hidden');
+            
+            // 更新标题
+            const titles = {
+                'overview': '总览仪表盘',
+                'trend': '趋势分析预测',
+                'anomaly': '异常检测',
+                'impact': '关联影响分析',
+                'capacity': '容量规划建议',
+                'knowledge': '知识图谱'
+            };
+            document.getElementById('view-title').textContent = titles[viewName];
+            
+            // 根据视图加载相应内容
+            switch(viewName) {
+                case 'trend':
+                    loadTrendAnalysis();
+                    break;
+                case 'anomaly':
+                    loadAnomalyDetection();
+                    break;
+                case 'impact':
+                    loadImpactAnalysis();
+                    break;
+                case 'capacity':
+                    loadCapacityPlanning();
+                    break;
+                case 'knowledge':
+                    loadKnowledgeGraph();
+                    break;
+            }
+            
+            currentView = viewName;
+        }
+        
+        // 加载趋势分析
+        function loadTrendAnalysis() {
+            const ctx = document.getElementById('prediction-chart');
+            if (ctx && !predictionChart) {
+                predictionChart = new Chart(ctx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: generateFutureLabels(30),
+                        datasets: [{
+                            label: '实际值',
+                            data: generateRandomData(15, 60, 80),
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderDash: []
+                        }, {
+                            label: '预测值',
+                            data: [...Array(15).fill(null), ...generateRandomData(15, 70, 90)],
+                            borderColor: 'rgb(168, 85, 247)',
+                            backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                            borderDash: [5, 5]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '系统负载预测（未来30天）'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // 加载异常检测
+        function loadAnomalyDetection() {
+            const anomalies = [
+                {level: 'high', system: 'payment-service', issue: 'CPU使用率突增至95%', time: '10:32', score: 0.92},
+                {level: 'medium', system: 'user-api', issue: '响应时间异常波动', time: '09:45', score: 0.78},
+                {level: 'low', system: 'log-collector', issue: '日志写入速度下降', time: '08:20', score: 0.45}
+            ];
+            
+            const html = anomalies.map(a => `
+                <div class="p-4 mb-3 border-l-4 ${a.level === 'high' ? 'border-red-500 bg-red-50' : a.level === 'medium' ? 'border-yellow-500 bg-yellow-50' : 'border-blue-500 bg-blue-50'} rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-semibold text-gray-800">${a.system}</h4>
+                            <p class="text-sm text-gray-600 mt-1">${a.issue}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm text-gray-500">${a.time}</div>
+                            <div class="text-xs mt-1">异常分数: ${a.score}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('anomaly-list').innerHTML = html;
+        }
+        
+        // 加载影响分析
+        function loadImpactAnalysis() {
+            const impactChart = echarts.init(document.getElementById('impact-graph'));
+            const option = {
+                tooltip: {},
+                series: [{
+                    type: 'graph',
+                    layout: 'force',
+                    data: [
+                        {name: 'API Gateway', category: 0, symbolSize: 60},
+                        {name: 'User Service', category: 1, symbolSize: 40},
+                        {name: 'Order Service', category: 1, symbolSize: 40},
+                        {name: 'Payment Service', category: 1, symbolSize: 40},
+                        {name: 'Database', category: 2, symbolSize: 50},
+                        {name: 'Cache', category: 2, symbolSize: 30},
+                        {name: 'Message Queue', category: 2, symbolSize: 30}
+                    ],
+                    links: [
+                        {source: 'API Gateway', target: 'User Service'},
+                        {source: 'API Gateway', target: 'Order Service'},
+                        {source: 'Order Service', target: 'Payment Service'},
+                        {source: 'User Service', target: 'Database'},
+                        {source: 'Order Service', target: 'Database'},
+                        {source: 'Payment Service', target: 'Database'},
+                        {source: 'User Service', target: 'Cache'},
+                        {source: 'Order Service', target: 'Message Queue'}
+                    ],
+                    categories: [
+                        {name: '网关层'},
+                        {name: '服务层'},
+                        {name: '数据层'}
+                    ],
+                    roam: true,
+                    force: {
+                        repulsion: 100,
+                        edgeLength: 150
+                    }
+                }]
+            };
+            impactChart.setOption(option);
+        }
+        
+        // 加载容量规划
+        function loadCapacityPlanning() {
+            const recommendations = [
+                {
+                    resource: 'CPU',
+                    current: '72%',
+                    predicted: '85%',
+                    recommendation: '建议增加2个计算节点',
+                    urgency: 'medium'
+                },
+                {
+                    resource: '内存',
+                    current: '84%',
+                    predicted: '92%',
+                    recommendation: '建议扩容16GB内存',
+                    urgency: 'high'
+                },
+                {
+                    resource: '存储',
+                    current: '65%',
+                    predicted: '78%',
+                    recommendation: '存储空间充足，继续监控',
+                    urgency: 'low'
+                }
+            ];
+            
+            const html = recommendations.map(r => `
+                <div class="p-4 mb-4 border rounded-lg ${r.urgency === 'high' ? 'border-red-200 bg-red-50' : r.urgency === 'medium' ? 'border-yellow-200 bg-yellow-50' : 'border-green-200 bg-green-50'}">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-semibold text-gray-800">${r.resource}</h4>
+                        <span class="text-sm px-2 py-1 rounded ${r.urgency === 'high' ? 'bg-red-100 text-red-700' : r.urgency === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}">
+                            ${r.urgency === 'high' ? '紧急' : r.urgency === 'medium' ? '关注' : '正常'}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-500">当前使用：</span>
+                            <span class="font-medium">${r.current}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">预测峰值：</span>
+                            <span class="font-medium">${r.predicted}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">建议：</span>
+                            <span class="font-medium">${r.recommendation}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('capacity-recommendations').innerHTML = html;
+        }
+        
+        // 加载知识图谱
+        function loadKnowledgeGraph() {
+            const knowledgeChart = echarts.init(document.getElementById('knowledge-graph'));
+            const option = {
+                title: {
+                    text: '架构知识图谱',
+                    subtext: '系统间关系与依赖分析'
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}'
+                },
+                series: [{
+                    type: 'graph',
+                    layout: 'circular',
+                    circular: {
+                        rotateLabel: true
+                    },
+                    data: generateKnowledgeNodes(),
+                    links: generateKnowledgeLinks(),
+                    roam: true,
+                    label: {
+                        position: 'right',
+                        formatter: '{b}'
+                    },
+                    lineStyle: {
+                        color: 'source',
+                        curveness: 0.3
+                    }
+                }]
+            };
+            knowledgeChart.setOption(option);
+        }
+        
+        // AI聊天功能
+        function openAIChat() {
+            document.getElementById('ai-chat-modal').classList.add('show');
+        }
+        
+        function closeAIChat() {
+            document.getElementById('ai-chat-modal').classList.remove('show');
+        }
+        
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            const messagesDiv = document.getElementById('chat-messages');
+            
+            // 添加用户消息
+            messagesDiv.innerHTML += `
+                <div class="flex justify-end mb-4">
+                    <div class="max-w-xs px-4 py-2 bg-blue-500 text-white rounded-lg">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            input.value = '';
+            
+            // 模拟AI回复
+            setTimeout(() => {
+                const aiResponse = generateAIResponse(message);
+                messagesDiv.innerHTML += `
+                    <div class="flex justify-start mb-4">
+                        <div class="max-w-md px-4 py-2 bg-gray-100 text-gray-800 rounded-lg">
+                            ${aiResponse}
+                        </div>
+                    </div>
+                `;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 1000);
+        }
+        
+        function generateAIResponse(question) {
+            const responses = {
+                '依赖': '系统间存在以下主要依赖关系：\n1. API Gateway → User Service (100%)\n2. Order Service → Payment Service (85%)\n3. All Services → Database (100%)',
+                '性能': '当前系统性能分析：\n- 平均响应时间: 230ms\n- P95延迟: 450ms\n- 建议优化数据库查询和缓存策略',
+                '风险': '识别到3个潜在风险：\n1. 数据库连接池配置过小\n2. 缺少服务降级机制\n3. 日志存储空间不足',
+                default: '我正在分析您的问题，这可能涉及到架构的多个方面。建议查看相关的监控指标和日志信息。'
+            };
+            
+            for (const key in responses) {
+                if (question.includes(key)) {
+                    return responses[key];
+                }
+            }
+            return responses.default;
+        }
+        
+        // 辅助函数
+        function generateTimeLabels(hours) {
+            const labels = [];
+            const now = new Date();
+            for (let i = hours - 1; i >= 0; i--) {
+                const time = new Date(now - i * 3600000);
+                labels.push(`${time.getHours()}:00`);
+            }
+            return labels;
+        }
+        
+        function generateFutureLabels(days) {
+            const labels = [];
+            const now = new Date();
+            for (let i = 0; i < days; i++) {
+                const date = new Date(now.getTime() + i * 24 * 3600000);
+                labels.push(`${date.getMonth() + 1}/${date.getDate()}`);
+            }
+            return labels;
+        }
+        
+        function generateRandomData(count, min, max) {
+            return Array.from({length: count}, () => 
+                Math.floor(Math.random() * (max - min + 1)) + min
+            );
+        }
+        
+        function generateKnowledgeNodes() {
+            const categories = ['微服务', '数据库', '中间件', '网关', '监控'];
+            const nodes = [];
+            for (let i = 0; i < 20; i++) {
+                nodes.push({
+                    name: `Node${i}`,
+                    category: i % 5,
+                    symbolSize: 20 + Math.random() * 30
+                });
+            }
+            return nodes;
+        }
+        
+        function generateKnowledgeLinks() {
+            const links = [];
+            for (let i = 0; i < 30; i++) {
+                links.push({
+                    source: `Node${Math.floor(Math.random() * 20)}`,
+                    target: `Node${Math.floor(Math.random() * 20)}`
+                });
+            }
+            return links;
+        }
+        
+        // 更新实时数据
+        function updateRealTimeData() {
+            // 更新健康度图表
+            if (healthTrendChart) {
+                healthTrendChart.data.datasets[0].data.push(85 + Math.random() * 15);
+                healthTrendChart.data.datasets[0].data.shift();
+                healthTrendChart.data.datasets[1].data.push(95 + Math.random() * 5);
+                healthTrendChart.data.datasets[1].data.shift();
+                healthTrendChart.update('none');
+            }
+            
+            // 更新指标卡片（模拟）
+            const metrics = document.querySelectorAll('.metric-card h3');
+            if (metrics[1]) {
+                const currentValue = parseFloat(metrics[1].textContent);
+                const newValue = (99.9 + Math.random() * 0.1).toFixed(2);
+                metrics[1].textContent = newValue + '%';
+            }
+        }
+        
+        // 刷新数据
+        function refreshData() {
+            showToast('数据刷新成功', 'success');
+            updateRealTimeData();
+        }
+        
+        // 导出报告
+        function exportReport() {
+            showToast('正在生成报告...', 'info');
+            setTimeout(() => {
+                showToast('报告已导出到 architecture_insight_report.pdf', 'success');
+            }, 2000);
+        }
+        
+        // Toast提示
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <div class="mr-3">
+                        ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+                    </div>
+                    <div>${message}</div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // 更新时间范围
+        function updateTimeRange(range) {
+            console.log('时间范围更新为:', range);
+            refreshData();
+        }
+    </script>
+</body>
+</html>

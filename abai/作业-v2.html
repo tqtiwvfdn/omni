@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>柜面助手 - 作业页面辅助及异常预警</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3); }
+            50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.1); }
+        }
+        .pulse-border-animation {
+            animation: pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes slide-in {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .slide-in {
+            animation: slide-in 0.3s ease-out;
+        }
+        .chat-message {
+            animation: slide-in 0.3s ease-out;
+        }
+        /* 滚动条样式 */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- 顶部导航栏 -->
+    <div class="bg-blue-600 text-white h-14 flex items-center justify-between px-4">
+        <div class="flex items-center space-x-4">
+            <!-- Logo和品牌 -->
+            <div class="flex items-center">
+                <span class="text-white font-bold text-lg">AgreeTech</span>
+            </div>
+            <!-- 导航按钮 -->
+            <div class="flex items-center space-x-2">
+                <button class="p-2 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                    </svg>
+                </button>
+                <button class="p-2 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                    </svg>
+                </button>
+                <button class="p-2 hover:bg-blue-700 rounded">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 搜索框 -->
+        <div class="flex-1 max-w-xl mx-8">
+            <input type="text" placeholder="搜索" class="w-full px-4 py-1.5 rounded text-gray-800 text-sm">
+        </div>
+        
+        <!-- 右侧功能区 -->
+        <div class="flex items-center space-x-4">
+            <button class="p-2 hover:bg-blue-700 rounded">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z"/>
+                </svg>
+            </button>
+            <button class="px-4 py-1.5 bg-blue-500 hover:bg-blue-700 rounded text-sm">开始服务</button>
+            <button class="p-2 hover:bg-blue-700 rounded">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                </svg>
+            </button>
+            <div class="flex items-center space-x-2">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23e5e7eb'/%3E%3Ccircle cx='50' cy='35' r='15' fill='%239ca3af'/%3E%3Cellipse cx='50' cy='70' rx='25' ry='20' fill='%239ca3af'/%3E%3C/svg%3E" 
+                     alt="用户头像" class="w-8 h-8 rounded-full">
+            </div>
+        </div>
+    </div>
+
+    <!-- 二级导航 -->
+    <div class="bg-white border-b px-4 py-2 flex items-center space-x-6">
+        <span class="text-gray-700">东秀英</span>
+        <span class="text-gray-700">代理人信息</span>
+        <span class="text-gray-700">客户提醒</span>
+        <span class="text-gray-700">预填信息</span>
+        <button class="ml-auto px-6 py-1.5 bg-red-500 text-white rounded hover:bg-red-600">结束</button>
+        <button class="px-4 py-1.5 border border-gray-300 rounded hover:bg-gray-50 text-sm">关闭柜员助手</button>
+        <button class="p-2 hover:bg-gray-100 rounded">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- 主体内容区 -->
+    <div class="flex h-[calc(100vh-7rem)]">
+        <!-- 左侧：对话区域 -->
+        <div class="w-96 bg-white border-r flex flex-col">
+            <!-- 页签 -->
+            <div class="flex border-b">
+                <button class="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
+                    首页
+                </button>
+                <button class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+                    聊账 <span class="text-red-500">×</span>
+                </button>
+                <button class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+                    客户信息维护 <span class="text-red-500">×</span>
+                </button>
+            </div>
+
+            <!-- 智能助手对话区 -->
+            <div class="flex-1 flex flex-col">
+                <!-- 对话标题 -->
+                <div class="px-4 py-3 bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-medium text-gray-800">智能助手</h3>
+                        <div id="assistantStatus" class="flex items-center">
+                            <div class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                            <span class="text-xs text-green-600">在线</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 对话内容 -->
+                <div id="chatContainer" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
+                    <!-- 助手消息 -->
+                    <div class="flex items-start space-x-2 chat-message">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="bg-blue-50 rounded-lg p-3 max-w-xs">
+                                <p class="text-sm text-gray-800">您好，我想进行个人申请修改。</p>
+                            </div>
+                            <span class="text-xs text-gray-500 mt-1 block">09:30</span>
+                        </div>
+                    </div>
+
+                    <!-- 预警消息 -->
+                    <div id="warningMessage" class="hidden">
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-3 chat-message">
+                            <div class="flex items-start space-x-2">
+                                <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"/>
+                                </svg>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-red-800 mb-1">页面不匹配预警</p>
+                                    <p class="text-xs text-red-600">客户需求是"个人申请修改"，当前页面不匹配</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 风险提示 -->
+                    <div id="riskAlert" class="hidden">
+                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 chat-message">
+                            <p class="text-sm font-medium text-orange-800 mb-2">🔍 智能分析检测</p>
+                            <div class="space-y-1 text-xs text-orange-700">
+                                <p>• 语音情绪：紧张度 75%</p>
+                                <p>• 逻辑一致性：存在矛盾</p>
+                                <p>• 综合风险评分：<span class="font-bold">85/100</span></p>
+                            </div>
+                            <div class="mt-3 p-2 bg-white rounded border border-orange-200">
+                                <p class="text-xs text-gray-700">建议话术：</p>
+                                <p class="text-xs text-blue-600 italic mt-1">"请问您和对方是什么关系？"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模拟控制区 -->
+                <div class="border-t p-3 bg-gray-50">
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="simulateNormal()" class="px-2 py-1.5 bg-green-500 text-white text-xs rounded hover:bg-green-600">
+                            正常场景
+                        </button>
+                        <button onclick="simulatePageError()" class="px-2 py-1.5 bg-yellow-500 text-white text-xs rounded hover:bg-yellow-600">
+                            页面错误
+                        </button>
+                        <button onclick="simulateHighRisk()" class="px-2 py-1.5 bg-red-500 text-white text-xs rounded hover:bg-red-600">
+                            高风险预警
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：表单区域 -->
+        <div class="flex-1 bg-gray-50 overflow-y-auto">
+            <div class="p-6">
+                <!-- 基本信息表单 -->
+                <div id="formContainer" class="bg-white rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-medium mb-4 pb-2 border-b">基本信息</h3>
+                    
+                    <div class="space-y-4">
+                        <!-- 第一行 -->
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="flex items-center">
+                                <label class="text-sm text-gray-700 w-24 text-right mr-4">
+                                    <span class="text-red-500">*</span> 客户姓名
+                                </label>
+                                <input type="text" value="王杰" class="flex-1 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="flex items-center">
+                                <label class="text-sm text-gray-700 w-32 text-right mr-4">
+                                    英文/拼音名称
+                                </label>
+                                <input type="text" value="wangjie" class="flex-1 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- 第二行 -->
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="flex items-center">
+                                <label class="text-sm text-gray-700 w-24 text-right mr-4">
+                                    <span class="text-red-500">*</span> 证件类型
+                                </label>
+                                <select class="flex-1 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option>100-居民身份证</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center">
+                                <label class="text-sm text-gray-700 w-32 text-right mr-4">
+                                    <span class="text-red-500">*</span> 证件号码
+                                </label>
+                                <input type="text" value="330701199007201234" class="flex-1 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- 第三行 -->
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="flex items-center">
+                                <label class="text-sm text-gray-700 w-24 text-right mr-4">
+                                    <span class="text-red-500">*</span> 性别
+                                </label>
+                                <select class="flex-1 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option>1-男</option>
+                                    <option>2-女</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center">
+                                <label class="text-sm text-gray-700 w-32 text-right mr-4">
+                                    <span class="text-red-500">*</span> 出生日期
+                                </label>
+                                <input type="date" value="1990-07-20" class="flex-1 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- 更多字段... -->
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="flex items-center">
+                                <label class="text-sm text-gray-700 w-24 text-right mr-4">
+                                    民族
+                                </label>
+                                <select class="flex-1 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option>01-汉族</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center">
+                                <label class="text-sm text-gray-700 w-32 text-right mr-4">
+                                    <span class="text-red-500">*</span> 签发机关所在地
+                                </label>
+                                <input type="text" value="浙江省/金华市/婺城区" class="flex-1 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 联系人信息 -->
+                    <h3 class="text-lg font-medium mb-4 mt-8 pb-2 border-b">联系人信息</h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="flex items-center">
+                                <label class="text-sm text-gray-700 w-24 text-right mr-4">
+                                    <span class="text-red-500">*</span> 手机号码
+                                </label>
+                                <input type="text" value="18813713888" class="flex-1 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="flex items-center">
+                                <label class="text-sm text-gray-700 w-32 text-right mr-4">
+                                    家庭电话
+                                </label>
+                                <input type="text" value="0579-87654321" class="flex-1 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="flex justify-center mt-8 space-x-4">
+                        <button class="px-8 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                            取消
+                        </button>
+                        <button class="px-8 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            提交
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 预警提示浮层 -->
+                <div id="floatingWarning" class="hidden fixed bottom-8 right-8 bg-red-500 text-white rounded-lg shadow-xl p-4 max-w-sm slide-in">
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"/>
+                        </svg>
+                        <div>
+                            <p class="font-medium">页面不匹配</p>
+                            <p class="text-sm mt-1">检测到当前页面与客户需求不符，建议切换到正确页面</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右下角柜员客户头像 -->
+        <div class="fixed bottom-4 right-4 flex items-center space-x-4">
+            <div class="flex flex-col items-center">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23f3f4f6'/%3E%3Ccircle cx='50' cy='35' r='15' fill='%236b7280'/%3E%3Cellipse cx='50' cy='70' rx='25' ry='20' fill='%236b7280'/%3E%3C/svg%3E" 
+                     alt="柜员" class="w-12 h-12 rounded-full border-2 border-white shadow-lg">
+                <span class="text-xs text-gray-600 mt-1">柜员</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23dbeafe'/%3E%3Ccircle cx='50' cy='35' r='15' fill='%233b82f6'/%3E%3Cellipse cx='50' cy='70' rx='25' ry='20' fill='%233b82f6'/%3E%3C/svg%3E" 
+                     alt="客户" class="w-12 h-12 rounded-full border-2 border-white shadow-lg">
+                <span class="text-xs text-gray-600 mt-1">客户</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟正常场景
+        function simulateNormal() {
+            document.getElementById('warningMessage').classList.add('hidden');
+            document.getElementById('riskAlert').classList.add('hidden');
+            document.getElementById('floatingWarning').classList.add('hidden');
+            document.getElementById('formContainer').classList.remove('pulse-border-animation', 'border-red-500', 'border-4');
+            
+            // 添加正常消息
+            const chatContainer = document.getElementById('chatContainer');
+            const normalMessage = document.createElement('div');
+            normalMessage.className = 'flex items-start space-x-2 chat-message';
+            normalMessage.innerHTML = `
+                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="bg-green-50 rounded-lg p-3 max-w-xs">
+                        <p class="text-sm text-gray-800">✓ 页面匹配正确</p>
+                        <p class="text-xs text-gray-600 mt-1">请继续办理业务</p>
+                    </div>
+                    <span class="text-xs text-gray-500 mt-1 block">${new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'})}</span>
+                </div>
+            `;
+            chatContainer.appendChild(normalMessage);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 模拟页面错误
+        function simulatePageError() {
+            document.getElementById('warningMessage').classList.remove('hidden');
+            document.getElementById('floatingWarning').classList.remove('hidden');
+            document.getElementById('formContainer').classList.add('pulse-border-animation', 'border-red-500', 'border-4');
+            
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 模拟高风险预警
+        function simulateHighRisk() {
+            document.getElementById('riskAlert').classList.remove('hidden');
+            document.getElementById('formContainer').classList.add('pulse-border-animation', 'border-orange-500', 'border-4');
+            
+            // 更新助手状态
+            document.getElementById('assistantStatus').innerHTML = `
+                <div class="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></div>
+                <span class="text-xs text-red-600">高风险</span>
+            `;
+            
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>

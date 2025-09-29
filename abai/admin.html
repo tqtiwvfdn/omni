@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能柜面助手管理平台 - 预警配置中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+        
+        .sidebar-item.active {
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 42px;
+            height: 22px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 22px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slide-in { animation: slideIn 0.3s ease-out; }
+        
+        .risk-meter {
+            position: relative;
+            width: 200px;
+            height: 100px;
+            margin: 0 auto;
+        }
+        
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white border-b border-gray-200 fixed w-full top-0 z-40">
+        <div class="px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center">
+                        <svg class="w-8 h-8 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                        </svg>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">智能柜面助手管理平台</h1>
+                            <p class="text-xs text-gray-500">Risk Prevention & Control System v3.2.1</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 px-3 py-1 bg-green-50 rounded-full">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-xs text-green-700">系统运行正常</span>
+                    </div>
+                    
+                    <button class="relative p-2 text-gray-600 hover:text-gray-900">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        <span class="absolute top-0 right-0 block h-2 w-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    
+                    <div class="flex items-center space-x-3 pl-4 border-l">
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-gray-900">系统管理员</p>
+                            <p class="text-xs text-gray-500">admin@agreetech.com</p>
+                        </div>
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23e5e7eb'/%3E%3Ccircle cx='50' cy='35' r='15' fill='%239ca3af'/%3E%3Cellipse cx='50' cy='70' rx='25' ry='20' fill='%239ca3af'/%3E%3C/svg%3E" 
+                             alt="管理员" class="w-10 h-10 rounded-full border-2 border-gray-200">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主体布局 -->
+    <div class="flex h-screen pt-16">
+        <!-- 左侧导航栏 -->
+        <aside class="w-64 bg-white border-r border-gray-200 fixed left-0 top-16 bottom-0 overflow-y-auto custom-scroll">
+            <nav class="p-4">
+                <div class="mb-6">
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">核心配置</h3>
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="#" onclick="showContent('page-match')" id="nav-page-match" class="sidebar-item active flex items-center px-3 py-2 text-sm font-medium rounded-lg transition">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
+                                页面匹配规则
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" onclick="showContent('risk-model')" id="nav-risk-model" class="sidebar-item flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                风险评估模型
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" onclick="showContent('warning-strategy')" id="nav-warning-strategy" class="sidebar-item flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                </svg>
+                                预警策略配置
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" onclick="showContent('speech-lib')" id="nav-speech-lib" class="sidebar-item flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                                </svg>
+                                话术知识库
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">数据分析</h3>
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="#" onclick="showContent('realtime-monitor')" id="nav-realtime-monitor" class="sidebar-item flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                                实时监控
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" onclick="showContent('history-analysis')" id="nav-history-analysis" class="sidebar-item flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                历史分析
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">系统管理</h3>
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                系统设置
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- 右侧内容区 -->
+        <main class="flex-1 ml-64 overflow-y-auto custom-scroll">
+            <div class="p-6">
+                <!-- 页面匹配规则 -->
+                <div id="content-page-match" class="animate-slide-in">
+                    <!-- 页面标题和操作栏 -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900">页面匹配规则配置</h2>
+                                <p class="text-sm text-gray-500 mt-1">配置业务意图识别与页面映射关系，确保系统准确引导柜员操作</p>
+                            </div>
+                            <div class="flex space-x-3">
+                                <button onclick="importRules()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                    </svg>
+                                    导入规则
+                                </button>
+                                <button onclick="exportRules()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                    导出规则
+                                </button>
+                                <button onclick="showAddRuleModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    新增规则
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 统计卡片 -->
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">总规则数</p>
+                                    <p class="text-2xl font-bold text-gray-900 mt-1">128</p>
+                                </div>
+                                <div class="p-3 bg-blue-50 rounded-lg">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">启用规则</p>
+                                    <p class="text-2xl font-bold text-green-600 mt-1">112</p>
+                                </div>
+                                <div class="p-3 bg-green-50 rounded-lg">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">今日匹配</p>
+                                    <p class="text-2xl font-bold text-blue-600 mt-1">3,847</p>
+                                </div>
+                                <div class="p-3 bg-blue-50 rounded-lg">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">匹配准确率</p>
+                                    <p class="text-2xl font-bold text-purple-600 mt-1">96.8%</p>
+                                </div>
+                                <div class="p-3 bg-purple-50 rounded-lg">
+                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 规则列表 -->
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">规则列表</h3>
+                                <div class="flex items-center space-x-3">
+                                    <input type="text" placeholder="搜索规则..." class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <select class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option>全部状态</option>
+                                        <option>已启用</option>
+                                        <option>已禁用</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left">
+                                            <input type="checkbox" class="rounded border-gray-300">
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">规则ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">业务意图</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">关键词组</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">目标页面</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">优先级</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">匹配次数</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4">
+                                            <input type="checkbox" class="rounded border-gray-300">
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">#R001</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">个人活期存款</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-wrap gap-1">
+                                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">存款</span>
+                                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">活期</span>
+                                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">存钱</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">个人活期存款页面</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">高</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">1,234</td>
+                                        <td class="px-6 py-4">
+                                            <label class="switch">
+                                                <input type="checkbox" checked>
+                                                <span class="slider"></span>
+                                            </label>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm">
+                                            <button onclick="editRule('R001')" class="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
+                                            <button onclick="deleteRule('R001')" class="text-red-600 hover:text-red-800">删除</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4">
+                                            <input type="checkbox" class="rounded border-gray-300">
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">#R002</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">转账汇款</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-wrap gap-1">
+                                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">转账</span>
+                                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">汇款</span>
+                                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">转钱</span>
+                                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">付款</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">转账汇款交易页面</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">特高</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">892</td>
+                                        <td class="px-6 py-4">
+                                            <label class="switch">
+                                                <input type="checkbox" checked>
+                                                <span class="slider"></span>
+                                            </label>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm">
+                                            <button onclick="editRule('R002')" class="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
+                                            <button onclick="deleteRule('R002')" class="text-red-600 hover:text-red-800">删除</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4">
+                                            <input type="checkbox" class="rounded border-gray-300">
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">#R003</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">定期存款</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-wrap gap-1">
+                                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">定期</span>
+                                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">理财</span>
+                                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">定存</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">个人定期存款页面</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">中</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">567</td>
+                                        <td class="px-6 py-4">
+                                            <label class="switch">
+                                                <input type="checkbox" checked>
+                                                <span class="slider"></span>
+                                            </label>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm">
+                                            <button onclick="editRule('R003')" class="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
+                                            <button onclick="deleteRule('R003')" class="text-red-600 hover:text-red-800">删除</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- 分页 -->
+                        <div class="px-6 py-4 border-t border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm text-gray-700">
+                                    显示 <span class="font-medium">1</span> 到 <span class="font-medium">10</span> 条，共 <span class="font-medium">128</span> 条记录
+                                </p>
+                                <div class="flex space-x-1">
+                                    <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">上一页</button>
+                                    <button class="px-3 py-1 bg-blue-600 text-white rounded text-sm">1</button>
+                                    <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">2</button>
+                                    <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">3</button>
+                                    <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">下一页</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 风险评估模型 -->
+                <div id="content-risk-model" class="hidden animate-slide-in">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">风险评估模型配置</h2>
+                        <p class="text-sm text-gray-500 mt-1">配置多维度风险评估参数，精准识别潜在风险交易</p>
+                    </div>
+
+                    <!-- 风险因子配置 -->
+                    <div class="grid grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">语义分析因子</h3>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">权重 35%</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">关键词匹配</label>
+                                    <div class="mt-2 flex items-center">
+                                        <input type="range" min="0" max="100" value="40" class="flex-1" onchange="updateWeight(this, 'keyword-weight')">
+                                        <span id="keyword-weight" class="ml-3 text-sm font-medium text-gray-900 w-12 text-right">40%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">异常表述识别</label>
+                                    <div class="mt-2 flex items-center">
+                                        <input type="range" min="0" max="100" value="30" class="flex-1" onchange="updateWeight(this, 'abnormal-weight')">
+                                        <span id="abnormal-weight" class="ml-3 text-sm font-medium text-gray-900 w-12 text-right">30%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">语义相似度</label>
+                                    <div class="mt-2 flex items-center">
+                                        <input type="range" min="0" max="100" value="30" class="flex-1" onchange="updateWeight(this, 'similarity-weight')">
+                                        <span id="similarity-weight" class="ml-3 text-sm font-medium text-gray-900 w-12 text-right">30%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">情绪分析因子</h3>
+                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">权重 30%</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">焦虑指数</label>
+                                    <div class="mt-2 flex items-center">
+                                        <input type="range" min="0" max="100" value="35" class="flex-1" onchange="updateWeight(this, 'anxiety-weight')">
+                                        <span id="anxiety-weight" class="ml-3 text-sm font-medium text-gray-900 w-12 text-right">35%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">紧张度</label>
+                                    <div class="mt-2 flex items-center">
+                                        <input type="range" min="0" max="100" value="35" class="flex-1" onchange="updateWeight(this, 'nervous-weight')">
+                                        <span id="nervous-weight" class="ml-3 text-sm font-medium text-gray-900 w-12 text-right">35%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">回避指数</label>
+                                    <div class="mt-2 flex items-center">
+                                        <input type="range" min="0" max="100" value="30" class="flex-1" onchange="updateWeight(this, 'avoidance-weight')">
+                                        <span id="avoidance-weight" class="ml-3 text-sm font-medium text-gray-900 w-12 text-right">30%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">逻辑分析因子</h3>
+                                <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">权重 35%</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">前后矛盾</label>
+                                    <div class="mt-2 flex items-center">
+                                        <input type="range" min="0" max="100" value="40" class="flex-1" onchange="updateWeight(this, 'contradiction-weight')">
+                                        <span id="contradiction-weight" class="ml-3 text-sm font-medium text-gray-900 w-12 text-right">40%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">信息缺失</label>
+                                    <div class="mt-2 flex items-center">
+                                        <input type="range" min="0" max="100" value="30" class="flex-1" onchange="updateWeight(this, 'missing-weight')">
+                                        <span id="missing-weight" class="ml-3 text-sm font-medium text-gray-900 w-12 text-right">30%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">时序异常</label>
+                                    <div class="mt-2 flex items-center">
+                                        <input type="range" min="0" max="100" value="30" class="flex-1" onchange="updateWeight(this, 'sequence-weight')">
+                                        <span id="sequence-weight" class="ml-3 text-sm font-medium text-gray-900 w-12 text-right">30%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 风险等级设置 -->
+                    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">风险等级阈值设置</h3>
+                        <div class="grid grid-cols-4 gap-6">
+                            <div class="text-center">
+                                <div class="relative">
+                                    <div class="w-32 h-32 mx-auto rounded-full bg-green-100 flex items-center justify-center">
+                                        <div class="text-center">
+                                            <p class="text-3xl font-bold text-green-600">低</p>
+                                            <p class="text-sm text-green-600 mt-1">0-30</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <p class="text-sm font-medium text-gray-700 mb-2">处理方式</p>
+                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option>正常办理</option>
+                                        <option>记录日志</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <div class="relative">
+                                    <div class="w-32 h-32 mx-auto rounded-full bg-yellow-100 flex items-center justify-center">
+                                        <div class="text-center">
+                                            <p class="text-3xl font-bold text-yellow-600">中</p>
+                                            <p class="text-sm text-yellow-600 mt-1">31-60</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <p class="text-sm font-medium text-gray-700 mb-2">处理方式</p>
+                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option>二次确认</option>
+                                        <option>增强验证</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <div class="relative">
+                                    <div class="w-32 h-32 mx-auto rounded-full bg-orange-100 flex items-center justify-center">
+                                        <div class="text-center">
+                                            <p class="text-3xl font-bold text-orange-600">高</p>
+                                            <p class="text-sm text-orange-600 mt-1">61-85</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <p class="text-sm font-medium text-gray-700 mb-2">处理方式</p>
+                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option>主管审核</option>
+                                        <option>暂停交易</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <div class="relative">
+                                    <div class="w-32 h-32 mx-auto rounded-full bg-red-100 flex items-center justify-center">
+                                        <div class="text-center">
+                                            <p class="text-3xl font-bold text-red-600">极高</p>
+                                            <p class="text-sm text-red-600 mt-1">86-100</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <p class="text-sm font-medium text-gray-700 mb-2">处理方式</p>
+                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option>立即拦截</option>
+                                        <option>报警处理</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 高风险关键词库 -->
+                    <div class="bg-white rounded-lg border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">高风险关键词库</h3>
+                            <button onclick="addKeyword()" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+                                添加关键词
+                            </button>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex space-x-2">
+                                <input type="text" id="keywordInput" placeholder="输入关键词，多个用逗号分隔" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <select class="px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option>诈骗类</option>
+                                    <option>投资类</option>
+                                    <option>贷款类</option>
+                                    <option>其他</option>
+                                </select>
+                                <button onclick="addKeywordToList()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                    添加
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex flex-wrap gap-2" id="keywordList">
+                                <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                                    投资理财
+                                    <button onclick="removeKeyword(this)" class="ml-2 text-red-500 hover:text-red-700">×</button>
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                                    网络贷款
+                                    <button onclick="removeKeyword(this)" class="ml-2 text-red-500 hover:text-red-700">×</button>
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                                    刷单返利
+                                    <button onclick="removeKeyword(this)" class="ml-2 text-red-500 hover:text-red-700">×</button>
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                                    虚拟货币
+                                    <button onclick="removeKeyword(this)" class="ml-2 text-red-500 hover:text-red-700">×</button>
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                                    公检法
+                                    <button onclick="removeKeyword(this)" class="ml-2 text-red-500 hover:text-red-700">×</button>
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                                    安全账户
+                                    <button onclick="removeKeyword(this)" class="ml-2 text-red-500 hover:text-red-700">×</button>
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                                    冻结资金
+                                    <button onclick="removeKeyword(this)" class="ml-2 text-red-500 hover:text-red-700">×</button>
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                                    保证金
+                                    <button onclick="removeKeyword(this)" class="ml-2 text-red-500 hover:text-red-700">×</button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 实时监控 -->
+                <div id="content-realtime-monitor" class="hidden animate-slide-in">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">实时监控大屏</h2>
+                        <p class="text-sm text-gray-500 mt-1">实时监控系统运行状态和预警情况</p>
+                    </div>
+
+                    <!-- 实时统计卡片 -->
+                    <div class="grid grid-cols-5 gap-4 mb-6">
+                        <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-4">
+                            <p class="text-sm opacity-90">今日交易总数</p>
+                            <p class="text-2xl font-bold mt-2">12,847</p>
+                            <p class="text-xs mt-2 opacity-75">↑ 12.5% 较昨日</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-4">
+                            <p class="text-sm opacity-90">正常交易</p>
+                            <p class="text-2xl font-bold mt-2">12,613</p>
+                            <p class="text-xs mt-2 opacity-75">98.2%</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-lg p-4">
+                            <p class="text-sm opacity-90">中风险预警</p>
+                            <p class="text-2xl font-bold mt-2">216</p>
+                            <p class="text-xs mt-2 opacity-75">1.7%</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg p-4">
+                            <p class="text-sm opacity-90">高风险拦截</p>
+                            <p class="text-2xl font-bold mt-2">18</p>
+                            <p class="text-xs mt-2 opacity-75">0.1%</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-4">
+                            <p class="text-sm opacity-90">平均响应时间</p>
+                            <p class="text-2xl font-bold mt-2">0.23s</p>
+                            <p class="text-xs mt-2 opacity-75">↓ 15% 较昨日</p>
+                        </div>
+                    </div>
+
+                    <!-- 图表区域 -->
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">24小时预警趋势</h3>
+                            <canvas id="realtimeTrendChart" height="100"></canvas>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">风险类型分布</h3>
+                            <canvas id="riskDistributionChart" height="100"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 实时预警日志 -->
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">实时预警日志</h3>
+                        </div>
+                        <div class="max-h-96 overflow-y-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">时间</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">柜员</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">客户</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">预警类型</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">风险等级</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200" id="realtimeLogBody">
+                                    <!-- 动态生成的日志内容 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 其他内容区域... -->
+            </div>
+        </main>
+    </div>
+
+    <!-- 模态框：添加规则 -->
+    <div id="addRuleModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="modal-backdrop fixed inset-0" onclick="closeModal('addRuleModal')"></div>
+            <div class="bg-white rounded-lg shadow-xl z-50 w-full max-w-2xl">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">新增匹配规则</h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">业务意图名称</label>
+                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：个人活期存款">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">关键词（用逗号分隔）</label>
+                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="例如：存款,活期,存钱"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">目标页面</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>个人活期存款页面</option>
+                                <option>个人定期存款页面</option>
+                                <option>转账汇款页面</option>
+                                <option>贷款申请页面</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">优先级</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option>低</option>
+                                    <option>中</option>
+                                    <option>高</option>
+                                    <option>特高</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option>启用</option>
+                                    <option>禁用</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button onclick="closeModal('addRuleModal')" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        取消
+                    </button>
+                    <button onclick="saveRule()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面切换
+        function showContent(contentId) {
+            // 隐藏所有内容
+            document.querySelectorAll('[id^="content-"]').forEach(el => {
+                el.classList.add('hidden');
+            });
+            // 移除所有导航激活状态
+            document.querySelectorAll('.sidebar-item').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // 显示选中内容
+            document.getElementById('content-' + contentId).classList.remove('hidden');
+            // 激活选中导航
+            document.getElementById('nav-' + contentId).classList.add('active');
+
+            // 初始化特定页面的功能
+            if (contentId === 'realtime-monitor') {
+                initRealtimeCharts();
+                startRealtimeUpdates();
+            }
+        }
+
+        // 显示添加规则模态框
+        function showAddRuleModal() {
+            document.getElementById('addRuleModal').classList.remove('hidden');
+        }
+
+        // 关闭模态框
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // 保存规则
+        function saveRule() {
+            // 模拟保存
+            alert('规则保存成功！');
+            closeModal('addRuleModal');
+        }
+
+        // 编辑规则
+        function editRule(ruleId) {
+            console.log('编辑规则:', ruleId);
+            showAddRuleModal();
+        }
+
+        // 删除规则
+        function deleteRule(ruleId) {
+            if (confirm('确定要删除规则 #' + ruleId + ' 吗？')) {
+                console.log('删除规则:', ruleId);
+            }
+        }
+
+        // 更新权重显示
+        function updateWeight(input, spanId) {
+            document.getElementById(spanId).textContent = input.value + '%';
+        }
+
+        // 添加关键词到列表
+        function addKeywordToList() {
+            const input = document.getElementById('keywordInput');
+            const keywords = input.value.split(',').map(k => k.trim()).filter(k => k);
+            const list = document.getElementById('keywordList');
+            
+            keywords.forEach(keyword => {
+                const span = document.createElement('span');
+                span.className = 'inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm';
+                span.innerHTML = `
+                    ${keyword}
+                    <button onclick="removeKeyword(this)" class="ml-2 text-red-500 hover:text-red-700">×</button>
+                `;
+                list.appendChild(span);
+            });
+            
+            input.value = '';
+        }
+
+        // 移除关键词
+        function removeKeyword(button) {
+            button.parentElement.remove();
+        }
+
+        // 初始化实时监控图表
+        function initRealtimeCharts() {
+            // 24小时趋势图
+            const trendCtx = document.getElementById('realtimeTrendChart');
+            if (trendCtx && !trendCtx.chart) {
+                trendCtx.chart = new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                        datasets: [{
+                            label: '低风险',
+                            data: Array.from({length: 24}, () => Math.floor(Math.random() * 50) + 100),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.3
+                        }, {
+                            label: '中风险',
+                            data: Array.from({length: 24}, () => Math.floor(Math.random() * 30) + 20),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.3
+                        }, {
+                            label: '高风险',
+                            data: Array.from({length: 24}, () => Math.floor(Math.random() * 10) + 5),
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 风险分布饼图
+            const distCtx = document.getElementById('riskDistributionChart');
+            if (distCtx && !distCtx.chart) {
+                distCtx.chart = new Chart(distCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['页面不匹配', '高风险交易', '异常行为', '情绪异常', '逻辑矛盾'],
+                        datasets: [{
+                            data: [45, 28, 15, 8, 4],
+                            backgroundColor: [
+                                '#3b82f6',
+                                '#ef4444',
+                                '#f59e0b',
+                                '#8b5cf6',
+                                '#10b981'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 启动实时更新
+        function startRealtimeUpdates() {
+            // 模拟实时日志更新
+            setInterval(() => {
+                const tbody = document.getElementById('realtimeLogBody');
+                if (!tbody) return;
+                
+                const newRow = document.createElement('tr');
+                newRow.className = 'hover:bg-gray-50 animate-slide-in';
+                
+                const time = new Date().toLocaleTimeString('zh-CN');
+                const types = ['页面不匹配', '高风险交易', '异常行为', '情绪异常'];
+                const levels = [
+                    { text: '低', class: 'bg-green-100 text-green-700' },
+                    { text: '中', class: 'bg-yellow-100 text-yellow-700' },
+                    { text: '高', class: 'bg-red-100 text-red-700' }
+                ];
+                const level = levels[Math.floor(Math.random() * levels.length)];
+                
+                newRow.innerHTML = `
+                    <td class="px-6 py-3 text-sm text-gray-900">${time}</td>
+                    <td class="px-6 py-3 text-sm text-gray-900">柜员${Math.floor(Math.random() * 100)}</td>
+                    <td class="px-6 py-3 text-sm text-gray-900">客户${Math.floor(Math.random() * 1000)}</td>
+                    <td class="px-6 py-3 text-sm text-gray-900">${types[Math.floor(Math.random() * types.length)]}</td>
+                    <td class="px-6 py-3">
+                        <span class="px-2 py-1 ${level.class} rounded-full text-xs font-medium">${level.text}</span>
+                    </td>
+                    <td class="px-6 py-3 text-sm text-gray-900">处理中</td>
+                    <td class="px-6 py-3 text-sm">
+                        <button class="text-blue-600 hover:text-blue-800">查看</button>
+                    </td>
+                `;
+                
+                tbody.insertBefore(newRow, tbody.firstChild);
+                
+                // 限制显示条数
+                while (tbody.children.length > 20) {
+                    tbody.removeChild(tbody.lastChild);
+                }
+            }, 3000);
+        }
+
+        // 导入规则
+        function importRules() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json,.csv';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                console.log('导入文件:', file.name);
+                alert('规则导入成功！');
+            };
+            input.click();
+        }
+
+        // 导出规则
+        function exportRules() {
+            const data = {
+                rules: [],
+                exportTime: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rules_${Date.now()}.json`;
+            a.click();
+        }
+    </script>
+</body>
+</html>

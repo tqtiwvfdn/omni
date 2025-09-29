@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能架构评估（ASE）- 赞同科技架构管控平台</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <script src="/scripts/mermaid.min.js"></script>
+    <script src="/console/style/chart.min.js"></script>
+    <style>
+        body {
+            /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.95); */
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+        
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+        
+        .assessment-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+        }
+        
+        .assessment-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+            border-color: rgba(102, 126, 234, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .health-score-circle {
+            width: 150px;
+            height: 150px;
+            position: relative;
+        }
+        
+        .health-score-bg {
+            fill: none;
+            stroke: #e5e7eb;
+            stroke-width: 10;
+        }
+        
+        .health-score-progress {
+            fill: none;
+            stroke-width: 10;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            transition: stroke-dashoffset 1s ease;
+        }
+        
+        .score-excellent { stroke: #10b981; }
+        .score-good { stroke: #3b82f6; }
+        .score-warning { stroke: #f59e0b; }
+        .score-danger { stroke: #ef4444; }
+        
+        .message-bubble {
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            border-radius: 18px 18px 4px 18px;
+        }
+        
+        .assistant-message {
+            background: rgba(255, 255, 255, 0.95);
+            color: #374151;
+            margin-right: auto;
+            border-radius: 18px 18px 18px 4px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px 18px 18px 4px;
+            margin-right: auto;
+            max-width: 85%;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-healthy { background: #d1fae5; color: #065f46; }
+        .status-warning { background: #fed7aa; color: #92400e; }
+        .status-critical { background: #fee2e2; color: #991b1b; }
+        .status-info { background: #dbeafe; color: #1e40af; }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            max-width: 800px;
+            max-height: 90vh;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .tech-debt-item {
+            background: rgba(255, 243, 199, 0.3);
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+        }
+        
+        .vulnerability-item {
+            background: rgba(254, 226, 226, 0.3);
+            border-left: 4px solid #ef4444;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+        }
+        
+        .recommendation-item {
+            background: rgba(209, 250, 229, 0.3);
+            border-left: 4px solid #10b981;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+        }
+        
+        .chat-input {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 12px 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-input:focus {
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- 主容器 -->
+    <div class="flex-1 flex flex-col overflow-hidden w-full p-4">
+        <!-- 头部 -->
+        <div class="liquid-glass-strong rounded-lg p-4 mb-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">智能架构评估系统（ASE）</h3>
+                    <p class="text-sm text-gray-500">自动化健康诊断 · 实时监控 · 智能优化建议</p>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="startFullAssessment()" class="liquid-glass specular-highlight rounded-lg px-4 py-2 text-sm font-medium bg-gradient-to-r from-purple-500 to-blue-500 text-white">
+                    开始全面评估
+                </button>
+                <button onclick="viewHistory()" class="liquid-glass specular-highlight rounded-lg px-4 py-2 text-sm font-medium text-gray-700">
+                    历史记录
+                </button>
+            </div>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="flex-1 flex gap-4 overflow-hidden">
+            <!-- 左侧评估区域 -->
+            <div class="flex-1 liquid-glass-strong rounded-lg p-6 overflow-y-auto">
+                <!-- 健康度总览 -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">架构健康度总览</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- 总体评分 -->
+                        <div class="metric-card flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="health-score-circle mx-auto">
+                                    <circle cx="75" cy="75" r="70" class="health-score-bg"></circle>
+                                    <circle cx="75" cy="75" r="70" class="health-score-progress score-good" 
+                                            style="stroke-dasharray: 440; stroke-dashoffset: 110;"></circle>
+                                </svg>
+                                <div style="margin-top: -90px;" class="relative">
+                                    <div class="text-3xl font-bold text-blue-600">75</div>
+                                    <div class="text-sm text-gray-500">总体健康度</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 核心指标 -->
+                        <div class="metric-card">
+                            <h5 class="font-medium text-gray-700 mb-3">核心指标</h5>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">架构复杂度</span>
+                                    <span class="status-badge status-warning">中等</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">技术债务</span>
+                                    <span class="status-badge status-critical">较高</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">安全合规</span>
+                                    <span class="status-badge status-healthy">良好</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">性能效率</span>
+                                    <span class="status-badge status-info">优化中</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 趋势图 -->
+                        <div class="metric-card flex flex-col overflow-hidden" style="height: 200px;max-height: 200px;">
+                            <h5 class="font-medium text-gray-700 mb-3">健康度趋势</h5>
+                            <canvas id="trendChart" width="200" height="120" class="flex-1"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 快速评估卡片 -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">快速评估</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="assessment-card specular-highlight" onclick="assessSystem('技术债务分析')">
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-amber-600">⚠️</span>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-gray-800 mb-1">技术债务扫描</h4>
+                                    <p class="text-sm text-gray-600 mb-2">识别过时技术栈、冗余代码、循环依赖等问题</p>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-amber-500" style="width: 65%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">已发现 23 个待优化项</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="assessment-card specular-highlight" onclick="assessSystem('合规性检查')">
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-green-600">✅</span>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-gray-800 mb-1">合规性检查</h4>
+                                    <p class="text-sm text-gray-600 mb-2">验证架构原则遵循度、安全规范符合性</p>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-green-500" style="width: 85%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">符合率 85%</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="assessment-card specular-highlight" onclick="assessSystem('性能瓶颈预测')">
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-blue-600">📊</span>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-gray-800 mb-1">性能瓶颈预测</h4>
+                                    <p class="text-sm text-gray-600 mb-2">基于历史数据预测潜在的性能问题</p>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-blue-500" style="width: 45%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">风险等级：中等</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="assessment-card specular-highlight" onclick="assessSystem('依赖关系分析')">
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-purple-600">🔗</span>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-gray-800 mb-1">依赖关系分析</h4>
+                                    <p class="text-sm text-gray-600 mb-2">分析系统间的耦合度和循环依赖</p>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-purple-500" style="width: 70%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">耦合度：中高</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 系统列表 -->
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">系统健康状态</h4>
+                    <div class="space-y-2" id="system-list">
+                        <!-- 系统列表将动态生成 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧聊天区域 -->
+            <div class="w-96 flex flex-col liquid-glass-strong rounded-lg">
+                <!-- 聊天头部 -->
+                <div class="p-4 border-b border-gray-200/50">
+                    <h4 class="font-medium text-gray-800">架构顾问助手</h4>
+                    <p class="text-xs text-gray-500">实时分析 · 智能建议 · 持续优化</p>
+                </div>
+                
+                <!-- 消息区域 -->
+                <div id="messages-container" class="flex-1 p-4 overflow-y-auto">
+                    <div class="message-bubble assistant-message p-4 mb-4">
+                        <p class="text-sm">您好！我是架构评估助手，可以帮助您：</p>
+                        <ul class="text-sm mt-2 space-y-1 text-gray-600">
+                            <li>• 分析系统架构健康度</li>
+                            <li>• 识别技术债务和风险</li>
+                            <li>• 提供优化建议和最佳实践</li>
+                            <li>• 预测潜在的性能瓶颈</li>
+                        </ul>
+                        <p class="text-sm mt-3 text-gray-700">请选择左侧的评估项开始，或直接询问我任何架构相关问题。</p>
+                    </div>
+                </div>
+                
+                <!-- 输入区域 -->
+                <div class="p-4 border-t border-gray-200/50">
+                    <div class="flex items-end space-x-2">
+                        <input type="text" 
+                               id="message-input"
+                               placeholder="询问架构优化建议..."
+                               class="flex-1 chat-input text-sm"
+                               onkeypress="if(event.key==='Enter') sendMessage()">
+                        <button onclick="sendMessage()" 
+                                class="p-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详细报告弹窗 -->
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-content">
+            <!-- 弹窗头部 -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800" id="modal-title">评估详细报告</h3>
+                <button onclick="closeDetailModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 弹窗内容 -->
+            <div class="p-6 overflow-y-auto max-h-96" id="modal-content">
+                <!-- 内容将动态生成 -->
+            </div>
+            
+            <!-- 弹窗底部 -->
+            <div class="flex items-center justify-between p-6 border-t border-gray-200/50">
+                <div class="text-sm text-gray-500">
+                    生成时间：<span id="report-time">-</span>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="exportReport()" class="liquid-glass rounded-lg px-4 py-2 text-sm font-medium text-gray-700">
+                        导出报告
+                    </button>
+                    <button onclick="optimizeNow()" class="bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg px-4 py-2 text-sm font-medium">
+                        立即优化
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default'
+        });
+
+        // 系统数据
+        const systems = [
+            { id: 'SYS001', name: '核心交易系统', health: 85, status: 'healthy' },
+            { id: 'SYS002', name: '账户管理系统', health: 72, status: 'warning' },
+            { id: 'SYS003', name: '风控管理平台', health: 91, status: 'healthy' },
+            { id: 'SYS004', name: '数据分析平台', health: 68, status: 'warning' },
+            { id: 'SYS005', name: '客户服务系统', health: 45, status: 'critical' }
+        ];
+
+        // 评估数据
+        const assessmentData = {
+            '技术债务分析': {
+                title: '技术债务扫描报告',
+                content: `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-3">发现的技术债务</h4>
+                        <div class="tech-debt-item">
+                            <div class="font-medium text-gray-800">过时的依赖库</div>
+                            <div class="text-sm text-gray-600 mt-1">发现 15 个依赖库版本过旧，存在安全风险</div>
+                            <div class="text-xs text-amber-600 mt-2">建议：升级到最新稳定版本</div>
+                        </div>
+                        <div class="tech-debt-item">
+                            <div class="font-medium text-gray-800">重复代码</div>
+                            <div class="text-sm text-gray-600 mt-1">代码重复率达到 23%，影响维护效率</div>
+                            <div class="text-xs text-amber-600 mt-2">建议：抽取公共模块，实施DRY原则</div>
+                        </div>
+                        <div class="tech-debt-item">
+                            <div class="font-medium text-gray-800">缺少单元测试</div>
+                            <div class="text-sm text-gray-600 mt-1">测试覆盖率仅 45%，低于标准要求</div>
+                            <div class="text-xs text-amber-600 mt-2">建议：补充关键业务逻辑的单元测试</div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-3">优化路线图</h4>
+                        <div class="mermaid">
+                            gantt
+                                title 技术债务清理计划
+                                dateFormat YYYY-MM-DD
+                                section 第一阶段
+                                依赖库升级     :a1, 2025-02-01, 30d
+                                安全漏洞修复   :a2, 2025-02-15, 20d
+                                section 第二阶段
+                                代码重构       :b1, 2025-03-01, 45d
+                                模块化改造     :b2, 2025-03-15, 30d
+                                section 第三阶段
+                                测试覆盖提升   :c1, 2025-04-01, 60d
+                                文档完善       :c2, 2025-04-15, 30d
+                        </div>
+                    </div>
+                `
+            },
+            '合规性检查': {
+                title: '架构合规性评估报告',
+                content: `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-3">合规性检查结果</h4>
+                        <div class="recommendation-item">
+                            <div class="font-medium text-gray-800">✅ 安全规范</div>
+                            <div class="text-sm text-gray-600 mt-1">符合信息安全三级等保要求</div>
+                        </div>
+                        <div class="recommendation-item">
+                            <div class="font-medium text-gray-800">✅ 架构原则</div>
+                            <div class="text-sm text-gray-600 mt-1">遵循微服务架构设计原则</div>
+                        </div>
+                        <div class="vulnerability-item">
+                            <div class="font-medium text-gray-800">⚠️ 数据规范</div>
+                            <div class="text-sm text-gray-600 mt-1">部分接口未遵循RESTful规范</div>
+                            <div class="text-xs text-red-600 mt-2">需要改进：标准化API设计</div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-3">合规性趋势</h4>
+                        <canvas id="compliance-chart" width="400" height="200"></canvas>
+                    </div>
+                `
+            },
+            '性能瓶颈预测': {
+                title: '性能瓶颈预测分析',
+                content: `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-3">潜在性能风险</h4>
+                        <div class="vulnerability-item">
+                            <div class="font-medium text-gray-800">数据库连接池配置</div>
+                            <div class="text-sm text-gray-600 mt-1">当前配置在高并发场景下可能出现连接耗尽</div>
+                            <div class="text-xs text-red-600 mt-2">预测：日交易量超过100万时触发</div>
+                        </div>
+                        <div class="vulnerability-item">
+                            <div class="font-medium text-gray-800">缓存命中率下降</div>
+                            <div class="text-sm text-gray-600 mt-1">Redis缓存命中率呈下降趋势，当前为78%</div>
+                            <div class="text-xs text-red-600 mt-2">预测：2个月后降至60%以下</div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-3">性能预测模型</h4>
+                        <div class="mermaid">
+                            graph TD
+                                A[当前负载: 65%] --> B{负载增长预测}
+                                B -->|正常增长| C[3个月后: 75%]
+                                B -->|快速增长| D[3个月后: 85%]
+                                C --> E[性能优化建议]
+                                D --> F[紧急扩容建议]
+                                E --> G[增加缓存<br/>优化SQL]
+                                F --> H[横向扩展<br/>负载均衡]
+                        </div>
+                    </div>
+                `
+            },
+            '依赖关系分析': {
+                title: '系统依赖关系分析',
+                content: `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-3">依赖关系图谱</h4>
+                        <div class="mermaid">
+                            graph LR
+                                A[核心交易系统] --> B[账户管理系统]
+                                A --> C[风控管理平台]
+                                B --> D[数据分析平台]
+                                C --> D
+                                D --> E[客户服务系统]
+                                B --> E
+                                C -.->|循环依赖| A
+                                style C fill:#fee2e2
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-3">问题诊断</h4>
+                        <div class="vulnerability-item">
+                            <div class="font-medium text-gray-800">循环依赖检测</div>
+                            <div class="text-sm text-gray-600 mt-1">发现 核心交易系统 与 风控管理平台 存在循环依赖</div>
+                            <div class="text-xs text-red-600 mt-2">影响：增加系统耦合度，降低可维护性</div>
+                        </div>
+                        <div class="tech-debt-item">
+                            <div class="font-medium text-gray-800">高耦合模块</div>
+                            <div class="text-sm text-gray-600 mt-1">账户管理系统被5个系统直接依赖</div>
+                            <div class="text-xs text-amber-600 mt-2">建议：引入消息队列解耦</div>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        // 初始化系统列表
+        function initSystemList() {
+            const container = document.getElementById('system-list');
+            systems.forEach(sys => {
+                const statusClass = sys.status === 'healthy' ? 'status-healthy' : 
+                                   sys.status === 'warning' ? 'status-warning' : 'status-critical';
+                const progressColor = sys.status === 'healthy' ? 'bg-green-500' : 
+                                     sys.status === 'warning' ? 'bg-amber-500' : 'bg-red-500';
+                
+                const systemCard = document.createElement('div');
+                systemCard.className = 'metric-card cursor-pointer';
+                systemCard.onclick = () => assessSpecificSystem(sys.id);
+                systemCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <span class="font-medium text-gray-800">${sys.name}</span>
+                            <span class="ml-2 text-xs text-gray-500">${sys.id}</span>
+                        </div>
+                        <span class="status-badge ${statusClass}">${sys.health}分</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${progressColor}" style="width: ${sys.health}%"></div>
+                    </div>
+                `;
+                container.appendChild(systemCard);
+            });
+        }
+
+        // 初始化趋势图
+        function initTrendChart() {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    datasets: [{
+                        label: '健康度',
+                        data: [82, 78, 75, 73, 75, 75],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 60,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // 评估系统
+        function assessSystem(type) {
+            const data = assessmentData[type];
+            if (!data) return;
+            
+            // 显示详细报告
+            document.getElementById('modal-title').textContent = data.title;
+            document.getElementById('modal-content').innerHTML = data.content;
+            document.getElementById('report-time').textContent = new Date().toLocaleString();
+            document.getElementById('detail-modal').classList.add('show');
+            
+            // 重新初始化 Mermaid 图表
+            setTimeout(() => {
+                mermaid.init();
+                
+                // 如果是合规性检查，初始化图表
+                if (type === '合规性检查') {
+                    initComplianceChart();
+                }
+            }, 100);
+            
+            // 添加聊天消息
+            addMessage('assistant', `已完成${type}，发现了一些需要关注的问题。点击查看详细报告了解具体情况和优化建议。`);
+        }
+
+        // 初始化合规性图表
+        function initComplianceChart() {
+            const canvas = document.getElementById('compliance-chart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['安全规范', '架构原则', '编码规范', '数据规范', '部署规范'],
+                    datasets: [{
+                        label: '当前合规度',
+                        data: [95, 88, 76, 65, 92],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)'
+                    }, {
+                        label: '目标合规度',
+                        data: [100, 100, 100, 100, 100],
+                        borderColor: '#e5e7eb',
+                        backgroundColor: 'rgba(229, 231, 235, 0.1)',
+                        borderDash: [5, 5]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // 评估特定系统
+        function assessSpecificSystem(sysId) {
+            const system = systems.find(s => s.id === sysId);
+            if (!system) return;
+            
+            addMessage('user', `请评估 ${system.name} 的架构健康状态`);
+            
+            setTimeout(() => {
+                let response = `${system.name}（${sysId}）评估结果：\n\n`;
+                response += `健康度评分：${system.health}/100\n`;
+                
+                if (system.health >= 80) {
+                    response += '状态：健康\n\n';
+                    response += '该系统架构设计良好，性能稳定。建议继续保持当前的架构模式，定期进行小规模优化。';
+                } else if (system.health >= 60) {
+                    response += '状态：需要关注\n\n';
+                    response += '发现以下问题：\n';
+                    response += '1. 部分模块耦合度较高\n';
+                    response += '2. 缺少必要的缓存机制\n';
+                    response += '3. 数据库查询需要优化\n\n';
+                    response += '建议制定优化计划，逐步改进架构设计。';
+                } else {
+                    response += '状态：严重问题\n\n';
+                    response += '紧急问题：\n';
+                    response += '1. 存在单点故障风险\n';
+                    response += '2. 性能瓶颈明显\n';
+                    response += '3. 技术栈严重过时\n\n';
+                    response += '强烈建议立即启动架构重构项目。';
+                }
+                
+                addMessage('assistant', response);
+            }, 1500);
+        }
+
+        // 开始全面评估
+        function startFullAssessment() {
+            addMessage('user', '请开始全面的架构健康评估');
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                addMessage('assistant', `正在执行全面评估，包括以下方面：
+                
+1. 架构复杂度分析
+2. 技术债务扫描
+3. 安全合规性检查
+4. 性能瓶颈预测
+5. 依赖关系分析
+
+评估完成！总体健康度为75分，处于"良好"水平。
+
+主要发现：
+• 技术债务：发现23个待优化项
+• 合规性：85%符合架构规范
+• 性能风险：2个潜在瓶颈
+• 依赖问题：1个循环依赖
+
+请点击各评估卡片查看详细报告。`);
+                
+                // 更新界面数据
+                updateHealthScore(75);
+            }, 3000);
+        }
+
+        // 更新健康度分数
+        function updateHealthScore(score) {
+            const circle = document.querySelector('.health-score-progress');
+            const offset = 440 - (440 * score / 100);
+            circle.style.strokeDashoffset = offset;
+            
+            // 更新分数显示
+            document.querySelector('.text-3xl').textContent = score;
+            
+            // 更新颜色
+            if (score >= 80) {
+                circle.classList.remove('score-good', 'score-warning', 'score-danger');
+                circle.classList.add('score-excellent');
+            } else if (score >= 60) {
+                circle.classList.remove('score-excellent', 'score-warning', 'score-danger');
+                circle.classList.add('score-good');
+            } else if (score >= 40) {
+                circle.classList.remove('score-excellent', 'score-good', 'score-danger');
+                circle.classList.add('score-warning');
+            } else {
+                circle.classList.remove('score-excellent', 'score-good', 'score-warning');
+                circle.classList.add('score-danger');
+            }
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addMessage('user', message);
+            input.value = '';
+            
+            // 模拟AI响应
+            setTimeout(() => {
+                handleAIResponse(message);
+            }, 1000);
+        }
+
+        // 处理AI响应
+        function handleAIResponse(userMessage) {
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                
+                let response = '';
+                
+                if (userMessage.includes('优化') || userMessage.includes('建议')) {
+                    response = `基于当前架构评估，为您提供以下优化建议：
+
+1. **短期优化（1-2个月）**
+   - 升级过时的依赖库版本
+   - 优化数据库慢查询
+   - 增加关键接口的缓存
+
+2. **中期改进（3-6个月）**
+   - 实施微服务拆分
+   - 引入消息队列解耦
+   - 完善监控告警体系
+
+3. **长期规划（6-12个月）**
+   - 云原生架构改造
+   - 建立完整的DevOps流程
+   - 实施混沌工程提升稳定性`;
+                } else if (userMessage.includes('风险') || userMessage.includes('问题')) {
+                    response = `当前架构存在的主要风险：
+
+⚠️ **高优先级风险：**
+- 客户服务系统健康度仅45%，存在宕机风险
+- 发现3个高危安全漏洞需要立即修复
+
+⚡ **中等风险：**
+- 数据库连接池配置不当，高并发时可能崩溃
+- 缺少服务降级和熔断机制
+
+📊 **潜在风险：**
+- 技术栈老化，维护成本逐年上升
+- 缺少完整的灾备方案`;
+                } else {
+                    response = `收到您的问题："${userMessage}"
+
+我可以帮您分析架构的各个方面，包括：
+- 健康度评估
+- 技术债务识别
+- 性能优化建议
+- 安全合规检查
+
+请选择左侧的评估项目，或继续提出具体问题。`;
+                }
+                
+                addMessage('assistant', response);
+            }, 2000);
+        }
+
+        // 添加消息
+        function addMessage(sender, content) {
+            const container = document.getElementById('messages-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-bubble ${sender}-message p-4 mb-4`;
+            
+            if (sender === 'assistant') {
+                // 简单的Markdown渲染
+                content = content
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+                messageDiv.innerHTML = `<div class="text-sm">${content}</div>`;
+            } else {
+                messageDiv.innerHTML = `<div class="text-sm">${content}</div>`;
+            }
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 显示输入指示器
+        function showTypingIndicator() {
+            const container = document.getElementById('messages-container');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'typing-indicator mb-4';
+            typingDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <span class="ml-2 text-sm text-gray-500">AI正在分析...</span>
+            `;
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 隐藏输入指示器
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        // 关闭详细弹窗
+        function closeDetailModal() {
+            document.getElementById('detail-modal').classList.remove('show');
+        }
+
+        // 导出报告
+        function exportReport() {
+            alert('正在生成PDF报告...\n报告将包含完整的架构评估数据和优化建议。');
+        }
+
+        // 立即优化
+        function optimizeNow() {
+            alert('正在启动架构优化流程...\n系统将自动创建优化任务并分配给相关团队。');
+            closeDetailModal();
+        }
+
+        // 查看历史
+        function viewHistory() {
+            alert('历史评估记录：\n- 2024-12: 健康度82分\n- 2025-01: 健康度75分\n- 2025-02: 健康度75分（当前）');
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initSystemList();
+            initTrendChart();
+            
+            // 模拟定期更新
+            setInterval(() => {
+                const randomSystem = systems[Math.floor(Math.random() * systems.length)];
+                const change = (Math.random() - 0.5) * 10;
+                randomSystem.health = Math.max(0, Math.min(100, randomSystem.health + change));
+                
+                // 更新状态
+                if (randomSystem.health >= 80) randomSystem.status = 'healthy';
+                else if (randomSystem.health >= 60) randomSystem.status = 'warning';
+                else randomSystem.status = 'critical';
+                
+                // 重新渲染系统列表
+                document.getElementById('system-list').innerHTML = '';
+                initSystemList();
+            }, 30000);
+        });
+    </script>
+</body>
+</html>

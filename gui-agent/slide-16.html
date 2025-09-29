@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成本效益重新分析</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <script src="/console/style/chart.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            background: #ffffff;
+        }
+    .tech-blue {
+        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+    }
+    
+    .tech-blue-light {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    }
+    
+    .warning-bg {
+        background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+    }
+    
+    .danger-bg {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    }
+    
+    .success-bg {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    }
+    
+    .cost-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        background: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .cost-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    .metric-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 2px;
+    }
+    
+    .high-risk {
+        background: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+    
+    .medium-risk {
+        background: #fef3c7;
+        color: #d97706;
+        border: 1px solid #fed7aa;
+    }
+    
+    .low-risk {
+        background: #dcfce7;
+        color: #059669;
+        border: 1px solid #bbf7d0;
+    }
+    
+    .roi-indicator {
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        padding: 10px;
+        border-radius: 8px;
+        margin: 10px 0;
+    }
+    
+    .negative-roi {
+        background: #fee2e2;
+        color: #dc2626;
+        border: 2px solid #fca5a5;
+    }
+    
+    .uncertain-roi {
+        background: #fef3c7;
+        color: #d97706;
+        border: 2px solid #fbbf24;
+    }
+    
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+</style>
+</head>
+<body class="p-8 bg-gray-50">
+    <div class="max-w-7xl mx-auto">
+        <!-- 页面标题 -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-900 mb-2">成本效益重新分析</h1>
+            <p class="text-lg text-gray-600">基于实际技术能力的ROI评估与风险分析</p>
+            <div class="w-16 h-1 tech-blue mx-auto mt-4 rounded"></div>
+        </div>
+    <!-- 核心结论警示框 -->
+    <div class="danger-bg border-l-4 border-red-500 p-6 mb-8 rounded-lg">
+        <div class="flex items-center mb-3">
+            <span class="text-2xl mr-3">⚠️</span>
+            <h2 class="text-xl font-bold text-red-800">投资风险警示</h2>
+        </div>
+        <p class="text-red-700 text-lg">基于技术现状分析，GUI Agent在金融环境的投资回报率存疑，甚至可能为负值。建议谨慎评估。</p>
+    </div>
+
+    <!-- 成本效益对比表格 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- 实际部署成本 -->
+        <div class="cost-card">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                💰 实际部署成本（年度预估）
+            </h3>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span class="text-gray-700">硬件成本（GPU服务器集群）</span>
+                    <span class="font-bold text-red-600">100-200万</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span class="text-gray-700">软件开发与定制</span>
+                    <span class="font-bold text-red-600">200-400万</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span class="text-gray-700">维护运营成本</span>
+                    <span class="font-bold text-red-600">100-200万</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span class="text-gray-700">合规审计成本</span>
+                    <span class="font-bold text-red-600">50-100万</span>
+                </div>
+                <div class="border-t-2 border-red-200 pt-3">
+                    <div class="flex justify-between items-center font-bold text-lg">
+                        <span class="text-gray-800">总成本</span>
+                        <span class="text-red-700 text-xl">450-900万</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 现实收益评估 -->
+        <div class="cost-card">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                📈 现实收益评估（保守估计）
+            </h3>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center p-3 bg-green-50 rounded">
+                    <span class="text-gray-700">培训效率提升</span>
+                    <span class="font-bold text-green-600">50-100万</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-green-50 rounded">
+                    <span class="text-gray-700">部分流程自动化</span>
+                    <span class="font-bold text-green-600">100-200万</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-red-50 rounded">
+                    <span class="text-gray-700">错误成本风险</span>
+                    <span class="font-bold text-red-600">-50至-500万</span>
+                </div>
+                <div class="border-t-2 border-orange-200 pt-3">
+                    <div class="flex justify-between items-center font-bold text-lg">
+                        <span class="text-gray-800">净收益</span>
+                        <span class="text-orange-700 text-xl">100-300万或负值</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROI分析图表 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- ROI计算结果 -->
+        <div class="cost-card text-center">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">投资回报率</h3>
+            <div class="roi-indicator uncertain-roi pulse-animation">
+                -10% ~ +15%
+            </div>
+            <p class="text-gray-600 mt-2">基于保守估计</p>
+            <div class="mt-4 space-y-2">
+                <div class="metric-badge high-risk">高不确定性</div>
+                <div class="metric-badge medium-risk">风险大于收益</div>
+            </div>
+        </div>
+
+        <!-- 风险评估 -->
+        <div class="cost-card">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">主要风险因素</h3>
+            <div class="space-y-3">
+                <div class="flex items-center">
+                    <span class="w-3 h-3 bg-red-500 rounded-full mr-3"></span>
+                    <span class="text-sm">技术不成熟导致的失败风险</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="w-3 h-3 bg-orange-500 rounded-full mr-3"></span>
+                    <span class="text-sm">监管合规的额外成本</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></span>
+                    <span class="text-sm">运营错误的潜在损失</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="w-3 h-3 bg-gray-500 rounded-full mr-3"></span>
+                    <span class="text-sm">技术债务的持续成本</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 对比方案 -->
+        <div class="cost-card">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">API-based方案对比</h3>
+            <div class="space-y-3">
+                <div class="p-3 success-bg rounded">
+                    <div class="text-sm text-green-800 font-semibold">开发成本</div>
+                    <div class="text-lg font-bold text-green-700">150-300万</div>
+                </div>
+                <div class="p-3 success-bg rounded">
+                    <div class="text-sm text-green-800 font-semibold">年度ROI</div>
+                    <div class="text-lg font-bold text-green-700">25-40%</div>
+                </div>
+                <div class="p-3 success-bg rounded">
+                    <div class="text-sm text-green-800 font-semibold">风险等级</div>
+                    <div class="text-lg font-bold text-green-700">低</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成本构成可视化 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div class="cost-card">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">GUI Agent成本构成</h3>
+            <div class="chart-container">
+                <canvas id="costChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="cost-card">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">不同方案投资对比</h3>
+            <div class="chart-container">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详细分析表格 -->
+    <div class="cost-card mb-8">
+        <h3 class="text-xl font-bold text-gray-800 mb-6">详细成本效益分析对比表</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="tech-blue text-white">
+                        <th class="px-4 py-3 text-left">项目</th>
+                        <th class="px-4 py-3 text-center">GUI Agent</th>
+                        <th class="px-4 py-3 text-center">API-based方案</th>
+                        <th class="px-4 py-3 text-center">传统RPA</th>
+                        <th class="px-4 py-3 text-center">推荐度</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <tr>
+                        <td class="px-4 py-3 font-medium">初期投资</td>
+                        <td class="px-4 py-3 text-center text-red-600 font-bold">450-900万</td>
+                        <td class="px-4 py-3 text-center text-green-600 font-bold">150-300万</td>
+                        <td class="px-4 py-3 text-center text-blue-600 font-bold">100-200万</td>
+                        <td class="px-4 py-3 text-center"><span class="metric-badge low-risk">API优先</span></td>
+                    </tr>
+                    <tr class="bg-gray-50">
+                        <td class="px-4 py-3 font-medium">技术风险</td>
+                        <td class="px-4 py-3 text-center"><span class="metric-badge high-risk">高</span></td>
+                        <td class="px-4 py-3 text-center"><span class="metric-badge low-risk">低</span></td>
+                        <td class="px-4 py-3 text-center"><span class="metric-badge medium-risk">中</span></td>
+                        <td class="px-4 py-3 text-center"><span class="metric-badge low-risk">API优先</span></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3 font-medium">实施周期</td>
+                        <td class="px-4 py-3 text-center text-red-600">12-18个月</td>
+                        <td class="px-4 py-3 text-center text-green-600">6-9个月</td>
+                        <td class="px-4 py-3 text-center text-blue-600">3-6个月</td>
+                        <td class="px-4 py-3 text-center"><span class="metric-badge low-risk">API优先</span></td>
+                    </tr>
+                    <tr class="bg-gray-50">
+                        <td class="px-4 py-3 font-medium">维护成本</td>
+                        <td class="px-4 py-3 text-center text-red-600">100-200万/年</td>
+                        <td class="px-4 py-3 text-center text-green-600">30-60万/年</td>
+                        <td class="px-4 py-3 text-center text-blue-600">50-100万/年</td>
+                        <td class="px-4 py-3 text-center"><span class="metric-badge low-risk">API优先</span></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3 font-medium">预期ROI</td>
+                        <td class="px-4 py-3 text-center text-red-600 font-bold">-10% ~ +15%</td>
+                        <td class="px-4 py-3 text-center text-green-600 font-bold">25% ~ 40%</td>
+                        <td class="px-4 py-3 text-center text-blue-600 font-bold">15% ~ 25%</td>
+                        <td class="px-4 py-3 text-center"><span class="metric-badge low-risk">API优先</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 核心建议 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="danger-bg p-6 rounded-lg border-l-4 border-red-500">
+            <h3 class="text-lg font-bold text-red-800 mb-3 flex items-center">
+                🚫 不建议大规模投资GUI Agent
+            </h3>
+            <ul class="space-y-2 text-red-700">
+                <li class="flex items-center"><span class="mr-2">•</span>技术不成熟，投资风险过高</li>
+                <li class="flex items-center"><span class="mr-2">•</span>ROI不确定性大，可能为负值</li>
+                <li class="flex items-center"><span class="mr-2">•</span>监管合规成本高昂</li>
+                <li class="flex items-center"><span class="mr-2">•</span>错误成本可能远超收益</li>
+            </ul>
+        </div>
+
+        <div class="success-bg p-6 rounded-lg border-l-4 border-green-500">
+            <h3 class="text-lg font-bold text-green-800 mb-3 flex items-center">
+                ✅ 推荐API-based智能化方案
+            </h3>
+            <ul class="space-y-2 text-green-700">
+                <li class="flex items-center"><span class="mr-2">•</span>投资成本可控，风险较低</li>
+                <li class="flex items-center"><span class="mr-2">•</span>预期ROI 25-40%，回报稳定</li>
+                <li class="flex items-center"><span class="mr-2">•</span>技术成熟，合规性好</li>
+                <li class="flex items-center"><span class="mr-2">•</span>实施周期短，见效快</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 成本构成饼图
+    const costCtx = document.getElementById('costChart').getContext('2d');
+    new Chart(costCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['硬件成本', '软件开发', '维护运营', '合规审计', '其他风险'],
+            datasets: [{
+                data: [150, 300, 150, 75, 125],
+                backgroundColor: [
+                    '#ef4444',
+                    '#f97316',
+                    '#eab308',
+                    '#84cc16',
+                    '#6b7280'
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + '万元';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 方案对比柱状图
+    const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+    new Chart(comparisonCtx, {
+        type: 'bar',
+        data: {
+            labels: ['GUI Agent', 'API-based', '传统RPA'],
+            datasets: [
+                {
+                    label: '初期投资（万元）',
+                    data: [675, 225, 150],
+                    backgroundColor: '#ef4444',
+                    borderRadius: 4
+                },
+                {
+                    label: '年度维护（万元）',
+                    data: [150, 45, 75],
+                    backgroundColor: '#f97316',
+                    borderRadius: 4
+                },
+                {
+                    label: '预期ROI（%）',
+                    data: [2.5, 32.5, 20],
+                    backgroundColor: '#22c55e',
+                    borderRadius: 4,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: '成本（万元）'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'ROI（%）'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
