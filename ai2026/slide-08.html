@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统集成形态演变</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            background: transparent;
+            margin: 0;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .content-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .slide-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .slide-subtitle {
+            font-size: 18px;
+            color: #86868b;
+            margin-bottom: 48px;
+        }
+
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        .era-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.3s;
+        }
+
+        .era-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 122, 255, 0.15);
+        }
+
+        .era-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .era-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .era-badge.old {
+            background: rgba(255, 59, 48, 0.1);
+            color: #FF3B30;
+        }
+
+        .era-badge.new {
+            background: rgba(0, 122, 255, 0.1);
+            color: #007AFF;
+        }
+
+        .era-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .system-type {
+            background: rgba(0, 0, 0, 0.03);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .system-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .feature-item {
+            font-size: 14px;
+            color: #86868b;
+            padding: 8px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .feature-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pain-point {
+            color: #FF3B30;
+        }
+
+        .advantage {
+            color: #34C759;
+        }
+
+        .evolution-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 32px 0;
+        }
+
+        .arrow-content {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+        }
+
+        .key-changes {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 20px;
+            padding: 32px;
+        }
+
+        .changes-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .change-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .change-item {
+            background: rgba(0, 122, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 3px solid #007AFF;
+        }
+
+        .change-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #007AFF;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .change-before {
+            font-size: 14px;
+            color: #86868b;
+            margin-bottom: 8px;
+            text-decoration: line-through;
+        }
+
+        .change-after {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .era-card, .key-changes {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .era-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <h1 class="slide-title">系统集成形态演变</h1>
+        <p class="slide-subtitle">柜面系统 · 手机银行 · 管理端系统的AI助手形态变革</p>
+
+        <!-- 对比容器 -->
+        <div class="comparison-container">
+            <!-- 传统形态 -->
+            <div class="era-card">
+                <div class="era-header">
+                    <span class="era-badge old">传统形态</span>
+                    <h2 class="era-title">隔离式AI入口</h2>
+                </div>
+
+                <!-- 柜面系统 -->
+                <div class="system-type">
+                    <div class="system-name">
+                        <span>🏦</span>
+                        <span>柜面系统</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>右上角下拉菜单"智能助手"</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>弹出独立ChatBox对话框</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>AI无法感知当前业务上下文</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>每次重新描述客户需求</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 手机银行 -->
+                <div class="system-type">
+                    <div class="system-name">
+                        <span>📱</span>
+                        <span>手机银行</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>底部Tab"AI助手"独立入口</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>进入后从零开始对话</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>与业务页面完全割裂</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>无法直接操作当前页面数据</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 管理端 -->
+                <div class="system-type">
+                    <div class="system-name">
+                        <span>💻</span>
+                        <span>管理端系统</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>侧边栏固定聊天窗口</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>占用大量屏幕空间</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>需要手动复制粘贴数据</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon pain-point">✕</span>
+                            <span>工作流被频繁打断</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 新形态 -->
+            <div class="era-card">
+                <div class="era-header">
+                    <span class="era-badge new">ChatLess 2.0</span>
+                    <h2 class="era-title">融合式AI能力</h2>
+                </div>
+
+                <!-- 柜面系统 -->
+                <div class="system-type">
+                    <div class="system-name">
+                        <span>🏦</span>
+                        <span>柜面系统</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>全局浮动AI按钮，需要时展开</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>自动识别客户信息和业务场景</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>点击表格数据即可分析处理</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>结果直接回填业务表单</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 手机银行 -->
+                <div class="system-type">
+                    <div class="system-name">
+                        <span>📱</span>
+                        <span>手机银行</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>底部常驻但收起的AI入口</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>理解当前页面和用户意图</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>响应直接体现为界面变化</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>无缝衔接业务流程</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 管理端 -->
+                <div class="system-type">
+                    <div class="system-name">
+                        <span>💻</span>
+                        <span>管理端系统</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>点击卡片/表格自动填充查询</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>AI响应浮窗从底部展开</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>分析结果高亮显示在原位</span>
+                        </li>
+                        <li class="feature-item">
+                            <span class="feature-icon advantage">✓</span>
+                            <span>保持工作流的连续性</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 演进箭头 -->
+        <div class="evolution-arrow">
+            <div class="arrow-content">
+                <span>从"切换到AI模式"</span>
+                <span>→</span>
+                <span>到"随时随地用AI"</span>
+            </div>
+        </div>
+
+        <!-- 关键变化 -->
+        <div class="key-changes">
+            <h3 class="changes-title">
+                <span>🎯</span>
+                <span>三大核心变化</span>
+            </h3>
+            <div class="change-grid">
+                <div class="change-item">
+                    <div class="change-label">上下文理解</div>
+                    <div class="change-before">需要反复描述场景</div>
+                    <div class="change-after">AI自动感知业务上下文</div>
+                </div>
+                <div class="change-item">
+                    <div class="change-label">交互方式</div>
+                    <div class="change-before">打开对话框输入文字</div>
+                    <div class="change-after">点击即交互，意图即执行</div>
+                </div>
+                <div class="change-item">
+                    <div class="change-label">结果呈现</div>
+                    <div class="change-before">对话框内纯文本回复</div>
+                    <div class="change-after">界面原位高亮和可视化</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

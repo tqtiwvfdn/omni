@@ -1532,8 +1532,8 @@ app.get('/api/models', async (req, res) => {
         const modelEndpoints = [
             'http://192.168.32.77:8792/v1/models',
             'http://192.168.32.77:8791/v1/models',
-            // 'http://10.8.6.30:30000/v1/models',
-            'http://10.8.4.110:8788/v1/models'
+            'http://192.168.32.77:8793/v1/models',
+            //'http://10.8.4.110:8788/v1/models'
         ];
 
         // Read local model descriptions for enrichment (optional)

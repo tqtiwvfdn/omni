@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP协议生态</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            padding: 48px;
+            /* overflow: hidden; */
+        }
+
+        .slide-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            height: calc(100vh - 96px);
+            display: flex;
+            flex-direction: column;
+            overflow:auto;
+        }
+
+        .slide-header {
+            margin-bottom: 32px;
+        }
+
+        .slide-title {
+            font-size: 42px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .slide-subtitle {
+            font-size: 20px;
+            color: #86868b;
+            font-weight: 500;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            flex: 1;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(0, 122, 255, 0.12);
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            font-size: 28px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(0, 81, 213, 0.12) 100%);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .stat-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: #007AFF;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            color: #1d1d1f;
+            font-weight: 500;
+        }
+
+        .stat-sublabel {
+            font-size: 14px;
+            color: #86868b;
+            margin-top: 4px;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 32px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #007AFF 0%, rgba(0, 122, 255, 0.2) 100%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 24px;
+            padding-left: 16px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            background: #007AFF;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+        }
+
+        .timeline-date {
+            font-size: 14px;
+            font-weight: 600;
+            color: #007AFF;
+            margin-bottom: 4px;
+        }
+
+        .timeline-content {
+            font-size: 15px;
+            color: #1d1d1f;
+            line-height: 1.6;
+        }
+
+        .adoption-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .adoption-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: rgba(0, 122, 255, 0.04);
+            border: 1px solid rgba(0, 122, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .adoption-item:hover {
+            background: rgba(0, 122, 255, 0.08);
+            transform: translateX(4px);
+        }
+
+        .adoption-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .adoption-text {
+            flex: 1;
+        }
+
+        .adoption-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .adoption-desc {
+            font-size: 13px;
+            color: #86868b;
+        }
+
+        .source-note {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            font-size: 12px;
+            color: #86868b;
+            font-style: italic;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #fff7e6 0%, #ffe5b4 100%);
+            border: 2px solid #ffd591;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .highlight-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #d46b08;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .highlight-text {
+            font-size: 13px;
+            color: #874d00;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide-header">
+            <h1 class="slide-title">MCP协议生态</h1>
+            <p class="slide-subtitle">Model Context Protocol - AI集成的统一标准</p>
+        </div>
+
+        <div class="content-grid">
+            <!-- 左侧：市场数据与趋势 -->
+            <div class="card">
+                <h2 class="card-title">
+                    <span class="card-icon">📊</span>
+                    市场增长与采用率
+                </h2>
+
+                <div class="stat-box">
+                    <div class="stat-value">$4.5B</div>
+                    <div class="stat-label">2025年市场规模</div>
+                    <div class="stat-sublabel">从2022年的$1.2B增长275%</div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-value">90%</div>
+                    <div class="stat-label">预期组织采用率</div>
+                    <div class="stat-sublabel">估计2025年底达成</div>
+                </div>
+
+                <div class="highlight-box">
+                    <div class="highlight-title">
+                        <span>💡</span>
+                        <span>战略价值</span>
+                    </div>
+                    <div class="highlight-text">
+                        MCP正在成为AI集成的"USB-C标准"，解决了碎片化集成的N×M问题，让AI系统能够标准化地访问数据源和工具
+                    </div>
+                </div>
+
+                <div class="source-note">
+                    数据来源：MarkTechPost 2025年MCP生态报告
+                </div>
+            </div>
+
+            <!-- 右上：行业采用情况 -->
+            <div class="card">
+                <h2 class="card-title">
+                    <span class="card-icon">🏢</span>
+                    主流厂商采用
+                </h2>
+
+                <div class="adoption-list">
+                    <div class="adoption-item">
+                        <span class="adoption-icon">🤖</span>
+                        <div class="adoption-text">
+                            <div class="adoption-name">Anthropic (Claude)</div>
+                            <div class="adoption-desc">2024.11 发布并开源MCP协议</div>
+                        </div>
+                    </div>
+
+                    <div class="adoption-item">
+                        <span class="adoption-icon">⚡</span>
+                        <div class="adoption-text">
+                            <div class="adoption-name">OpenAI</div>
+                            <div class="adoption-desc">2025.03 正式采用MCP标准</div>
+                        </div>
+                    </div>
+
+                    <div class="adoption-item">
+                        <span class="adoption-icon">🔷</span>
+                        <div class="adoption-text">
+                            <div class="adoption-name">Google DeepMind</div>
+                            <div class="adoption-desc">2025年已集成MCP支持</div>
+                        </div>
+                    </div>
+
+                    <div class="adoption-item">
+                        <span class="adoption-icon">🛠️</span>
+                        <div class="adoption-text">
+                            <div class="adoption-name">开发者工具</div>
+                            <div class="adoption-desc">Replit, Sourcegraph, Zed等平台</div>
+                        </div>
+                    </div>
+
+                    <div class="adoption-item">
+                        <span class="adoption-icon">🏦</span>
+                        <div class="adoption-text">
+                            <div class="adoption-name">企业采用</div>
+                            <div class="adoption-desc">Block, Apollo等早期采用者</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="source-note">
+                    数据来源：Wikipedia MCP词条、Anthropic官方公告
+                </div>
+            </div>
+
+            <!-- 右下：关键时间线 -->
+            <div class="card" style="grid-column: span 2;">
+                <h2 class="card-title">
+                    <span class="card-icon">📅</span>
+                    MCP发展时间线
+                </h2>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-date">2024年11月</div>
+                        <div class="timeline-content">
+                            Anthropic发布MCP协议并开源，提供Python、TypeScript、C#和Java的SDK
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-date">2025年3月</div>
+                        <div class="timeline-content">
+                            OpenAI正式采用MCP协议，标志着行业标准化的重要里程碑
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-date">2025年Q2</div>
+                        <div class="timeline-content">
+                            MCP生态系统快速增长，已有数千个MCP服务器可用，覆盖主流企业工具
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-date">2025年底（预测）</div>
+                        <div class="timeline-content">
+                            预计90%的企业组织将采用MCP标准，成为AI集成的事实标准
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-date">2026年（展望）</div>
+                        <div class="timeline-content">
+                            <strong>银行业机遇：</strong>通过MCP Gateway快速整合存量系统，构建统一的AI集成层，实现系统级的技术领先
+                        </div>
+                    </div>
+                </div>
+
+                <div class="source-note">
+                    数据来源：Anthropic官方博客、Wikipedia、Equinix MCP分析报告
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

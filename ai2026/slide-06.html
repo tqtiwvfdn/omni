@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运行基座架构设计</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            background: transparent;
+            /* overflow: hidden; */
+        }
+
+        .slide-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 48px 64px;
+        }
+
+        .slide-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .slide-subtitle {
+            font-size: 18px;
+            color: #86868b;
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            flex: 1;
+        }
+
+        .layer-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .layer-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 122, 255, 0.15);
+            border-color: rgba(0, 122, 255, 0.4);
+        }
+
+        .layer-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid rgba(0, 122, 255, 0.1);
+        }
+
+        .layer-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .layer-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .layer-content {
+            flex: 1;
+        }
+
+        .capability-item {
+            padding: 10px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 14px;
+            color: #1d1d1f;
+            line-height: 1.6;
+        }
+
+        .capability-icon {
+            color: #007AFF;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .tech-stack {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .tech-label {
+            font-size: 11px;
+            color: #86868b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tech-tag {
+            background: rgba(0, 122, 255, 0.1);
+            color: #007AFF;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .bottom-note {
+            margin-top: 32px;
+            padding: 20px 24px;
+            background: rgba(0, 122, 255, 0.06);
+            border-left: 4px solid #007AFF;
+            border-radius: 8px;
+        }
+
+        .note-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #007AFF;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .note-content {
+            font-size: 13px;
+            color: #1d1d1f;
+            line-height: 1.6;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .layer-card {
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .layer-card:nth-child(1) { animation-delay: 0.1s; }
+        .layer-card:nth-child(2) { animation-delay: 0.2s; }
+        .layer-card:nth-child(3) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div>
+            <h1 class="slide-title">基于SpringAI的运行基座架构</h1>
+            <p class="slide-subtitle">企业级AI应用运行平台 - 工程化能力构建</p>
+        </div>
+
+        <div class="architecture-grid">
+            <!-- 第一层：接入层 -->
+            <div class="layer-card">
+                <div class="layer-header">
+                    <div class="layer-icon">🔌</div>
+                    <div class="layer-title">接入与适配层</div>
+                </div>
+                <div class="layer-content">
+                    <div class="capability-item">
+                        <span class="capability-icon">•</span>
+                        <span><strong>多模型统一接口</strong><br/>兼容OpenAI、Claude、Gemini等主流模型</span>
+                    </div>
+                    <div class="capability-item">
+                        <span class="capability-icon">•</span>
+                        <span><strong>MCP协议原生支持</strong><br/>标准化的数据源连接能力</span>
+                    </div>
+                    <div class="capability-item">
+                        <span class="capability-icon">•</span>
+                        <span><strong>REST/WebSocket双通道</strong><br/>支持实时流式响应</span>
+                    </div>
+                    
+                    <div class="tech-stack">
+                        <div class="tech-label">技术栈</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">SpringAI</span>
+                            <span class="tech-tag">MCP SDK</span>
+                            <span class="tech-tag">WebFlux</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第二层：核心能力层 -->
+            <div class="layer-card">
+                <div class="layer-header">
+                    <div class="layer-icon">⚙️</div>
+                    <div class="layer-title">核心能力层</div>
+                </div>
+                <div class="layer-content">
+                    <div class="capability-item">
+                        <span class="capability-icon">•</span>
+                        <span><strong>身份认证与授权</strong><br/>OAuth 2.1 / RBAC权限模型</span>
+                    </div>
+                    <div class="capability-item">
+                        <span class="capability-icon">•</span>
+                        <span><strong>租户隔离</strong><br/>多租户数据与配置隔离</span>
+                    </div>
+                    <div class="capability-item">
+                        <span class="capability-icon">•</span>
+                        <span><strong>流程编排引擎</strong><br/>支持复杂的Agent工作流</span>
+                    </div>
+                    <div class="capability-item">
+                        <span class="capability-icon">•</span>
+                        <span><strong>错误处理与重试</strong><br/>自动熔断与降级机制</span>
+                    </div>
+                    
+                    <div class="tech-stack">
+                        <div class="tech-label">技术栈</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">Spring Security</span>
+                            <span class="tech-tag">Resilience4j</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第三层：治理层 -->
+            <div class="layer-card">
+                <div class="layer-header">
+                    <div class="layer-icon">🛡️</div>
+                    <div class="layer-title">治理与监控层</div>
+                </div>
+                <div class="layer-content">
+                    <div class="capability-item">
+                        <span class="capability-icon">•</span>
+                        <span><strong>完整审计日志</strong><br/>所有API调用可追溯</span>
+                    </div>
+                    <div class="capability-item">
+                        <span class="capability-icon">•</span>
+                        <span><strong>合规管控</strong><br/>敏感信息脱敏与内容审核</span>
+                    </div>
+                    <div class="capability-item">
+                        <span class="capability-icon">•</span>
+                        <span><strong>成本追踪</strong><br/>Token消耗统计与预警</span>
+                    </div>
+                    <div class="capability-item">
+                        <span class="capability-icon">•</span>
+                        <span><strong>性能监控</strong><br/>实时指标与链路追踪</span>
+                    </div>
+                    
+                    <div class="tech-stack">
+                        <div class="tech-label">技术栈</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">Micrometer</span>
+                            <span class="tech-tag">ELK Stack</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-note">
+            <div class="note-title">
+                <span>💡</span>
+                <span>设计理念</span>
+            </div>
+            <div class="note-content">
+                基于SpringAI构建的运行基座，不是简单的模型调用封装，而是<strong>面向企业级生产环境的完整工程化解决方案</strong>。参考OpenAI Agents SDK和Anthropic Claude Agent SDK的设计思想，我们提供开箱即用的身份认证、租户隔离、流程编排、错误处理等核心能力，让开发团队专注于业务逻辑而非基础设施。这套基座将作为所有AI应用的统一运行平台，确保<strong>安全性、稳定性和可扩展性</strong>。
+            </div>
+        </div>
+    </div>
+</body>
+</html>
