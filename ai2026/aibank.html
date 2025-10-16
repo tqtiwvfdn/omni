@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能银行</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(180deg, #f0f4f8 0%, #ffffff 100%);
+            height: 100vh;
+            overflow: hidden;
+            color: #1a1a1a;
+        }
+
+        .mobile-container {
+            max-width: 428px;
+            height: 100vh;
+            margin: 0 auto;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            height: 44px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #1a1a1a;
+            background: white;
+        }
+
+        .time {
+            font-weight: 600;
+        }
+
+        .status-icons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        /* Header */
+        .app-header {
+            padding: 16px 20px;
+            background: white;
+        }
+
+        .greeting {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .account-info {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Balance Card */
+        .balance-card {
+            margin: 16px 20px;
+            padding: 24px;
+            background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(22, 119, 255, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .balance-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .balance-amount {
+            font-size: 36px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 16px;
+            letter-spacing: 1px;
+        }
+
+        .balance-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .balance-btn {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .balance-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .action-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .action-item:active {
+            transform: scale(0.9);
+        }
+
+        .action-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 2px 8px rgba(22, 119, 255, 0.1);
+        }
+
+        .action-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Recent Transactions */
+        .recent-section {
+            padding: 20px;
+            padding-bottom: 120px;
+        }
+
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .transaction-item:active {
+            background: #f0f2f5;
+            transform: scale(0.98);
+        }
+
+        .transaction-icon {
+            width: 44px;
+            height: 44px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-right: 12px;
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .transaction-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .transaction-amount {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .transaction-amount.out {
+            color: #1a1a1a;
+        }
+
+        .transaction-amount.in {
+            color: #52c41a;
+        }
+
+        /* AI Button - Collapsed */
+        .ai-button-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 428px;
+            width: calc(100% - 40px);
+        }
+
+        .ai-trigger-button {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
+            border-radius: 32px;
+            border: none;
+            box-shadow: 0 8px 24px rgba(22, 119, 255, 0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .ai-trigger-button::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            background: linear-gradient(135deg, #1677ff, #0958d9);
+            border-radius: 36px;
+            opacity: 0;
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                opacity: 0;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.3;
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.2);
+            }
+        }
+
+        .ai-trigger-button:active {
+            transform: scale(0.9);
+        }
+
+        /* AI Input - Expanded */
+        .ai-button-container.expanded {
+            width: calc(100% - 40px);
+        }
+
+        .ai-button-container.expanded .ai-trigger-button {
+            display: none;
+        }
+
+        .ai-input-panel {
+            display: none;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border-radius: 24px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .ai-button-container.expanded .ai-input-panel {
+            display: block;
+            animation: expandUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes expandUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ai-input-header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .ai-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .ai-avatar {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .close-ai-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #f5f5f5;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .ai-suggestions {
+            padding: 16px 20px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .ai-suggestions::-webkit-scrollbar {
+            display: none;
+        }
+
+        .suggestion-chip {
+            padding: 8px 16px;
+            background: #f0f5ff;
+            border: 1px solid #d6e4ff;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #1677ff;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .suggestion-chip:active {
+            background: #e6f0ff;
+            transform: scale(0.95);
+        }
+
+        .ai-input-area {
+            padding: 12px 20px 20px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .input-wrapper.focused {
+            border-color: #1677ff;
+            background: white;
+        }
+
+        .main-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            color: #1a1a1a;
+            outline: none;
+            min-height: 24px;
+            max-height: 100px;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .main-input::placeholder {
+            color: #bfbfbf;
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .input-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: #8c8c8c;
+            transition: all 0.2s;
+        }
+
+        .input-action-btn:active {
+            transform: scale(0.9);
+        }
+
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .send-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .send-btn:active:not(:disabled) {
+            transform: scale(0.9);
+        }
+
+        /* AI Processing Overlay */
+        .ai-processing-overlay {
+            position: fixed;
+            bottom: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 388px;
+            width: calc(100% - 80px);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border-radius: 20px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ai-processing-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateX(-50%) translateY(-50%);
+        }
+
+        .processing-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .processing-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .processing-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+
+        .contact-card {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .contact-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .contact-info {
+            flex: 1;
+        }
+
+        .contact-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .contact-bank {
+            font-size: 12px;
+            color: #8c8c8c;
+        }
+
+        .transfer-summary {
+            background: #f0f5ff;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .summary-row:not(:last-child) {
+            border-bottom: 1px dashed rgba(22, 119, 255, 0.2);
+        }
+
+        .summary-label {
+            font-size: 13px;
+            color: #8c8c8c;
+        }
+
+        .summary-value {
+            font-size: 14px;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        .summary-value.amount {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1677ff;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .action-btn.secondary {
+            background: #f5f5f5;
+            color: #595959;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Loading State */
+        .loading-dots {
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            background: #1677ff;
+            border-radius: 50%;
+            animation: pulse 1.4s infinite;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            30% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Success Animation */
+        .success-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .success-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .success-card {
+            max-width: 320px;
+            width: calc(100% - 80px);
+            background: white;
+            border-radius: 24px;
+            padding: 40px 32px;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .success-overlay.show .success-card {
+            transform: scale(1);
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 40px;
+            color: white;
+            animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .success-desc {
+            font-size: 14px;
+            color: #8c8c8c;
+            margin-bottom: 32px;
+        }
+
+        .success-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .success-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 900;
+        }
+
+        .overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="time">9:41</div>
+            <div class="status-icons">
+                <span>📶</span>
+                <span>📡</span>
+                <span>🔋</span>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="app-header">
+            <div class="greeting">早上好</div>
+            <div class="account-info">中国工商银行 ···· 8888</div>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="balance-card">
+            <div class="balance-label">账户余额（元）</div>
+            <div class="balance-amount">45,678.90</div>
+            <div class="balance-actions">
+                <button class="balance-btn">转账</button>
+                <button class="balance-btn">收款</button>
+                <button class="balance-btn">理财</button>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="section-title">快捷功能</div>
+            <div class="action-grid">
+                <div class="action-item">
+                    <div class="action-icon">💳</div>
+                    <div class="action-label">信用卡</div>
+                </div>
+                <div class="action-item">
+                    <div class="action-icon">🏠</div>
+                    <div class="action-label">贷款</div>
+                </div>
+                <div class="action-item">
+                    <div class="action-icon">📱</div>
+                    <div class="action-label">充值</div>
+                </div>
+                <div class="action-item">
+                    <div class="action-icon">🎫</div>
+                    <div class="action-label">生活</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="recent-section">
+            <div class="section-title">最近交易</div>
+            <div class="transaction-item">
+                <div class="transaction-icon">👩</div>
+                <div class="transaction-info">
+                    <div class="transaction-name">妈妈</div>
+                    <div class="transaction-time">昨天 14:23</div>
+                </div>
+                <div class="transaction-amount out">-2,000.00</div>
+            </div>
+            <div class="transaction-item">
+                <div class="transaction-icon">🏪</div>
+                <div class="transaction-info">
+                    <div class="transaction-name">超市消费</div>
+                    <div class="transaction-time">昨天 10:15</div>
+                </div>
+                <div class="transaction-amount out">-258.50</div>
+            </div>
+            <div class="transaction-item">
+                <div class="transaction-icon">💼</div>
+                <div class="transaction-info">
+                    <div class="transaction-name">工资到账</div>
+                    <div class="transaction-time">10月1日</div>
+                </div>
+                <div class="transaction-amount in">+15,000.00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- AI Button -->
+    <div class="ai-button-container" id="aiButtonContainer">
+        <button class="ai-trigger-button" onclick="expandAI()">
+            ✨
+        </button>
+        
+        <div class="ai-input-panel">
+            <div class="ai-input-header">
+                <div class="ai-title">
+                    <div class="ai-avatar">✨</div>
+                    <span>智能助手</span>
+                </div>
+                <button class="close-ai-btn" onclick="collapseAI()">✕</button>
+            </div>
+            
+            <div class="ai-suggestions">
+                <div class="suggestion-chip" onclick="fillInput('给我妈妈转账3000块')">给妈妈转账</div>
+                <div class="suggestion-chip" onclick="fillInput('查询我的信用卡账单')">信用卡账单</div>
+                <div class="suggestion-chip" onclick="fillInput('帮我还房贷')">还房贷</div>
+                <div class="suggestion-chip" onclick="fillInput('查看理财收益')">理财收益</div>
+            </div>
+            
+            <div class="ai-input-area">
+                <div class="input-wrapper" id="inputWrapper">
+                    <textarea 
+                        class="main-input" 
+                        id="mainInput"
+                        rows="1"
+                        placeholder="说出你的需求，例如：给我妈妈转账3000块"
+                        onfocus="handleInputFocus()"
+                        onblur="handleInputBlur()"
+                        oninput="handleInput()"></textarea>
+                    <div class="input-actions">
+                        <button class="input-action-btn" onclick="handleVoice()">🎤</button>
+                        <button class="send-btn" id="sendBtn" onclick="handleSend()" disabled>➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Processing Overlay -->
+    <div class="ai-processing-overlay" id="processingOverlay">
+        <div class="processing-header">
+            <div class="processing-title">
+                <div class="ai-avatar">✨</div>
+                <span id="processingTitle">AI正在处理</span>
+            </div>
+        </div>
+        <div class="processing-content" id="processingContent">
+            <div class="loading-dots">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Overlay -->
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-card">
+            <div class="success-icon">✓</div>
+            <div class="success-title">转账成功</div>
+            <div class="success-desc">已成功转账 ¥3,000.00 给妈妈</div>
+            <button class="success-btn" onclick="closeSuccess()">完成</button>
+        </div>
+    </div>
+
+    <script>
+        const aiButtonContainer = document.getElementById('aiButtonContainer');
+        const mainInput = document.getElementById('mainInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const inputWrapper = document.getElementById('inputWrapper');
+        const processingOverlay = document.getElementById('processingOverlay');
+        const processingTitle = document.getElementById('processingTitle');
+        const processingContent = document.getElementById('processingContent');
+        const successOverlay = document.getElementById('successOverlay');
+        const overlay = document.getElementById('overlay');
+
+        function expandAI() {
+            aiButtonContainer.classList.add('expanded');
+            overlay.classList.add('show');
+            setTimeout(() => mainInput.focus(), 300);
+        }
+
+        function collapseAI() {
+            aiButtonContainer.classList.remove('expanded');
+            overlay.classList.remove('show');
+            mainInput.value = '';
+            sendBtn.disabled = true;
+            processingOverlay.classList.remove('show');
+        }
+
+        function handleInputFocus() {
+            inputWrapper.classList.add('focused');
+        }
+
+        function handleInputBlur() {
+            setTimeout(() => {
+                inputWrapper.classList.remove('focused');
+            }, 200);
+        }
+
+        function handleInput() {
+            const value = mainInput.value.trim();
+            sendBtn.disabled = !value;
+            
+            // Auto resize textarea
+            mainInput.style.height = 'auto';
+            mainInput.style.height = mainInput.scrollHeight + 'px';
+        }
+
+        function fillInput(text) {
+            mainInput.value = text;
+            handleInput();
+            mainInput.focus();
+        }
+
+        function handleVoice() {
+            mainInput.value = '给我妈妈转账3000块';
+            handleInput();
+        }
+
+        function handleSend() {
+            const message = mainInput.value.trim();
+            if (!message) return;
+
+            // Show processing
+            showProcessing();
+
+            // Simulate AI understanding
+            setTimeout(() => {
+                parseTransferRequest(message);
+            }, 1500);
+        }
+
+        function showProcessing() {
+            processingTitle.textContent = 'AI正在理解';
+            processingContent.innerHTML = `
+                <div class="loading-dots">
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                </div>
+            `;
+            processingOverlay.classList.add('show');
+            mainInput.value = '';
+            sendBtn.disabled = true;
+        }
+
+        function parseTransferRequest(message) {
+            // Simulate AI parsing
+            processingTitle.textContent = '已识别转账请求';
+            
+            // Extract info from message
+            const isMom = message.includes('妈妈') || message.includes('母亲');
+            const amount = message.match(/\d+/)?.[0] || '3000';
+            
+            processingContent.innerHTML = `
+                <div class="processing-content" style="margin-bottom: 16px;">
+                    我已经为你准备好转账信息，请确认：
+                </div>
+                
+                <div class="contact-card">
+                    <div class="contact-avatar">👩</div>
+                    <div class="contact-info">
+                        <div class="contact-name">妈妈</div>
+                        <div class="contact-bank">中国工商银行 ···· 1234</div>
+                    </div>
+                </div>
+                
+                <div class="transfer-summary">
+                    <div class="summary-row">
+                        <span class="summary-label">转账金额</span>
+                        <span class="summary-value amount">¥${amount}.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">手续费</span>
+                        <span class="summary-value">免费</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">到账时间</span>
+                        <span class="summary-value">实时到账</span>
+                    </div>
+                </div>
+                
+                <div class="confirm-actions">
+                    <button class="action-btn secondary" onclick="cancelTransfer()">取消</button>
+                    <button class="action-btn primary" onclick="confirmTransfer()">确认转账</button>
+                </div>
+            `;
+        }
+
+        function cancelTransfer() {
+            processingOverlay.classList.remove('show');
+        }
+
+        function confirmTransfer() {
+            processingTitle.textContent = '正在转账';
+            processingContent.innerHTML = `
+                <div style="text-align: center; padding: 20px 0;">
+                    <div class="loading-dots" style="justify-content: center;">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                    <div style="margin-top: 16px; font-size: 13px; color: #8c8c8c;">
+                        正在安全处理您的转账请求...
+                    </div>
+                </div>
+            `;
+
+            // Simulate transfer
+            setTimeout(() => {
+                processingOverlay.classList.remove('show');
+                successOverlay.classList.add('show');
+                
+                // Haptic feedback simulation
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+            }, 2000);
+        }
+
+        function closeSuccess() {
+            successOverlay.classList.remove('show');
+            collapseAI();
+        }
+
+        // Auto adjust textarea height
+        mainInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Close on overlay click
+        overlay.addEventListener('click', function() {
+            if (aiButtonContainer.classList.contains('expanded')) {
+                collapseAI();
+            }
+        });
+
+        // Prevent body scroll when AI is expanded
+        aiButtonContainer.addEventListener('transitionend', function() {
+            if (this.classList.contains('expanded')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        });
+    </script>
+</body>
+</html>

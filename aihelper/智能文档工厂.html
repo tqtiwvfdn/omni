@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能文档工厂（ADF） - 架构管控平台</title>
-    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <title>智能文档工厂（ADF） - 架构设计文档生成</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            /* background: linear-gradient(135deg, #f0f2f5 0%, #e8ecf0 50%, #f5f7fa 100%); */
             min-height: 100vh;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
@@ -20,63 +19,9 @@
         }
         
         .liquid-glass-strong {
-            /* background: rgba(255, 255, 255, 0.95); */
             backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-        }
-        
-        .specular-highlight {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .specular-highlight::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-            transition: left 0.6s ease;
-            pointer-events: none;
-        }
-        
-        .specular-highlight:hover::before {
-            left: 100%;
-        }
-        
-        .doc-type-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 16px;
-            padding: 20px;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            cursor: pointer;
-        }
-        
-        .doc-type-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
-            border-color: rgba(59, 130, 246, 0.3);
-            background: rgba(255, 255, 255, 0.95);
-        }
-        
-        .doc-type-card.active {
-            border-color: rgba(59, 130, 246, 0.5);
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
-        }
-        
-        .floating-button {
-            transform: translateY(0);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .floating-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
         }
         
         .progress-step {
@@ -107,29 +52,59 @@
             color: white;
         }
         
-        .template-preview {
-            background: rgba(255, 255, 255, 0.95);
+        .chapter-item {
+            background: rgba(255, 255, 255, 0.9);
             border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .ai-suggestion {
-            background: linear-gradient(135deg, rgba(147, 51, 234, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
-            border: 1px solid rgba(147, 51, 234, 0.2);
-            border-radius: 12px;
-            padding: 12px;
-            margin: 8px 0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 4px 0;
             cursor: pointer;
             transition: all 0.3s ease;
         }
         
-        .ai-suggestion:hover {
-            transform: translateX(4px);
-            box-shadow: 0 4px 16px rgba(147, 51, 234, 0.1);
+        .chapter-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        .chapter-item.selected {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+        
+        .chapter-item.level-1 { margin-left: 0; font-weight: 600; }
+        .chapter-item.level-2 { margin-left: 20px; font-weight: 500; }
+        .chapter-item.level-3 { margin-left: 40px; }
+        .chapter-item.level-4 { margin-left: 60px; font-size: 0.9rem; }
+        .chapter-item.level-5 { margin-left: 80px; font-size: 0.85rem; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
         
         .toast {
@@ -156,12 +131,145 @@
             border-left: 4px solid #10b981;
         }
         
-        .toast.error {
-            border-left: 4px solid #ef4444;
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
-        .toast.info {
-            border-left: 4px solid #3b82f6;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #374151;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .datasource-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        
+        .datasource-badge.rag {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .datasource-badge.mcp {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .param-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        
+        .param-item input {
+            flex: 1;
+        }
+        
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            transition: transform 0.2s ease;
+        }
+        
+        .icon-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .tab-button {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: #6b7280;
+        }
+        
+        .tab-button.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
         }
         
         .generating-animation {
@@ -170,63 +278,94 @@
         }
         
         @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
-        .editor-toolbar {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(0, 0, 0, 0.1);
+        #documentPreview {
+            background: white;
+            padding: 40px;
             border-radius: 8px;
-            padding: 8px;
-            display: flex;
-            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        #documentPreview h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+        
+        #documentPreview h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 24px;
             margin-bottom: 12px;
+            color: #374151;
         }
         
-        .toolbar-btn {
-            padding: 6px 12px;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 14px;
+        #documentPreview h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #4b5563;
         }
         
-        .toolbar-btn:hover {
-            background: rgba(59, 130, 246, 0.1);
-            border-color: rgba(59, 130, 246, 0.3);
+        #documentPreview h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            color: #6b7280;
         }
         
-        .chapter-item {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            padding: 12px;
-            margin: 8px 0;
-            cursor: move;
-            transition: all 0.3s ease;
+        #documentPreview h5 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-top: 12px;
+            margin-bottom: 6px;
+            color: #6b7280;
         }
         
-        .chapter-item:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        #documentPreview p {
+            margin-bottom: 12px;
+            line-height: 1.6;
+            color: #374151;
         }
         
-        .chapter-item.dragging {
-            opacity: 0.5;
+        #documentPreview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        
+        #documentPreview th, #documentPreview td {
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        #documentPreview th {
+            background: #f3f4f6;
+            font-weight: 600;
+        }
+        
+        #documentPreview ul, #documentPreview ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+        
+        #documentPreview li {
+            margin-bottom: 6px;
+            line-height: 1.6;
         }
     </style>
 </head>
 <body class="h-screen flex">
     <!-- 侧边栏 -->
-    <div class="w-80 liquid-glass-strong p-6 overflow-y-auto">
+    <div class="w-120 liquid-glass-strong p-6 overflow-y-auto">
         <div class="mb-6">
-            <img src="/console/img/agreeLogo.png" alt="Logo" class="h-10 mb-4">
             <h1 class="text-2xl font-bold text-gray-800 mb-2">智能文档工厂</h1>
             <p class="text-sm text-gray-600">AI驱动的架构文档自动生成平台</p>
         </div>
@@ -236,7 +375,7 @@
             <div class="flex items-center justify-between mb-4">
                 <div class="progress-step completed" id="step1">1</div>
                 <div class="flex-1 h-0.5 bg-gray-300 mx-2"></div>
-                <div class="progress-step active" id="step2">2</div>
+                <div class="progress-step" id="step2">2</div>
                 <div class="flex-1 h-0.5 bg-gray-300 mx-2"></div>
                 <div class="progress-step" id="step3">3</div>
                 <div class="flex-1 h-0.5 bg-gray-300 mx-2"></div>
@@ -250,78 +389,16 @@
             </div>
         </div>
         
-        <!-- 文档类型选择 -->
+        <!-- 文档结构 -->
         <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-3">📄 文档类型</h3>
-            <div class="space-y-3">
-                <div class="doc-type-card specular-highlight active" onclick="selectDocType('design-report')">
-                    <div class="flex items-start">
-                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                            <span class="text-blue-600">📋</span>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-gray-800">架构设计报告</h4>
-                            <p class="text-xs text-gray-600 mt-1">系统架构设计文档、技术方案</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="doc-type-card specular-highlight" onclick="selectDocType('assessment')">
-                    <div class="flex items-start">
-                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                            <span class="text-green-600">📊</span>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-gray-800">架构评估报告</h4>
-                            <p class="text-xs text-gray-600 mt-1">架构健康度、合规性评估</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="doc-type-card specular-highlight" onclick="selectDocType('change-analysis')">
-                    <div class="flex items-start">
-                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                            <span class="text-purple-600">🔄</span>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-gray-800">变更影响分析</h4>
-                            <p class="text-xs text-gray-600 mt-1">系统变更的影响评估分析</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="doc-type-card specular-highlight" onclick="selectDocType('meeting-minutes')">
-                    <div class="flex items-start">
-                        <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center mr-3">
-                            <span class="text-cyan-600">📝</span>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-gray-800">会议纪要</h4>
-                            <p class="text-xs text-gray-600 mt-1">架构评审会、决策会议纪要</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-semibold text-gray-800">📚 文档结构</h3>
+                <button onclick="showAddChapterModal()" class="btn-primary text-sm">
+                    ➕ 新建
+                </button>
             </div>
-        </div>
-        
-        <!-- AI建议 -->
-        <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-3">🤖 AI建议</h3>
-            <div id="ai-suggestions">
-                <div class="ai-suggestion" onclick="applyAISuggestion('template1')">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium text-purple-700">推荐模板：微服务架构设计</span>
-                        <span class="text-xs text-purple-500">95%匹配</span>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-1">基于您的系统特征，推荐使用此模板</p>
-                </div>
-                <div class="ai-suggestion" onclick="applyAISuggestion('content1')">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium text-purple-700">补充建议：添加性能指标</span>
-                        <span class="text-xs text-purple-500">建议</span>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-1">建议在文档中加入性能基线说明</p>
-                </div>
+            <div id="chapter-tree" class="space-y-1">
+                <!-- 章节树将在这里动态生成 -->
             </div>
         </div>
     </div>
@@ -331,223 +408,630 @@
         <!-- 顶部工具栏 -->
         <div class="liquid-glass p-4 flex items-center justify-between">
             <div class="flex items-center space-x-4">
-                <h2 class="text-xl font-semibold text-gray-800">架构设计报告</h2>
-                <span class="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">草稿</span>
+                <h2 class="text-xl font-semibold text-gray-800">架构设计文档</h2>
+                <span class="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full" id="statusBadge">配置中</span>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="previewDocument()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
-                    <span class="mr-2">👁️</span>预览
+                <button onclick="saveTemplate()" class="btn-secondary text-sm">
+                    <span class="mr-2">💾</span>保存模板
                 </button>
-                <button onclick="saveDocument()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
-                    <span class="mr-2">💾</span>保存
+                <button onclick="exportMarkdown()" class="btn-secondary text-sm" id="exportBtn" style="display: none;">
+                    <span class="mr-2">📥</span>导出Markdown
                 </button>
-                <button onclick="generateDocument()" class="bg-blue-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-600 transition-colors">
-                    <span class="mr-2">✨</span>AI生成
+                <button onclick="generateDocument()" class="btn-primary" id="generateBtn">
+                    <span class="mr-2">✨</span>生成文档
                 </button>
             </div>
         </div>
         
-        <!-- 主编辑区 -->
-        <div class="flex-1 flex">
-            <!-- 左侧：章节结构 -->
-            <div class="w-64 liquid-glass p-4 overflow-y-auto">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">📚 文档结构</h3>
-                <div id="chapter-list">
-                    <div class="chapter-item" draggable="true">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium">1. 概述</span>
-                            <button onclick="editChapter(1)" class="text-gray-500 hover:text-gray-700">
-                                ✏️
-                            </button>
-                        </div>
-                    </div>
-                    <div class="chapter-item" draggable="true">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium">2. 业务架构</span>
-                            <button onclick="editChapter(2)" class="text-gray-500 hover:text-gray-700">
-                                ✏️
-                            </button>
-                        </div>
-                    </div>
-                    <div class="chapter-item" draggable="true">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium">3. 应用架构</span>
-                            <button onclick="editChapter(3)" class="text-gray-500 hover:text-gray-700">
-                                ✏️
-                            </button>
-                        </div>
-                    </div>
-                    <div class="chapter-item" draggable="true">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium">4. 数据架构</span>
-                            <button onclick="editChapter(4)" class="text-gray-500 hover:text-gray-700">
-                                ✏️
-                            </button>
-                        </div>
-                    </div>
-                    <div class="chapter-item" draggable="true">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium">5. 技术架构</span>
-                            <button onclick="editChapter(5)" class="text-gray-500 hover:text-gray-700">
-                                ✏️
-                            </button>
-                        </div>
-                    </div>
+        <!-- Tab导航 -->
+        <div class="liquid-glass px-6 pt-2 flex gap-4 border-b border-gray-200">
+            <button class="tab-button active" onclick="switchTab('config')">
+                📝 配置
+            </button>
+            <button class="tab-button" onclick="switchTab('preview')" id="previewTabBtn">
+                👁️ 预览
+            </button>
+        </div>
+        
+        <!-- 配置面板 -->
+        <div id="configTab" class="tab-content active flex-1 p-6 overflow-y-auto">
+            <div id="config-panel" class="liquid-glass-strong rounded-lg p-6">
+                <div class="text-center text-gray-500 py-12">
+                    <p class="text-lg">👈 请从左侧选择或新建章节</p>
+                    <p class="text-sm mt-2">选择章节后可配置标题、偏好内容和数据源</p>
                 </div>
-                <button onclick="addChapter()" class="mt-4 w-full liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
-                    <span class="mr-2">➕</span>添加章节
-                </button>
             </div>
-            
-            <!-- 右侧：内容编辑 -->
-            <div class="flex-1 p-6 overflow-y-auto">
-                <div class="liquid-glass-strong rounded-lg p-6">
-                    <!-- 编辑工具栏 -->
-                    <div class="editor-toolbar">
-                        <button class="toolbar-btn" onclick="formatText('bold')">
-                            <strong>B</strong>
-                        </button>
-                        <button class="toolbar-btn" onclick="formatText('italic')">
-                            <em>I</em>
-                        </button>
-                        <button class="toolbar-btn" onclick="formatText('heading')">
-                            H
-                        </button>
-                        <button class="toolbar-btn" onclick="formatText('list')">
-                            ≡
-                        </button>
-                        <button class="toolbar-btn" onclick="insertTemplate()">
-                            📋 插入模板
-                        </button>
-                        <button class="toolbar-btn" onclick="aiAssist()">
-                            🤖 AI辅助
-                        </button>
+        </div>
+        
+        <!-- 预览面板 -->
+        <div id="previewTabContent" class="tab-content flex-1 p-6 overflow-y-auto">
+            <div class="liquid-glass-strong rounded-lg p-6">
+                <div id="generating-status" class="hidden mb-4 p-4 bg-purple-50 rounded-lg">
+                    <div class="flex items-center">
+                        <span class="generating-animation mr-3">🤖</span>
+                        <span class="text-purple-700">AI正在生成文档内容...</span>
                     </div>
-                    
-                    <!-- 内容编辑区 -->
-                    <div id="editor-content" contenteditable="true" class="min-h-96 p-4 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <h1 class="text-2xl font-bold text-gray-800 mb-4">1. 概述</h1>
-                        <p class="text-gray-700 mb-3">本文档描述了<span class="text-blue-600">[系统名称]</span>的整体架构设计方案，包括业务架构、应用架构、数据架构和技术架构等方面的详细说明。</p>
-                        
-                        <h2 class="text-xl font-semibold text-gray-800 mt-6 mb-3">1.1 文档目的</h2>
-                        <p class="text-gray-700 mb-3">明确系统的架构设计原则、架构决策和实施方案，为系统的开发、部署和运维提供指导。</p>
-                        
-                        <h2 class="text-xl font-semibold text-gray-800 mt-6 mb-3">1.2 文档范围</h2>
-                        <ul class="list-disc list-inside text-gray-700 space-y-1">
-                            <li>系统总体架构设计</li>
-                            <li>核心业务流程设计</li>
-                            <li>关键技术选型</li>
-                            <li>部署架构方案</li>
-                        </ul>
-                        
-                        <div class="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
-                            <p class="text-sm text-blue-700">
-                                <strong>AI提示：</strong>点击工具栏的"AI辅助"按钮，我可以帮您自动生成或优化文档内容。
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <!-- AI生成状态 -->
-                    <div id="generating-status" class="hidden mt-4 p-4 bg-purple-50 rounded-lg">
-                        <div class="flex items-center">
-                            <span class="generating-animation mr-3">🤖</span>
-                            <span class="text-purple-700">AI正在生成文档内容...</span>
-                        </div>
-                        <div class="mt-2 w-full bg-purple-200 rounded-full h-2">
-                            <div id="progress-bar" class="bg-purple-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
+                    <div class="mt-2 w-full bg-purple-200 rounded-full h-2">
+                        <div id="progress-bar" class="bg-purple-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                 </div>
                 
-                <!-- 版本历史 -->
-                <div class="mt-6 liquid-glass-strong rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">📜 版本历史</h3>
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div>
-                                <span class="text-sm font-medium text-gray-700">v1.0 - 初始版本</span>
-                                <span class="text-xs text-gray-500 ml-2">2024-01-15 14:30</span>
-                            </div>
-                            <button onclick="viewVersion('v1.0')" class="text-blue-600 text-sm hover:underline">查看</button>
-                        </div>
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div>
-                                <span class="text-sm font-medium text-gray-700">v1.1 - 更新业务架构</span>
-                                <span class="text-xs text-gray-500 ml-2">2024-01-16 10:15</span>
-                            </div>
-                            <button onclick="viewVersion('v1.1')" class="text-blue-600 text-sm hover:underline">查看</button>
-                        </div>
-                        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <div>
-                                <span class="text-sm font-medium text-blue-700">v1.2 - 当前版本</span>
-                                <span class="text-xs text-blue-500 ml-2">2024-01-16 15:45</span>
-                            </div>
-                            <span class="text-blue-600 text-sm">当前</span>
-                        </div>
+                <div id="documentPreview">
+                    <div class="text-center text-gray-500 py-12">
+                        <p class="text-lg">📄 文档预览</p>
+                        <p class="text-sm mt-2">点击"生成文档"按钮生成预览内容</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- 新建/编辑章节模态框 -->
+    <div id="chapterModal" class="modal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-800" id="modalTitle">新建章节</h2>
+                <button onclick="closeChapterModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">章节层级</label>
+                <select id="chapterLevel" class="form-select">
+                    <option value="1">一级标题</option>
+                    <option value="2">二级标题</option>
+                    <option value="3">三级标题</option>
+                    <option value="4">四级标题</option>
+                    <option value="5">五级标题</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">父级章节</label>
+                <select id="chapterParent" class="form-select">
+                    <option value="">无（顶级章节）</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">章节标题</label>
+                <input type="text" id="chapterTitle" class="form-input" placeholder="请输入章节标题">
+            </div>
+            
+            <div class="flex justify-end gap-3">
+                <button onclick="closeChapterModal()" class="btn-secondary">取消</button>
+                <button onclick="saveChapter()" class="btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据源配置模态框 -->
+    <div id="datasourceModal" class="modal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-800">配置数据源</h2>
+                <button onclick="closeDatasourceModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">数据源类型</label>
+                <select id="datasourceType" class="form-select" onchange="toggleDatasourceConfig()">
+                    <option value="">无数据源</option>
+                    <option value="rag">RAG 知识库</option>
+                    <option value="mcp">MCP 接口</option>
+                </select>
+            </div>
+            
+            <!-- RAG 配置 -->
+            <div id="ragConfig" class="hidden">
+                <div class="form-group">
+                    <label class="form-label">选择知识库</label>
+                    <select id="ragKnowledge" class="form-select">
+                        <option value="">请选择知识库</option>
+                        <option value="kb1">架构设计规范库</option>
+                        <option value="kb2">技术标准文档库</option>
+                        <option value="kb3">历史项目案例库</option>
+                        <option value="kb4">最佳实践库</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- MCP 配置 -->
+            <div id="mcpConfig" class="hidden">
+                <div class="form-group">
+                    <label class="form-label">工具名称</label>
+                    <input type="text" id="mcpToolName" class="form-input" placeholder="请输入MCP工具名称">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">参数列表</label>
+                    <div id="mcpParams">
+                        <div class="param-item">
+                            <input type="text" class="form-input" placeholder="参数Key" />
+                            <input type="text" class="form-input" placeholder="参数Value" />
+                            <button class="icon-btn text-red-500" onclick="removeParam(this)">🗑️</button>
+                        </div>
+                    </div>
+                    <button onclick="addParam()" class="btn-secondary text-sm mt-2">
+                        ➕ 添加参数
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="closeDatasourceModal()" class="btn-secondary">取消</button>
+                <button onclick="saveDatasource()" class="btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let currentDocType = 'design-report';
-        let documentContent = {};
-        let isGenerating = false;
-
-        // 文档类型模板
-        const docTemplates = {
-            'design-report': {
-                title: '架构设计报告',
-                chapters: [
-                    '1. 概述',
-                    '2. 业务架构',
-                    '3. 应用架构',
-                    '4. 数据架构',
-                    '5. 技术架构',
-                    '6. 部署架构',
-                    '7. 安全架构',
-                    '8. 架构决策记录'
-                ]
-            },
-            'assessment': {
-                title: '架构评估报告',
-                chapters: [
-                    '1. 评估概述',
-                    '2. 架构现状分析',
-                    '3. 合规性评估',
-                    '4. 性能评估',
-                    '5. 安全评估',
-                    '6. 技术债务分析',
-                    '7. 改进建议',
-                    '8. 实施路线图'
-                ]
-            },
-            'change-analysis': {
-                title: '变更影响分析',
-                chapters: [
-                    '1. 变更概述',
-                    '2. 变更内容',
-                    '3. 影响范围分析',
-                    '4. 风险评估',
-                    '5. 依赖分析',
-                    '6. 实施计划',
-                    '7. 回滚方案'
-                ]
-            },
-            'meeting-minutes': {
-                title: '会议纪要',
-                chapters: [
-                    '1. 会议信息',
-                    '2. 参会人员',
-                    '3. 议题讨论',
-                    '4. 决议事项',
-                    '5. 行动计划',
-                    '6. 后续工作'
-                ]
+        // 数据结构
+        let chapters = [
+            { id: 1, level: 1, title: '1. 整体信息', parent: null, preference: '', datasource: null },
+            { id: 2, level: 2, title: '1.1. 基本信息', parent: 1, preference: '', datasource: null },
+            { id: 3, level: 3, title: '1.1.1. 系统业务归类', parent: 2, preference: '[系统业务归类]\n填写要求：多选一。\n可选项：支付业务、中间业务、网银业务', datasource: null },
+            { id: 4, level: 3, title: '1.1.2. 系统类型', parent: 2, preference: '[系统类型]\n填写要求：多选一\n可选项：应用系统、基础平台', datasource: null },
+            { id: 5, level: 3, title: '1.1.3. 建设模式', parent: 2, preference: '[建设模式]\n填写要求：多选一\n可选项：行内自主建设、合作商引进、合作商建设', datasource: null },
+            { id: 6, level: 3, title: '1.1.4. 研发自主范围', parent: 2, preference: '[研发自主范围]\n填写要求：多选一\n可选项：完全自主、部分自主、非自主', datasource: null },
+            { id: 7, level: 3, title: '1.1.5. 风险定级', parent: 2, preference: '[风险定级]\n填写要求：多选一\n可选项：\n1.高风险（涉及支付、对公、对客业务的系统）\n2.中风险（不涉及支付、对公、对客业务，但是会对外提供服务的业务）\n3.低风险（后管类等仅在行内提供服务的系统）', datasource: null },
+            { id: 8, level: 3, title: '1.1.6. 是否强关联A类保障性要求业务场景', parent: 2, preference: '[是否强关联A类保障性要求业务场景]\n填写要求：二选一\n可选项：是或否', datasource: null },
+            { id: 9, level: 1, title: '2. 整体架构', parent: null, preference: '', datasource: null },
+            { id: 10, level: 2, title: '2.1. 平台化要求', parent: 9, preference: '', datasource: null },
+            { id: 11, level: 3, title: '2.1.1. 平台化整体要求', parent: 10, preference: '[人工填写]', datasource: null },
+            { id: 12, level: 2, title: '2.2. 整体功能架构', parent: 9, preference: '', datasource: null },
+            { id: 13, level: 3, title: '2.2.1. 逻辑功能架构视图', parent: 12, preference: '[人工填写]', datasource: null },
+            { id: 14, level: 2, title: '2.3. 应用部署架构', parent: 9, preference: '', datasource: null },
+            { id: 15, level: 3, title: '2.3.1. 应用部署功能划分方案', parent: 14, preference: '', datasource: null },
+            { id: 16, level: 4, title: '2.3.1.1. 应用部署关键考量（功能划分）', parent: 15, preference: '填写要求：文字描述\n内容要求：从应用部署的角度，结合高可用、功能划分角度列出应用部署方案设计的关键考量点', datasource: null },
+            { id: 17, level: 3, title: '2.3.2. 应用部署架构', parent: 14, preference: '', datasource: null },
+            { id: 18, level: 4, title: '2.3.2.1. 应用架构部署视图', parent: 17, preference: '[人工填写]', datasource: null },
+            { id: 19, level: 2, title: '2.4. 总体集成架构', parent: 9, preference: '', datasource: null },
+            { id: 20, level: 3, title: '2.4.1. 集成架构', parent: 19, preference: '[人工填写]', datasource: null },
+            { id: 21, level: 1, title: '3. 系统设计', parent: null, preference: '', datasource: null },
+            { id: 22, level: 2, title: '3.1. 功能模块划分', parent: 21, preference: '', datasource: null },
+            { id: 23, level: 3, title: '3.1.1. 应用功能划分思路', parent: 22, preference: '[应用功能划分思路]\n填写要求：文字描述\n内容要求：详细说明当前项目如何划分功能模块的思路', datasource: null },
+            { id: 24, level: 3, title: '3.1.2. 应用功能划分结果', parent: 22, preference: '[应用功能划分]\n填写要求：文字描述\n内容要求：结合划分功能模块的思路，列出应用功能的划分结果', datasource: null },
+            { id: 25, level: 2, title: '3.2. 关键功能设计', parent: 21, preference: '[关键功能设计]\n填写要求：循环列举\n内容要求：列出系统中核心关键功能的设计方案。案例参考：3.2.1 对账设计', datasource: null },
+            { id: 26, level: 3, title: '3.2.1. 对账设计', parent: 25, preference: '[功能说明]\n填写要求：文字描述\n内容要求：详细说明该功能的需求、设计思路等', datasource: null },
+            { id: 27, level: 4, title: '3.2.1.1. 对账设计', parent: 26, preference: '填写要求：文字描述\n内容要求：详细说明该功能的设计思路。包括：关键类、数据库设计、性能指标设计等', datasource: null },
+            { id: 28, level: 4, title: '3.2.1.2. 技术选型', parent: 26, preference: '填写要求：文字描述\n内容要求：根据该功能的技术实现要求，说明技术选型结果。包括：\n1.开发平台：SpringBoot、其它\n2.中间件：ES、Redis、RocketMQ\n3.其它开源组件：Mybatis、Mybatis Plus、JPA等', datasource: null }
+        ];
+        
+        let nextId = 29;
+        let currentChapter = null;
+        let editingChapter = null;
+        let currentTab = 'config';
+        let generatedDocument = '';
+        
+        // 初始化
+        function init() {
+            renderChapterTree();
+            updateProgress(2);
+        }
+        
+        // 更新进度
+        function updateProgress(step) {
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                if (i < step) {
+                    stepEl.classList.add('completed');
+                    stepEl.classList.remove('active');
+                } else if (i === step) {
+                    stepEl.classList.add('active');
+                    stepEl.classList.remove('completed');
+                } else {
+                    stepEl.classList.remove('active', 'completed');
+                }
             }
-        };
-
+        }
+        
+        // 切换Tab
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 更新内容显示
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            if (tab === 'config') {
+                document.getElementById('configTab').classList.add('active');
+            } else if (tab === 'preview') {
+                document.getElementById('previewTabContent').classList.add('active');
+            }
+        }
+        
+        // 渲染章节树
+        function renderChapterTree() {
+            const tree = document.getElementById('chapter-tree');
+            tree.innerHTML = '';
+            
+            function renderNode(parentId, level = 0) {
+                const children = chapters.filter(c => c.parent === parentId);
+                children.forEach(chapter => {
+                    const div = document.createElement('div');
+                    div.className = `chapter-item level-${chapter.level} ${currentChapter?.id === chapter.id ? 'selected' : ''}`;
+                    div.onclick = () => selectChapter(chapter);
+                    
+                    let datasourceBadge = '';
+                    if (chapter.datasource) {
+                        if (chapter.datasource.type === 'rag') {
+                            datasourceBadge = '<span class="datasource-badge rag">RAG</span>';
+                        } else if (chapter.datasource.type === 'mcp') {
+                            datasourceBadge = '<span class="datasource-badge mcp">MCP</span>';
+                        }
+                    }
+                    
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm flex-1">${chapter.title}${datasourceBadge}</span>
+                            <div class="flex gap-1">
+                                <button class="icon-btn text-blue-600" onclick="event.stopPropagation(); editChapter(${chapter.id})" title="编辑">✏️</button>
+                                <button class="icon-btn text-green-600" onclick="event.stopPropagation(); moveChapter(${chapter.id}, 'up')" title="上移">⬆️</button>
+                                <button class="icon-btn text-green-600" onclick="event.stopPropagation(); moveChapter(${chapter.id}, 'down')" title="下移">⬇️</button>
+                                <button class="icon-btn text-red-600" onclick="event.stopPropagation(); deleteChapter(${chapter.id})" title="删除">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                    tree.appendChild(div);
+                    
+                    renderNode(chapter.id, level + 1);
+                });
+            }
+            
+            renderNode(null);
+        }
+        
+        // 选择章节
+        function selectChapter(chapter) {
+            currentChapter = chapter;
+            renderChapterTree();
+            renderConfigPanel();
+        }
+        
+        // 渲染配置面板
+        function renderConfigPanel() {
+            const panel = document.getElementById('config-panel');
+            if (!currentChapter) {
+                panel.innerHTML = `
+                    <div class="text-center text-gray-500 py-12">
+                        <p class="text-lg">👈 请从左侧选择或新建章节</p>
+                        <p class="text-sm mt-2">选择章节后可配置标题、偏好内容和数据源</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let datasourceInfo = '<p class="text-gray-500 text-sm">未配置数据源</p>';
+            if (currentChapter.datasource) {
+                if (currentChapter.datasource.type === 'rag') {
+                    datasourceInfo = `
+                        <div class="p-3 bg-blue-50 rounded-lg">
+                            <p class="text-sm font-medium text-blue-700">RAG 知识库</p>
+                            <p class="text-sm text-blue-600 mt-1">知识库ID: ${currentChapter.datasource.knowledgeId}</p>
+                        </div>
+                    `;
+                } else if (currentChapter.datasource.type === 'mcp') {
+                    const params = currentChapter.datasource.params || [];
+                    const paramsList = params.map(p => `<li class="text-sm">${p.key}: ${p.value}</li>`).join('');
+                    datasourceInfo = `
+                        <div class="p-3 bg-yellow-50 rounded-lg">
+                            <p class="text-sm font-medium text-yellow-700">MCP 接口</p>
+                            <p class="text-sm text-yellow-600 mt-1">工具名称: ${currentChapter.datasource.toolName}</p>
+                            ${params.length > 0 ? `<ul class="mt-2 text-yellow-600">${paramsList}</ul>` : ''}
+                        </div>
+                    `;
+                }
+            }
+            
+            panel.innerHTML = `
+                <div>
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-gray-800">${currentChapter.title}</h3>
+                        <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">${currentChapter.level}级标题</span>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-sm font-semibold text-gray-700">偏好内容（提示词）</label>
+                            <button onclick="savePreference()" class="btn-primary text-sm">保存偏好内容</button>
+                        </div>
+                        <textarea id="preferenceInput" class="form-textarea" style="min-height: 200px;" placeholder="请输入偏好内容，描述该章节的生成要求、填写规范等...">${currentChapter.preference || ''}</textarea>
+                        <p class="text-xs text-gray-500 mt-2">💡 提示：偏好内容用于指导AI生成该章节的内容，可以包括填写要求、可选项、内容格式等</p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-sm font-semibold text-gray-700">数据源配置</label>
+                            <button onclick="showDatasourceModal()" class="btn-secondary text-sm">
+                                ${currentChapter.datasource ? '修改数据源' : '配置数据源'}
+                            </button>
+                        </div>
+                        ${datasourceInfo}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 保存偏好内容
+        function savePreference() {
+            const input = document.getElementById('preferenceInput');
+            if (currentChapter) {
+                currentChapter.preference = input.value;
+                showToast('偏好内容已保存', 'success');
+            }
+        }
+        
+        // 显示新建章节模态框
+        function showAddChapterModal() {
+            editingChapter = null;
+            document.getElementById('modalTitle').textContent = '新建章节';
+            document.getElementById('chapterLevel').value = '1';
+            document.getElementById('chapterTitle').value = '';
+            updateParentOptions();
+            document.getElementById('chapterModal').classList.add('show');
+        }
+        
+        // 编辑章节
+        function editChapter(id) {
+            editingChapter = chapters.find(c => c.id === id);
+            if (!editingChapter) return;
+            
+            document.getElementById('modalTitle').textContent = '编辑章节';
+            document.getElementById('chapterLevel').value = editingChapter.level;
+            document.getElementById('chapterTitle').value = editingChapter.title;
+            updateParentOptions(editingChapter.id);
+            document.getElementById('chapterParent').value = editingChapter.parent || '';
+            document.getElementById('chapterModal').classList.add('show');
+        }
+        
+        // 更新父级选项
+        function updateParentOptions(excludeId = null) {
+            const select = document.getElementById('chapterParent');
+            const level = parseInt(document.getElementById('chapterLevel').value);
+            
+            select.innerHTML = '<option value="">无（顶级章节）</option>';
+            
+            if (level > 1) {
+                const availableParents = chapters.filter(c => 
+                    c.level === level - 1 && c.id !== excludeId
+                );
+                
+                availableParents.forEach(parent => {
+                    const option = document.createElement('option');
+                    option.value = parent.id;
+                    option.textContent = parent.title;
+                    select.appendChild(option);
+                });
+            }
+        }
+        
+        // 保存章节
+        function saveChapter() {
+            const level = parseInt(document.getElementById('chapterLevel').value);
+            const parent = document.getElementById('chapterParent').value;
+            const title = document.getElementById('chapterTitle').value.trim();
+            
+            if (!title) {
+                alert('请输入章节标题');
+                return;
+            }
+            
+            if (editingChapter) {
+                editingChapter.level = level;
+                editingChapter.parent = parent ? parseInt(parent) : null;
+                editingChapter.title = title;
+                showToast('章节已更新', 'success');
+            } else {
+                const newChapter = {
+                    id: nextId++,
+                    level: level,
+                    title: title,
+                    parent: parent ? parseInt(parent) : null,
+                    preference: '',
+                    datasource: null
+                };
+                chapters.push(newChapter);
+                showToast('章节已创建', 'success');
+            }
+            
+            closeChapterModal();
+            renderChapterTree();
+        }
+        
+        // 关闭章节模态框
+        function closeChapterModal() {
+            document.getElementById('chapterModal').classList.remove('show');
+        }
+        
+        // 删除章节
+        function deleteChapter(id) {
+            if (!confirm('确定要删除该章节吗？子章节也会被删除。')) return;
+            
+            function deleteRecursive(chapterId) {
+                const children = chapters.filter(c => c.parent === chapterId);
+                children.forEach(child => deleteRecursive(child.id));
+                chapters = chapters.filter(c => c.id !== chapterId);
+            }
+            
+            deleteRecursive(id);
+            if (currentChapter?.id === id) {
+                currentChapter = null;
+                renderConfigPanel();
+            }
+            renderChapterTree();
+            showToast('章节已删除', 'success');
+        }
+        
+        // 移动章节
+        function moveChapter(id, direction) {
+            const chapter = chapters.find(c => c.id === id);
+            if (!chapter) return;
+            
+            const siblings = chapters.filter(c => c.parent === chapter.parent);
+            const index = siblings.findIndex(c => c.id === id);
+            
+            if (direction === 'up' && index > 0) {
+                const temp = siblings[index];
+                siblings[index] = siblings[index - 1];
+                siblings[index - 1] = temp;
+            } else if (direction === 'down' && index < siblings.length - 1) {
+                const temp = siblings[index];
+                siblings[index] = siblings[index + 1];
+                siblings[index + 1] = temp;
+            } else {
+                return;
+            }
+            
+            const otherChapters = chapters.filter(c => c.parent !== chapter.parent);
+            chapters = [...otherChapters, ...siblings];
+            
+            renderChapterTree();
+            showToast('章节顺序已调整', 'success');
+        }
+        
+        // 显示数据源配置模态框
+        function showDatasourceModal() {
+            if (!currentChapter) return;
+            
+            document.getElementById('datasourceType').value = currentChapter.datasource?.type || '';
+            
+            if (currentChapter.datasource?.type === 'rag') {
+                document.getElementById('ragKnowledge').value = currentChapter.datasource.knowledgeId || '';
+                document.getElementById('ragConfig').classList.remove('hidden');
+                document.getElementById('mcpConfig').classList.add('hidden');
+            } else if (currentChapter.datasource?.type === 'mcp') {
+                document.getElementById('mcpToolName').value = currentChapter.datasource.toolName || '';
+                renderMcpParams(currentChapter.datasource.params || []);
+                document.getElementById('ragConfig').classList.add('hidden');
+                document.getElementById('mcpConfig').classList.remove('hidden');
+            } else {
+                document.getElementById('ragConfig').classList.add('hidden');
+                document.getElementById('mcpConfig').classList.add('hidden');
+            }
+            
+            document.getElementById('datasourceModal').classList.add('show');
+        }
+        
+        // 关闭数据源模态框
+        function closeDatasourceModal() {
+            document.getElementById('datasourceModal').classList.remove('show');
+        }
+        
+        // 切换数据源配置
+        function toggleDatasourceConfig() {
+            const type = document.getElementById('datasourceType').value;
+            const ragConfig = document.getElementById('ragConfig');
+            const mcpConfig = document.getElementById('mcpConfig');
+            
+            ragConfig.classList.add('hidden');
+            mcpConfig.classList.add('hidden');
+            
+            if (type === 'rag') {
+                ragConfig.classList.remove('hidden');
+            } else if (type === 'mcp') {
+                mcpConfig.classList.remove('hidden');
+            }
+        }
+        
+        // 渲染MCP参数
+        function renderMcpParams(params) {
+            const container = document.getElementById('mcpParams');
+            container.innerHTML = '';
+            
+            if (params.length === 0) {
+                params = [{ key: '', value: '' }];
+            }
+            
+            params.forEach(param => {
+                const div = document.createElement('div');
+                div.className = 'param-item';
+                div.innerHTML = `
+                    <input type="text" class="form-input" placeholder="参数Key" value="${param.key || ''}" />
+                    <input type="text" class="form-input" placeholder="参数Value" value="${param.value || ''}" />
+                    <button class="icon-btn text-red-500" onclick="removeParam(this)">🗑️</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        // 添加参数
+        function addParam() {
+            const container = document.getElementById('mcpParams');
+            const div = document.createElement('div');
+            div.className = 'param-item';
+            div.innerHTML = `
+                <input type="text" class="form-input" placeholder="参数Key" />
+                <input type="text" class="form-input" placeholder="参数Value" />
+                <button class="icon-btn text-red-500" onclick="removeParam(this)">🗑️</button>
+            `;
+            container.appendChild(div);
+        }
+        
+        // 删除参数
+        function removeParam(btn) {
+            const container = document.getElementById('mcpParams');
+            if (container.children.length > 1) {
+                btn.parentElement.remove();
+            }
+        }
+        
+        // 保存数据源
+        function saveDatasource() {
+            if (!currentChapter) return;
+            
+            const type = document.getElementById('datasourceType').value;
+            
+            if (!type) {
+                currentChapter.datasource = null;
+            } else if (type === 'rag') {
+                const knowledgeId = document.getElementById('ragKnowledge').value;
+                if (!knowledgeId) {
+                    alert('请选择知识库');
+                    return;
+                }
+                currentChapter.datasource = {
+                    type: 'rag',
+                    knowledgeId: knowledgeId
+                };
+            } else if (type === 'mcp') {
+                const toolName = document.getElementById('mcpToolName').value.trim();
+                if (!toolName) {
+                    alert('请输入工具名称');
+                    return;
+                }
+                
+                const paramItems = document.querySelectorAll('#mcpParams .param-item');
+                const params = [];
+                paramItems.forEach(item => {
+                    const inputs = item.querySelectorAll('input');
+                    const key = inputs[0].value.trim();
+                    const value = inputs[1].value.trim();
+                    if (key || value) {
+                        params.push({ key, value });
+                    }
+                });
+                
+                currentChapter.datasource = {
+                    type: 'mcp',
+                    toolName: toolName,
+                    params: params
+                };
+            }
+            
+            closeDatasourceModal();
+            renderChapterTree();
+            renderConfigPanel();
+            showToast('数据源配置已保存', 'success');
+        }
+        
         // Toast提示
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
@@ -567,78 +1051,35 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
-
-        // 选择文档类型
-        function selectDocType(type) {
-            currentDocType = type;
-            
-            // 更新选中状态
-            document.querySelectorAll('.doc-type-card').forEach(card => {
-                card.classList.remove('active');
-            });
-            event.currentTarget.classList.add('active');
-            
-            // 更新章节列表
-            updateChapterList(type);
-            
-            // 更新标题
-            const template = docTemplates[type];
-            document.querySelector('h2').textContent = template.title;
-            
-            // 更新进度
-            updateProgress(2);
-            
-            showToast(`已选择：${template.title}`, 'success');
+        
+        // 保存模板
+        function saveTemplate() {
+            const templateData = {
+                chapters: chapters,
+                timestamp: new Date().toISOString()
+            };
+            console.log('保存模板：', templateData);
+            showToast('模板已保存', 'success');
         }
-
-        // 更新章节列表
-        function updateChapterList(type) {
-            const template = docTemplates[type];
-            const chapterList = document.getElementById('chapter-list');
-            
-            chapterList.innerHTML = template.chapters.map((chapter, index) => `
-                <div class="chapter-item" draggable="true">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium">${chapter}</span>
-                        <button onclick="editChapter(${index + 1})" class="text-gray-500 hover:text-gray-700">
-                            ✏️
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-            
-            initDragAndDrop();
-        }
-
-        // 更新进度条
-        function updateProgress(step) {
-            for (let i = 1; i <= 4; i++) {
-                const stepEl = document.getElementById(`step${i}`);
-                if (i < step) {
-                    stepEl.classList.add('completed');
-                    stepEl.classList.remove('active');
-                } else if (i === step) {
-                    stepEl.classList.add('active');
-                    stepEl.classList.remove('completed');
-                } else {
-                    stepEl.classList.remove('active', 'completed');
-                }
-            }
-        }
-
-        // AI生成文档
+        
+        // 生成文档
         async function generateDocument() {
-            if (isGenerating) return;
+            document.getElementById('statusBadge').textContent = '生成中';
+            document.getElementById('statusBadge').className = 'px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded-full';
             
-            isGenerating = true;
+            // 切换到预览标签
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('previewTabBtn').classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('previewTabContent').classList.add('active');
+            
             const statusEl = document.getElementById('generating-status');
             const progressBar = document.getElementById('progress-bar');
-            const editorContent = document.getElementById('editor-content');
             
             statusEl.classList.remove('hidden');
             progressBar.style.width = '0%';
             
-            // 模拟生成过程
+            // 模拟生成进度
             let progress = 0;
             const progressInterval = setInterval(() => {
                 progress += Math.random() * 15;
@@ -646,302 +1087,185 @@
                 progressBar.style.width = `${progress}%`;
             }, 500);
             
-            // 模拟AI生成内容
+            // 模拟AI生成
             setTimeout(() => {
                 clearInterval(progressInterval);
                 progressBar.style.width = '100%';
                 
-                // 生成内容
-                const generatedContent = generateAIContent();
-                editorContent.innerHTML = generatedContent;
+                generatedDocument = generateDocumentContent();
+                document.getElementById('documentPreview').innerHTML = generatedDocument;
                 
                 setTimeout(() => {
                     statusEl.classList.add('hidden');
-                    isGenerating = false;
+                    document.getElementById('statusBadge').textContent = '已生成';
+                    document.getElementById('statusBadge').className = 'px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full';
+                    document.getElementById('exportBtn').style.display = 'inline-block';
                     updateProgress(3);
                     showToast('文档生成完成！', 'success');
                 }, 500);
             }, 3000);
         }
-
-        // 生成AI内容
-        function generateAIContent() {
-            const template = docTemplates[currentDocType];
-            let content = `<h1 class="text-2xl font-bold text-gray-800 mb-4">${template.title}</h1>`;
+        
+        // 生成文档内容
+        function generateDocumentContent() {
+            let html = '<h1>[系统名称]架构设计文档</h1>';
             
-            if (currentDocType === 'design-report') {
-                content += `
-                    <h2 class="text-xl font-semibold text-gray-800 mt-6 mb-3">1. 概述</h2>
-                    <p class="text-gray-700 mb-3">本架构设计报告详细阐述了系统的整体架构方案，遵循微服务架构设计原则，采用分层架构模式，确保系统的高可用性、可扩展性和可维护性。</p>
-                    
-                    <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">1.1 系统背景</h3>
-                    <p class="text-gray-700 mb-3">随着业务的快速发展，现有系统架构面临性能瓶颈和扩展性限制。为满足未来3-5年的业务增长需求，需要对系统架构进行全面升级改造。</p>
-                    
-                    <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">1.2 设计目标</h3>
-                    <ul class="list-disc list-inside text-gray-700 space-y-1 mb-3">
-                        <li>支持10万+ QPS的并发访问</li>
-                        <li>系统可用性达到99.99%</li>
-                        <li>响应时间P99 < 200ms</li>
-                        <li>支持横向弹性扩展</li>
-                        <li>实现服务自治和故障隔离</li>
-                    </ul>
-                    
-                    <h2 class="text-xl font-semibold text-gray-800 mt-6 mb-3">2. 业务架构</h2>
-                    <p class="text-gray-700 mb-3">业务架构采用领域驱动设计(DDD)方法，将系统划分为多个业务领域，每个领域包含独立的业务能力和数据模型。</p>
-                    
-                    <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">2.1 核心业务领域</h3>
-                    <ul class="list-disc list-inside text-gray-700 space-y-1 mb-3">
-                        <li><strong>用户域：</strong>用户注册、认证、权限管理</li>
-                        <li><strong>订单域：</strong>订单创建、支付、履约</li>
-                        <li><strong>产品域：</strong>产品管理、库存管理、价格策略</li>
-                        <li><strong>营销域：</strong>促销活动、优惠券、积分体系</li>
-                    </ul>
-                    
-                    <div class="mt-6 p-4 bg-green-50 border-l-4 border-green-500 rounded">
-                        <p class="text-sm text-green-700">
-                            <strong>AI建议：</strong>基于您的系统特征，建议采用事件驱动架构(EDA)来实现领域间的解耦通信。
-                        </p>
-                    </div>
-                    
-                    <h2 class="text-xl font-semibold text-gray-800 mt-6 mb-3">3. 应用架构</h2>
-                    <p class="text-gray-700 mb-3">应用架构采用微服务架构模式，每个服务独立部署、独立扩展、独立演进。</p>
-                    
-                    <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">3.1 服务分层</h3>
-                    <ul class="list-disc list-inside text-gray-700 space-y-1 mb-3">
-                        <li><strong>接入层：</strong>API网关、负载均衡、限流熔断</li>
-                        <li><strong>业务服务层：</strong>核心业务逻辑实现</li>
-                        <li><strong>基础服务层：</strong>通用能力服务（消息、缓存、存储）</li>
-                        <li><strong>数据层：</strong>数据库、消息队列、缓存</li>
-                    </ul>`;
-            }
+            // 文档修改记录
+            html += `
+                <h2>文档修改记录</h2>
+                <table>
+                    <tr>
+                        <th>版本号</th>
+                        <th>版本描述</th>
+                        <th>责任人</th>
+                        <th>日期</th>
+                        <th>备注</th>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
+            `;
             
-            return content;
-        }
-
-        // AI辅助
-        function aiAssist() {
-            const selection = window.getSelection();
-            const selectedText = selection.toString();
-            
-            if (selectedText) {
-                // 优化选中的文本
-                const optimizedText = `<mark class="bg-yellow-200">${selectedText}</mark> <span class="text-blue-600">[AI优化建议：可以添加更多技术细节说明]</span>`;
-                document.execCommand('insertHTML', false, optimizedText);
-                showToast('AI已为您优化选中的内容', 'success');
-            } else {
-                // 生成新内容
-                const suggestions = [
-                    '建议添加：系统的非功能性需求说明',
-                    '建议添加：关键技术选型的决策依据',
-                    '建议添加：性能基准测试结果',
-                    '建议添加：容灾和备份策略'
-                ];
-                
-                const suggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
-                const newContent = `<div class="mt-4 p-3 bg-purple-50 border-l-4 border-purple-500 rounded">
-                    <p class="text-sm text-purple-700"><strong>AI建议：</strong>${suggestion}</p>
-                </div>`;
-                
-                document.getElementById('editor-content').insertAdjacentHTML('beforeend', newContent);
-                showToast('AI已为您生成建议内容', 'success');
-            }
-        }
-
-        // 格式化文本
-        function formatText(format) {
-            switch (format) {
-                case 'bold':
-                    document.execCommand('bold', false, null);
-                    break;
-                case 'italic':
-                    document.execCommand('italic', false, null);
-                    break;
-                case 'heading':
-                    document.execCommand('formatBlock', false, 'h2');
-                    break;
-                case 'list':
-                    document.execCommand('insertUnorderedList', false, null);
-                    break;
-            }
-        }
-
-        // 插入模板
-        function insertTemplate() {
-            const templates = {
-                'architecture-principles': `
-                    <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">架构原则</h3>
-                    <ul class="list-disc list-inside text-gray-700 space-y-1">
-                        <li>高内聚低耦合：服务边界清晰，依赖关系简单</li>
-                        <li>服务自治：每个服务独立部署、独立扩展</li>
-                        <li>故障隔离：单个服务故障不影响整体系统</li>
-                        <li>数据一致性：采用最终一致性模型</li>
-                    </ul>`,
-                'tech-stack': `
-                    <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">技术栈</h3>
-                    <table class="min-w-full border border-gray-300 mt-2">
-                        <tr class="bg-gray-100">
-                            <th class="border p-2 text-left">层级</th>
-                            <th class="border p-2 text-left">技术选型</th>
-                        </tr>
-                        <tr>
-                            <td class="border p-2">前端</td>
-                            <td class="border p-2">Vue 3 + TypeScript</td>
-                        </tr>
-                        <tr>
-                            <td class="border p-2">后端</td>
-                            <td class="border p-2">Spring Cloud + Kotlin</td>
-                        </tr>
-                        <tr>
-                            <td class="border p-2">数据库</td>
-                            <td class="border p-2">MySQL + Redis</td>
-                        </tr>
-                    </table>`
-            };
-            
-            const template = templates['architecture-principles'];
-            document.getElementById('editor-content').insertAdjacentHTML('beforeend', template);
-            showToast('模板已插入', 'success');
-        }
-
-        // 应用AI建议
-        function applyAISuggestion(suggestionType) {
-            if (suggestionType === 'template1') {
-                selectDocType('design-report');
-                showToast('已应用推荐模板', 'success');
-            } else if (suggestionType === 'content1') {
-                const performanceSection = `
-                    <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">性能指标基线</h3>
-                    <ul class="list-disc list-inside text-gray-700 space-y-1">
-                        <li>API响应时间: P50 < 50ms, P99 < 200ms</li>
-                        <li>吞吐量: 单机 QPS > 1000</li>
-                        <li>并发连接数: > 10000</li>
-                        <li>CPU使用率: < 70%</li>
-                        <li>内存使用率: < 80%</li>
-                    </ul>`;
-                document.getElementById('editor-content').insertAdjacentHTML('beforeend', performanceSection);
-                showToast('性能指标已添加', 'success');
-            }
-        }
-
-        // 添加章节
-        function addChapter() {
-            const chapterName = prompt('请输入章节名称：');
-            if (chapterName) {
-                const chapterList = document.getElementById('chapter-list');
-                const newChapter = document.createElement('div');
-                newChapter.className = 'chapter-item';
-                newChapter.draggable = true;
-                newChapter.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium">${chapterName}</span>
-                        <button onclick="editChapter(${Date.now()})" class="text-gray-500 hover:text-gray-700">
-                            ✏️
-                        </button>
-                    </div>`;
-                chapterList.appendChild(newChapter);
-                initDragAndDrop();
-                showToast('章节已添加', 'success');
-            }
-        }
-
-        // 编辑章节
-        function editChapter(chapterId) {
-            const newName = prompt('请输入新的章节名称：');
-            if (newName) {
-                event.target.parentElement.previousElementSibling.textContent = newName;
-                showToast('章节已更新', 'success');
-            }
-        }
-
-        // 保存文档
-        function saveDocument() {
-            const content = document.getElementById('editor-content').innerHTML;
-            documentContent[currentDocType] = content;
-            localStorage.setItem('adf_document', JSON.stringify(documentContent));
-            showToast('文档已保存', 'success');
-        }
-
-        // 预览文档
-        function previewDocument() {
-            const content = document.getElementById('editor-content').innerHTML;
-            const previewWindow = window.open('', '_blank');
-            previewWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>文档预览</title>
-                    <style>
-                        block { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-                        h1 { color: #1f2937; }
-                        h2 { color: #374151; margin-top: 24px; }
-                        h3 { color: #4b5563; margin-top: 16px; }
-                        p { line-height: 1.6; color: #6b7280; }
-                        ul { color: #6b7280; }
-                        .bg-blue-50 { background: #eff6ff; padding: 16px; border-left: 4px solid #3b82f6; border-radius: 4px; margin: 16px 0; }
-                        .bg-green-50 { background: #f0fdf4; padding: 16px; border-left: 4px solid #10b981; border-radius: 4px; margin: 16px 0; }
-                        .bg-purple-50 { background: #faf5ff; padding: 16px; border-left: 4px solid #9333ea; border-radius: 4px; margin: 16px 0; }
-                        mark { background: #fef3c7; padding: 2px 4px; }
-                    </style>
-                </head>
-                <block>${content}</block>
-                </html>
-            `);
-            updateProgress(4);
-        }
-
-        // 查看版本
-        function viewVersion(version) {
-            showToast(`正在查看版本 ${version}`, 'info');
-        }
-
-        // 初始化拖拽功能
-        function initDragAndDrop() {
-            const chapters = document.querySelectorAll('.chapter-item');
-            let draggedItem = null;
-            
+            // 生成目录
+            html += '<h2>目录</h2><ul>';
             chapters.forEach(chapter => {
-                chapter.addEventListener('dragstart', function(e) {
-                    draggedItem = this;
-                    this.classList.add('dragging');
-                });
-                
-                chapter.addEventListener('dragend', function(e) {
-                    this.classList.remove('dragging');
-                });
-                
-                chapter.addEventListener('dragover', function(e) {
-                    e.preventDefault();
-                    if (this !== draggedItem) {
-                        const rect = this.getBoundingClientRect();
-                        const y = e.clientY - rect.top;
-                        if (y < rect.height / 2) {
-                            this.parentNode.insertBefore(draggedItem, this);
-                        } else {
-                            this.parentNode.insertBefore(draggedItem, this.nextSibling);
-                        }
-                    }
-                });
+                if (chapter.level <= 3) {
+                    const indent = '&nbsp;'.repeat((chapter.level - 1) * 4);
+                    html += `<li>${indent}${chapter.title}</li>`;
+                }
             });
-        }
-
-        // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            initDragAndDrop();
+            html += '</ul>';
             
-            // 恢复保存的内容
-            const savedContent = localStorage.getItem('adf_document');
-            if (savedContent) {
-                documentContent = JSON.parse(savedContent);
+            // 生成章节内容
+            function renderChapter(parentId) {
+                const children = chapters.filter(c => c.parent === parentId);
+                children.forEach(chapter => {
+                    const tag = `h${chapter.level}`;
+                    html += `<${tag}>${chapter.title}</${tag}>`;
+                    
+                    if (chapter.preference) {
+                        const lines = chapter.preference.split('\n');
+                        lines.forEach(line => {
+                            if (line.trim().startsWith('[') && line.trim().endsWith(']')) {
+                                html += `<p>${line}</p>`;
+                            } else if (line.trim().startsWith('填写要求：') || line.trim().startsWith('内容要求：')) {
+                                html += `<p><em>${line}</em></p>`;
+                            } else if (line.trim().startsWith('可选项：')) {
+                                html += `<p><em>${line}</em></p>`;
+                            } else if (line.trim().match(/^\d+\./)) {
+                                html += `<p style="margin-left: 20px;"><em>${line}</em></p>`;
+                            } else if (line.trim()) {
+                                html += `<p>${line}</p>`;
+                            }
+                        });
+                    }
+                    
+                    renderChapter(chapter.id);
+                });
             }
             
-            // 自动保存
-            setInterval(() => {
-                if (!isGenerating) {
-                    saveDocument();
-                }
-            }, 30000); // 每30秒自动保存
+            renderChapter(null);
             
-            console.log('智能文档工厂已初始化');
+            return html;
+        }
+        
+        // 导出Markdown
+        function exportMarkdown() {
+            if (!generatedDocument) {
+                showToast('请先生成文档', 'error');
+                return;
+            }
+            
+            let markdown = '# [系统名称]架构设计文档\n\n';
+            
+            // 文档修改记录
+            markdown += '## 文档修改记录\n\n';
+            markdown += '| 版本号 | 版本描述 | 责任人 | 日期 | 备注 |\n';
+            markdown += '| --- | --- | --- | --- | --- |\n';
+            markdown += '|     |     |     |     |     |\n\n';
+            
+            // 生成目录
+            markdown += '## 目录\n\n';
+            chapters.forEach(chapter => {
+                if (chapter.level <= 3) {
+                    const indent = '  '.repeat(chapter.level - 1);
+                    markdown += `${indent}- ${chapter.title}\n`;
+                }
+            });
+            markdown += '\n';
+            
+            // 生成章节内容
+            function renderChapterMarkdown(parentId) {
+                const children = chapters.filter(c => c.parent === parentId);
+                children.forEach(chapter => {
+                    // 添加标题
+                    const headerLevel = '#'.repeat(chapter.level);
+                    markdown += `${headerLevel} ${chapter.title}\n\n`;
+                    
+                    // 添加偏好内容
+                    if (chapter.preference) {
+                        const lines = chapter.preference.split('\n');
+                        lines.forEach(line => {
+                            if (line.trim()) {
+                                if (line.trim().startsWith('[') && line.trim().endsWith(']')) {
+                                    markdown += `${line}\n`;
+                                } else if (line.trim().startsWith('填写要求：') || 
+                                          line.trim().startsWith('内容要求：') ||
+                                          line.trim().startsWith('可选项：')) {
+                                    markdown += `*${line}*\n`;
+                                } else if (line.trim().match(/^\d+\./)) {
+                                    markdown += `${line}\n`;
+                                } else {
+                                    markdown += `${line}\n`;
+                                }
+                            }
+                        });
+                        markdown += '\n';
+                    }
+                    
+                    // 递归处理子章节
+                    renderChapterMarkdown(chapter.id);
+                });
+            }
+            
+            renderChapterMarkdown(null);
+            
+            // 创建下载
+            const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            
+            // 生成文件名（使用当前日期时间）
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+            const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
+            link.download = `架构设计文档_${dateStr}_${timeStr}.md`;
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            updateProgress(4);
+            showToast('Markdown文件已导出', 'success');
+        }
+        
+        // 层级改变时更新父级选项
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+            
+            const levelSelect = document.getElementById('chapterLevel');
+            if (levelSelect) {
+                levelSelect.addEventListener('change', function() {
+                    updateParentOptions(editingChapter?.id);
+                });
+            }
         });
     </script>
 </body>
