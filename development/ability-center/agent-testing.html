@@ -1,136 +1,350 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能体评测 - 银行AI中台管理系统</title>
-    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <title>智能体评测 - Ability Center</title>
     <style>
         :root {
             --dify-primary: #2970FF;
             --dify-primary-light: #EBF2FF;
-            --dify-sidebar-bg: #F9FAFB;
-            --dify-border: #E5E7EB;
-            --dify-hover: #F3F4F6;
-            --dify-active: #EBF2FF;
-            --dify-text-primary: #1F2937;
-            --dify-text-secondary: #6B7280;
-            --dify-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --liquid-glass-bg: rgba(255, 255, 255, 0.1);
+            --liquid-glass-border: rgba(255, 255, 255, 0.2);
+            --liquid-glass-strong: rgba(255, 255, 255, 0.15);
+            --liquid-glass-subtle: rgba(255, 255, 255, 0.05);
+            --liquid-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --liquid-text-primary: rgba(255, 255, 255, 0.9);
+            --liquid-text-secondary: rgba(0, 0, 0, 0.7);
+            --liquid-text-tertiary: rgba(255, 255, 255, 0.5);
+            
+            /* Editor specific colors */
+            --editor-bg: rgba(255, 255, 255, 0.05);
+            --editor-panel-bg: rgba(255, 255, 255, 0.08);
+            --editor-border: rgba(255, 255, 255, 0.15);
+            --editor-text: rgba(255, 255, 255, 0.95);
+            --editor-text-muted: rgba(255, 255, 255, 0.7);
+            
+            /* For compatibility with existing code */
+            --editor-text-primary: var(--editor-text);
+            --editor-text-secondary: var(--editor-text-muted);
+            --editor-text-tertiary: var(--liquid-text-tertiary);
+            --editor-border-color: var(--editor-border);
+            --editor-border-light: var(--liquid-glass-border);
+            --editor-bg-secondary: #505050;/*var(--editor-panel-bg)*/;
+            --editor-bg-tertiary: var(--liquid-glass-subtle);
+            --editor-bg-hover: var(--liquid-glass-strong);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
-            color: var(--dify-text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: var(--editor-text);
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        .dify-card {
-            border-radius: 12px;
-            border: 1px solid var(--dify-border);
-            box-shadow: var(--dify-shadow);
-            transition: all 0.3s ease;
+        .container {
+            width: 100%;
+            height: 100vh;
+            display: grid;
+            grid-template-rows: 60px 1fr;
+            gap: 0;
         }
 
-        .dify-card:hover {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        .header {
+            grid-row: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+            background: var(--liquid-glass-bg);
+            border-bottom: 1px solid var(--editor-border);
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--editor-text);
         }
 
         .dify-btn {
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .dify-btn:hover {
-            transform: translateYY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .flow-canvas {
-            background-image:
-                linear-gradient(to right, #f3f4f6 1px, transparent 1px),
-                linear-gradient(to bottom, #f3f4f6 1px, transparent 1px);
-            background-size: 20px 20px;
-            position: relative;
-            overflow: auto;
-            min-height: 500px;
-        }
-
-        .flow-node {
-            position: absolute;
-            min-width: 200px;
-            background: white;
-            border: 1px solid var(--dify-border);
-            border-radius: 8px;
-            box-shadow: var(--dify-shadow);
-            padding: 12px;
-            transition: all 0.2s ease;
-        }
-
-        .flow-node:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .node-start {
-            top: 50px;
-            left: 50px;
-        }
-
-        .node-input {
-            top: 150px;
-            left: 50px;
-        }
-
-        .node-agent {
-            top: 250px;
-            left: 300px;
-        }
-
-        .node-evaluation {
-            top: 150px;
-            left: 550px;
-        }
-
-        .node-output {
-            top: 350px;
-            left: 550px;
-        }
-
-        .flow-connection {
-            position: absolute;
-            stroke: #94a3b8;
-            stroke-width: 2;
-            fill: none;
-            z-index: 1;
-        }
-
-        .test-case-card {
-            border: 1px solid var(--dify-border);
-            border-radius: 8px;
-            margin-bottom: 12px;
-            transition: border-color 0.2s ease;
-        }
-
-        .test-case-card:hover {
-            border-color: var(--dify-primary);
-        }
-
-        .metric-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            gap: 6px;
         }
 
-        .progress-ring {
-            transform: rotate(-90deg);
+        .dify-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
-        .progress-ring-circle {
-            transition: 0.5s;
+        .btn-primary {
+            background: var(--dify-primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #1e5bff;
+        }
+
+        .btn-secondary {
+            background: var(--liquid-glass-bg);
+            color: var(--editor-text);
+            border: 1px solid var(--liquid-glass-border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--liquid-glass-strong);
+        }
+
+        .btn-success {
+            background-color: var(--dify-success);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        .btn-warning {
+            background-color: var(--dify-warning);
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        .btn-error {
+            background-color: var(--dify-error);
+            color: white;
+        }
+
+        .btn-error:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        .content-wrapper {
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: 4px;
+            overflow: hidden;
+            /* margin: 0 4px 4px 4px; */
+        }
+
+        .sidebar {
+            background-color: var(--editor-panel-bg);
+            backdrop-filter: blur(20px);
+            /* border-radius: 12px 0 0 12px; */
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .main-content {
+            background-color: var(--editor-panel-bg);
+            backdrop-filter: blur(20px);
+            /* border-radius: 0 12px 12px 0; */
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--editor-text-primary);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--editor-border-color);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--editor-text);
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--liquid-glass-bg);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 6px;
+            color: var(--editor-text);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--dify-primary);
+            background: var(--liquid-glass-strong);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .checkbox-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            font-size: 14px;
+            color: var(--editor-text-secondary);
+        }
+
+        .card {
+            background-color: var(--editor-bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--editor-border-color);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--editor-text-primary);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-fact {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--dify-info);
+        }
+
+        .badge-analysis {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--dify-success);
+        }
+
+        .badge-comparison {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--dify-warning);
+        }
+
+        .badge-tutorial {
+            background-color: rgba(147, 51, 234, 0.2);
+            color: var(--dify-secondary);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--editor-border-light);
+            border-radius: 6px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-area:hover {
+            border-color: var(--dify-primary);
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-text {
+            color: var(--editor-text-tertiary);
+            font-size: 14px;
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            color: var(--editor-text-tertiary);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--editor-border-color);
+        }
+
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--editor-text-tertiary);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            color: var(--dify-primary);
+            border-bottom-color: var(--dify-primary);
         }
 
         .tab-content {
@@ -140,955 +354,379 @@
         .tab-content.active {
             display: block;
         }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: var(--editor-bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--dify-primary);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--editor-text-tertiary);
+            text-align: right;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background-color: var(--editor-bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dify-primary);
+            margin-bottom: 4px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--editor-text-tertiary);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--editor-border-color);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--editor-text-secondary);
+            font-size: 13px;
+        }
+
+        td {
+            font-size: 14px;
+            color: var(--editor-text-primary);
+        }
+
+        .recommendation-section {
+            background-color: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .recommendation-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dify-primary);
+            margin-bottom: 12px;
+        }
+
+        .recommendation-content {
+            font-size: 14px;
+            color: var(--editor-text-secondary);
+            line-height: 1.6;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--editor-bg-secondary);
+            border-radius: 8px;
+            padding: 0;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--editor-border-color);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--editor-text-primary);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--editor-border-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--editor-text-tertiary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 1001;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .message-success {
+            background-color: rgba(16, 185, 129, 0.9);
+            color: white;
+        }
+
+        .message-error {
+            background-color: rgba(239, 68, 68, 0.9);
+            color: white;
+        }
+
+        .message-warning {
+            background-color: rgba(245, 158, 11, 0.9);
+            color: white;
+        }
+
+        .message-info {
+            background-color: rgba(59, 130, 246, 0.9);
+            color: white;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .loading-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--dify-primary);
+            border-radius: 50%;
+            animation: loading 1.4s infinite ease-in-out;
+        }
+
+        .loading-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes loading {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="dify-btn btn-secondary" onclick="window.history.back()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"></path>
+                </svg>
+                返回列表
+            </button>
+            <div>
+                <h1>智能体评测</h1>
+                <p style="color: var(--editor-text-tertiary); font-size: 14px; margin-top: 4px;">
+                    对比不同版本智能体在不同模型下的表现
+                </p>
+            </div>
+        </div>
 
-<body class="font-sans">
-    <div class="px-4 py-6">
-        <!-- Page Header -->
-        <div class="mb-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-semibold text-gray-800">智能体评测</h1>
-                    <p class="text-gray-600 mt-1">全方位评估银行AI智能体性能、准确性与安全性</p>
+        <div class="content-wrapper">
+            <!-- 左侧配置区域 -->
+            <div class="sidebar">
+                <!-- 智能体版本选择 -->
+                <div class="section">
+                    <h3 class="section-title">智能体版本</h3>
+                    <div class="form-group">
+                        <label class="form-label">选择版本（至少选择2个）</label>
+                        <div class="checkbox-list" id="agent-versions-list">
+                            <div class="loading-dots" style="margin-top: 10px;">
+                                <div class="loading-dot"></div>
+                                <div class="loading-dot"></div>
+                                <div class="loading-dot"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <button
-                        class="dify-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+
+                <!-- 评测集选择 -->
+                <div class="section">
+                    <h3 class="section-title">评测集</h3>
+                    <div class="form-group">
+                        <div class="tabs">
+                            <div class="tab active" onclick="switchTab('custom-testset')">自定义评测集</div>
+                            <div class="tab" onclick="switchTab('upload-testset')">上传评测集</div>
+                        </div>
+
+                        <!-- 自定义评测集 -->
+                        <div class="tab-content active" id="custom-testset">
+                            <div class="form-group" style="margin-top: 16px;">
+                                <label class="form-label">评测集名称</label>
+                                <input type="text" id="testset-name" class="form-input" placeholder="请输入评测集名称">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">评测集类型</label>
+                                <select id="testset-type" class="form-select">
+                                    <option value="fact">事实型</option>
+                                    <option value="analysis">分析型</option>
+                                    <option value="comparison">比较型</option>
+                                    <option value="tutorial">教程型</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">测试用例</label>
+                                <div id="testcase-list">
+                                    <div class="testcase-item">
+                                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                            <input type="text" placeholder="输入测试问题" class="form-input">
+                                            <input type="text" placeholder="期望答案" class="form-input">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="dify-btn btn-secondary" style="width: 100%; margin-top: 8px;" onclick="addTestCase()">
+                                    添加测试用例
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 上传评测集 -->
+                        <div class="tab-content" id="upload-testset">
+                            <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+                                <input type="file" id="file-input" accept=".json,.xlsx" onchange="handleFileUpload(event)">
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">点击或拖拽文件到此处上传</div>
+                                <div class="upload-text" style="font-size: 12px; margin-top: 4px;">支持 JSON、Excel 格式</div>
+                            </div>
+                            <div id="upload-preview" style="display: none; margin-top: 16px;">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <div class="card-title" id="uploaded-filename"></div>
+                                        <div class="badge" id="uploaded-file-type"></div>
+                                    </div>
+                                    <div id="uploaded-content-preview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模型选择 -->
+                <div class="section">
+                    <h3 class="section-title">选择模型</h3>
+                    <div class="form-group">
+                        <select id="model-select" class="form-select">
+                            <option value="loading">加载中...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 开始评测按钮 -->
+                <div class="section">
+                    <button class="dify-btn btn-primary" style="width: 100%; padding: 12px;" onclick="startEvaluation()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
                         </svg>
-                        新建测试计划
-                    </button>
-                    <button
-                        class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6V4m-2 2h4m-2 0v2m0 8V4m6 8c0 .552-.448 1-1 1H5c-.552 0-1-.448-1-1s.448-1 1-1h14c.552 0 1 .448 1 1zm-4 0V8m0 0c0-1.105-.895-2-2-2s-2 .895-2 2m0 0V4">
-                            </path>
-                        </svg>
-                        测试模板
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="mb-6 bg-white shadow-sm rounded-lg">
-            <div class="flex border-b border-gray-200">
-                <button id="tab-overview"
-                    class="tab-btn px-6 py-4 text-sm font-medium focus:outline-none border-b-2 border-blue-600 text-blue-600"
-                    data-tab="overview">
-                    测试概览
-                </button>
-                <button id="tab-flow"
-                    class="tab-btn px-6 py-4 text-sm font-medium focus:outline-none border-b-2 border-transparent text-gray-500 hover:text-gray-700"
-                    data-tab="flow">
-                    测试流程
-                </button>
-                <button id="tab-report"
-                    class="tab-btn px-6 py-4 text-sm font-medium focus:outline-none border-b-2 border-transparent text-gray-500 hover:text-gray-700"
-                    data-tab="report">
-                    测试报告
-                </button>
-                <button id="tab-cases"
-                    class="tab-btn px-6 py-4 text-sm font-medium focus:outline-none border-b-2 border-transparent text-gray-500 hover:text-gray-700"
-                    data-tab="cases">
-                    测试用例管理
-                </button>
-            </div>
-        </div>
-
-        <!-- Tab Content: Overview -->
-        <div id="content-overview" class="tab-content active">
-            <!-- Quick Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                <div class="dify-card p-6 bg-white">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-medium text-gray-800">运行中测试</h2>
-                    </div>
-                    <div class="mt-4 flex items-end justify-between">
-                        <div>
-                            <p class="text-3xl font-semibold text-gray-800">3</p>
-                            <p class="text-sm text-gray-500">当前测试任务</p>
-                        </div>
-                        <div class="metric-icon bg-blue-50 text-blue-600">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
-                                </path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dify-card p-6 bg-white">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-medium text-gray-800">测试通过率</h2>
-                    </div>
-                    <div class="mt-4 flex items-end justify-between">
-                        <div>
-                            <p class="text-3xl font-semibold text-gray-800">92.5%</p>
-                            <p class="text-sm text-gray-500">本月平均通过率</p>
-                        </div>
-                        <div class="relative w-12 h-12">
-                            <svg class="progress-ring w-12 h-12">
-                                <circle class="text-gray-200 w-full h-full" stroke="currentColor" stroke-width="2"
-                                    fill="transparent" r="16" cx="50%" cy="50%" />
-                                <circle class="progress-ring-circle text-green-600 w-full h-full" stroke="currentColor"
-                                    stroke-width="2" fill="transparent" stroke-dasharray="100" stroke-dashoffset="7.5"
-                                    stroke-linecap="round" r="16" cx="50%" cy="50%" />
-                            </svg>
-                            <div
-                                class="absolute inset-0 flex items-center justify-center text-green-600 text-sm font-medium">
-                                92%</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dify-card p-6 bg-white">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-medium text-gray-800">测试用例数</h2>
-                    </div>
-                    <div class="mt-4 flex items-end justify-between">
-                        <div>
-                            <p class="text-3xl font-semibold text-gray-800">284</p>
-                            <p class="text-sm text-gray-500">覆盖各业务场景</p>
-                        </div>
-                        <div class="metric-icon bg-indigo-50 text-indigo-600">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
-                                </path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dify-card p-6 bg-white">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-medium text-gray-800">平均评测时间</h2>
-                    </div>
-                    <div class="mt-4 flex items-end justify-between">
-                        <div>
-                            <p class="text-3xl font-semibold text-gray-800">2.3分</p>
-                            <p class="text-sm text-gray-500">每个测试用例</p>
-                        </div>
-                        <div class="metric-icon bg-orange-50 text-orange-600">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Current Tests -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <!-- Running Tests -->
-                <div class="dify-card bg-white p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-medium text-gray-800">正在运行的测试</h3>
-                        <a href="#" class="text-sm text-blue-600 hover:text-blue-800">查看全部</a>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium text-gray-900">转账业务智能体测试</h4>
-                                    <p class="text-sm text-gray-600">测试ID: AGT-001-TEST-2024</p>
-                                </div>
-                                <span
-                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                    运行中
-                                </span>
-                            </div>
-                            <div class="mt-3">
-                                <div class="flex justify-between text-sm text-gray-600 mb-1">
-                                    <span>进度</span>
-                                    <span>65%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 65%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium text-gray-900">客服支持智能体评估</h4>
-                                    <p class="text-sm text-gray-600">测试ID: AGT-002-TEST-2024</p>
-                                </div>
-                                <span
-                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                    队列中
-                                </span>
-                            </div>
-                            <div class="mt-3">
-                                <div class="flex justify-between text-sm text-gray-600 mb-1">
-                                    <span>预计开始时间</span>
-                                    <span>14:30</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Results -->
-                <div class="dify-card bg-white p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-medium text-gray-800">最近测试结果</h3>
-                        <a href="#" class="text-sm text-blue-600 hover:text-blue-800">查看更多</a>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium text-gray-900">理财顾问智能体</h4>
-                                    <p class="text-sm text-gray-600">完成时间: 今天 13:45</p>
-                                </div>
-                                <span
-                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    通过
-                                </span>
-                            </div>
-                            <div class="mt-3 grid grid-cols-3 gap-4 text-sm">
-                                <div>
-                                    <p class="text-gray-600">准确率</p>
-                                    <p class="font-medium">95.2%</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">响应时间</p>
-                                    <p class="font-medium">1.8s</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">安全分数</p>
-                                    <p class="font-medium">98/100</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium text-gray-900">信贷申请智能体</h4>
-                                    <p class="text-sm text-gray-600">完成时间: 今天 11:20</p>
-                                </div>
-                                <span
-                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                    失败
-                                </span>
-                            </div>
-                            <div class="mt-3 grid grid-cols-3 gap-4 text-sm">
-                                <div>
-                                    <p class="text-gray-600">准确率</p>
-                                    <p class="font-medium">78.5%</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">响应时间</p>
-                                    <p class="font-medium">4.2s</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">安全分数</p>
-                                    <p class="font-medium">82/100</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Test Categories -->
-            <div class="dify-card bg-white p-6">
-                <h3 class="text-lg font-medium text-gray-800 mb-4">测试类别覆盖情况</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <div class="flex justify-between mb-2">
-                            <div class="text-sm font-medium text-gray-700">功能测试</div>
-                            <div class="text-sm font-medium text-gray-700">89%</div>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 89%"></div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">验证智能体功能完整性</p>
-                    </div>
-                    <div>
-                        <div class="flex justify-between mb-2">
-                            <div class="text-sm font-medium text-gray-700">性能测试</div>
-                            <div class="text-sm font-medium text-gray-700">72%</div>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-500 h-2 rounded-full" style="width: 72%"></div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">评估响应速度和并发能力</p>
-                    </div>
-                    <div>
-                        <div class="flex justify-between mb-2">
-                            <div class="text-sm font-medium text-gray-700">安全测试</div>
-                            <div class="text-sm font-medium text-gray-700">96%</div>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-purple-500 h-2 rounded-full" style="width: 96%"></div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">检测安全漏洞与风险点</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab Content: Flow -->
-        <div id="content-flow" class="tab-content">
-            <div class="dify-card bg-white mb-6">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-medium text-gray-800">测试流程设计器</h3>
-                        <div class="flex items-center space-x-3">
-                            <button
-                                class="dify-btn px-3 py-1 text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
-                                保存模板
-                            </button>
-                            <button class="dify-btn px-3 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700">
-                                运行测试
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="flow-canvas relative">
-                    <!-- SVG for connections -->
-                    <svg class="absolute inset-0 w-full h-full" style="z-index: 1;">
-                        <defs>
-                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                                <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
-                            </marker>
-                        </defs>
-                        <!-- Connection lines -->
-                        <path class="flow-connection" d="M 150 100 L 150 200" marker-end="url(#arrowhead)" />
-                        <path class="flow-connection" d="M 150 250 L 300 300" marker-end="url(#arrowhead)" />
-                        <path class="flow-connection" d="M 500 300 L 550 200" marker-end="url(#arrowhead)" />
-                        <path class="flow-connection" d="M 650 250 L 650 400" marker-end="url(#arrowhead)" />
-                    </svg>
-
-                    <!-- Flow Nodes -->
-                    <div class="flow-node node-start bg-green-50 border-green-300">
-                        <div class="flex items-center mb-2">
-                            <div
-                                class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
-                                S
-                            </div>
-                            <div>
-                                <h4 class="font-medium text-sm">开始测试</h4>
-                                <p class="text-xs text-gray-600">初始化测试环境</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flow-node node-input bg-blue-50 border-blue-300">
-                        <div class="flex items-center mb-2">
-                            <div
-                                class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
-                                I
-                            </div>
-                            <div>
-                                <h4 class="font-medium text-sm">测试输入</h4>
-                                <p class="text-xs text-gray-600">执行测试用例</p>
-                            </div>
-                        </div>
-                        <div class="mt-2 text-xs text-gray-600">
-                            <div class="bg-white rounded p-2 border border-gray-200">
-                                <p class="font-medium">示例输入:</p>
-                                <p>"我想转账1000元给张三"</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flow-node node-agent bg-purple-50 border-purple-300" style="min-width: 250px;">
-                        <div class="flex items-center mb-2">
-                            <div
-                                class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
-                                A
-                            </div>
-                            <div>
-                                <h4 class="font-medium text-sm">智能体执行</h4>
-                                <p class="text-xs text-gray-600">转账业务智能体</p>
-                            </div>
-                        </div>
-                        <div class="mt-2 text-xs text-gray-600">
-                            <div class="bg-white rounded p-2 border border-gray-200">
-                                <p class="font-medium">监控指标:</p>
-                                <ul class="list-disc list-inside text-xs mt-1">
-                                    <li>响应时间</li>
-                                    <li>准确性</li>
-                                    <li>异常处理</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flow-node node-evaluation bg-orange-50 border-orange-300">
-                        <div class="flex items-center mb-2">
-                            <div
-                                class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
-                                E
-                            </div>
-                            <div>
-                                <h4 class="font-medium text-sm">结果评估</h4>
-                                <p class="text-xs text-gray-600">自动评分与分析</p>
-                            </div>
-                        </div>
-                        <div class="mt-2 text-xs text-gray-600">
-                            <div class="bg-white rounded p-2 border border-gray-200">
-                                <p class="font-medium">评估维度:</p>
-                                <ul class="list-disc list-inside text-xs mt-1">
-                                    <li>功能正确性</li>
-                                    <li>性能指标</li>
-                                    <li>安全合规</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flow-node node-output bg-gray-50 border-gray-300">
-                        <div class="flex items-center mb-2">
-                            <div
-                                class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-2">
-                                R
-                            </div>
-                            <div>
-                                <h4 class="font-medium text-sm">报告生成</h4>
-                                <p class="text-xs text-gray-600">输出测试结果</p>
-                            </div>
-                        </div>
-                        <div class="mt-2 text-xs text-gray-600">
-                            <div class="bg-white rounded p-2 border border-gray-200">
-                                <p class="font-medium">报告内容:</p>
-                                <ul class="list-disc list-inside text-xs mt-1">
-                                    <li>详细日志</li>
-                                    <li>性能图表</li>
-                                    <li>改进建议</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Flow Configuration Panel -->
-            <div class="dify-card bg-white">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-800">测试配置</h3>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">测试智能体</label>
-                            <select
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                                <option>转账业务智能体</option>
-                                <option>客服支持智能体</option>
-                                <option>理财顾问智能体</option>
-                                <option>信贷申请智能体</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">测试类型</label>
-                            <select
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                                <option>功能测试</option>
-                                <option>性能测试</option>
-                                <option>安全测试</option>
-                                <option>回归测试</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">并发用户数</label>
-                            <input type="number" value="10"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">测试时长(分钟)</label>
-                            <input type="number" value="30"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" />
-                        </div>
-                    </div>
-                    <div class="mt-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">测试环境</label>
-                        <div class="flex space-x-4">
-                            <label class="flex items-center">
-                                <input type="radio" name="environment" value="dev"
-                                    class="text-blue-600 focus:ring-blue-500" checked />
-                                <span class="ml-2 text-sm text-gray-700">开发环境</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="environment" value="staging"
-                                    class="text-blue-600 focus:ring-blue-500" />
-                                <span class="ml-2 text-sm text-gray-700">测试环境</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="environment" value="prod"
-                                    class="text-blue-600 focus:ring-blue-500" />
-                                <span class="ml-2 text-sm text-gray-700">生产环境</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab Content: Report -->
-        <div id="content-report" class="tab-content">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <!-- Test Summary Card -->
-                <div class="lg:col-span-2 dify-card bg-white p-6">
-                    <h3 class="text-lg font-medium text-gray-800 mb-4">测试报告摘要</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="text-center">
-                            <div class="text-2xl font-semibold text-gray-900">95.2%</div>
-                            <div class="text-sm text-gray-600">准确率</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-semibold text-gray-900">1.8s</div>
-                            <div class="text-sm text-gray-600">平均响应时间</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-semibold text-gray-900">98/100</div>
-                            <div class="text-sm text-gray-600">安全分数</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-semibold text-gray-900">156</div>
-                            <div class="text-sm text-gray-600">执行用例数</div>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 border-t pt-4">
-                        <h4 class="text-sm font-medium text-gray-700 mb-3">测试用例结果分布</h4>
-                        <div class="space-y-2">
-                            <div class="flex items-center">
-                                <div class="w-32 text-sm text-gray-600">通过</div>
-                                <div class="flex-1 bg-gray-200 rounded-full h-4 mx-3">
-                                    <div class="bg-green-500 h-4 rounded-full" style="width: 85%"></div>
-                                </div>
-                                <div class="w-12 text-sm text-gray-900 text-right">133</div>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="w-32 text-sm text-gray-600">失败</div>
-                                <div class="flex-1 bg-gray-200 rounded-full h-4 mx-3">
-                                    <div class="bg-red-500 h-4 rounded-full" style="width: 10%"></div>
-                                </div>
-                                <div class="w-12 text-sm text-gray-900 text-right">15</div>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="w-32 text-sm text-gray-600">警告</div>
-                                <div class="flex-1 bg-gray-200 rounded-full h-4 mx-3">
-                                    <div class="bg-yellow-500 h-4 rounded-full" style="width: 5%"></div>
-                                </div>
-                                <div class="w-12 text-sm text-gray-900 text-right">8</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="dify-card bg-white p-6">
-                    <h3 class="text-lg font-medium text-gray-800 mb-4">快速操作</h3>
-                    <div class="space-y-3">
-                        <button
-                            class="w-full dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-left flex items-center">
-                            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                </path>
-                            </svg>
-                            下载完整报告
-                        </button>
-                        <button
-                            class="w-full dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-left flex items-center">
-                            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z">
-                                </path>
-                            </svg>
-                            分享报告
-                        </button>
-                        <button
-                            class="w-full dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-left flex items-center">
-                            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                                </path>
-                            </svg>
-                            创建优化任务
-                        </button>
-                        <button
-                            class="w-full dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-left flex items-center">
-                            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                                </path>
-                            </svg>
-                            重新测试
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Detailed Results -->
-            <div class="dify-card bg-white">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-800">详细测试结果</h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    测试用例</th>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    输入</th>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    预期输出</th>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    实际输出</th>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    响应时间</th>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    状态</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TC-TRF-001
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">转账1000元给张三</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">显示转账确认界面</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">显示转账确认界面</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.2s</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">通过</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TC-TRF-002
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">查询账户余额</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">显示当前余额</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">显示当前余额</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.8s</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">通过</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TC-TRF-003
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">转账金额超限</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">提示超过日限额</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">未能正确识别超限</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.5s</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">失败</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="px-6 py-4 border-t border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <div class="text-sm text-gray-500">
-                            显示 1 到 3 共 156 条测试用例
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button
-                                class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">上一页</button>
-                            <button
-                                class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">1</button>
-                            <button
-                                class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">2</button>
-                            <button
-                                class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">下一页</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab Content: Cases -->
-        <div id="content-cases" class="tab-content">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h2 class="text-xl font-semibold text-gray-800">测试用例库</h2>
-                    <p class="text-sm text-gray-600 mt-1">管理和维护智能体测试用例</p>
-                </div>
-                <div class="flex space-x-3">
-                    <button
-                        class="dify-btn px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">
-                        导入用例
-                    </button>
-                    <button class="dify-btn px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 text-sm">
-                        新建用例
+                        开始评测
                     </button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <!-- Test Suite Navigation -->
-                <div class="lg:col-span-1">
-                    <div class="dify-card bg-white">
-                        <div class="px-4 py-3 border-b border-gray-200">
-                            <h3 class="text-sm font-medium text-gray-800">测试套件</h3>
-                        </div>
-                        <div class="p-4 space-y-2">
-                            <div
-                                class="flex items-center px-3 py-2 text-sm rounded-md bg-blue-50 text-blue-700 cursor-pointer">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
-                                    </path>
-                                </svg>
-                                转账业务测试
-                            </div>
-                            <div
-                                class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
-                                    </path>
-                                </svg>
-                                客服处理测试
-                            </div>
-                            <div
-                                class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
-                                    </path>
-                                </svg>
-                                理财咨询测试
-                            </div>
-                            <div
-                                class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
-                                    </path>
-                                </svg>
-                                安全防护测试
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Test Cases List -->
-                <div class="lg:col-span-3">
-                    <div class="dify-card bg-white">
-                        <div class="px-6 py-4 border-b border-gray-200">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-lg font-medium text-gray-800">转账业务测试用例</h3>
-                                <div class="flex items-center space-x-3">
-                                    <input type="text" placeholder="搜索用例..."
-                                        class="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" />
-                                    <select
-                                        class="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                                        <option>全部状态</option>
-                                        <option>已启用</option>
-                                        <option>已禁用</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="p-6 space-y-4">
-                            <!-- Test Case Card -->
-                            <div class="test-case-card p-4">
-                                <div class="flex items-start justify-between">
-                                    <div class="flex items-start">
-                                        <input type="checkbox" class="mt-1 mr-3 text-blue-600 focus:ring-blue-500" />
-                                        <div>
-                                            <h4 class="font-medium text-gray-900">标准转账流程测试</h4>
-                                            <p class="text-sm text-gray-600 mt-1">用例ID: TC-TRF-001</p>
-                                            <div class="mt-2 text-sm">
-                                                <div class="flex">
-                                                    <span class="w-16 text-gray-500">输入:</span>
-                                                    <span class="text-gray-700">"我要转账1000元给张三"</span>
-                                                </div>
-                                                <div class="flex">
-                                                    <span class="w-16 text-gray-500">预期:</span>
-                                                    <span class="text-gray-700">展示转账确认界面，包含收款人信息、金额确认</span>
-                                                </div>
-                                            </div>
-                                            <div class="mt-3 flex items-center space-x-4">
-                                                <span class="text-xs text-gray-500">优先级: 高</span>
-                                                <span class="text-xs text-gray-500">最后执行: 今天 14:30</span>
-                                                <span class="text-xs text-gray-500">通过率: 98%</span>
-                                                <span class="text-xs text-gray-500">执行时长: 1.2s</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span
-                                            class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">已启用</span>
-                                        <button class="text-gray-400 hover:text-gray-600">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z">
-                                                </path>
-                                            </svg>
-                                        </button>
-                                        <button class="text-gray-400 hover:text-gray-600">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
-                                                </path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- More Test Cases -->
-                            <div class="test-case-card p-4">
-                                <div class="flex items-start justify-between">
-                                    <div class="flex items-start">
-                                        <input type="checkbox" class="mt-1 mr-3 text-blue-600 focus:ring-blue-500" />
-                                        <div>
-                                            <h4 class="font-medium text-gray-900">余额不足转账测试</h4>
-                                            <p class="text-sm text-gray-600 mt-1">用例ID: TC-TRF-002</p>
-                                            <div class="mt-2 text-sm">
-                                                <div class="flex">
-                                                    <span class="w-16 text-gray-500">输入:</span>
-                                                    <span class="text-gray-700">"转账10000元给李四"</span>
-                                                </div>
-                                                <div class="flex">
-                                                    <span class="w-16 text-gray-500">预期:</span>
-                                                    <span class="text-gray-700">提示余额不足，建议充值</span>
-                                                </div>
-                                            </div>
-                                            <div class="mt-3 flex items-center space-x-4">
-                                                <span class="text-xs text-gray-500">优先级: 中</span>
-                                                <span class="text-xs text-gray-500">最后执行: 今天 13:45</span>
-                                                <span class="text-xs text-gray-500">通过率: 95%</span>
-                                                <span class="text-xs text-gray-500">执行时长: 1.5s</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span
-                                            class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">已启用</span>
-                                        <button class="text-gray-400 hover:text-gray-600">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z">
-                                                </path>
-                                            </svg>
-                                        </button>
-                                        <button class="text-gray-400 hover:text-gray-600">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
-                                                </path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Test Case with Issues -->
-                            <div class="test-case-card p-4">
-                                <div class="flex items-start justify-between">
-                                    <div class="flex items-start">
-                                        <input type="checkbox" class="mt-1 mr-3 text-blue-600 focus:ring-blue-500" />
-                                        <div>
-                                            <h4 class="font-medium text-gray-900">跨行转账流程测试</h4>
-                                            <p class="text-sm text-gray-600 mt-1">用例ID: TC-TRF-003</p>
-                                            <div class="mt-2 text-sm">
-                                                <div class="flex">
-                                                    <span class="w-16 text-gray-500">输入:</span>
-                                                    <span class="text-gray-700">"转账5000元到建设银行账户"</span>
-                                                </div>
-                                                <div class="flex">
-                                                    <span class="w-16 text-gray-500">预期:</span>
-                                                    <span class="text-gray-700">显示跨行转账手续费，要求确认</span>
-                                                </div>
-                                            </div>
-                                            <div class="mt-3 flex items-center space-x-4">
-                                                <span class="text-xs text-gray-500">优先级: 高</span>
-                                                <span class="text-xs text-gray-500">最后执行: 昨天 16:20</span>
-                                                <span class="text-xs text-red-600">通过率: 76% ↓</span>
-                                                <span class="text-xs text-gray-500">执行时长: 3.2s</span>
-                                            </div>
-                                            <div class="mt-2 text-xs text-red-600">⚠️ 近期失败率上升，需要检查</div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span
-                                            class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">待优化</span>
-                                        <button class="text-gray-400 hover:text-gray-600">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z">
-                                                </path>
-                                            </svg>
-                                        </button>
-                                        <button class="text-gray-400 hover:text-gray-600">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
-                                                </path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pagination -->
-                        <div class="px-6 py-4 border-t border-gray-200">
-                            <div class="flex items-center justify-between">
-                                <div class="text-sm text-gray-500">
-                                    显示 1 到 3 共 42 个测试用例
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <button
-                                        class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">上一页</button>
-                                    <button
-                                        class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">1</button>
-                                    <button
-                                        class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">2</button>
-                                    <button
-                                        class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">3</button>
-                                    <button
-                                        class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-500 text-sm hover:bg-gray-50">下一页</button>
-                                </div>
-                            </div>
+            <!-- 右侧结果显示区域 -->
+            <div class="main-content">
+                <div id="results-container">
+                    <div class="section">
+                        <h3 class="section-title">评测结果</h3>
+                        <div style="text-align: center; padding: 60px 20px; color: var(--editor-text-tertiary);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 16px;">
+                                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"></path>
+                                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                            </svg>
+                            <p>请配置评测参数并点击开始评测按钮</p>
                         </div>
                     </div>
                 </div>
@@ -1096,77 +734,716 @@
         </div>
     </div>
 
+    <!-- 评测进度模态框 -->
+    <div id="progress-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">评测进行中</h3>
+                <button class="modal-close" onclick="cancelEvaluation()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text">0%</div>
+                <div style="margin-top: 20px;">
+                    <h4 style="font-size: 14px; margin-bottom: 10px;">评测日志：</h4>
+                    <div id="evaluation-log" style="max-height: 200px; overflow-y: auto; background-color: var(--editor-bg-tertiary); padding: 12px; border-radius: 4px; font-size: 12px; line-height: 1.4;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Tab switching functionality
-        document.querySelectorAll('.tab-btn').forEach(tabBtn => {
-            tabBtn.addEventListener('click', function () {
-                const targetTab = this.getAttribute('data-tab');
-
-                // Remove active class from all tabs and contents
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.classList.remove('border-blue-600', 'text-blue-600');
-                    btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700');
-                });
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-
-                // Add active class to clicked tab and corresponding content
-                this.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700');
-                this.classList.add('border-blue-600', 'text-blue-600');
-                document.getElementById(`content-${targetTab}`).classList.add('active');
-            });
-        });
-
-        // Flow node drag functionality (basic simulation)
-        const flowNodes = document.querySelectorAll('.flow-node');
-        flowNodes.forEach(node => {
-            let isDragging = false;
-            let currentX;
-            let currentY;
-            let initialX;
-            let initialY;
-            let xOffset = 0;
-            let yOffset = 0;
-
-            node.addEventListener('mousedown', dragStart);
-            document.addEventListener('mousemove', drag);
-            document.addEventListener('mouseup', dragEnd);
-
-            function dragStart(e) {
-                if (e.type === "mousedown") {
-                    initialX = e.clientX - xOffset;
-                    initialY = e.clientY - yOffset;
-                }
-                if (e.target === node) {
-                    isDragging = true;
-                }
+        class AgentTestingSystem {
+            constructor() {
+                this.agentId = this.getAgentIdFromURL();
+                this.selectedVersions = [];
+                this.testset = null;
+                this.selectedModel = null;
+                this.evaluationResults = null;
+                this.isEvaluating = false;
+                this.evaluationAbortController = null;
+                
+                // 初始化
+                this.init();
             }
 
-            function drag(e) {
-                if (isDragging) {
-                    e.preventDefault();
-                    if (e.type === "mousemove") {
-                        currentX = e.clientX - initialX;
-                        currentY = e.clientY - initialY;
+            getAgentIdFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('agentId');
+            }
+
+            async init() {
+                if (!this.agentId) {
+                    this.showMessage('未找到智能体ID', 'error');
+                    return;
+                }
+
+                // 加载智能体版本
+                await this.loadAgentVersions();
+                
+                // 加载模型列表
+                await this.loadModels();
+            }
+
+            async loadAgentVersions() {
+                try {
+                    const response = await fetch(`/omni-api/agents/${this.agentId}/versions`);
+                    const result = await response.json();
+                    
+                    if (result.success && Array.isArray(result.data)) {
+                        const versionsList = document.getElementById('agent-versions-list');
+                        versionsList.innerHTML = '';
+                        
+                        // 按创建时间降序排序
+                        const sortedVersions = result.data.sort((a, b) => 
+                            new Date(b.createdAt) - new Date(a.createdAt)
+                        );
+                        
+                        sortedVersions.forEach(version => {
+                            const versionName = version.name || version.versionName || version.version || `版本 ${version.id}`;
+                            const item = document.createElement('div');
+                            item.className = 'checkbox-item';
+                            item.innerHTML = `
+                                <input type="checkbox" id="version-${version.id}" value="${version.id}">
+                                <label for="version-${version.id}" class="checkbox-label">
+                                    ${versionName}
+                                    <span style="color: var(--editor-text-tertiary); font-size: 12px; margin-left: 8px;">
+                                        (${new Date(version.createdAt).toLocaleString('zh-CN')})
+                                    </span>
+                                </label>
+                            `;
+                            
+                            const checkbox = item.querySelector('input[type="checkbox"]');
+                            checkbox.addEventListener('change', (event) => {
+                                this.handleVersionSelection(event, version);
+                            });
+                            
+                            versionsList.appendChild(item);
+                        });
+                    } else {
+                        document.getElementById('agent-versions-list').innerHTML = 
+                            '<div style="color: var(--editor-text-tertiary); font-size: 14px; padding: 10px 0;">暂无版本数据</div>';
                     }
-                    xOffset = currentX;
-                    yOffset = currentY;
-                    setTranslate(currentX, currentY, node);
+                } catch (error) {
+                    console.error('加载智能体版本失败:', error);
+                    this.showMessage('加载智能体版本失败', 'error');
+                    document.getElementById('agent-versions-list').innerHTML = 
+                        '<div style="color: var(--dify-error); font-size: 14px; padding: 10px 0;">加载失败</div>';
                 }
             }
 
-            function setTranslate(xPos, yPos, el) {
-                el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+            async loadModels() {
+                try {
+                    // 调用真实的模型接口
+                    const response = await fetch('/omni-api/models');
+                    const result = await response.json();
+                    
+                    if (result.success && Array.isArray(result.data?.models)) {
+                        const modelSelect = document.getElementById('model-select');
+                        modelSelect.innerHTML = '';
+                        
+                        result.data.models.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model.id || model.name;
+                            option.textContent = `${model.name} - ${model.id}`;
+                            modelSelect.appendChild(option);
+                        });
+                        
+                        // 默认选择第一个模型
+                        if (modelSelect.options.length > 0) {
+                            modelSelect.selectedIndex = 0;
+                            this.selectedModel = modelSelect.value;
+                        }
+                    } else {
+                        document.getElementById('model-select').innerHTML = 
+                            '<option value="">加载模型失败</option>';
+                    }
+                } catch (error) {
+                    console.error('加载模型列表失败:', error);
+                    this.showMessage('加载模型列表失败', 'error');
+                    document.getElementById('model-select').innerHTML = 
+                        '<option value="">加载失败</option>';
+                }
             }
 
-            function dragEnd(e) {
-                initialX = currentX;
-                initialY = currentY;
-                isDragging = false;
+            handleVersionSelection(event, version) {
+                if (event.target.checked) {
+                    this.selectedVersions.push(version);
+                } else {
+                    this.selectedVersions = this.selectedVersions.filter(v => v.id !== version.id);
+                }
             }
-        });
+
+            getSelectedTestset() {
+                const activeTab = document.querySelector('.tab.active').textContent;
+                
+                if (activeTab === '自定义评测集') {
+                    const name = document.getElementById('testset-name').value.trim();
+                    const type = document.getElementById('testset-type').value;
+                    const testcases = [];
+                    
+                    document.querySelectorAll('#testcase-list .testcase-item').forEach(item => {
+                        const question = item.querySelector('input:nth-child(1)').value.trim();
+                        const expected = item.querySelector('input:nth-child(2)').value.trim();
+                        
+                        if (question && expected) {
+                            testcases.push({ question, expected });
+                        }
+                    });
+                    
+                    if (!name) {
+                        this.showMessage('请输入评测集名称', 'error');
+                        return null;
+                    }
+                    
+                    if (testcases.length === 0) {
+                        this.showMessage('请添加有效的测试用例', 'error');
+                        return null;
+                    }
+                    
+                    return {
+                        name,
+                        type,
+                        testcases
+                    };
+                } else if (activeTab === '上传评测集') {
+                    return this.testset;
+                }
+                
+                return null;
+            }
+
+            validateEvaluationParams() {
+                // 检查是否选择了至少2个版本
+                if (this.selectedVersions.length < 2) {
+                    this.showMessage('请至少选择2个智能体版本进行对比', 'error');
+                    return false;
+                }
+                
+                // 检查评测集
+                const testset = this.getSelectedTestset();
+                if (!testset) {
+                    return false;
+                }
+                this.testset = testset;
+                
+                // 检查模型
+                this.selectedModel = document.getElementById('model-select').value;
+                if (!this.selectedModel) {
+                    this.showMessage('请选择评测模型', 'error');
+                    return false;
+                }
+                
+                return true;
+            }
+
+            async startEvaluation() {
+                if (!this.validateEvaluationParams()) {
+                    return;
+                }
+                
+                // 显示进度模态框
+                const progressModal = document.getElementById('progress-modal');
+                progressModal.style.display = 'flex';
+                document.querySelector('.progress-fill').style.width = '0%';
+                document.querySelector('.progress-text').textContent = '0%';
+                document.getElementById('evaluation-log').innerHTML = '';
+                
+                this.isEvaluating = true;
+                this.evaluationAbortController = new AbortController();
+                
+                try {
+                    await this.runEvaluation();
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        this.showMessage('评测已取消', 'info');
+                    } else {
+                        console.error('评测过程出错:', error);
+                        this.showMessage('评测失败: ' + error.message, 'error');
+                    }
+                } finally {
+                    this.isEvaluating = false;
+                    progressModal.style.display = 'none';
+                }
+            }
+
+            async runEvaluation() {
+                const totalSteps = this.selectedVersions.length * this.testset.testcases.length;
+                let completedSteps = 0;
+                const results = {};
+                
+                this.logEvaluation('开始评测...');
+                this.logEvaluation(`评测模型: ${this.selectedModel}`);
+                this.logEvaluation(`评测集: ${this.testset.name} (${this.testset.testcases.length}个测试用例)`);
+                
+                // 对每个版本进行评测
+                for (const version of this.selectedVersions) {
+                    const versionName = version.name || version.versionName || version.version || `版本 ${version.id}`;
+                    this.logEvaluation(`\n正在评测版本: ${versionName}`);
+                    
+                    results[version.id] = {
+                        version: version,
+                        versionName: versionName,
+                        metrics: {
+                            accuracy: 0,
+                            responseTime: 0,
+                            tokens: 0
+                        },
+                        testResults: []
+                    };
+                    
+                    let totalAccuracy = 0;
+                    let totalResponseTime = 0;
+                    let totalTokens = 0;
+                    
+                    // 对每个测试用例进行评测
+                    for (const testcase of this.testset.testcases) {
+                        this.logEvaluation(`  执行测试用例: ${testcase.question.substring(0, 30)}...`);
+                        
+                        const startTime = performance.now();
+                        let response = null;
+                        let tokenCount = 0;
+                        
+                        try {
+                            // 调用真实的AI模型API进行评测
+                            // 获取智能体提示词作为系统提示词
+                            const systemPrompt = version.promptTemplate || version.description || `智能体 ${version.name || version.id} 的系统提示词`;
+                            
+                            const requestBody = {
+                                model: this.selectedModel,
+                                messages: [
+                                    {
+                                        role: "system",
+                                        content: systemPrompt
+                                    },
+                                    {
+                                        role: "user",
+                                        content: testcase.question
+                                    }
+                                ],
+                                stream: false,
+                                temperature: 0.7,
+                                max_tokens: 1000,
+                                top_p: 0.95
+                            };
+                            
+                            const modelResponse = await fetch('/raw-ai/v1/chat/completions', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'accept': '*/*',
+                                    'cache-control': 'no-cache',
+                                    'pragma': 'no-cache'
+                                },
+                                body: JSON.stringify(requestBody),
+                                signal: this.evaluationAbortController.signal,
+                                credentials: 'include'
+                            });
+                            
+                            if (!modelResponse.ok) {
+                                throw new Error(`API调用失败: ${modelResponse.status}`);
+                            }
+                            
+                            const resultData = await modelResponse.json();
+                            // 从新的API响应格式中提取回复内容
+                            response = resultData.choices?.[0]?.message?.content || resultData.response || resultData.content || '';
+                            tokenCount = resultData.usage?.total_tokens || Math.floor(response.length / 4);
+                            
+                            const endTime = performance.now();
+                            const responseTime = endTime - startTime;
+                            
+                            // 计算准确率
+                            const accuracy = this.calculateAccuracy(response, testcase.expected);
+                            
+                            totalAccuracy += accuracy;
+                            totalResponseTime += responseTime;
+                            totalTokens += tokenCount;
+                            
+                            results[version.id].testResults.push({
+                                question: testcase.question,
+                                expected: testcase.expected,
+                                response: response,
+                                accuracy: accuracy,
+                                responseTime: responseTime,
+                                tokens: tokenCount
+                            });
+                            
+                        } catch (error) {
+                            if (error.name === 'AbortError') throw error;
+                            
+                            this.logEvaluation(`  错误: ${error.message}`, true);
+                            
+                            // 记录失败的测试用例
+                            results[version.id].testResults.push({
+                                question: testcase.question,
+                                expected: testcase.expected,
+                                response: '评测失败',
+                                accuracy: 0,
+                                responseTime: 0,
+                                tokens: 0,
+                                error: error.message
+                            });
+                        }
+                        
+                        // 更新进度
+                        completedSteps++;
+                        const progress = Math.floor((completedSteps / totalSteps) * 100);
+                        this.updateProgress(progress);
+                    }
+                    
+                    // 计算平均指标
+                    const testCaseCount = results[version.id].testResults.length;
+                    results[version.id].metrics = {
+                        accuracy: totalAccuracy / testCaseCount,
+                        responseTime: totalResponseTime / testCaseCount,
+                        tokens: totalTokens / testCaseCount
+                    };
+                }
+                
+                this.evaluationResults = results;
+                this.renderResults();
+            }
+
+            calculateAccuracy(response, expected) {
+                // 简单的准确率计算逻辑，可以根据实际需求调整
+                const responseLower = response.toLowerCase();
+                const expectedLower = expected.toLowerCase();
+                
+                // 检查关键词匹配
+                const keywords = expectedLower.split(/\s+/).filter(word => word.length > 2);
+                if (keywords.length === 0) {
+                    return responseLower.includes(expectedLower) ? 1 : 0;
+                }
+                
+                let matchedCount = 0;
+                for (const keyword of keywords) {
+                    if (responseLower.includes(keyword)) {
+                        matchedCount++;
+                    }
+                }
+                
+                return matchedCount / keywords.length;
+            }
+
+            updateProgress(progress) {
+                document.querySelector('.progress-fill').style.width = `${progress}%`;
+                document.querySelector('.progress-text').textContent = `${progress}%`;
+            }
+
+            logEvaluation(message, isError = false) {
+                const logElement = document.getElementById('evaluation-log');
+                const logItem = document.createElement('div');
+                logItem.textContent = message;
+                logItem.style.color = isError ? 'var(--dify-error)' : 'var(--editor-text-secondary)';
+                logElement.appendChild(logItem);
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+
+            renderResults() {
+                const resultsContainer = document.getElementById('results-container');
+                resultsContainer.innerHTML = '';
+                
+                // 渲染总体指标对比
+                const metricsSection = document.createElement('div');
+                metricsSection.className = 'section';
+                metricsSection.innerHTML = `
+                    <h3 class="section-title">总体指标对比</h3>
+                    <div class="metrics-grid">
+                        ${this.selectedVersions.map(version => `
+                            <div class="metric-card">
+                                <div class="card-header" style="margin-bottom: 16px;">
+                                    <div class="card-title">${version.name || version.versionName || version.version || `版本 ${version.id}`}</div>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <div class="metric-value">${(this.evaluationResults[version.id].metrics.accuracy * 100).toFixed(1)}%</div>
+                                    <div class="metric-label">准确率</div>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <div class="metric-value">${this.evaluationResults[version.id].metrics.responseTime.toFixed(0)}ms</div>
+                                    <div class="metric-label">响应时间</div>
+                                </div>
+                                <div>
+                                    <div class="metric-value">${Math.round(this.evaluationResults[version.id].metrics.tokens)}</div>
+                                    <div class="metric-label">平均Tokens</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                resultsContainer.appendChild(metricsSection);
+                
+                // 渲染详细测试结果表格
+                const detailsSection = document.createElement('div');
+                detailsSection.className = 'section';
+                detailsSection.innerHTML = `
+                    <h3 class="section-title">详细测试结果</h3>
+                `;
+                
+                this.selectedVersions.forEach(version => {
+                    const versionResults = this.evaluationResults[version.id];
+                    const tableContainer = document.createElement('div');
+                    tableContainer.className = 'table-container';
+                    tableContainer.innerHTML = `
+                        <h4 style="margin-bottom: 12px; color: var(--editor-text-secondary);">版本: ${versionResults.versionName}</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>测试问题</th>
+                                    <th>期望答案</th>
+                                    <th>实际响应</th>
+                                    <th>准确率</th>
+                                    <th>响应时间</th>
+                                    <th>Tokens</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${versionResults.testResults.map(testResult => `
+                                    <tr>
+                                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${testResult.question}</td>
+                                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${testResult.expected}</td>
+                                        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${testResult.response}</td>
+                                        <td>
+                                            <span style="color: ${testResult.accuracy >= 0.8 ? 'var(--dify-success)' : testResult.accuracy >= 0.5 ? 'var(--dify-warning)' : 'var(--dify-error)'}">
+                                                ${(testResult.accuracy * 100).toFixed(1)}%
+                                            </span>
+                                        </td>
+                                        <td>${testResult.responseTime.toFixed(0)}ms</td>
+                                        <td>${testResult.tokens}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    detailsSection.appendChild(tableContainer);
+                });
+                
+                resultsContainer.appendChild(detailsSection);
+                
+                // 渲染推荐
+                this.renderRecommendation();
+            }
+
+            renderRecommendation() {
+                // 找出最佳版本（综合考虑准确率、响应时间和token使用量）
+                let bestVersion = null;
+                let bestScore = -Infinity;
+                
+                Object.values(this.evaluationResults).forEach(versionResult => {
+                    // 计算综合评分（准确率权重0.6，响应时间权重-0.2，token权重-0.2）
+                    // 对响应时间和token进行标准化处理
+                    const accuracyScore = versionResult.metrics.accuracy;
+                    const responseTimeScore = 1 - Math.min(versionResult.metrics.responseTime / 5000, 1); // 假设5000ms为最坏情况
+                    const tokensScore = 1 - Math.min(versionResult.metrics.tokens / 1000, 1); // 假设1000tokens为最坏情况
+                    
+                    const totalScore = (accuracyScore * 0.6) + (responseTimeScore * 0.2) + (tokensScore * 0.2);
+                    
+                    if (totalScore > bestScore) {
+                        bestScore = totalScore;
+                        bestVersion = versionResult;
+                    }
+                });
+                
+                const recommendationSection = document.createElement('div');
+                recommendationSection.className = 'recommendation-section';
+                recommendationSection.innerHTML = `
+                    <div class="recommendation-title">推荐结果</div>
+                    <div class="recommendation-content">
+                        <p>基于综合评测，我们推荐使用以下智能体版本：</p>
+                        <h4 style="margin: 12px 0; color: var(--dify-primary);">${bestVersion.versionName}</h4>
+                        <p>该版本在当前评测集上表现最优，具体指标如下：</p>
+                        <ul style="margin-left: 20px; margin-top: 8px;">
+                            <li>准确率：<strong>${(bestVersion.metrics.accuracy * 100).toFixed(1)}%</strong></li>
+                            <li>平均响应时间：<strong>${bestVersion.metrics.responseTime.toFixed(0)}ms</strong></li>
+                            <li>平均Tokens消耗：<strong>${Math.round(bestVersion.metrics.tokens)}</strong></li>
+                        </ul>
+                        <p style="margin-top: 12px;">评测模型：<strong>${this.selectedModel}</strong></p>
+                        <p>评测集类型：<strong>${this.getTestsetTypeName(this.testset.type)}</strong></p>
+                    </div>
+                `;
+                
+                document.getElementById('results-container').appendChild(recommendationSection);
+            }
+
+            getTestsetTypeName(type) {
+                const typeMap = {
+                    'fact': '事实型',
+                    'analysis': '分析型',
+                    'comparison': '比较型',
+                    'tutorial': '教程型'
+                };
+                return typeMap[type] || type;
+            }
+
+            showMessage(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `message-toast message-${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 300);
+                }, 3000);
+            }
+
+            cancelEvaluation() {
+                if (this.evaluationAbortController) {
+                    this.evaluationAbortController.abort();
+                }
+            }
+        }
+
+        // 全局实例
+        const agentTestingSystem = new AgentTestingSystem();
+
+        // 辅助函数
+        function switchTab(tabId) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有标签的激活状态
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 激活选中的标签和内容
+            document.getElementById(tabId).classList.add('active');
+            
+            // 高亮选中的标签
+            const activeTabText = tabId === 'custom-testset' ? '自定义评测集' : '上传评测集';
+            document.querySelectorAll('.tab').forEach(tab => {
+                if (tab.textContent === activeTabText) {
+                    tab.classList.add('active');
+                }
+            });
+        }
+
+        function addTestCase() {
+            const testcaseList = document.getElementById('testcase-list');
+            const testcaseItem = document.createElement('div');
+            testcaseItem.className = 'testcase-item';
+            testcaseItem.innerHTML = `
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="text" placeholder="输入测试问题" class="form-input">
+                    <input type="text" placeholder="期望答案" class="form-input">
+                    <button class="dify-btn btn-error" style="padding: 8px;" onclick="removeTestCase(this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            testcaseList.appendChild(testcaseItem);
+        }
+
+        function removeTestCase(button) {
+            const testcaseItem = button.closest('.testcase-item');
+            testcaseItem.remove();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 检查文件类型
+            if (!['.json', '.xlsx'].some(ext => file.name.toLowerCase().endsWith(ext))) {
+                agentTestingSystem.showMessage('请上传JSON或Excel格式的文件', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            if (file.name.toLowerCase().endsWith('.json')) {
+                reader.onload = function(e) {
+                    try {
+                        const testsetData = JSON.parse(e.target.result);
+                        
+                        // 验证数据格式
+                        if (!testsetData.name || !Array.isArray(testsetData.testcases)) {
+                            throw new Error('JSON格式不正确，需要包含name和testcases字段');
+                        }
+                        
+                        // 验证每个测试用例
+                        for (const testcase of testsetData.testcases) {
+                            if (!testcase.question || !testcase.expected) {
+                                throw new Error('每个测试用例需要包含question和expected字段');
+                            }
+                        }
+                        
+                        // 保存测试集数据
+                        agentTestingSystem.testset = testsetData;
+                        
+                        // 显示预览
+                        const preview = document.getElementById('upload-preview');
+                        preview.style.display = 'block';
+                        document.getElementById('uploaded-filename').textContent = file.name;
+                        document.getElementById('uploaded-file-type').textContent = testsetData.type || '自定义';
+                        document.getElementById('uploaded-file-type').className = `badge ${getBadgeClass(testsetData.type)}`;
+                        
+                        const contentPreview = document.getElementById('uploaded-content-preview');
+                        contentPreview.innerHTML = `
+                            <div style="color: var(--editor-text-secondary); font-size: 14px; margin-bottom: 8px;">
+                                测试用例数量: <strong>${testsetData.testcases.length}</strong>
+                            </div>
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                ${testsetData.testcases.slice(0, 3).map((tc, index) => `
+                                    <div style="margin-bottom: 8px; padding: 8px; background-color: var(--editor-bg-tertiary); border-radius: 4px;">
+                                        <div style="margin-bottom: 4px;">
+                                            <span style="color: var(--editor-text-tertiary); font-size: 12px;">问题 ${index + 1}:</span>
+                                            <div style="font-size: 13px;">${tc.question}</div>
+                                        </div>
+                                        <div>
+                                            <span style="color: var(--editor-text-tertiary); font-size: 12px;">期望答案:</span>
+                                            <div style="font-size: 13px;">${tc.expected}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                                ${testsetData.testcases.length > 3 ? `
+                                    <div style="text-align: center; color: var(--editor-text-tertiary); font-size: 12px;">
+                                        ... 还有 ${testsetData.testcases.length - 3} 个测试用例
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                        
+                        agentTestingSystem.showMessage('评测集上传成功', 'success');
+                    } catch (error) {
+                        agentTestingSystem.showMessage('JSON解析失败: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            } else if (file.name.toLowerCase().endsWith('.xlsx')) {
+                // 注意：Excel文件的处理需要引入xlsx.js库
+                agentTestingSystem.showMessage('Excel文件处理功能正在开发中，请先使用JSON格式', 'info');
+                // 这里可以扩展Excel文件的处理逻辑
+            }
+        }
+
+        function getBadgeClass(type) {
+            const typeMap = {
+                'fact': 'badge-fact',
+                'analysis': 'badge-analysis',
+                'comparison': 'badge-comparison',
+                'tutorial': 'badge-tutorial'
+            };
+            return typeMap[type] || 'badge-fact';
+        }
+
+        // 全局函数
+        function startEvaluation() {
+            agentTestingSystem.startEvaluation();
+        }
+
+        function cancelEvaluation() {
+            agentTestingSystem.cancelEvaluation();
+        }
     </script>
 </body>
-
 </html>

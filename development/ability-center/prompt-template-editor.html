@@ -703,6 +703,12 @@
                 // Debug before/after comparison
                 this.debugHistory = [];
                 
+                // 支持智能体模式
+                this.agentId = this.getAgentIdFromURL();
+                this.versionId = this.getVersionIdFromURL();
+                this.isAgentMode = !!this.agentId;
+                this.appId = this.getAppId();
+                
                 this.init();
             }
             
@@ -711,13 +717,41 @@
                 return urlParams.get('id');
             }
             
+            getAgentIdFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('agentId');
+            }
+            
+            getVersionIdFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('versionId');
+            }
+            
+            getAppId() {
+                try {
+                    if (window.top && window.top.appMetadata && window.top.appMetadata.appId) {
+                        return window.top.appMetadata.appId;
+                    }
+                } catch (e) {
+                    console.log('无法获取appMetadata，使用默认值');
+                }
+                return 'default-app';
+            }
+            
             async init() {
                 await this.loadTemplates();
                 this.setupEventListeners();
                 
-                if (this.isEditMode) {
+                if (this.isAgentMode) {
+                    // 智能体模式
+                    this.updateTitle('编辑智能体');
+                    await this.loadAgent();
+                    this.modifyUIForAgentMode();
+                } else if (this.isEditMode) {
+                    // 模板编辑模式
                     await this.loadTemplate();
                 } else {
+                    // 新建模板模式
                     this.updateTitle('新建提示词模板');
                     // 为新模板保存初始状态到历史记录
                     this.saveToHistory('新建模板', false);
@@ -767,6 +801,102 @@
                 
                 // 保存初始状态到历史记录
                 this.saveToHistory('加载模板', false);
+            }
+            
+            async loadAgent() {
+                try {
+                    let agentData;
+                    
+                    // 如果有版本ID，加载特定版本的智能体
+                    if (this.versionId) {
+                        const versionResponse = await fetch(`/omni-api/agents/${this.agentId}/versions/${this.versionId}`);
+                        const versionResult = await versionResponse.json();
+                        
+                        if (versionResult.success) {
+                            agentData = versionResult.data;
+                            // 标记这是一个特定版本
+                            agentData.isVersion = true;
+                            agentData.versionId = this.versionId;
+                        } else {
+                            throw new Error(versionResult.error || '加载智能体版本失败');
+                        }
+                    } else {
+                        // 否则加载智能体的最新版本
+                        const response = await fetch(`/omni-api/agents/${this.agentId}`);
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            agentData = result.data;
+                        } else {
+                            throw new Error(result.error || '加载智能体失败');
+                        }
+                    }
+                    
+                    this.currentAgent = agentData;
+                    
+                    // 填充表单
+                    document.getElementById('template-name').value = agentData.name || '';
+                    document.getElementById('template-category').value = agentData.category || 'office';
+                    document.getElementById('template-author').value = agentData.author || '';
+                    document.getElementById('template-version').value = agentData.version || agentData.versionName || '1.0.0';
+                    
+                    // 优先使用promptTemplate字段（版本中的字段名），如果没有则使用promptContent（智能体中的字段名）
+                    const content = agentData.promptTemplate || agentData.promptContent || '';
+                    document.getElementById('prompt-content').value = this.formatContentForDisplay(content);
+                    
+                    // 保存初始状态到历史记录
+                    this.saveToHistory(this.versionId ? '加载智能体版本' : '加载智能体', false);
+                } catch (error) {
+                    console.error('加载智能体失败:', error);
+                    this.showMessage('加载智能体失败: ' + error.message, 'error');
+                }
+            }
+            
+            modifyUIForAgentMode() {
+                // 修改页面标题
+                document.title = '编辑智能体';
+                
+                // 添加智能体信息显示
+                const header = document.querySelector('.page-header');
+                if (header && this.currentAgent) {
+                    const agentInfo = document.createElement('div');
+                    agentInfo.className = 'agent-info text-sm text-gray-300 ml-4';
+                    agentInfo.innerHTML = `
+                        <span>当前版本: ${this.currentAgent.version || '1.0.0'}</span>
+                        <span class="mx-2">|</span>
+                        <span>状态: <span class="${this.currentAgent.status === 'published' ? 'text-green-400' : 'text-yellow-400'}">${this.currentAgent.status === 'published' ? '已发布' : '草稿'}</span></span>
+                    `;
+                    
+                    // 查找标题元素并添加信息
+                    const titleEl = header.querySelector('#editor-title');
+                    if (titleEl && titleEl.nextSibling) {
+                        header.insertBefore(agentInfo, titleEl.nextSibling);
+                    } else {
+                        header.appendChild(agentInfo);
+                    }
+                }
+                
+                // 替换保存按钮
+                const saveBtn = document.querySelector('button[onclick="saveTemplate()"]');
+                if (saveBtn && saveBtn.parentNode) {
+                    const parent = saveBtn.parentNode;
+                    parent.removeChild(saveBtn);
+                    
+                    // 添加智能体专用保存按钮
+                    const saveDraftBtn = document.createElement('button');
+                    saveDraftBtn.className = saveBtn.className;
+                    saveDraftBtn.innerHTML = '保存为草稿';
+                    saveDraftBtn.onclick = () => this.saveAgent(false);
+                    
+                    const savePublishBtn = document.createElement('button');
+                    savePublishBtn.className = saveBtn.className.replace('btn-secondary', 'btn-primary');
+                    savePublishBtn.innerHTML = '保存并发布新版本';
+                    savePublishBtn.onclick = () => this.saveAgent(true);
+                    
+                    parent.appendChild(saveDraftBtn);
+                    parent.appendChild(document.createTextNode(' '));
+                    parent.appendChild(savePublishBtn);
+                }
             }
             
             // 格式化内容用于显示 - 将转义字符转换为实际字符
@@ -1728,6 +1858,116 @@ ${content}
                 }
             }
             
+            async saveAgent(publish = false) {
+                const formData = this.getFormData();
+                
+                if (!this.validateForm(formData)) {
+                    return;
+                }
+                
+                try {
+                    // 准备智能体数据
+                    let version = this.currentAgent?.version || '1.0.0';
+                    
+                    if (publish) {
+                        // 获取当前版本并递增
+                        const currentVersion = await this.getCurrentAgentVersion();
+                        version = this.incrementVersion(currentVersion);
+                    }
+                    
+                    // 调用API保存智能体
+                    const response = await fetch(`/omni-api/agents/${this.agentId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            appId: this.appId,
+                            name: formData.name,
+                            description: formData.description || '',
+                            category: formData.category,
+                            promptContent: formData.content,
+                            version: publish ? version : undefined,
+                            status: publish ? 'published' : 'draft'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // 更新当前智能体信息
+                        this.currentAgent = result.data;
+                        
+                        // 如果是发布新版本，创建版本记录
+                        if (publish) {
+                            // 创建版本记录
+                            const versionResponse = await fetch(`/omni-api/agents/${this.agentId}/versions`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    name: version,
+                                    versionName: version,
+                                    promptTemplate: formData.content,
+                                    description: formData.description || '',
+                                    status: 'published',
+                                    createdAt: new Date().toISOString(),
+                                    updatedAt: new Date().toISOString()
+                                })
+                            });
+                            
+                            const versionResult = await versionResponse.json();
+                            console.log('版本记录创建结果:', versionResult);
+                            
+                            // 更新页面显示
+                            const agentInfo = document.querySelector('.agent-info');
+                            if (agentInfo) {
+                                agentInfo.querySelector('span:first-child').textContent = `当前版本: ${version}`;
+                                agentInfo.querySelector('span:last-child span').textContent = '已发布';
+                                agentInfo.querySelector('span:last-child span').className = 'text-green-400';
+                            }
+                            this.showMessage(`新版本 ${version} 已发布，版本记录已创建`, 'success');
+                        } else {
+                            this.showMessage('智能体已保存为草稿', 'success');
+                        }
+                        
+                        // 清除本地存储的草稿
+                        localStorage.removeItem('prompt_template_draft');
+                        
+                        // 更新历史记录
+                        this.saveToHistory(publish ? '发布新版本' : '保存草稿');
+                    } else {
+                        throw new Error(result.error || '保存失败');
+                    }
+                } catch (error) {
+                    console.error('保存智能体失败:', error);
+                    this.showMessage('保存智能体失败：' + error.message, 'error');
+                }
+            }
+            
+            async getCurrentAgentVersion() {
+                try {
+                    // const response = await fetch(`/omni-api/agents/${this.agentId}`);
+                    // const result = await response.json();
+                    // if (result.success && result.data) {
+                    //     return result.data.version || '1.0.0';
+                    // }
+
+                    return document.querySelector('#template-version').value || '1.0.0';
+                } catch (error) {
+                    console.error('获取当前版本失败:', error);
+                }
+                return '1.0.0';
+            }
+            
+            incrementVersion(currentVersion) {
+                // 简单的版本号递增逻辑 x.y.z -> x.y.(z+1)
+                const parts = currentVersion.split('.').map(Number);
+                parts[2] = (parts[2] || 0) + 1;
+                return parts.join('.');
+            }
+            
             async saveToFile() {
                 try {
                     const templateData = this.getCurrentTemplateData();
@@ -1795,12 +2035,12 @@ ${content}
             
             validateForm(data) {
                 if (!data.name) {
-                    this.showMessage('请输入模板名称', 'error');
+                    this.showMessage(this.isAgentMode ? '请输入智能体名称' : '请输入模板名称', 'error');
                     return false;
                 }
                 
                 if (!data.content) {
-                    this.showMessage('请输入提示词内容', 'error');
+                    this.showMessage(this.isAgentMode ? '请输入智能体提示词内容' : '请输入提示词内容', 'error');
                     return false;
                 }
                 
@@ -1830,7 +2070,13 @@ ${content}
         
         // 全局函数
         function returnToTemplates() {
-            window.open('/development/ability-center/prompt-template.html', '_self');
+            // 检查是否是智能体模式
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('agentId')) {
+                window.open('/development/ability-center/agent-management.html', '_self');
+            } else {
+                window.open('/development/ability-center/prompt-template.html', '_self');
+            }
         }
         
         function saveTemplate() {

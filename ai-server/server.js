@@ -25,6 +25,7 @@ const MCPService = require('./services/mcpService');
 const LUIService = require('./services/luiService');
 const ComponentService = require('./services/componentService');
 const PromptTemplateService = require('./services/promptTemplateService');
+const AgentService = require('./services/agentService');
 
 // Data storage paths
 const DATA_DIR = path.join(__dirname, 'data');
@@ -38,6 +39,7 @@ const mcpService = new MCPService(DATA_DIR);
 const luiService = new LUIService(DATA_DIR);
 const componentService = new ComponentService(DATA_DIR);
 const promptTemplateService = new PromptTemplateService();
+const agentService = new AgentService(DATA_DIR);
 
 // Initialize data directory and files
 async function initializeData() {
@@ -104,6 +106,9 @@ async function initializeData() {
         
         // Initialize LUI data
         await luiService.initializeLUIData();
+        
+        // Initialize agent data
+        await agentService.initializeAgentData();
         
         console.log('Data files initialized successfully');
     } catch (error) {
@@ -1814,7 +1819,258 @@ app.put('/api/models/:modelId', async (req, res) => {
     }
 });
 
-// Update statistics (with tenant support)
+// 智能体管理API路由
+
+// 获取所有智能体
+app.get('/api/agents', async (req, res) => {
+    try {
+        const { appId, search, status } = req.query;
+        const agents = await agentService.getAgents({ appId, search, status });
+        
+        res.json({
+            success: true,
+            data: agents,
+            total: agents.length
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 获取单个智能体
+app.get('/api/agents/:id', async (req, res) => {
+    try {
+        const agent = await agentService.getAgentById(req.params.id);
+        
+        if (!agent) {
+            return res.status(404).json({
+                success: false,
+                error: '智能体不存在'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: agent
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 创建智能体
+app.post('/api/agents', async (req, res) => {
+    try {
+        const newAgent = await agentService.createAgent(req.body);
+        
+        res.status(201).json({
+            success: true,
+            data: newAgent,
+            message: '智能体创建成功'
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 更新智能体
+app.put('/api/agents/:id', async (req, res) => {
+    try {
+        const updatedAgent = await agentService.updateAgent(req.params.id, req.body);
+        
+        if (!updatedAgent) {
+            return res.status(404).json({
+                success: false,
+                error: '智能体不存在'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: updatedAgent,
+            message: '智能体更新成功'
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 删除智能体
+app.delete('/api/agents/:id', async (req, res) => {
+    try {
+        const deletedAgent = await agentService.deleteAgent(req.params.id);
+        
+        if (!deletedAgent) {
+            return res.status(404).json({
+                success: false,
+                error: '智能体不存在'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: deletedAgent,
+            message: '智能体删除成功'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 智能体版本管理API路由
+
+// 获取智能体的所有版本
+app.get('/api/agents/:agentId/versions', async (req, res) => {
+    try {
+        const versions = await agentService.getAgentVersions(req.params.agentId);
+        
+        res.json({
+            success: true,
+            data: versions,
+            total: versions.length
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 获取智能体的特定版本
+app.get('/api/agents/:agentId/versions/:versionId', async (req, res) => {
+    try {
+        const version = await agentService.getAgentVersion(req.params.agentId, req.params.versionId);
+        
+        if (!version) {
+            return res.status(404).json({
+                success: false,
+                error: '版本不存在'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: version
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 创建智能体版本
+app.post('/api/agents/:agentId/versions', async (req, res) => {
+    try {
+        const { isDraft = false } = req.body;
+        const newVersion = await agentService.createAgentVersion(req.params.agentId, req.body, isDraft);
+        
+        res.status(201).json({
+            success: true,
+            data: newVersion,
+            message: '版本创建成功'
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 更新智能体版本
+app.put('/api/agents/:agentId/versions/:versionId', async (req, res) => {
+    try {
+        const updatedVersion = await agentService.updateAgentVersion(req.params.agentId, req.params.versionId, req.body);
+        
+        if (!updatedVersion) {
+            return res.status(404).json({
+                success: false,
+                error: '版本不存在'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: updatedVersion,
+            message: '版本更新成功'
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 删除智能体版本
+app.delete('/api/agents/:agentId/versions/:versionId', async (req, res) => {
+    try {
+        const deletedVersion = await agentService.deleteAgentVersion(req.params.agentId, req.params.versionId);
+        
+        if (!deletedVersion) {
+            return res.status(404).json({
+                success: false,
+                error: '版本不存在'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: deletedVersion,
+            message: '版本删除成功'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 发布智能体版本
+app.post('/api/agents/:agentId/versions/:versionId/publish', async (req, res) => {
+    try {
+        const publishedVersion = await agentService.publishAgentVersion(req.params.agentId, req.params.versionId);
+        
+        if (!publishedVersion) {
+            return res.status(404).json({
+                success: false,
+                error: '版本不存在'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: publishedVersion,
+            message: '版本发布成功'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 更新统计信息 (带有租户支持)
 async function updateStats() {
     try {
         const appsData = await fs.readJson(APPS_FILE);
