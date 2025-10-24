@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP服务注册 - 应用开发工作台</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <style>
+        :root {
+            --dify-primary: #2970FF;
+            --dify-primary-light: #EBF2FF;
+            --liquid-glass-bg: rgba(255, 255, 255, 0.1);
+            --liquid-glass-border: rgba(255, 255, 255, 0.2);
+            --liquid-glass-strong: rgba(255, 255, 255, 0.15);
+            --liquid-glass-subtle: rgba(255, 255, 255, 0.05);
+            --liquid-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --liquid-text-primary: rgba(255, 255, 255, 0.9);
+            --liquid-text-secondary: rgba(0, 0, 0, 0.7);
+            --liquid-text-tertiary: rgba(255, 255, 255, 0.5);
+            
+            /* Table specific colors */
+            --table-header-bg: rgba(255, 255, 255, 0.1);
+            --table-row-hover: rgba(255, 255, 255, 0.05);
+            --table-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: var(--liquid-text-primary);
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            /* background-color: #0F172A; */
+        }
+
+        /* 主布局 */
+        .main-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 16px;
+            gap: 16px;
+        }
+
+        /* 顶部工具栏 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--liquid-glass-bg);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .page-header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--liquid-text-primary);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* 内容区域 */
+        .content-area {
+            flex: 1;
+            background: var(--liquid-glass-bg);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 搜索和筛选 */
+        .search-filter {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--liquid-glass-border);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 8px 12px;
+            background: var(--liquid-glass-subtle);
+            border: 1px solid var(--liquid-glass-border);
+            border-radius: 6px;
+            color: var(--liquid-text-primary);
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--dify-primary);
+            background: var(--liquid-glass-strong);
+        }
+
+        /* 表格样式 */
+        .table-container {
+            flex: 1;
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: var(--table-header-bg);
+            backdrop-filter: blur(10px);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--liquid-text-primary);
+            border-bottom: 1px solid var(--table-border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--table-border);
+            color: var(--liquid-text-primary);
+        }
+
+        tr:hover {
+            background: var(--table-row-hover);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: var(--liquid-text-tertiary);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-text {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .empty-subtext {
+            font-size: 14px;
+            text-align: center;
+            max-width: 300px;
+        }
+
+        /* 按钮样式 */
+        .dify-btn {
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            padding: 6px 12px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: var(--dify-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e5bff;
+        }
+
+        .btn-secondary {
+            background: var(--liquid-glass-bg);
+            color: var(--liquid-text-primary);
+            border: 1px solid var(--liquid-glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--liquid-glass-strong);
+        }
+
+        .btn-danger {
+            background: #EF4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: #10B981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        /* 内容区域 */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 1.5rem;
+        }
+
+        /* 搜索和筛选 */
+        .search-filter {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--dify-border);
+            border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            color: var(--dify-text);
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--dify-primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .search-input::placeholder {
+            color: var(--dify-text-secondary);
+        }
+
+        /* 表格容器 */
+        .table-container {
+            flex: 1;
+            background: var(--glass-bg);
+            border-radius: 0.5rem;
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        thead {
+            background-color: rgba(255, 255, 255, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dify-text);
+            border-bottom: 1px solid var(--dify-border);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--dify-text-secondary);
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 操作按钮组 */
+        .action-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .action-btn {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            outline: none;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            color: var(--dify-text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dify-text);
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+            text-align: center;
+            max-width: 300px;
+        }
+
+        /* 加载状态 */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(15, 23, 42, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .loading-dots span {
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            background-color: var(--dify-primary);
+            animation: loading 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes loading {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* 消息提示 */
+        .message-toast {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            max-width: 400px;
+            transform: translateX(calc(100% + 1rem));
+            transition: transform 0.3s ease;
+        }
+
+        .message-toast.show {
+            transform: translateX(0);
+        }
+
+        .message-toast.success {
+            background: rgba(34, 197, 94);
+            color: white;
+        }
+
+        .message-toast.error {
+            background: rgba(239, 68, 68);
+            color: white;
+        }
+
+        .message-toast.info {
+            background: rgba(251, 191, 36);
+            color: white;
+        }
+
+        /* 模态框 */
+        .modal-overlay {
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            /* background: var(--glass-bg); */
+            background: #505050;
+            border: 1px solid var(--glass-border);
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-glass);
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dify-text);
+            font-size: 0.875rem;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--dify-border);
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            color: var(--dify-text);
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--dify-primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+            color: var(--dify-text-secondary);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .search-filter {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 640px;
+            }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* API参数表格 */
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .params-table th,
+        .params-table td {
+            padding: 0.5rem;
+            border: 1px solid var(--dify-border);
+            font-size: 0.75rem;
+        }
+
+        .params-table th {
+            background-color: rgba(255, 255, 255, 0.05);
+            font-weight: 500;
+        }
+
+        .add-param-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--dify-border);
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            color: var(--dify-primary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .add-param-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: var(--dify-primary);
+        }
+
+        .remove-param-btn {
+            background: none;
+            border: none;
+            color: var(--dify-danger);
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 0.75rem;
+            transition: color 0.2s ease;
+        }
+
+        .remove-param-btn:hover {
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <!-- 头部 -->
+        <header class="page-header">
+            <div>
+                <!-- <button id="back-btn" class="dify-btn btn-secondary mb-2">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    返回列表
+                </button> -->
+                <h1>MCP服务注册</h1>
+            </div>
+            <div class="action-buttons">
+                <button id="create-mcp-btn" class="dify-btn btn-primary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    新建MCP服务
+                </button>
+            </div>
+        </header>
+
+        <!-- 内容区域 -->
+        <div class="content-area">
+            <!-- 搜索和筛选 -->
+            <div class="search-filter">
+                <input type="text" id="search-input" class="search-input" placeholder="搜索MCP服务名称、描述或标签...">
+                <select id="category-filter" class="form-select">
+                    <option value="all">所有分类</option>
+                    <option value="core-system">核心系统</option>
+                    <option value="payment">支付系统</option>
+                    <option value="monitoring">监控系统</option>
+                    <option value="travel">差旅系统</option>
+                    <option value="rpa">RPA自动化</option>
+                </select>
+            </div>
+
+            <!-- 表格容器 -->
+            <div class="table-container">
+                <table id="mcps-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>名称</th>
+                            <th>描述</th>
+                            <th>分类</th>
+                            <th>版本</th>
+                            <th>创建时间</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 表格内容将通过JavaScript动态生成 -->
+                    </tbody>
+                </table>
+                
+                <!-- 空状态 -->
+                <div id="empty-state" class="empty-state">
+                    <div class="empty-state-icon">📦</div>
+                    <h3>暂无MCP服务</h3>
+                    <p>点击上方的"新建MCP服务"按钮开始注册您的第一个MCP服务</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建MCP模态框 -->
+    <div id="create-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+        <div class="modal-content w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between p-6 border-b border-dify-border">
+                <h2 class="text-xl font-bold text-white">新建MCP服务</h2>
+                <button id="close-create-modal" class="text-white/60 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="create-form" class="p-6 flex-1 overflow-auto">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">MCP名称 *</label>
+                        <input type="text" name="name" class="form-input" required placeholder="请输入MCP服务名称">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">分类 *</label>
+                        <select name="category" class="form-select" required>
+                            <option value="">选择分类</option>
+                            <option value="core-system">核心系统</option>
+                            <option value="payment">支付系统</option>
+                            <option value="monitoring">监控系统</option>
+                            <option value="travel">差旅系统</option>
+                            <option value="rpa">RPA自动化</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">版本</label>
+                        <input type="text" name="version" class="form-input" value="v1.0.0" placeholder="例如: v1.0.0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">开发者</label>
+                        <input type="text" name="author" class="form-input" placeholder="开发者名称">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">描述 *</label>
+                    <textarea name="description" class="form-textarea" required placeholder="请描述MCP服务的功能和用途"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">标签</label>
+                    <input type="text" name="tags" class="form-input" placeholder="使用逗号分隔多个标签，如：API, 数据处理, 自动化">
+                </div>
+                
+                <!-- API接口信息 -->
+                <div class="form-group">
+                    <label class="form-label">API接口信息</label>
+                    <div id="endpoints-container">
+                        <div class="endpoint-item p-4 border border-dify-border rounded-lg mb-4">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">接口名称</label>
+                                    <input type="text" name="endpoint-name[]" class="form-input" placeholder="接口名称">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">请求方法</label>
+                                    <select name="endpoint-method[]" class="form-select">
+                                        <option value="GET">GET</option>
+                                        <option value="POST">POST</option>
+                                        <option value="PUT">PUT</option>
+                                        <option value="DELETE">DELETE</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">接口路径</label>
+                                    <input type="text" name="endpoint-path[]" class="form-input" placeholder="/api/endpoint">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">接口描述</label>
+                                <textarea name="endpoint-description[]" class="form-textarea" placeholder="接口功能描述"></textarea>
+                            </div>
+                            
+                            <!-- Headers参数 -->
+                            <div class="form-group">
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="form-label mb-0">Headers参数</label>
+                                    <button type="button" class="add-param-btn" onclick="addParamRow(this, 'header')">+ 添加参数</button>
+                                </div>
+                                <table class="params-table header-params">
+                                    <thead>
+                                        <tr>
+                                            <th>参数名</th>
+                                            <th>类型</th>
+                                            <th>是否必填</th>
+                                            <th>描述</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><input type="text" name="header-name[]" class="form-input" placeholder="参数名"></td>
+                                            <td><input type="text" name="header-type[]" class="form-input" placeholder="string"></td>
+                                            <td><select name="header-required[]" class="form-select"><option value="false">否</option><option value="true">是</option></select></td>
+                                            <td><input type="text" name="header-desc[]" class="form-input" placeholder="描述"></td>
+                                            <td><button type="button" class="remove-param-btn" onclick="removeParamRow(this)">删除</button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Query参数 -->
+                            <div class="form-group">
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="form-label mb-0">Query参数</label>
+                                    <button type="button" class="add-param-btn" onclick="addParamRow(this, 'query')">+ 添加参数</button>
+                                </div>
+                                <table class="params-table query-params">
+                                    <thead>
+                                        <tr>
+                                            <th>参数名</th>
+                                            <th>类型</th>
+                                            <th>是否必填</th>
+                                            <th>描述</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><input type="text" name="query-name[]" class="form-input" placeholder="参数名"></td>
+                                            <td><input type="text" name="query-type[]" class="form-input" placeholder="string"></td>
+                                            <td><select name="query-required[]" class="form-select"><option value="false">否</option><option value="true">是</option></select></td>
+                                            <td><input type="text" name="query-desc[]" class="form-input" placeholder="描述"></td>
+                                            <td><button type="button" class="remove-param-btn" onclick="removeParamRow(this)">删除</button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Body参数 -->
+                            <div class="form-group">
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="form-label mb-0">Body参数 (JSON)</label>
+                                </div>
+                                <textarea name="endpoint-body[]" class="form-textarea" placeholder="{
+  \"param1\": \"value1\",
+  \"param2\": 123
+}"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" id="add-endpoint-btn" class="add-param-btn">+ 添加接口</button>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">详细文档 *</label>
+                    <textarea name="documentation" class="form-textarea" rows="8" required placeholder="支持Markdown格式，请详细描述MCP的功能、API接口、使用方法等"></textarea>
+                </div>
+                
+                <div class="flex items-center justify-end space-x-4 mt-6">
+                    <button type="button" id="cancel-create-btn" class="dify-btn btn-secondary">取消</button>
+                    <button type="button" id="submit-create-btn" class="dify-btn btn-primary">创建MCP服务</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 编辑MCP模态框 -->
+    <div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+        <div class="modal-content w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between p-6 border-b border-dify-border">
+                <h2 class="text-xl font-bold text-white">编辑MCP服务</h2>
+                <button id="close-edit-modal" class="text-white/60 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="edit-form" class="p-6 flex-1 overflow-auto">
+                <input type="hidden" name="id" id="edit-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">MCP名称 *</label>
+                        <input type="text" name="name" id="edit-name" class="form-input" required placeholder="请输入MCP服务名称">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">分类 *</label>
+                        <select name="category" id="edit-category" class="form-select" required>
+                            <option value="">选择分类</option>
+                            <option value="core-system">核心系统</option>
+                            <option value="payment">支付系统</option>
+                            <option value="monitoring">监控系统</option>
+                            <option value="travel">差旅系统</option>
+                            <option value="rpa">RPA自动化</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">版本</label>
+                        <input type="text" name="version" id="edit-version" class="form-input" placeholder="例如: v1.0.0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">开发者</label>
+                        <input type="text" name="author" id="edit-author" class="form-input" placeholder="开发者名称">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">描述 *</label>
+                    <textarea name="description" id="edit-description" class="form-textarea" required placeholder="请描述MCP服务的功能和用途"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">标签</label>
+                    <input type="text" name="tags" id="edit-tags" class="form-input" placeholder="使用逗号分隔多个标签，如：API, 数据处理, 自动化">
+                </div>
+                
+                <!-- API接口信息 -->
+                <div class="form-group">
+                    <label class="form-label">API接口信息</label>
+                    <div id="edit-endpoints-container">
+                        <!-- 动态生成 -->
+                    </div>
+                    <button type="button" id="edit-add-endpoint-btn" class="add-param-btn">+ 添加接口</button>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">详细文档 *</label>
+                    <textarea name="documentation" id="edit-documentation" class="form-textarea" rows="8" required placeholder="支持Markdown格式，请详细描述MCP的功能、API接口、使用方法等"></textarea>
+                </div>
+                
+                <div class="flex items-center justify-end space-x-4 mt-6">
+                    <button type="button" id="cancel-edit-btn" class="dify-btn btn-secondary">取消</button>
+                    <button type="button" id="submit-edit-btn" class="dify-btn btn-primary">更新MCP服务</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div id="delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+        <div class="modal-content w-full max-w-md">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="text-4xl mb-4">⚠️</div>
+                    <h3 class="text-xl font-bold text-white mb-2">确认删除</h3>
+                    <p class="text-dify-text-secondary">确定要删除这个MCP服务吗？此操作不可撤销。</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button id="cancel-delete-btn" class="flex-1 dify-btn btn-secondary">取消</button>
+                    <button id="confirm-delete-btn" class="flex-1 dify-btn btn-danger">确认删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // MCP服务注册管理类
+        class MCPServiceRegistry {
+            constructor() {
+                this.apiBase = '/omni-api/mcp-app';
+                this.appId = window.top?.appMetadata?.appId || '';
+                this.mcps = [];
+                this.filteredMcps = [];
+                this.pendingDeleteId = null;
+                this.init();
+            }
+
+            async init() {
+                this.appId = this.getAppId();
+                this.setupEventListeners();
+                if (!this.appId) {
+                    this.showMessage('无法获取应用ID，使用模拟数据', 'warning');
+                    //this.useMockData();
+                } else {
+                    await this.loadMcps();
+                }
+            }
+
+            getAppId() {
+                try {
+                    if (window.top && window.top.appMetadata && window.top.appMetadata.appId) {
+                        return window.top.appMetadata.appId;
+                    }
+                    // 从URL参数获取
+                    const urlParams = new URLSearchParams(window.location.search);
+                    return urlParams.get('appId') || '';
+                } catch (error) {
+                    console.error('获取appId失败:', error);
+                    return '';
+                }
+            }
+
+            setupEventListeners() {
+                // 返回按钮
+                // document.getElementById('back-btn').addEventListener('click', () => {
+                //     window.history.back();
+                // });
+
+                // 新建按钮
+                document.getElementById('create-mcp-btn').addEventListener('click', () => {
+                    this.showCreateModal();
+                });
+
+                // 搜索和筛选
+                document.getElementById('search-input').addEventListener('input', () => {
+                    this.filterMcps();
+                });
+                document.getElementById('category-filter').addEventListener('change', () => {
+                    this.filterMcps();
+                });
+
+                // 新建模态框事件
+                document.getElementById('close-create-modal').addEventListener('click', () => {
+                    this.hideCreateModal();
+                });
+                document.getElementById('cancel-create-btn').addEventListener('click', () => {
+                    this.hideCreateModal();
+                });
+                // 直接监听创建按钮点击事件
+                document.getElementById('submit-create-btn').addEventListener('click', () => {
+                    this.handleCreateSubmit();
+                });
+                document.getElementById('add-endpoint-btn').addEventListener('click', () => {
+                    this.addEndpoint();
+                });
+
+                // 编辑模态框事件
+                document.getElementById('close-edit-modal').addEventListener('click', () => {
+                    this.hideEditModal();
+                });
+                document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+                    this.hideEditModal();
+                });
+                // 直接监听编辑按钮点击事件
+                document.getElementById('submit-edit-btn').addEventListener('click', () => {
+                    this.handleEditSubmit();
+                });
+                document.getElementById('edit-add-endpoint-btn').addEventListener('click', () => {
+                    this.addEndpoint('edit');
+                });
+
+                // 删除模态框事件
+                document.getElementById('cancel-delete-btn').addEventListener('click', () => {
+                    this.hideDeleteModal();
+                });
+                document.getElementById('confirm-delete-btn').addEventListener('click', () => {
+                    this.handleDeleteConfirm();
+                });
+
+                // 点击模态框背景关闭
+                document.getElementById('create-modal').addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('create-modal')) this.hideCreateModal();
+                });
+                document.getElementById('edit-modal').addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('edit-modal')) this.hideEditModal();
+                });
+                document.getElementById('delete-modal').addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('delete-modal')) this.hideDeleteModal();
+                });
+            }
+
+            async loadMcps() {
+                try {
+                    console.log(`加载appId: ${this.appId} 的MCP工具数据`);
+                    const response = await fetch(`${this.apiBase}?appId=${this.appId}`);
+                    if (!response.ok) throw new Error('网络错误');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.mcps = data.data || [];
+                        this.filteredMcps = [...this.mcps];
+                        this.renderMcpsTable();
+                    } else {
+                        throw new Error(data.error || '加载失败');
+                    }
+                } catch (error) {
+                    console.error(`加载appId: ${this.appId} 的MCP工具数据失败:`, error);
+                    this.showMessage('加载失败: ' + error.message, 'error');
+                    // 使用模拟数据，并确保模拟数据包含正确的appId
+                    //this.useMockData();
+                }
+            }
+
+            useMockData() {
+                // 基于prototype/mcp.js中的示例创建MCP工具数据
+                const INTENT_MAP = {
+                  '创建迭代': { api: '/pm/iterations', method: 'POST', requiredParams: ['projectId', 'name', 'begin', 'end'], optionalParams: ['desc'] },
+                  '查看迭代列表': { api: '/pm/iterations', method: 'GET', requiredParams: ['projectId'], optionalParams: [], isQuery: true },
+                  '创建需求': { api: '/pm/stories', method: 'POST', requiredParams: ['projectId', 'name', 'effort', 'desc', 'status', 'start', 'end'], optionalParams: ['handler', 'priority'] },
+                  '需求列表查询': { api: '/pm/stories', method: 'GET', requiredParams: ['projectId'], optionalParams: ['keyword', 'handler', 'status'], isQuery: true },
+                  '创建任务': { api: '/pm/tasks', method: 'POST', requiredParams: ['projectId', 'name', 'effort'], optionalParams: ['desc', 'handler', 'priority', 'status'] },
+                  '任务列表查询': { api: '/pm/tasks', method: 'GET', requiredParams: ['projectId'], optionalParams: ['keyword', 'handler', 'status'], isQuery: true },
+                  '创建缺陷': { api: '/pm/bugs', method: 'POST', requiredParams: ['projectId', 'name', 'effort'], optionalParams: ['desc', 'handler', 'severity', 'status'] },
+                  '缺陷列表查询': { api: '/pm/bugs', method: 'GET', requiredParams: ['projectId'], optionalParams: ['keyword', 'handler', 'status'], isQuery: true },
+                  '查询报工': { description: '查询用户在各项目的实际工作天数（报工数据）', isQuery: true, requiredParams: ['startDate', 'endDate'] }
+                };
+
+                // 为当前appId生成对应的MCP工具
+                this.mcps = [
+                    {
+                        id: 'project-mgmt-mcp-' + this.appId,
+                        name: '项目管理MCP工具',
+                        description: '基于prototype/mcp.js实现的项目管理接口集合，包含迭代、需求、任务、缺陷等管理功能',
+                        category: 'project-management',
+                        version: 'v1.0.0',
+                        author: '系统生成',
+                        tags: ['项目管理', 'PM', '迭代', '需求', '任务', '缺陷'],
+                        documentation: '这是基于prototype/mcp.js的项目管理MCP工具，为应用提供完整的项目管理能力。',
+                        endpoints: Object.entries(INTENT_MAP).map(([intent, config]) => ({
+                            name: intent,
+                            method: config.method || 'GET',
+                            path: config.api || '',
+                            description: config.description || `${intent}接口`,
+                            query: config.isQuery ? config.requiredParams.concat(config.optionalParams || []).map(param => ({
+                                name: param,
+                                type: 'string',
+                                required: config.requiredParams.includes(param),
+                                description: `${param}参数`
+                            })) : [],
+                            requiredParams: config.requiredParams,
+                            optionalParams: config.optionalParams || []
+                        })),
+                        createdAt: new Date().toISOString().split('T')[0],
+                        updatedAt: new Date().toISOString().split('T')[0],
+                        appId: this.appId
+                    }
+                ];
+                this.filteredMcps = [...this.mcps];
+                this.renderMcpsTable();
+            }
+
+            renderMcpsTable() {
+                const tbody = document.getElementById('mcps-table').querySelector('tbody');
+                const emptyState = document.getElementById('empty-state');
+
+                if (this.filteredMcps.length === 0) {
+                    tbody.innerHTML = '';
+                    emptyState.style.display = 'flex';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                tbody.innerHTML = this.filteredMcps.map(mcp => `
+                    <tr>
+                        <td>${mcp.id}</td>
+                        <td>${mcp.name}</td>
+                        <td class="max-w-xs truncate" title="${mcp.description}">${mcp.description}</td>
+                        <td>${this.getCategoryName(mcp.category)}</td>
+                        <td>${mcp.version || 'v1.0.0'}</td>
+                        <td>${mcp.createdAt || '-'}</td>
+                        <td>${mcp.updatedAt || '-'}</td>
+                        <td>
+                            <div class="action-group">
+                                <button class="action-btn btn-secondary" onclick="mcpServiceRegistry.viewMcp('${mcp.id}')">预览</button>
+                                <button class="action-btn btn-primary" onclick="mcpServiceRegistry.editMcp('${mcp.id}')">编辑</button>
+                                <button class="action-btn btn-danger" onclick="mcpServiceRegistry.deleteMcp('${mcp.id}')">删除</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            filterMcps() {
+                const searchTerm = document.getElementById('search-input').value.toLowerCase();
+                const category = document.getElementById('category-filter').value;
+
+                this.filteredMcps = this.mcps.filter(mcp => {
+                    const matchesSearch = !searchTerm || 
+                        mcp.name.toLowerCase().includes(searchTerm) ||
+                        mcp.description.toLowerCase().includes(searchTerm) ||
+                        (mcp.tags && mcp.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+                    
+                    const matchesCategory = category === 'all' || mcp.category === category;
+                    
+                    return matchesSearch && matchesCategory;
+                });
+
+                this.renderMcpsTable();
+            }
+
+            getCategoryName(category) {
+                const categoryMap = {
+                    'core-system': '核心系统',
+                    'payment': '支付系统',
+                    'monitoring': '监控系统',
+                    'travel': '差旅系统',
+                    'rpa': 'RPA自动化',
+                    'project-management': '项目管理'
+                };
+                return categoryMap[category] || category;
+            }
+
+            showCreateModal() {
+                document.getElementById('create-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            hideCreateModal() {
+                document.getElementById('create-modal').classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                document.getElementById('create-form').reset();
+                // 重置到一个接口
+                const container = document.getElementById('endpoints-container');
+                while (container.children.length > 1) {
+                    container.removeChild(container.lastChild);
+                }
+                // 修正表单元素样式
+                const formInputs = document.querySelectorAll('#create-form input, #create-form textarea, #create-form select');
+                formInputs.forEach(input => {
+                    input.classList.remove('border-red-500');
+                    // 确保保留玻璃效果和其他基础样式
+                    input.classList.add('glass-card-input');
+                });
+            }
+
+            showEditModal() {
+                document.getElementById('edit-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            hideEditModal() {
+                document.getElementById('edit-modal').classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+
+            showDeleteModal() {
+                document.getElementById('delete-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            hideDeleteModal() {
+                document.getElementById('delete-modal').classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                this.pendingDeleteId = null;
+            }
+
+            async handleCreateSubmit() {
+                try {
+                    const formData = this.collectFormData('create-form');
+                    
+                    // 不需要添加appId，服务端会从查询参数获取
+
+                    const response = await fetch(`${this.apiBase}?appId=${this.appId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.hideCreateModal();
+                        this.showMessage('MCP服务创建成功！', 'success');
+                        await this.loadMcps();
+                    } else {
+                        throw new Error(result.error || '创建失败');
+                    }
+                } catch (error) {
+                    console.error('创建MCP服务失败:', error);
+                    this.showMessage('创建失败: ' + error.message, 'error');
+                    // 模拟成功创建
+                    //this.simulateCreateSuccess();
+                }
+            }
+
+            async handleEditSubmit() {
+                try {
+                    const mcpId = document.getElementById('edit-id').value;
+                    const formData = this.collectFormData('edit-form');
+
+                    const response = await fetch(`${this.apiBase}/${mcpId}?appId=${this.appId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.hideEditModal();
+                        this.showMessage('MCP服务更新成功！', 'success');
+                        await this.loadMcps();
+                    } else {
+                        throw new Error(result.error || '更新失败');
+                    }
+                } catch (error) {
+                    console.error('更新MCP服务失败:', error);
+                    this.showMessage('更新失败: ' + error.message, 'error');
+                    // 模拟成功更新
+                    await this.loadMcps();
+                }
+            }
+
+            async handleDeleteConfirm() {
+                if (!this.pendingDeleteId) return;
+
+                try {
+                    const response = await fetch(`${this.apiBase}/${this.pendingDeleteId}?appId=${this.appId}`, {
+                        method: 'DELETE'
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.hideDeleteModal();
+                        this.showMessage('MCP服务删除成功！', 'success');
+                        await this.loadMcps();
+                    } else {
+                        throw new Error(result.error || '删除失败');
+                    }
+                } catch (error) {
+                    console.error('删除MCP服务失败:', error);
+                    this.showMessage('删除失败: ' + error.message, 'error');
+                    // 模拟成功删除
+                    this.mcps = this.mcps.filter(mcp => mcp.id !== this.pendingDeleteId);
+                    this.filterMcps();
+                    this.hideDeleteModal();
+                }
+            }
+
+            collectFormData(formId) {
+                const form = document.getElementById(formId);
+                const formData = new FormData(form);
+                const data = {};
+
+                // 基础字段
+                data.name = formData.get('name');
+                data.description = formData.get('description');
+                data.category = formData.get('category');
+                data.version = formData.get('version') || 'v1.0.0';
+                data.author = formData.get('author') || 'Developer';
+                data.tags = formData.get('tags') ? formData.get('tags').split(',').map(tag => tag.trim()) : [];
+                data.documentation = formData.get('documentation');
+
+                // 收集endpoints
+                data.endpoints = [];
+                const endpointItems = form.querySelectorAll('.endpoint-item');
+                
+                endpointItems.forEach(item => {
+                    const name = item.querySelector('input[name="endpoint-name[]"]').value;
+                    const method = item.querySelector('select[name="endpoint-method[]"]').value;
+                    const path = item.querySelector('input[name="endpoint-path[]"]').value;
+                    const description = item.querySelector('textarea[name="endpoint-description[]"]').value;
+                    const body = item.querySelector('textarea[name="endpoint-body[]"]').value;
+
+                    // 收集Headers参数
+                    const headerParams = [];
+                    const headerRows = item.querySelectorAll('.header-params tbody tr');
+                    headerRows.forEach(row => {
+                        const param = {
+                            name: row.querySelector('input[name="header-name[]"]').value,
+                            type: row.querySelector('input[name="header-type[]"]').value,
+                            required: row.querySelector('select[name="header-required[]"]').value === 'true',
+                            description: row.querySelector('input[name="header-desc[]"]').value
+                        };
+                        if (param.name) headerParams.push(param);
+                    });
+
+                    // 收集Query参数
+                    const queryParams = [];
+                    const queryRows = item.querySelectorAll('.query-params tbody tr');
+                    queryRows.forEach(row => {
+                        const param = {
+                            name: row.querySelector('input[name="query-name[]"]').value,
+                            type: row.querySelector('input[name="query-type[]"]').value,
+                            required: row.querySelector('select[name="query-required[]"]').value === 'true',
+                            description: row.querySelector('input[name="query-desc[]"]').value
+                        };
+                        if (param.name) queryParams.push(param);
+                    });
+
+                    if (name && method && path) {
+                        data.endpoints.push({
+                            name,
+                            method,
+                            path,
+                            description,
+                            headers: headerParams,
+                            query: queryParams,
+                            body: body ? JSON.parse(body) : null
+                        });
+                    }
+                });
+
+                return data;
+            }
+
+            addEndpoint(type = 'create') {
+                const container = type === 'create' ? 
+                    document.getElementById('endpoints-container') : 
+                    document.getElementById('edit-endpoints-container');
+                
+                const endpointItem = document.createElement('div');
+                endpointItem.className = 'endpoint-item p-4 border border-dify-border rounded-lg mb-4';
+                endpointItem.innerHTML = `
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">接口名称</label>
+                            <input type="text" name="endpoint-name[]" class="form-input" placeholder="接口名称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">请求方法</label>
+                            <select name="endpoint-method[]" class="form-select">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">接口路径</label>
+                            <input type="text" name="endpoint-path[]" class="form-input" placeholder="/api/endpoint">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">接口描述</label>
+                        <textarea name="endpoint-description[]" class="form-textarea" placeholder="接口功能描述"></textarea>
+                    </div>
+                    
+                    <!-- Headers参数 -->
+                    <div class="form-group">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="form-label mb-0">Headers参数</label>
+                            <button type="button" class="add-param-btn" onclick="addParamRow(this, 'header')">+ 添加参数</button>
+                        </div>
+                        <table class="params-table header-params">
+                            <thead>
+                                <tr>
+                                    <th>参数名</th>
+                                    <th>类型</th>
+                                    <th>是否必填</th>
+                                    <th>描述</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" name="header-name[]" class="form-input" placeholder="参数名"></td>
+                                    <td><input type="text" name="header-type[]" class="form-input" placeholder="string"></td>
+                                    <td><select name="header-required[]" class="form-select"><option value="false">否</option><option value="true">是</option></select></td>
+                                    <td><input type="text" name="header-desc[]" class="form-input" placeholder="描述"></td>
+                                    <td><button type="button" class="remove-param-btn" onclick="removeParamRow(this)">删除</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Query参数 -->
+                    <div class="form-group">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="form-label mb-0">Query参数</label>
+                            <button type="button" class="add-param-btn" onclick="addParamRow(this, 'query')">+ 添加参数</button>
+                        </div>
+                        <table class="params-table query-params">
+                            <thead>
+                                <tr>
+                                    <th>参数名</th>
+                                    <th>类型</th>
+                                    <th>是否必填</th>
+                                    <th>描述</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" name="query-name[]" class="form-input" placeholder="参数名"></td>
+                                    <td><input type="text" name="query-type[]" class="form-input" placeholder="string"></td>
+                                    <td><select name="query-required[]" class="form-select"><option value="false">否</option><option value="true">是</option></select></td>
+                                    <td><input type="text" name="query-desc[]" class="form-input" placeholder="描述"></td>
+                                    <td><button type="button" class="remove-param-btn" onclick="removeParamRow(this)">删除</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Body参数 -->
+                    <div class="form-group">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="form-label mb-0">Body参数 (JSON)</label>
+                        </div>
+                        <textarea name="endpoint-body[]" class="form-textarea" placeholder="{
+  \"param1\": \"value1\",
+  \"param2\": 123
+}"></textarea>
+                    </div>
+                    <button type="button" class="remove-param-btn" onclick="removeEndpoint(this)">删除接口</button>
+                `;
+                
+                container.appendChild(endpointItem);
+            }
+
+            async editMcp(mcpId) {
+                const mcp = this.mcps.find(m => m.id === mcpId);
+                if (!mcp) {
+                    this.showMessage('MCP服务不存在', 'error');
+                    return;
+                }
+
+                // 填充表单
+                document.getElementById('edit-id').value = mcp.id;
+                document.getElementById('edit-name').value = mcp.name;
+                document.getElementById('edit-description').value = mcp.description;
+                document.getElementById('edit-category').value = mcp.category;
+                document.getElementById('edit-version').value = mcp.version || 'v1.0.0';
+                document.getElementById('edit-author').value = mcp.author || '';
+                document.getElementById('edit-tags').value = (mcp.tags || []).join(', ');
+                document.getElementById('edit-documentation').value = mcp.documentation || '';
+
+                // 填充endpoints
+                const container = document.getElementById('edit-endpoints-container');
+                container.innerHTML = '';
+
+                if (mcp.endpoints && mcp.endpoints.length > 0) {
+                    mcp.endpoints.forEach(endpoint => {
+                        const endpointItem = document.createElement('div');
+                        endpointItem.className = 'endpoint-item p-4 border border-dify-border rounded-lg mb-4';
+                        endpointItem.innerHTML = `
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">接口名称</label>
+                                    <input type="text" name="endpoint-name[]" class="form-input" value="${endpoint.name || ''}" placeholder="接口名称">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">请求方法</label>
+                                    <select name="endpoint-method[]" class="form-select">
+                                        <option value="GET" ${endpoint.method === 'GET' ? 'selected' : ''}>GET</option>
+                                        <option value="POST" ${endpoint.method === 'POST' ? 'selected' : ''}>POST</option>
+                                        <option value="PUT" ${endpoint.method === 'PUT' ? 'selected' : ''}>PUT</option>
+                                        <option value="DELETE" ${endpoint.method === 'DELETE' ? 'selected' : ''}>DELETE</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">接口路径</label>
+                                    <input type="text" name="endpoint-path[]" class="form-input" value="${endpoint.path || ''}" placeholder="/api/endpoint">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">接口描述</label>
+                                <textarea name="endpoint-description[]" class="form-textarea" placeholder="接口功能描述">${endpoint.description || ''}</textarea>
+                            </div>
+                        `;
+                        
+                        container.appendChild(endpointItem);
+                    });
+                } else {
+                    // 添加一个空的接口
+                    this.addEndpoint('edit');
+                }
+
+                this.showEditModal();
+            }
+
+            deleteMcp(mcpId) {
+                this.pendingDeleteId = mcpId;
+                this.showDeleteModal();
+            }
+
+            viewMcp(mcpId) {
+                // 跳转到预览页面，带上appId参数
+                const mcp = this.mcps.find(m => m.id === mcpId);
+                if (mcp) {
+                    // 使用应用内的MCP详情页，确保带上appId参数
+                    window.open(`/development/mcp/mcp-detail.html?id=${mcpId}&appId=${this.appId}`, '_self');
+                } else {
+                    this.showMessage('MCP工具不存在', 'error');
+                }
+            }
+
+            simulateCreateSuccess() {
+                this.showMessage('模拟创建成功（API未实现）', 'success');
+                this.hideCreateModal();
+                //this.useMockData();
+            }
+
+            showMessage(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `message-toast ${type}`;
+                toast.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'success' ? 'M5 13l4 4L19 7' : type === 'error' ? 'M6 18L18 6M6 6l12 12' : 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'}"></path>
+                    </svg>
+                    <span>${message}</span>
+                `;
+                
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 100);
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+        }
+
+        // 全局函数
+        function addParamRow(button, type) {
+            const table = button.closest('.form-group').querySelector(`.${type}-params tbody`);
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><input type="text" name="${type}-name[]" class="form-input" placeholder="参数名"></td>
+                <td><input type="text" name="${type}-type[]" class="form-input" placeholder="string"></td>
+                <td><select name="${type}-required[]" class="form-select"><option value="false">否</option><option value="true">是</option></select></td>
+                <td><input type="text" name="${type}-desc[]" class="form-input" placeholder="描述"></td>
+                <td><button type="button" class="remove-param-btn" onclick="removeParamRow(this)">删除</button></td>
+            `;
+            table.appendChild(newRow);
+        }
+
+        function removeParamRow(button) {
+            const row = button.closest('tr');
+            if (row.parentNode.rows.length > 1) {
+                row.parentNode.removeChild(row);
+            }
+        }
+
+        function removeEndpoint(button) {
+            const endpointItem = button.closest('.endpoint-item');
+            endpointItem.parentNode.removeChild(endpointItem);
+        }
+
+        // 页面加载完成后初始化
+        let mcpServiceRegistry;
+        document.addEventListener('DOMContentLoaded', () => {
+            mcpServiceRegistry=window.mcpServiceRegistry = new MCPServiceRegistry();
+        });
+    </script>
+</body>
+</html>

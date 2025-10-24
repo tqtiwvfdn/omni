@@ -26,6 +26,7 @@ const LUIService = require('./services/luiService');
 const ComponentService = require('./services/componentService');
 const PromptTemplateService = require('./services/promptTemplateService');
 const AgentService = require('./services/agentService');
+const AppMCPService = require('./services/appMCPService');
 
 // Data storage paths
 const DATA_DIR = path.join(__dirname, 'data');
@@ -594,6 +595,119 @@ app.delete('/api/applications/by-appid/:appId', async (req, res) => {
             success: false,
             error: error.message
         });
+    }
+});
+
+// App MCP API Routes - for application-specific MCPs
+
+// Get all MCPS for an application
+app.get('/api/mcp-app', async (req, res) => {
+    try {
+        const { appId, search, category, sortBy } = req.query;
+        
+        if (!appId) {
+            return res.status(400).json({ success: false, error: 'appId is required' });
+        }
+        
+        const filters = { search, category, sortBy };
+        const result = await AppMCPService.searchMcps(appId, filters);
+        
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(500).json(result);
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get MCP by ID
+app.get('/api/mcp-app/:id', async (req, res) => {
+    try {
+        const { appId } = req.query;
+        const { id } = req.params;
+        
+        if (!appId) {
+            return res.status(400).json({ success: false, error: 'appId is required' });
+        }
+        
+        const result = await AppMCPService.getMcpById(appId, id);
+        
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(404).json(result);
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Create new MCP
+app.post('/api/mcp-app', async (req, res) => {
+    try {
+        const { appId } = req.query;
+        const mcpData = req.body;
+        
+        if (!appId) {
+            return res.status(400).json({ success: false, error: 'appId is required' });
+        }
+        
+        const result = await AppMCPService.createMcp(appId, mcpData);
+        
+        if (result.success) {
+            res.status(201).json(result);
+        } else {
+            res.status(400).json(result);
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Update MCP
+app.put('/api/mcp-app/:id', async (req, res) => {
+    try {
+        const { appId } = req.query;
+        const { id } = req.params;
+        const mcpData = req.body;
+        
+        if (!appId) {
+            return res.status(400).json({ success: false, error: 'appId is required' });
+        }
+        
+        const result = await AppMCPService.updateMcp(appId, id, mcpData);
+        
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(404).json(result);
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Delete MCP
+app.delete('/api/mcp-app/:id', async (req, res) => {
+    try {
+        const { appId } = req.query;
+        const { id } = req.params;
+        
+        if (!appId) {
+            return res.status(400).json({ success: false, error: 'appId is required' });
+        }
+        
+        const result = await AppMCPService.deleteMcp(appId, id);
+        
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(404).json(result);
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
@@ -2108,26 +2222,26 @@ async function updateStats() {
 
 // API 路由别名 - 将 /omni-api/* 映射到 /api/*
 // 通过重新注册所有路由来实现别名
-const originalRoutes = [];
-app._router.stack.forEach(layer => {
-    if (layer.route && layer.route.path && layer.route.path.startsWith('/api/')) {
-        originalRoutes.push({
-            path: layer.route.path,
-            methods: layer.route.methods,
-            handler: layer.route.stack[0].handle
-        });
-    }
-});
+// const originalRoutes = [];
+// app._router.stack.forEach(layer => {
+//     if (layer.route && layer.route.path && layer.route.path.startsWith('/api/')) {
+//         originalRoutes.push({
+//             path: layer.route.path,
+//             methods: layer.route.methods,
+//             handler: layer.route.stack[0].handle
+//         });
+//     }
+// });
 
-// 为每个 /api/* 路由创建对应的 /omni-api/* 路由
-originalRoutes.forEach(route => {
-    const omniPath = route.path.replace(/^\/api/, '/omni-api');
-    Object.keys(route.methods).forEach(method => {
-        if (method !== '_all') {
-            app[method](omniPath, route.handler);
-        }
-    });
-});
+// // 为每个 /api/* 路由创建对应的 /omni-api/* 路由
+// originalRoutes.forEach(route => {
+//     const omniPath = route.path.replace(/^\/api/, '/omni-api');
+//     Object.keys(route.methods).forEach(method => {
+//         if (method !== '_all') {
+//             app[method](omniPath, route.handler);
+//         }
+//     });
+// });
 
 // Error handling middleware
 app.use((err, req, res, next) => {

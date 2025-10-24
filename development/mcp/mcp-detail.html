@@ -371,9 +371,18 @@
     <script>
         class MCPDetail {
             constructor() {
-                this.apiBase = '/omni-api';
+                // 根据URL中是否包含appId参数来区分接口来源
+                this.appId = this.getAppIdFromURL();
+                // 如果有appId参数，使用MCP服务注册的接口，否则使用MCP市场的接口
+                this.apiBase = this.appId ? '/omni-api/mcp-app' : '/omni-api';
                 this.mcpId = this.getMCPIdFromURL();
                 this.init();
+            }
+            
+            // 从URL获取appId
+            getAppIdFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('appId');
             }
 
             // 从URL获取MCP ID
@@ -399,7 +408,18 @@
             // 加载MCP详情
             async loadMCPDetail() {
                 try {
-                    const response = await fetch(`${this.apiBase}/mcps/${this.mcpId}`);
+                    let url;
+                    
+                    // 根据接口类型构建不同的URL
+                    if (this.appId) {
+                        // MCP服务注册接口
+                        url = `${this.apiBase}/${this.mcpId}?appId=${this.appId}`;
+                    } else {
+                        // MCP市场接口
+                        url = `${this.apiBase}/mcps/${this.mcpId}`;
+                    }
+                    
+                    const response = await fetch(url);
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
@@ -429,7 +449,7 @@
                 
                 // 更新版本和更新时间
                 document.getElementById('version-text').textContent = `版本 ${mcp.version}`;
-                document.getElementById('updated-text').textContent = `更新于 ${mcp.lastUpdated}`;
+                document.getElementById('updated-text').textContent = `更新于 ${mcp.lastUpdated||mcp.updatedAt}`;
                 
                 // 渲染标签
                 this.renderTags(mcp.tags || []);
@@ -468,22 +488,91 @@
                     return;
                 }
 
-                container.innerHTML = endpoints.map(endpoint => `
-                    <div class="endpoint-item">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center space-x-3">
-                                <span class="method-badge ${this.getMethodClass(endpoint.method)}">
-                                    ${endpoint.method}
-                                </span>
-                                <code class="text-blue-300 font-mono text-sm bg-black/20 px-2 py-1 rounded">
-                                    ${endpoint.path}
-                                </code>
+                container.innerHTML = endpoints.map(endpoint => {
+                    // 渲染必填参数
+                    const requiredParamsHTML = endpoint.requiredParams && endpoint.requiredParams.length > 0 ? 
+                        `<div class="mt-3">
+                            <h4 class="text-white/90 font-medium text-sm mb-2">必填参数</h4>
+                            <div class="text-white/70 text-sm">${endpoint.requiredParams.join(', ')}</div>
+                        </div>` : '';
+                    
+                    // 渲染可选参数
+                    const optionalParamsHTML = endpoint.optionalParams && endpoint.optionalParams.length > 0 ? 
+                        `<div class="mt-3">
+                            <h4 class="text-white/90 font-medium text-sm mb-2">可选参数</h4>
+                            <div class="text-white/70 text-sm">${endpoint.optionalParams.join(', ')}</div>
+                        </div>` : '';
+                    
+                    // 渲染Query参数
+                    const queryParamsHTML = endpoint.query && endpoint.query.length > 0 ? 
+                        `<div class="mt-3">
+                            <h4 class="text-white/90 font-medium text-sm mb-2">Query参数</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-sm">
+                                    <thead>
+                                        <tr class="border-b border-white/10">
+                                            <th class="text-left py-2 px-3 text-white/80">参数名</th>
+                                            <th class="text-left py-2 px-3 text-white/80">类型</th>
+                                            <th class="text-left py-2 px-3 text-white/80">是否必填</th>
+                                            <th class="text-left py-2 px-3 text-white/80">描述</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${endpoint.query.map(q => `
+                                            <tr class="border-b border-white/5">
+                                                <td class="py-2 px-3 text-white/70 font-mono">${q.name}</td>
+                                                <td class="py-2 px-3 text-white/70">${q.type || '-'}</td>
+                                                <td class="py-2 px-3 text-white/70">${q.required ? '是' : '否'}</td>
+                                                <td class="py-2 px-3 text-white/70">${q.description || '-'}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
                             </div>
+                        </div>` : '';
+                    
+                    // 渲染Body参数示例
+                    const bodyParamsHTML = endpoint.body && Object.keys(endpoint.body).length > 0 ? 
+                        `<div class="mt-3">
+                            <h4 class="text-white/90 font-medium text-sm mb-2">Body参数</h4>
+                            <pre class="bg-black/30 p-3 rounded-md text-sm overflow-x-auto text-white/70"><code>${JSON.stringify(endpoint.body, null, 2)}</code></pre>
+                        </div>` : '';
+                    
+                    // 渲染其他信息
+                    const otherInfoHTML = [];
+                    if (endpoint.note) {
+                        otherInfoHTML.push(`<div class="mt-3 text-yellow-300 text-sm">📝 ${endpoint.note}</div>`);
+                    }
+                    if (endpoint.isQuery !== undefined) {
+                        otherInfoHTML.push(`<div class="mt-1 text-white/60 text-xs">查询类型: ${endpoint.isQuery ? '是' : '否'}</div>`);
+                    }
+                    if (endpoint.dataType) {
+                        otherInfoHTML.push(`<div class="mt-1 text-white/60 text-xs">数据类型: ${endpoint.dataType}</div>`);
+                    }
+                    
+                    return `
+                        <div class="endpoint-item">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge ${this.getMethodClass(endpoint.method)}">
+                                        ${endpoint.method}
+                                    </span>
+                                    <code class="text-blue-300 font-mono text-sm bg-black/20 px-2 py-1 rounded">
+                                        ${endpoint.path}
+                                    </code>
+                                </div>
+                            </div>
+                            <h3 class="text-white font-semibold mb-2">${endpoint.name}</h3>
+                            <p class="text-white/70 text-sm mb-3">${endpoint.description}</p>
+                            
+                            ${requiredParamsHTML}
+                            ${optionalParamsHTML}
+                            ${queryParamsHTML}
+                            ${bodyParamsHTML}
+                            ${otherInfoHTML.join('')}
                         </div>
-                        <h3 class="text-white font-semibold mb-2">${endpoint.name}</h3>
-                        <p class="text-white/70 text-sm">${endpoint.description}</p>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
 
             // 渲染文档内容
