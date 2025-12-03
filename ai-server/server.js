@@ -27,6 +27,7 @@ const ComponentService = require('./services/componentService');
 const PromptTemplateService = require('./services/promptTemplateService');
 const AgentService = require('./services/agentService');
 const AppMCPService = require('./services/appMCPService');
+const CompilerService = require('./services/compilerService');
 
 // Data storage paths
 const DATA_DIR = path.join(__dirname, 'data');
@@ -41,6 +42,8 @@ const luiService = new LUIService(DATA_DIR);
 const componentService = new ComponentService(DATA_DIR);
 const promptTemplateService = new PromptTemplateService();
 const agentService = new AgentService(DATA_DIR);
+// const appMCPService = new AppMCPService(DATA_DIR);
+const compilerService = new CompilerService(DATA_DIR);
 
 // Initialize data directory and files
 async function initializeData() {
@@ -2250,6 +2253,54 @@ app.use((err, req, res, next) => {
         success: false,
         error: 'Internal server error'
     });
+});
+
+// 静态文件服务 - 提供编译后的文件下载
+app.use('/compiled', express.static(path.join(DATA_DIR, 'compiled')));
+
+// 编译相关API
+// 编译特定应用
+app.post('/api/compile/:appId', async (req, res) => {
+    try {
+        const { appId } = req.params;
+        const { tenantId } = req.body || { tenantId: 'lAseKW' };
+        
+        const result = await compilerService.compileApp(appId, tenantId);
+        
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(400).json(result);
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 获取已编译的应用列表
+app.get('/api/compiled', async (req, res) => {
+    try {
+        const apps = await compilerService.getCompiledApps();
+        res.json({ success: true, data: apps });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 删除编译文件
+app.delete('/api/compiled/:appId', async (req, res) => {
+    try {
+        const { appId } = req.params;
+        const result = await compilerService.deleteCompiledApp(appId);
+        
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(400).json(result);
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // 404 handler

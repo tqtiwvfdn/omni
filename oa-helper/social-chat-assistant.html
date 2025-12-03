@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>聊天助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://zhiyan.awebide.com/scripts/marked.min.js"></script>
+    <script src="https://zhiyan.awebide.com/scripts/highlight.min.js"></script>
+    <script>
+        marked.setOptions({
+            highlight: function (code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    try {
+                        return hljs.highlight(code, { language: lang }).value;
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+    </script>
+    <style>
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .message-content {
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            max-width: 100%;
+        }
+
+        .message-content * {
+            max-width: 100% !important;
+            box-sizing: border-box;
+        }
+
+        .quick-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .quick-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .quick-card.clicked {
+            transform: scale(0.98);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .typing-dot {
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        .stream-cursor::after {
+            content: '|';
+            animation: blink 1s infinite;
+            color: #60a5fa;
+        }
+
+        @keyframes blink {
+            0%, 50% {
+                opacity: 1;
+            }
+            51%, 100% {
+                opacity: 0;
+            }
+        }
+
+        .scrollbar-hide {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .text-high-contrast {
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .text-medium-contrast {
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .gradient-blue {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .gradient-green {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
+
+        .gradient-orange {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .gradient-purple {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="min-h-screen p-4 flex flex-col">
+        <!-- Header -->
+        <div class="glass-strong rounded-2xl p-4 mb-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 gradient-blue rounded-xl flex items-center justify-center shadow-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-high-contrast text-xl font-bold">聊天训练</h1>
+                        <p class="text-medium-contrast text-sm">练习自然对话</p>
+                    </div>
+                </div>
+                <button id="clear-chat" class="glass rounded-xl px-4 py-2 text-high-contrast hover:bg-white/20 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="flex-1 glass rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <!-- Messages -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
+                <!-- 欢迎消息 -->
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loading-indicator" class="hidden px-6 py-2">
+                <div class="flex justify-start">
+                    <div class="glass-dark rounded-2xl px-4 py-3">
+                        <div class="flex space-x-2">
+                            <div class="w-2 h-2 bg-white rounded-full typing-dot"></div>
+                            <div class="w-2 h-2 bg-white rounded-full typing-dot"></div>
+                            <div class="w-2 h-2 bg-white rounded-full typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="glass-dark p-4 rounded-2xl">
+                <div class="flex items-end space-x-3">
+                    <div class="flex-1 relative">
+                        <input id="chat-input" type="text" placeholder="输入消息..." autocomplete="off"
+                            class="w-full bg-white/20 border border-white/30 rounded-xl px-4 py-2.5 text-high-contrast placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/30 transition-all duration-200">
+                    </div>
+                    <button id="send-btn"
+                        class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-5 py-2.5 rounded-xl font-medium hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200 transform hover:scale-105 active:scale-95">
+                        发送
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ChatAssistant {
+            constructor() {
+                this.ollamaBase = 'https://aom.awebide.com';
+                this.isStreaming = false;
+                this.conversationHistory = [];
+
+                this.initEventListeners();
+                this.clearChat();
+            }
+
+            initEventListeners() {
+                document.getElementById('send-btn').addEventListener('click', this.sendMessage.bind(this));
+                document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !this.isStreaming) this.sendMessage();
+                });
+                document.getElementById('clear-chat').addEventListener('click', this.clearChat.bind(this));
+            }
+
+            handleQuickAction(query) {
+                const target = event.target.closest('.quick-card');
+                if (target) {
+                    target.classList.add('clicked');
+                    setTimeout(() => {
+                        target.classList.remove('clicked');
+                    }, 200);
+                }
+
+                const input = document.getElementById('chat-input');
+                input.value = query;
+
+                setTimeout(() => {
+                    this.sendMessage();
+                }, 100);
+            }
+
+            async sendMessage() {
+                if (this.isStreaming) return;
+
+                const input = document.getElementById('chat-input');
+                const message = input.value.trim();
+
+                if (!message) return;
+
+                input.value = '';
+                this.addMessage('我', message, 'user');
+
+                this.conversationHistory.push({
+                    role: 'user',
+                    content: message
+                });
+
+                this.isStreaming = true;
+                this.showLoading(true);
+
+                try {
+                    await this.generateStreamResponse(message);
+                } catch (error) {
+                    console.error('Stream error:', error);
+                    this.addMessage('他', '抱歉,刚才没听清', 'ai');
+                } finally {
+                    this.isStreaming = false;
+                    this.showLoading(false);
+                }
+            }
+
+            async generateStreamResponse(originalMessage) {
+                try {
+                    const systemPrompt = `你是一个25-30岁的成熟男性,性格阳光开朗,有点幽默风趣。
+你是一个情商极高的渣男,善于跟陌生女性聊天,并能活跃气氛,迅速拉进与女生的距离。看对方性格,学霸旧料学习、游戏就聊游戏、聊对方感兴趣的,提供情绪价值,能说会道,聊天能握住主动权,不被对方带着走,不断地PUA。女人很简单,他能你一起觉得舒服就喜欢跟你一起,对女人来说,不能限制她自由,不会给压力她,让她活出自我,按她的方式活,就是什么都跟她说,还要让她知道。你都是站在他的角度考虑的。既捧了她,又让她觉得你很懂她,说明她魅力大。说话期间,你还会勾起她的好奇心、留悬念。发个[奸笑]勾起兴趣。不要一下子把话讲完,没有一点波澜起伏,就没有意思了。尽量不要用“可以吗,可不可以”这样的词,改一下舔狗心态。你问,就是给人家选择,一般人肯定说不可以,因为你是带着请求的语气。你就说,那么好看的美女,认识一下不过分吧。带点调侃。人家肯定会说不过分。既夸了她,又让她不会觉得你是那种下头和油腻。`;
+
+                    const messages = [
+                        {
+                            role: 'system',
+                            content: systemPrompt
+                        },
+                        ...this.conversationHistory.slice(-10),
+                    ];
+
+                    const response = await fetch(`${this.ollamaBase}/v1/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: 'Qwen3-32B',
+                            messages: messages,
+                            stream: true,
+                            temperature: 0.8,
+                            max_tokens: 500,
+                            top_p: 0.95,
+                            "chat_template_kwargs": { "enable_thinking": false }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`流式请求失败: ${response.status}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let aiResponse = '';
+
+                    const messageEl = this.addMessage('他', '', 'ai');
+                    const contentEl = messageEl.querySelector('.message-content');
+                    contentEl.classList.add('stream-cursor');
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n').filter(line => line.trim() && line.startsWith('data: '));
+
+                        for (const line of lines) {
+                            const jsonStr = line.replace('data: ', '');
+                            if (jsonStr === '[DONE]') continue;
+                            try {
+                                const data = JSON.parse(jsonStr);
+                                if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+                                    const content = data.choices[0].delta.content;
+                                    aiResponse += content;
+                                    contentEl.innerHTML = this.escapeHtml(aiResponse);
+                                    this.scrollToBottom();
+                                }
+                            } catch (e) {
+                                console.log('Stream parse error:', e, jsonStr);
+                            }
+                        }
+                    }
+
+                    contentEl.classList.remove('stream-cursor');
+
+                    this.conversationHistory.push({
+                        role: 'assistant',
+                        content: aiResponse
+                    });
+
+                    if (this.conversationHistory.length > 20) {
+                        this.conversationHistory = this.conversationHistory.slice(-20);
+                    }
+
+                } catch (error) {
+                    console.error('Stream response error:', error);
+                    this.addMessage('他', '不好意思,刚才走神了', 'ai');
+                }
+            }
+
+            addMessage(sender, content, role) {
+                const messagesContainer = document.getElementById('chat-messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} fade-in`;
+
+                const bubbleClass = role === 'user' ? 'gradient-blue text-white' : 'glass-dark';
+
+                messageDiv.innerHTML = `
+                    <div class="max-w-[85%] ${bubbleClass} rounded-2xl p-4 shadow-xl relative group">
+                        <div class="message-content text-high-contrast">
+                            ${this.escapeHtml(content)}
+                        </div>
+                    </div>
+                `;
+
+                messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+                return messageDiv;
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            scrollToBottom() {
+                const container = document.getElementById('chat-messages');
+                container.scrollTop = container.scrollHeight;
+            }
+
+            clearChat() {
+                this.conversationHistory = [];
+
+                const messagesContainer = document.getElementById('chat-messages');
+                messagesContainer.innerHTML = `
+                    <div class="flex justify-start">
+                        <div class="max-w-full glass-dark rounded-2xl p-4 shadow-xl relative group">
+                            <div class="message-content">
+                                <p class="text-high-contrast font-semibold mb-2">💬 开始聊天</p>
+                                <p class="text-medium-contrast text-sm mb-4">随便聊点什么吧~</p>
+                                
+                                <div class="mb-4">
+                                    <h3 class="text-high-contrast font-medium mb-3 text-sm">快速开始</h3>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="quick-card glass rounded-xl p-3 text-center" onclick="chatAssistant.handleQuickAction('嗨~')">
+                                            <div class="text-high-contrast font-medium text-xs">打个招呼</div>
+                                        </div>
+                                        
+                                        <div class="quick-card glass rounded-xl p-3 text-center" onclick="chatAssistant.handleQuickAction('在干嘛呢')">
+                                            <div class="text-high-contrast font-medium text-xs">闲聊</div>
+                                        </div>
+                                        
+                                        <div class="quick-card glass rounded-xl p-3 text-center" onclick="chatAssistant.handleQuickAction('今天天气不错')">
+                                            <div class="text-high-contrast font-medium text-xs">聊天气</div>
+                                        </div>
+                                        
+                                        <div class="quick-card glass rounded-xl p-3 text-center" onclick="chatAssistant.handleQuickAction('最近有什么好玩的吗')">
+                                            <div class="text-high-contrast font-medium text-xs">找话题</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            showLoading(show) {
+                const indicator = document.getElementById('loading-indicator');
+                if (show) {
+                    indicator.classList.remove('hidden');
+                } else {
+                    indicator.classList.add('hidden');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.chatAssistant = new ChatAssistant();
+        });
+    </script>
+</body>
+
+</html>

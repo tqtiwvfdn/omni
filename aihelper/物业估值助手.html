@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物業估值助手 - 上海商業銀行數字員工</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            /* background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%); */
+        }
+        
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.92); */
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+        
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+        
+        .question-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+        }
+        
+        .question-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .message-bubble {
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            margin-left: auto;
+            border-radius: 18px 18px 4px 18px;
+        }
+        
+        .assistant-message {
+            background: rgba(255, 255, 255, 0.95);
+            color: #374151;
+            margin-right: auto;
+            border-radius: 18px 18px 18px 4px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px 18px 18px 4px;
+            margin-right: auto;
+            max-width: 85%;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
+        .source-reference {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .source-reference:hover {
+            background: rgba(16, 185, 129, 0.15);
+            transform: translateY(-1px);
+        }
+        
+        .floating-button {
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .floating-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .chat-input {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 12px 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-input:focus {
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        /* 彈窗樣式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            max-width: 700px;
+            max-height: 85vh;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .reference-tag {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.1);
+            color: #047857;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin: 2px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .message-actions {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+            color: #6b7280;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #374151;
+        }
+        
+        .action-btn.active {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #047857;
+        }
+        
+        .action-btn.like.active {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #059669;
+        }
+        
+        .action-btn.dislike.active {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #dc2626;
+        }
+        
+        /* Toast 提示樣式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            min-width: 300px;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success {
+            border-left: 4px solid #10b981;
+        }
+        
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .toast.info {
+            border-left: 4px solid #3b82f6;
+        }
+        
+        /* 編輯模態框樣式 */
+        .edit-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .edit-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .edit-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .edit-modal.show .edit-content {
+            transform: scale(1);
+        }
+        
+        .edit-textarea {
+            width: 100%;
+            min-height: 200px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            resize: vertical;
+            outline: none;
+            font-family: inherit;
+            line-height: 1.6;
+        }
+        
+        .edit-textarea:focus {
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        /* 文檔上傳區域樣式 */
+        .upload-zone {
+            border: 2px dashed rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+            padding: 48px 24px;
+            text-align: center;
+            background: rgba(16, 185, 129, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .upload-zone:hover {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .upload-zone.dragover {
+            border-color: rgba(34, 197, 94, 0.5);
+            background: rgba(34, 197, 94, 0.1);
+            transform: scale(1.02);
+        }
+        
+        .upload-zone.has-file {
+            border-color: rgba(34, 197, 94, 0.5);
+            background: rgba(34, 197, 94, 0.1);
+        }
+        
+        .file-preview {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        
+        .scenario-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .scenario-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .scenario-card.selected {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .step.active {
+            color: #059669;
+            font-weight: 600;
+        }
+        
+        .step.completed {
+            color: #10b981;
+        }
+        
+        .step-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .step.active .step-circle {
+            background: #059669;
+            color: white;
+        }
+        
+        .step.completed .step-circle {
+            background: #10b981;
+            color: white;
+        }
+        
+        .step-divider {
+            width: 40px;
+            height: 2px;
+            background: #e5e7eb;
+            margin: 0 16px;
+        }
+        
+        .step.completed + .step-divider {
+            background: #10b981;
+        }
+
+        /* 測量師選擇樣式 */
+        .surveyor-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .surveyor-card:hover {
+            border-color: rgba(16, 185, 129, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .surveyor-card.selected {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .surveyor-card.selected .check-icon {
+            display: flex;
+        }
+
+        .check-icon {
+            display: none;
+            width: 24px;
+            height: 24px;
+            background: #10b981;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        /* 進度追蹤樣式 */
+        .progress-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .progress-timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e7eb;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 24px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -22px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            border: 2px solid white;
+        }
+
+        .timeline-item.completed::before {
+            background: #10b981;
+        }
+
+        .timeline-item.current::before {
+            background: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
+
+        .timeline-item.pending::before {
+            background: #e5e7eb;
+        }
+
+        /* 統計卡片 */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- 聊天界面 -->
+    <div class="flex-1 flex flex-col w-full overflow-hidden">
+        <!-- 聊天頭部 -->
+        <div class="liquid-glass-strong rounded-t-lg p-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full mr-4 bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white text-xl">
+                    🏠
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">您好，我是AI物業估值助手</h3>
+                    <p class="text-sm text-gray-500">工號 LPC-005 · 專注物業估值流程自動化</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="showDashboard()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    工作台
+                </button>
+                <button onclick="resetWizard()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
+                    新建任務
+                </button>
+            </div>
+        </div>
+        
+        <!-- 消息區域 -->
+        <div id="messages-container" class="flex-1 liquid-glass-strong p-6 overflow-y-auto">
+            <!-- 嚮導界面 -->
+            <div id="wizard-interface">
+                <!-- 步驟指示器 -->
+                <div class="step-indicator">
+                    <div class="step active" id="step-1">
+                        <div class="step-circle">1</div>
+                        <span>上傳文件</span>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-2">
+                        <div class="step-circle">2</div>
+                        <span>選擇服務類型</span>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-3">
+                        <div class="step-circle">3</div>
+                        <span>執行任務</span>
+                    </div>
+                </div>
+                
+                <!-- 助手介紹 -->
+                <div class="message-bubble assistant-message p-6 mb-6">
+                    <div class="prose prose-sm max-w-none text-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">🏠 歡迎使用物業估值助手</h3>
+                        <p class="mb-3">我能夠自動化處理物業估值請求的全流程，從申請提交、測量師選派、進度追蹤到帳單對賬，為貸款處理中心提供高效支援。</p>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-emerald-600 text-sm">📋</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm">估值申請</div>
+                                    <div class="text-xs text-gray-500">智能提取資訊</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-blue-600 text-sm">👥</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm">測量師選派</div>
+                                    <div class="text-xs text-gray-500">智能匹配推薦</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-purple-600 text-sm">📊</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm">進度追蹤</div>
+                                    <div class="text-xs text-gray-500">實時狀態更新</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-amber-600 text-sm">💰</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm">帳單對賬</div>
+                                    <div class="text-xs text-gray-500">自動核對費用</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 步驟1: 文檔上傳 -->
+                <div id="upload-step" class="step-content">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">第一步：上傳估值相關文件</h3>
+                    <div class="upload-zone" onclick="triggerFileInput()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                        <div id="upload-content">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <h4 class="text-xl font-semibold text-gray-700 mb-2">拖拽文件到這裡</h4>
+                            <p class="text-gray-500 mb-4">或點擊選擇文件上傳</p>
+                            <div class="flex flex-wrap justify-center gap-2 text-xs text-gray-400">
+                                <span class="bg-gray-100 px-2 py-1 rounded">估值申請表</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">物業資料</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">貸款文件</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">PDF/Word/Excel</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">最大50MB</span>
+                            </div>
+                        </div>
+                        <input type="file" id="file-input" style="display: none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" onchange="handleFileUpload(this)" multiple>
+                    </div>
+                    
+                    <!-- 文件預覽區域 -->
+                    <div id="file-preview-area" style="display: none;"></div>
+                </div>
+                
+                <!-- 步驟2: 服務類型選擇 -->
+                <div id="scenario-step" class="step-content" style="display: none;">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">第二步：選擇服務類型</h3>
+                    <p class="text-gray-600 mb-6">請選擇您需要處理的估值業務類型：</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('new-valuation')">
+                            <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-emerald-600 text-lg">📝</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">新建估值請求</h4>
+                            <p class="text-sm text-gray-600">提取物業資訊，生成估值申請，選擇並派發給測量師</p>
+                        </div>
+                        
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('batch-request')">
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-blue-600 text-lg">📦</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">批量估值處理</h4>
+                            <p class="text-sm text-gray-600">合併多個估值請求，統一發送給測量師公司</p>
+                        </div>
+                        
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('track-progress')">
+                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-purple-600 text-lg">📊</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">進度追蹤查詢</h4>
+                            <p class="text-sm text-gray-600">查詢估值請求的處理進度，發送催辦提醒</p>
+                        </div>
+                        
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('report-review')">
+                            <div class="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-teal-600 text-lg">📄</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">估值報告審閱</h4>
+                            <p class="text-sm text-gray-600">AI分析估值報告，提取關鍵數據，識別異常項目</p>
+                        </div>
+                        
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('billing-reconcile')">
+                            <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-amber-600 text-lg">💰</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">帳單費用對賬</h4>
+                            <p class="text-sm text-gray-600">核對測量師帳單，與估值請求進行自動對賬</p>
+                        </div>
+                        
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('surveyor-manage')">
+                            <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-gray-600 text-lg">👥</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">測量師管理</h4>
+                            <p class="text-sm text-gray-600">查看測量師公司資料、績效評分和聯繫方式</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-center">
+                        <button onclick="goToStep(1)" class="liquid-glass floating-button rounded-lg px-6 py-2 text-sm font-medium text-gray-700 specular-highlight mr-4">
+                            上一步
+                        </button>
+                        <button id="next-to-analysis" onclick="startAnalysis()" class="bg-emerald-500 text-white rounded-lg px-6 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors opacity-50" disabled>
+                            開始處理
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 聊天對話區域（分析開始後顯示） -->
+            <div id="chat-area" style="display: none;">
+                <!-- 這裡將顯示分析結果和後續對話 -->
+            </div>
+        </div>
+        
+        <!-- 輸入區域 -->
+        <div id="input-area" class="liquid-glass-strong rounded-b-lg p-4" style="display: none;">
+            <div class="flex items-end space-x-3">
+                <div class="flex-1">
+                    <input type="text" 
+                           id="message-input"
+                           placeholder="請輸入您的問題或需求..."
+                           class="w-full chat-input"
+                           onkeypress="if(event.key==='Enter') sendMessage()">
+                </div>
+                <button onclick="sendMessage()" 
+                        class="liquid-glass floating-button rounded-lg p-3 specular-highlight bg-emerald-500 text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 知識溯源彈窗 -->
+    <div id="source-modal" class="modal-overlay">
+        <div class="modal-content">
+            <!-- 彈窗頭部 -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800">知識來源詳情</h3>
+                <button onclick="closeSourceModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 彈窗內容 -->
+            <div class="p-6 overflow-y-auto max-h-96">
+                <!-- 文檔信息 -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-2">📄 文檔信息</h4>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600 mb-2">
+                            <span class="font-medium">文檔標題：</span>
+                            <span id="doc-title">-</span>
+                        </p>
+                        <p class="text-sm text-gray-600 mb-2">
+                            <span class="font-medium">章節位置：</span>
+                            <span id="doc-section">-</span>
+                        </p>
+                        <p class="text-sm text-gray-600">
+                            <span class="font-medium">引用地址：</span>
+                            <span id="doc-url" class="text-emerald-600">-</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 切片內容 -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-2">📝 切片內容</h4>
+                    <div class="bg-emerald-50 rounded-lg p-4">
+                        <div id="slice-content" class="text-sm text-gray-700 leading-relaxed">
+                            -
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 相關標籤 -->
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-2">🏷️ 相關標籤</h4>
+                    <div id="reference-tags" class="flex flex-wrap gap-2">
+                        <!-- 標籤將動態生成 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 彈窗底部 -->
+            <div class="flex items-center justify-between p-6 border-t border-gray-200/50">
+                <div class="text-sm text-gray-500">
+                    準確率：<span class="font-semibold text-emerald-600" id="accuracy-rate">-</span>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="optimizeAnswer()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
+                        優化答案
+                    </button>
+                    <button onclick="closeSourceModal()" class="bg-emerald-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors">
+                        確定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 編輯模態框 -->
+    <div id="edit-modal" class="edit-modal">
+        <div class="edit-content">
+            <!-- 編輯框頭部 -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800">編輯內容</h3>
+                <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 編輯框內容 -->
+            <div class="p-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">編輯內容（支持Markdown格式）</label>
+                    <textarea id="edit-textarea" class="edit-textarea" placeholder="請輸入內容..."></textarea>
+                </div>
+                <div class="text-sm text-gray-500 mb-4">
+                    💡 支持格式：**粗體**、*斜體*、# 標題、- 列表
+                </div>
+            </div>
+            
+            <!-- 編輯框底部 -->
+            <div class="flex items-center justify-between p-6 border-t border-gray-200/50">
+                <button onclick="closeEditModal()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
+                    取消
+                </button>
+                <button onclick="saveEdit()" class="bg-emerald-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors">
+                    保存修改
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 測量師選擇彈窗 -->
+    <div id="surveyor-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800">👥 選擇測量師公司</h3>
+                <button onclick="closeSurveyorModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-96">
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600">根據物業位置和類型，AI 推薦以下測量師公司：</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="surveyor-list">
+                    <!-- 測量師列表將動態生成 -->
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between p-6 border-t border-gray-200/50">
+                <div class="text-sm text-gray-500">
+                    已選擇：<span class="font-semibold text-emerald-600" id="selected-surveyor-count">0</span> 家
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="closeSurveyorModal()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
+                        取消
+                    </button>
+                    <button onclick="confirmSurveyorSelection()" class="bg-emerald-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors">
+                        確認派發
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工作台彈窗 -->
+    <div id="dashboard-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800">📊 估值工作台</h3>
+                <button onclick="closeDashboard()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-[70vh]">
+                <!-- 統計卡片 -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold text-emerald-600">23</div>
+                        <div class="text-sm text-gray-600">待處理請求</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold text-blue-600">45</div>
+                        <div class="text-sm text-gray-600">進行中</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold text-purple-600">128</div>
+                        <div class="text-sm text-gray-600">本月完成</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold text-amber-600">5</div>
+                        <div class="text-sm text-gray-600">待對賬帳單</div>
+                    </div>
+                </div>
+                
+                <!-- 最近請求列表 -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-3">📋 最近估值請求</h4>
+                    <div class="bg-white rounded-lg border overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">請求編號</th>
+                                    <th class="px-4 py-3 text-left">物業地址</th>
+                                    <th class="px-4 py-3 text-left">測量師</th>
+                                    <th class="px-4 py-3 text-left">狀態</th>
+                                    <th class="px-4 py-3 text-left">提交日期</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-t">
+                                    <td class="px-4 py-3 font-medium">VR-2025-0892</td>
+                                    <td class="px-4 py-3">太古城海景花園 A座 15樓</td>
+                                    <td class="px-4 py-3">仲量聯行</td>
+                                    <td class="px-4 py-3"><span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">進行中</span></td>
+                                    <td class="px-4 py-3">2025-12-01</td>
+                                </tr>
+                                <tr class="border-t">
+                                    <td class="px-4 py-3 font-medium">VR-2025-0891</td>
+                                    <td class="px-4 py-3">將軍澳日出康城 領都 2座</td>
+                                    <td class="px-4 py-3">戴德梁行</td>
+                                    <td class="px-4 py-3"><span class="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs">待派發</span></td>
+                                    <td class="px-4 py-3">2025-12-01</td>
+                                </tr>
+                                <tr class="border-t">
+                                    <td class="px-4 py-3 font-medium">VR-2025-0890</td>
+                                    <td class="px-4 py-3">沙田第一城 52座 8樓</td>
+                                    <td class="px-4 py-3">世邦魏理仕</td>
+                                    <td class="px-4 py-3"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs">已完成</span></td>
+                                    <td class="px-4 py-3">2025-11-30</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 待對賬帳單 -->
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-3">💰 待對賬帳單</h4>
+                    <div class="bg-white rounded-lg border overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">帳單編號</th>
+                                    <th class="px-4 py-3 text-left">測量師公司</th>
+                                    <th class="px-4 py-3 text-left">金額 (HKD)</th>
+                                    <th class="px-4 py-3 text-left">請求數量</th>
+                                    <th class="px-4 py-3 text-left">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-t">
+                                    <td class="px-4 py-3 font-medium">INV-2025-1201</td>
+                                    <td class="px-4 py-3">仲量聯行</td>
+                                    <td class="px-4 py-3">$45,000</td>
+                                    <td class="px-4 py-3">12筆</td>
+                                    <td class="px-4 py-3">
+                                        <button class="text-emerald-600 hover:text-emerald-700 text-sm">核對</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-t">
+                                    <td class="px-4 py-3 font-medium">INV-2025-1202</td>
+                                    <td class="px-4 py-3">戴德梁行</td>
+                                    <td class="px-4 py-3">$32,500</td>
+                                    <td class="px-4 py-3">8筆</td>
+                                    <td class="px-4 py-3">
+                                        <button class="text-emerald-600 hover:text-emerald-700 text-sm">核對</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-end p-6 border-t border-gray-200/50">
+                <button onclick="closeDashboard()" class="bg-emerald-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversationHistory = [];
+        let isTyping = false;
+        let currentContext = [];
+        let currentEditingMessageId = null;
+        let uploadedFiles = [];
+        let selectedScenario = null;
+        let currentStep = 1;
+        let selectedSurveyors = [];
+
+        // 測量師數據
+        const surveyors = [
+            { id: 1, name: '仲量聯行', rating: 4.8, cases: 156, avgDays: 3, areas: ['港島', '九龍'], recommended: true },
+            { id: 2, name: '戴德梁行', rating: 4.7, cases: 142, avgDays: 4, areas: ['新界', '九龍'], recommended: true },
+            { id: 3, name: '世邦魏理仕', rating: 4.6, cases: 128, avgDays: 3, areas: ['港島', '新界'], recommended: false },
+            { id: 4, name: '高力國際', rating: 4.5, cases: 98, avgDays: 4, areas: ['九龍', '新界'], recommended: false },
+            { id: 5, name: '萊坊', rating: 4.4, cases: 87, avgDays: 5, areas: ['港島'], recommended: false },
+            { id: 6, name: '第一太平戴維斯', rating: 4.3, cases: 76, avgDays: 4, areas: ['港島', '九龍', '新界'], recommended: false }
+        ];
+
+        // 簡單的Markdown渲染器
+        function renderMarkdown(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold text-gray-800 mt-4 mb-3">$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-800 mt-4 mb-3">$1</h1>')
+                .replace(/^- (.*$)/gim, '<li class="ml-4">$1</li>')
+                .replace(/^(\d+)\. (.*$)/gim, '<li class="ml-4 list-decimal">$2</li>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Toast提示函數
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <div class="mr-3">
+                        ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-800">${message}</div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-gray-500 hover:text-gray-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 更新步驟狀態
+        function updateStepStatus(step) {
+            for (let i = 1; i <= 3; i++) {
+                const stepEl = document.getElementById(`step-${i}`);
+                stepEl.classList.remove('active', 'completed');
+                if (i < step) {
+                    stepEl.classList.add('completed');
+                } else if (i === step) {
+                    stepEl.classList.add('active');
+                }
+            }
+            currentStep = step;
+        }
+
+        // 跳轉到指定步驟
+        function goToStep(step) {
+            updateStepStatus(step);
+            
+            if (step === 1) {
+                document.getElementById('upload-step').style.display = 'block';
+                document.getElementById('scenario-step').style.display = 'none';
+            } else if (step === 2) {
+                document.getElementById('upload-step').style.display = 'none';
+                document.getElementById('scenario-step').style.display = 'block';
+            }
+        }
+
+        // 觸發文件選擇
+        function triggerFileInput() {
+            document.getElementById('file-input').click();
+        }
+
+        // 處理拖拽
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.querySelector('.upload-zone').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.querySelector('.upload-zone').classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.querySelector('.upload-zone').classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFiles(files);
+            }
+        }
+
+        // 處理文件上傳
+        function handleFileUpload(input) {
+            const files = input.files;
+            if (files.length > 0) {
+                processFiles(files);
+            }
+        }
+
+        // 處理文件
+        function processFiles(files) {
+            const maxSize = 50 * 1024 * 1024; // 50MB
+            
+            for (let file of files) {
+                if (file.size > maxSize) {
+                    showToast(`文件 "${file.name}" 大小超過50MB限制`, 'error');
+                    continue;
+                }
+                uploadedFiles.push(file);
+            }
+
+            if (uploadedFiles.length === 0) return;
+            
+            // 更新上傳區域
+            const uploadZone = document.querySelector('.upload-zone');
+            uploadZone.classList.add('has-file');
+            
+            const uploadContent = document.getElementById('upload-content');
+            uploadContent.innerHTML = `
+                <svg class="w-12 h-12 mx-auto mb-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h4 class="text-lg font-semibold text-emerald-600 mb-2">已上傳 ${uploadedFiles.length} 個文件</h4>
+                <p class="text-sm text-gray-600">點擊可繼續添加文件</p>
+            `;
+            
+            // 顯示文件預覽
+            const previewArea = document.getElementById('file-preview-area');
+            previewArea.style.display = 'block';
+            previewArea.innerHTML = `
+                <div class="space-y-2 mt-4">
+                    ${uploadedFiles.map((file, index) => `
+                        <div class="file-preview">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-emerald-600 text-sm">${getFileIcon(file.name)}</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-800">${file.name}</div>
+                                    <div class="text-sm text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                                </div>
+                            </div>
+                            <button onclick="removeFile(${index})" class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="mt-4 text-center">
+                    <button onclick="goToStep(2)" class="bg-emerald-500 text-white rounded-lg px-6 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors">
+                        下一步：選擇服務類型
+                    </button>
+                </div>
+            `;
+            
+            showToast(`已上傳 ${uploadedFiles.length} 個文件`, 'success');
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'pdf': '📄',
+                'doc': '📝',
+                'docx': '📝',
+                'xls': '📊',
+                'xlsx': '📊',
+                'jpg': '🖼️',
+                'jpeg': '🖼️',
+                'png': '🖼️'
+            };
+            return icons[ext] || '📁';
+        }
+
+        // 移除文件
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            
+            if (uploadedFiles.length === 0) {
+                resetUploadZone();
+            } else {
+                processFiles([]);
+            }
+            showToast('文件已移除', 'info');
+        }
+
+        function resetUploadZone() {
+            uploadedFiles = [];
+            const uploadZone = document.querySelector('.upload-zone');
+            uploadZone.classList.remove('has-file');
+            
+            document.getElementById('upload-content').innerHTML = `
+                <svg class="w-16 h-16 mx-auto mb-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <h4 class="text-xl font-semibold text-gray-700 mb-2">拖拽文件到這裡</h4>
+                <p class="text-gray-500 mb-4">或點擊選擇文件上傳</p>
+                <div class="flex flex-wrap justify-center gap-2 text-xs text-gray-400">
+                    <span class="bg-gray-100 px-2 py-1 rounded">估值申請表</span>
+                    <span class="bg-gray-100 px-2 py-1 rounded">物業資料</span>
+                    <span class="bg-gray-100 px-2 py-1 rounded">貸款文件</span>
+                    <span class="bg-gray-100 px-2 py-1 rounded">PDF/Word/Excel</span>
+                    <span class="bg-gray-100 px-2 py-1 rounded">最大50MB</span>
+                </div>
+            `;
+            
+            document.getElementById('file-preview-area').style.display = 'none';
+        }
+
+        // 選擇服務場景
+        function selectScenario(scenario) {
+            document.querySelectorAll('.scenario-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            event.currentTarget.classList.add('selected');
+            selectedScenario = scenario;
+            
+            document.getElementById('next-to-analysis').disabled = false;
+            document.getElementById('next-to-analysis').classList.remove('opacity-50');
+        }
+
+        // 開始分析
+        function startAnalysis() {
+            if (uploadedFiles.length === 0 || !selectedScenario) {
+                showToast('請先上傳文件並選擇服務類型', 'error');
+                return;
+            }
+            
+            updateStepStatus(3);
+            
+            document.getElementById('wizard-interface').style.display = 'none';
+            document.getElementById('chat-area').style.display = 'block';
+            document.getElementById('input-area').style.display = 'block';
+            
+            performAnalysis();
+        }
+
+        // 執行分析
+        function performAnalysis() {
+            const scenarioNames = {
+                'new-valuation': '新建估值請求',
+                'batch-request': '批量估值處理',
+                'track-progress': '進度追蹤查詢',
+                'report-review': '估值報告審閱',
+                'billing-reconcile': '帳單費用對賬',
+                'surveyor-manage': '測量師管理'
+            };
+            
+            const fileNames = uploadedFiles.map(f => f.name).join('、');
+            addMessageToChatArea('user', `請對「${fileNames}」進行${scenarioNames[selectedScenario]}`);
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                
+                let analysisResult = '';
+                let sourceInfo = null;
+                
+                switch (selectedScenario) {
+                    case 'new-valuation':
+                        analysisResult = `🏠 **物業估值請求處理報告**
+
+**📋 文件解析結果：**
+- 已處理文件：${uploadedFiles.length} 份
+- 識別準確率：96.8%
+- 資料完整性：完整
+
+**🏢 物業基本資訊：**
+- 物業地址：香港太古城海景花園 A座 1508室
+- 物業類型：住宅 - 私人屋苑
+- 建築面積：856 平方呎
+- 實用面積：682 平方呎
+- 樓齡：約35年（1990年落成）
+- 座向：東南向海景
+
+**💰 貸款申請資料：**
+- 貸款類型：按揭貸款
+- 申請金額：HKD 8,500,000
+- 貸款成數：70%
+- 申請人：陳大文先生
+
+**📊 初步估值參考：**
+- 同區近期成交均價：$18,500/呎
+- 預估市值範圍：HKD 12,617,000 - 13,200,000
+- 市場趨勢：穩定偏強
+
+**✅ 下一步操作：**
+系統已提取完整物業資訊，請選擇測量師進行正式估值。`;
+                        
+                        sourceInfo = {
+                            title: '物業估值智能處理系統',
+                            section: 'AI 資料提取模組',
+                            url: 'http://intranet.shacom.com/lpc/valuation_ai.pdf',
+                            slice: '系統採用<span class="highlight">先進 OCR 技術</span>自動識別物業文件，結合<span class="highlight">NLP 自然語言處理</span>提取關鍵資訊。<span class="highlight">資料提取準確率達到 96.8%</span>，大幅提升估值請求處理效率。',
+                            tags: ['物業估值', 'AI OCR', '資料提取', '按揭貸款'],
+                            accuracy: 96.8
+                        };
+                        break;
+                        
+                    case 'batch-request':
+                        analysisResult = `📦 **批量估值請求處理**
+
+**📋 批量處理摘要：**
+- 待處理請求：${uploadedFiles.length} 筆
+- 自動分類完成
+- 可合併發送
+
+**📊 請求分類結果：**
+
+**🏢 住宅物業（${Math.ceil(uploadedFiles.length * 0.6)} 筆）：**
+- 港島區：2 筆
+- 九龍區：1 筆  
+- 新界區：${Math.ceil(uploadedFiles.length * 0.6) - 3} 筆
+
+**🏬 商業物業（${Math.floor(uploadedFiles.length * 0.4)} 筆）：**
+- 寫字樓：1 筆
+- 商舖：${Math.floor(uploadedFiles.length * 0.4) - 1} 筆
+
+**👥 建議測量師分配：**
+- 仲量聯行：港島區住宅、商業物業
+- 戴德梁行：九龍區住宅
+- 世邦魏理仕：新界區住宅
+
+**⏱️ 預計處理時間：**
+- 批量發送：即時
+- 估值報告：3-5 個工作天
+
+是否確認批量發送給建議的測量師？`;
+
+                        sourceInfo = {
+                            title: '批量估值處理引擎',
+                            section: '智能分配模組',
+                            url: 'http://intranet.shacom.com/lpc/batch_processor.pdf',
+                            slice: '批量處理引擎可<span class="highlight">自動分類物業類型</span>，根據地區和物業特性<span class="highlight">智能匹配最佳測量師</span>。系統支援一次處理多達 50 筆請求，<span class="highlight">處理效率提升 80%</span>。',
+                            tags: ['批量處理', '智能分配', '測量師匹配', '效率提升'],
+                            accuracy: 94.5
+                        };
+                        break;
+
+                    case 'track-progress':
+                        analysisResult = `📊 **估值進度追蹤報告**
+
+**📋 查詢結果摘要：**
+- 查詢時間：${new Date().toLocaleString('zh-TW')}
+- 匹配請求：${uploadedFiles.length} 筆
+
+**📈 進度追蹤詳情：**
+
+**🔵 進行中（2筆）：**
+
+**1. VR-2025-0892**
+- 物業：太古城海景花園 A座 15樓
+- 測量師：仲量聯行
+- 派發日期：2025-12-01
+- 預計完成：2025-12-04
+- 當前狀態：現場勘察中
+
+**2. VR-2025-0891**
+- 物業：將軍澳日出康城 領都 2座
+- 測量師：戴德梁行
+- 派發日期：2025-12-01
+- 預計完成：2025-12-05
+- 當前狀態：資料審核中
+
+**🟡 逾期提醒（1筆）：**
+
+**VR-2025-0885**
+- 物業：沙田第一城 52座
+- 測量師：高力國際
+- 原定完成：2025-11-29
+- 已逾期：3天
+- 建議：發送催辦郵件
+
+是否需要發送催辦提醒給逾期的測量師？`;
+
+                        sourceInfo = {
+                            title: '估值進度追蹤系統',
+                            section: '實時監控模組',
+                            url: 'http://intranet.shacom.com/lpc/tracking_system.pdf',
+                            slice: '進度追蹤系統提供<span class="highlight">實時狀態更新</span>，自動識別逾期請求並發送提醒。系統連接測量師反饋渠道，<span class="highlight">追蹤準確率達 99%</span>。',
+                            tags: ['進度追蹤', '實時監控', '逾期提醒', '狀態更新'],
+                            accuracy: 99
+                        };
+                        break;
+
+                    case 'report-review':
+                        analysisResult = `📄 **估值報告 AI 審閱結果**
+
+**📋 報告基本資訊：**
+- 報告編號：VAL-2025-1201-JLL
+- 測量師：仲量聯行
+- 報告日期：2025-12-01
+- 物業地址：太古城海景花園 A座 1508室
+
+**💰 估值結果摘要：**
+- 市場價值：HKD 12,850,000
+- 強制售賣價值：HKD 11,565,000
+- 每呎單價：$18,842/呎（實用面積）
+- 估值基準日：2025-11-30
+
+**📊 AI 分析要點：**
+
+**✅ 合理項目：**
+- 估值價格在合理區間內（偏差 +2.3%）
+- 比較個案選取適當
+- 調整因素說明充分
+
+**⚠️ 需關注項目：**
+- 樓齡調整幅度較大（-8%）
+- 景觀溢價偏高（+12%）
+- 建議複核比較個案 #3 的調整
+
+**📈 市場數據驗證：**
+- 同區3個月成交：15宗
+- 成交價範圍：$17,800 - $19,500/呎
+- 本報告估值位置：中等偏上
+
+**✅ 審閱結論：**
+報告整體質量良好，建議接受。風險評級：低。`;
+
+                        sourceInfo = {
+                            title: '估值報告 AI 審閱系統',
+                            section: '智能分析模組',
+                            url: 'http://intranet.shacom.com/lpc/report_review_ai.pdf',
+                            slice: 'AI 審閱系統採用<span class="highlight">多維度分析框架</span>，自動對比市場數據、歷史交易，識別異常項目。系統<span class="highlight">準確識別 95% 的潛在問題</span>，有效降低估值風險。',
+                            tags: ['報告審閱', 'AI分析', '風險識別', '市場驗證'],
+                            accuracy: 95
+                        };
+                        break;
+
+                    case 'billing-reconcile':
+                        analysisResult = `💰 **帳單費用對賬報告**
+
+**📋 對賬摘要：**
+- 對賬期間：2025年11月
+- 測量師：仲量聯行
+- 帳單編號：INV-2025-1201
+- 帳單金額：HKD 45,000
+
+**📊 對賬明細：**
+
+**✅ 匹配成功（10筆）：**
+| 請求編號 | 物業 | 帳單金額 | 系統記錄 | 狀態 |
+|---------|------|---------|---------|------|
+| VR-0875 | 太古城 A座 | $4,500 | $4,500 | ✅ |
+| VR-0876 | 康怡花園 | $4,000 | $4,000 | ✅ |
+| VR-0877 | 杏花邨 | $3,800 | $3,800 | ✅ |
+... 共10筆匹配
+
+**⚠️ 差異項目（2筆）：**
+
+**1. VR-0880**
+- 物業：西灣河太安樓
+- 帳單金額：$5,500
+- 系統記錄：$4,500
+- 差異：+$1,000
+- 原因：緊急估值附加費
+
+**2. VR-0882**
+- 物業：筲箕灣東大街
+- 帳單金額：$4,200
+- 系統記錄：未找到
+- 狀態：待確認
+
+**💵 對賬結果：**
+- 系統記錄總額：HKD 43,000
+- 帳單總額：HKD 45,000
+- 差異金額：HKD 2,000
+- 對賬準確率：95.6%
+
+需要標記差異項目進行人工複核嗎？`;
+
+                        sourceInfo = {
+                            title: '帳單自動對賬系統',
+                            section: '智能核對模組',
+                            url: 'http://intranet.shacom.com/lpc/billing_reconcile.pdf',
+                            slice: '對賬系統可<span class="highlight">自動匹配估值請求與帳單明細</span>，識別差異項目並分析原因。系統支援批量對賬，<span class="highlight">對賬效率提升 90%</span>，錯誤識別率低於 0.5%。',
+                            tags: ['帳單對賬', '費用核對', '差異分析', '自動匹配'],
+                            accuracy: 95.6
+                        };
+                        break;
+
+                    case 'surveyor-manage':
+                        analysisResult = `👥 **測量師公司管理**
+
+**📋 合作測量師總覽：**
+- 合作公司數量：6 家
+- 本月活躍：5 家
+- 平均評分：4.55/5.0
+
+**🏆 測量師績效排名（本月）：**
+
+**1. 仲量聯行** ⭐⭐⭐⭐⭐
+- 完成案件：28 筆
+- 平均時效：2.8 天
+- 準時率：96%
+- 客戶滿意度：4.8/5
+
+**2. 戴德梁行** ⭐⭐⭐⭐⭐
+- 完成案件：24 筆
+- 平均時效：3.2 天
+- 準時率：94%
+- 客戶滿意度：4.7/5
+
+**3. 世邦魏理仕** ⭐⭐⭐⭐
+- 完成案件：21 筆
+- 平均時效：3.5 天
+- 準時率：91%
+- 客戶滿意度：4.6/5
+
+**4. 高力國際** ⭐⭐⭐⭐
+- 完成案件：18 筆
+- 平均時效：3.8 天
+- 準時率：88%
+- 客戶滿意度：4.5/5
+
+**📊 區域覆蓋分析：**
+- 港島區：仲量聯行、世邦魏理仕、萊坊
+- 九龍區：戴德梁行、高力國際、第一太平戴維斯
+- 新界區：戴德梁行、世邦魏理仕、高力國際
+
+需要查看特定測量師的詳細資料或聯繫方式嗎？`;
+
+                        sourceInfo = {
+                            title: '測量師管理系統',
+                            section: '績效評估模組',
+                            url: 'http://intranet.shacom.com/lpc/surveyor_management.pdf',
+                            slice: '測量師管理系統提供<span class="highlight">全面的績效追蹤</span>，包括時效性、準時率和客戶滿意度等指標。系統自動生成<span class="highlight">智能推薦排名</span>，協助優化測量師分配。',
+                            tags: ['測量師管理', '績效評估', '智能推薦', '區域覆蓋'],
+                            accuracy: 98
+                        };
+                        break;
+                        
+                    default:
+                        analysisResult = `📋 **物業估值處理報告**
+
+**文件基本資訊：**
+- 已處理文件：${uploadedFiles.length} 份
+- 分析類型：${scenarioNames[selectedScenario]}
+
+**分析結果概覽：**
+- 資料提取成功
+- 識別關鍵資訊完成
+- 系統已準備好進行下一步操作
+
+您可以繼續提問或選擇其他操作。`;
+                }
+                
+                addMessageToChatArea('assistant', analysisResult, sourceInfo);
+                
+                // 顯示後續操作建議
+                setTimeout(() => {
+                    showFollowUpSuggestions();
+                }, 1000);
+                
+            }, 3000);
+        }
+
+        // 顯示後續建議
+        function showFollowUpSuggestions() {
+            let suggestions = [];
+            
+            switch (selectedScenario) {
+                case 'new-valuation':
+                    suggestions = [
+                        { icon: '👥', text: '選擇測量師進行派發', action: 'showSurveyorSelection()' },
+                        { icon: '📝', text: '修改物業資訊', action: 'askFollowUp("請讓我修改物業資訊")' },
+                        { icon: '📊', text: '查看區域估值趨勢', action: 'askFollowUp("請顯示太古城近期估值趨勢")' },
+                        { icon: '📤', text: '導出估值申請表', action: 'askFollowUp("請導出估值申請表")' }
+                    ];
+                    break;
+                case 'batch-request':
+                    suggestions = [
+                        { icon: '✅', text: '確認批量發送', action: 'askFollowUp("確認批量發送給建議的測量師")' },
+                        { icon: '🔄', text: '調整測量師分配', action: 'showSurveyorSelection()' },
+                        { icon: '📋', text: '查看請求明細', action: 'askFollowUp("請顯示所有請求的詳細明細")' },
+                        { icon: '⏰', text: '設定優先級', action: 'askFollowUp("請幫我設定請求的處理優先級")' }
+                    ];
+                    break;
+                case 'track-progress':
+                    suggestions = [
+                        { icon: '📧', text: '發送催辦郵件', action: 'askFollowUp("請發送催辦郵件給逾期的測量師")' },
+                        { icon: '📊', text: '查看完整進度報表', action: 'askFollowUp("請生成本週進度報表")' },
+                        { icon: '🔔', text: '設定到期提醒', action: 'askFollowUp("請設定估值到期自動提醒")' },
+                        { icon: '📈', text: '查看時效統計', action: 'askFollowUp("請顯示測量師時效統計")' }
+                    ];
+                    break;
+                case 'report-review':
+                    suggestions = [
+                        { icon: '✅', text: '接受估值報告', action: 'askFollowUp("確認接受此估值報告")' },
+                        { icon: '❓', text: '提出覆核請求', action: 'askFollowUp("請就景觀溢價提出覆核請求")' },
+                        { icon: '📊', text: '對比歷史估值', action: 'askFollowUp("請對比此物業的歷史估值記錄")' },
+                        { icon: '📤', text: '導出審閱報告', action: 'askFollowUp("請導出 AI 審閱報告")' }
+                    ];
+                    break;
+                case 'billing-reconcile':
+                    suggestions = [
+                        { icon: '✅', text: '確認對賬結果', action: 'askFollowUp("確認對賬結果並標記完成")' },
+                        { icon: '🔍', text: '調查差異項目', action: 'askFollowUp("請詳細說明差異項目的原因")' },
+                        { icon: '📧', text: '發送確認郵件', action: 'askFollowUp("請發送對賬確認郵件給測量師")' },
+                        { icon: '📤', text: '導出對賬報表', action: 'askFollowUp("請導出完整對賬報表")' }
+                    ];
+                    break;
+                default:
+                    suggestions = [
+                        { icon: '🔍', text: '查看詳細分析', action: 'askFollowUp("請提供更詳細的分析")' },
+                        { icon: '📤', text: '導出報告', action: 'askFollowUp("請導出處理報告")' },
+                        { icon: '❓', text: '其他問題', action: 'askFollowUp("我有其他問題")' }
+                    ];
+            }
+            
+            const suggestionsHtml = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                    ${suggestions.map(s => `
+                        <button onclick="${s.action}" class="question-card text-left">
+                            <div class="flex items-center">
+                                <span class="mr-2">${s.icon}</span>
+                                <span class="text-sm">${s.text}</span>
+                            </div>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.className = 'message-bubble assistant-message p-4 mb-4';
+            suggestionsDiv.innerHTML = `
+                <p class="text-gray-700 mb-3">您可以：</p>
+                ${suggestionsHtml}
+            `;
+            
+            document.getElementById('chat-area').appendChild(suggestionsDiv);
+            document.getElementById('chat-area').scrollTop = document.getElementById('chat-area').scrollHeight;
+        }
+
+        // 添加消息到聊天區域
+        function addMessageToChatArea(sender, content, source = null) {
+            const chatArea = document.getElementById('chat-area');
+            const messageDiv = document.createElement('div');
+            const messageId = 'msg_' + Date.now();
+            messageDiv.className = `message-bubble ${sender}-message p-4 mb-4`;
+            messageDiv.id = messageId;
+            
+            if (sender === 'assistant') {
+                let messageHTML = `<div class="prose prose-sm max-w-none">${renderMarkdown(content)}</div>`;
+                
+                if (source) {
+                    messageHTML += `
+                        <div class="source-reference mt-3" onclick="showSourceDetail('${messageId}')">
+                            <div class="flex items-center text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-emerald-700">查看來源：${source.section}</span>
+                            </div>
+                        </div>`;
+                }
+                
+                messageHTML += `
+                    <div class="message-actions">
+                        <button class="action-btn like" onclick="likeMessage('${messageId}')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L9 9m5 1v10M4 12v8a2 2 0 002 2h2m-6-10V9a2 2 0 012-2h2m2 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                            </svg>
+                            <span>讚</span>
+                        </button>
+                        <button class="action-btn dislike" onclick="dislikeMessage('${messageId}')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018c.163 0 .326.02.485.06L17 4m-7 10v2a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L15 15M10 14l-2-2m6-6v8a2 2 0 01-2 2h-2m6-10V4a2 2 0 00-2-2h-2m-6 5a2 2 0 00-2-2H4a2 2 0 00-2 2m10 9l-2-2-4 4"></path>
+                            </svg>
+                            <span>踩</span>
+                        </button>
+                    </div>`;
+                
+                messageDiv.innerHTML = messageHTML;
+                
+                if (source) {
+                    messageDiv.setAttribute('data-source', JSON.stringify(source));
+                }
+            } else {
+                messageDiv.textContent = content;
+            }
+            
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // 顯示打字指示器
+        function showTypingIndicator() {
+            isTyping = true;
+            const chatArea = document.getElementById('chat-area');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'typing-indicator mb-4';
+            typingDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <span class="ml-2 text-sm text-gray-500">正在處理中...</span>
+            `;
+            chatArea.appendChild(typingDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // 隱藏打字指示器
+        function hideTypingIndicator() {
+            isTyping = false;
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        // 後續問題
+        function askFollowUp(question) {
+            addMessageToChatArea('user', question);
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                
+                let response = '';
+                
+                if (question.includes('選擇測量師') || question.includes('派發')) {
+                    showSurveyorSelection();
+                    response = '已打開測量師選擇面板，請選擇合適的測量師進行派發。';
+                } else if (question.includes('催辦') || question.includes('郵件')) {
+                    response = `📧 **催辦郵件已發送**
+
+已向高力國際發送催辦郵件：
+
+**收件人：** valuations@colliers.com.hk
+**主旨：** 【催辦】估值請求 VR-2025-0885 已逾期
+
+**郵件內容：**
+敬啟者，
+
+貴司承接的估值請求（編號：VR-2025-0885）原定於 2025年11月29日 完成，現已逾期 3 天。
+
+請盡快完成估值報告並回覆，如有任何問題請即時聯繫。
+
+此致
+上海商業銀行 貸款處理中心
+
+---
+✅ 郵件已成功發送
+⏰ 發送時間：${new Date().toLocaleString('zh-TW')}`;
+                } else if (question.includes('導出') || question.includes('報表')) {
+                    response = `📤 **報告導出成功**
+
+已生成以下文件：
+- 物業估值申請表_VR-2025-0892.pdf
+- 物業資訊摘要.xlsx
+
+文件已保存至：/輸出文件/估值請求/
+
+您可以在工作台中下載或發送給相關人員。`;
+                } else if (question.includes('確認') && question.includes('批量')) {
+                    response = `✅ **批量發送確認**
+
+已成功發送 ${uploadedFiles.length} 筆估值請求：
+
+**發送明細：**
+- 仲量聯行：3 筆（港島區）
+- 戴德梁行：2 筆（九龍區）
+- 世邦魏理仕：${uploadedFiles.length - 5} 筆（新界區）
+
+**確認編號：** BATCH-2025-1202-001
+**發送時間：** ${new Date().toLocaleString('zh-TW')}
+
+所有測量師已收到郵件通知，預計 3-5 個工作天內提交報告。`;
+                } else if (question.includes('趨勢') || question.includes('統計')) {
+                    response = `📊 **太古城估值趨勢分析**
+
+**近6個月估值數據：**
+- 2025年7月：$17,800/呎
+- 2025年8月：$17,950/呎（+0.8%）
+- 2025年9月：$18,100/呎（+0.8%）
+- 2025年10月：$18,300/呎（+1.1%）
+- 2025年11月：$18,450/呎（+0.8%）
+- 2025年12月：$18,600/呎（+0.8%）
+
+**趨勢分析：**
+- 整體趨勢：穩步上升
+- 6個月漲幅：+4.5%
+- 預測下月：$18,750/呎
+
+**影響因素：**
+- 區內交通配套完善
+- 學校網絡優質
+- 海景單位需求穩定`;
+                } else {
+                    response = `已收到您的請求：「${question}」
+
+我正在為您處理相關操作。如需進一步協助，請繼續提問或使用快捷操作按鈕。`;
+                }
+                
+                addMessageToChatArea('assistant', response);
+            }, 2000);
+        }
+
+        // 發送消息
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || isTyping) return;
+            
+            addMessageToChatArea('user', message);
+            input.value = '';
+            
+            askFollowUp(message);
+        }
+
+        // 測量師選擇
+        function showSurveyorSelection() {
+            const surveyorList = document.getElementById('surveyor-list');
+            surveyorList.innerHTML = surveyors.map(s => `
+                <div class="surveyor-card ${s.recommended ? 'border-emerald-300' : ''}" onclick="toggleSurveyor(${s.id})" id="surveyor-${s.id}">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-semibold text-gray-800">${s.name}</h4>
+                            ${s.recommended ? '<span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">AI 推薦</span>' : ''}
+                        </div>
+                        <div class="check-icon">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div>⭐ 評分：${s.rating}</div>
+                        <div>📋 本月：${s.cases}筆</div>
+                        <div>⏱️ 平均：${s.avgDays}天</div>
+                        <div>📍 ${s.areas.join('、')}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            selectedSurveyors = [];
+            updateSelectedCount();
+            document.getElementById('surveyor-modal').classList.add('show');
+        }
+
+        function toggleSurveyor(id) {
+            const card = document.getElementById(`surveyor-${id}`);
+            const index = selectedSurveyors.indexOf(id);
+            
+            if (index === -1) {
+                selectedSurveyors.push(id);
+                card.classList.add('selected');
+            } else {
+                selectedSurveyors.splice(index, 1);
+                card.classList.remove('selected');
+            }
+            
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selected-surveyor-count').textContent = selectedSurveyors.length;
+        }
+
+        function closeSurveyorModal() {
+            document.getElementById('surveyor-modal').classList.remove('show');
+        }
+
+        function confirmSurveyorSelection() {
+            if (selectedSurveyors.length === 0) {
+                showToast('請至少選擇一家測量師', 'error');
+                return;
+            }
+            
+            const selectedNames = selectedSurveyors.map(id => surveyors.find(s => s.id === id).name).join('、');
+            
+            closeSurveyorModal();
+            
+            addMessageToChatArea('assistant', `✅ **估值請求已派發**
+
+**派發詳情：**
+- 請求編號：VR-2025-0893
+- 測量師：${selectedNames}
+- 派發時間：${new Date().toLocaleString('zh-TW')}
+- 預計完成：${new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('zh-TW')}
+
+系統已自動發送郵件通知測量師，您可以在工作台追蹤處理進度。`);
+            
+            showToast(`已成功派發給 ${selectedSurveyors.length} 家測量師`, 'success');
+        }
+
+        // 工作台
+        function showDashboard() {
+            document.getElementById('dashboard-modal').classList.add('show');
+        }
+
+        function closeDashboard() {
+            document.getElementById('dashboard-modal').classList.remove('show');
+        }
+
+        // 重置嚮導
+        function resetWizard() {
+            uploadedFiles = [];
+            selectedScenario = null;
+            currentStep = 1;
+            selectedSurveyors = [];
+            
+            document.getElementById('wizard-interface').style.display = 'block';
+            document.getElementById('chat-area').style.display = 'none';
+            document.getElementById('input-area').style.display = 'none';
+            
+            updateStepStatus(1);
+            goToStep(1);
+            
+            resetUploadZone();
+            
+            document.querySelectorAll('.scenario-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById('next-to-analysis').disabled = true;
+            document.getElementById('next-to-analysis').classList.add('opacity-50');
+            
+            document.getElementById('chat-area').innerHTML = '';
+            
+            showToast('已重置，可以新建任務', 'info');
+        }
+
+        // 知識溯源相關功能
+        function showSourceDetail(messageId) {
+            const messageElement = document.getElementById(messageId);
+            if (!messageElement) return;
+            
+            const sourceDataStr = messageElement.getAttribute('data-source');
+            if (!sourceDataStr) return;
+            
+            try {
+                const sourceData = JSON.parse(sourceDataStr);
+                
+                document.getElementById('doc-title').textContent = sourceData.title;
+                document.getElementById('doc-section').textContent = sourceData.section;
+                document.getElementById('doc-url').textContent = sourceData.url;
+                document.getElementById('slice-content').innerHTML = sourceData.slice;
+                document.getElementById('accuracy-rate').textContent = sourceData.accuracy + '%';
+                
+                const tagsContainer = document.getElementById('reference-tags');
+                tagsContainer.innerHTML = '';
+                sourceData.tags.forEach(tag => {
+                    const tagElement = document.createElement('span');
+                    tagElement.className = 'reference-tag';
+                    tagElement.textContent = tag;
+                    tagsContainer.appendChild(tagElement);
+                });
+                
+                document.getElementById('source-modal').classList.add('show');
+            } catch (error) {
+                console.error('解析來源數據失敗:', error);
+            }
+        }
+
+        function closeSourceModal() {
+            document.getElementById('source-modal').classList.remove('show');
+        }
+
+        function optimizeAnswer() {
+            showToast('答案優化功能將記錄您的反饋，用於提升分析準確性', 'info');
+            closeSourceModal();
+        }
+
+        function likeMessage(messageId) {
+            const btn = document.querySelector(`#${messageId} .action-btn.like`);
+            const dislikeBtn = document.querySelector(`#${messageId} .action-btn.dislike`);
+            
+            btn.classList.toggle('active');
+            dislikeBtn.classList.remove('active');
+            
+            if (btn.classList.contains('active')) {
+                showToast('感謝您的反饋！這將幫助我們改進分析質量', 'success');
+            } else {
+                showToast('已取消點讚', 'info');
+            }
+        }
+
+        function dislikeMessage(messageId) {
+            const btn = document.querySelector(`#${messageId} .action-btn.dislike`);
+            const likeBtn = document.querySelector(`#${messageId} .action-btn.like`);
+            
+            btn.classList.toggle('active');
+            likeBtn.classList.remove('active');
+            
+            if (btn.classList.contains('active')) {
+                showToast('我們已記錄您的反饋，會持續優化分析準確性', 'info');
+            } else {
+                showToast('已取消反饋', 'info');
+            }
+        }
+
+        // 編輯功能
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.remove('show');
+            currentEditingMessageId = null;
+        }
+
+        function saveEdit() {
+            if (!currentEditingMessageId) return;
+            
+            const newContent = document.getElementById('edit-textarea').value.trim();
+            if (!newContent) {
+                showToast('內容不能為空', 'error');
+                return;
+            }
+            
+            const messageElement = document.getElementById(currentEditingMessageId);
+            const contentDiv = messageElement.querySelector('.prose');
+            
+            contentDiv.innerHTML = renderMarkdown(newContent);
+            closeEditModal();
+            showToast('內容已更新保存', 'success');
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('物業估值助手已加載完成');
+            
+            updateStepStatus(1);
+            
+            document.getElementById('source-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeSourceModal();
+            });
+            
+            document.getElementById('edit-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeEditModal();
+            });
+            
+            document.getElementById('surveyor-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeSurveyorModal();
+            });
+            
+            document.getElementById('dashboard-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeDashboard();
+            });
+            
+            document.getElementById('edit-textarea').addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') saveEdit();
+            });
+        });
+    </script>
+</body>
+</html>

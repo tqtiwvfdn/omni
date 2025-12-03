@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习进度管理</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .progress-ring { transition: stroke-dashoffset 0.5s ease; }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        .rank-badge { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .error-item:hover { background: #fef3c7; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- 顶部导航 -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <h1 class="text-2xl font-bold text-gray-800">学习进度管理</h1>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">柜员培训系统</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="搜索柜员姓名或工号" class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64">
+                            <svg class="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <select class="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>全部分行</option>
+                            <option>总行营业部</option>
+                            <option>东城分行</option>
+                            <option>西城分行</option>
+                        </select>
+                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            导出报表
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-6 py-6">
+            <!-- 统计卡片 -->
+            <div class="grid grid-cols-4 gap-6 mb-6">
+                <div class="stat-card bg-white rounded-xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-600 text-sm">总学习人数</span>
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800 mb-1">1,247</div>
+                    <div class="text-sm text-green-600">↑ 12.5% 较上月</div>
+                </div>
+
+                <div class="stat-card bg-white rounded-xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-600 text-sm">平均学习时长</span>
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800 mb-1">24.3h</div>
+                    <div class="text-sm text-green-600">↑ 8.2% 较上月</div>
+                </div>
+
+                <div class="stat-card bg-white rounded-xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-600 text-sm">测验通过率</span>
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800 mb-1">87.6%</div>
+                    <div class="text-sm text-green-600">↑ 3.1% 较上月</div>
+                </div>
+
+                <div class="stat-card bg-white rounded-xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-600 text-sm">培训任务完成率</span>
+                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800 mb-1">92.3%</div>
+                    <div class="text-sm text-red-600">↓ 1.2% 较上月</div>
+                </div>
+            </div>
+
+            <!-- 标签页 -->
+            <div class="bg-white rounded-xl shadow-sm mb-6">
+                <div class="border-b px-6">
+                    <div class="flex space-x-8">
+                        <button class="tab-active py-4 px-2 font-medium transition" onclick="switchTab(0)">学习记录汇总</button>
+                        <button class="py-4 px-2 text-gray-600 hover:text-gray-800 font-medium transition" onclick="switchTab(1)">进度可视化</button>
+                        <button class="py-4 px-2 text-gray-600 hover:text-gray-800 font-medium transition" onclick="switchTab(2)">错误分析</button>
+                        <button class="py-4 px-2 text-gray-600 hover:text-gray-800 font-medium transition" onclick="switchTab(3)">测验成绩</button>
+                        <button class="py-4 px-2 text-gray-600 hover:text-gray-800 font-medium transition" onclick="switchTab(4)">学习排行榜</button>
+                    </div>
+                </div>
+
+                <!-- 学习记录汇总 -->
+                <div id="tab-0" class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">学习记录列表</h3>
+                        <div class="flex space-x-3">
+                            <select class="border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>最近7天</option>
+                                <option>最近30天</option>
+                                <option>最近90天</option>
+                            </select>
+                            <button class="px-4 py-1.5 border rounded-lg text-sm hover:bg-gray-50 transition">筛选</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">柜员姓名</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">工号</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">所属网点</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">学习时长</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">演示次数</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">练习次数</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">测验成绩</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">完成进度</th>
+                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="py-3 px-4 text-sm">张晓敏</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">001234</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">东城支行</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-blue-600">32.5h</td>
+                                    <td class="py-3 px-4 text-sm">156次</td>
+                                    <td class="py-3 px-4 text-sm">243次</td>
+                                    <td class="py-3 px-4 text-sm"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">92分</span></td>
+                                    <td class="py-3 px-4">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="flex-1 bg-gray-200 rounded-full h-2 w-24">
+                                                <div class="bg-green-500 h-2 rounded-full" style="width: 85%"></div>
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-700">85%</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">详情</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="py-3 px-4 text-sm">李强</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">001235</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">西城支行</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-blue-600">28.3h</td>
+                                    <td class="py-3 px-4 text-sm">134次</td>
+                                    <td class="py-3 px-4 text-sm">198次</td>
+                                    <td class="py-3 px-4 text-sm"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">88分</span></td>
+                                    <td class="py-3 px-4">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="flex-1 bg-gray-200 rounded-full h-2 w-24">
+                                                <div class="bg-blue-500 h-2 rounded-full" style="width: 72%"></div>
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-700">72%</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">详情</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="py-3 px-4 text-sm">王芳</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">001236</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">朝阳支行</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-blue-600">18.7h</td>
+                                    <td class="py-3 px-4 text-sm">92次</td>
+                                    <td class="py-3 px-4 text-sm">145次</td>
+                                    <td class="py-3 px-4 text-sm"><span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">58分</span></td>
+                                    <td class="py-3 px-4">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="flex-1 bg-gray-200 rounded-full h-2 w-24">
+                                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 45%"></div>
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-700">45%</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">详情</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="text-sm text-gray-600">显示 1-10 条，共 1,247 条记录</div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1.5 border rounded hover:bg-gray-50 text-sm">上一页</button>
+                            <button class="px-3 py-1.5 bg-blue-600 text-white rounded text-sm">1</button>
+                            <button class="px-3 py-1.5 border rounded hover:bg-gray-50 text-sm">2</button>
+                            <button class="px-3 py-1.5 border rounded hover:bg-gray-50 text-sm">3</button>
+                            <button class="px-3 py-1.5 border rounded hover:bg-gray-50 text-sm">下一页</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 进度可视化 -->
+                <div id="tab-1" class="p-6 hidden">
+                    <div class="grid grid-cols-3 gap-6 mb-6">
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6">
+                            <h4 class="text-sm font-semibold text-gray-700 mb-4">零售业务掌握度</h4>
+                            <div class="flex items-center justify-center">
+                                <svg width="120" height="120" class="transform -rotate-90">
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="10"/>
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#3b82f6" stroke-width="10" 
+                                            stroke-dasharray="314" stroke-dashoffset="62.8" class="progress-ring"/>
+                                </svg>
+                                <div class="absolute text-center">
+                                    <div class="text-3xl font-bold text-blue-600">80%</div>
+                                    <div class="text-xs text-gray-600">优秀</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6">
+                            <h4 class="text-sm font-semibold text-gray-700 mb-4">对公业务掌握度</h4>
+                            <div class="flex items-center justify-center">
+                                <svg width="120" height="120" class="transform -rotate-90">
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="10"/>
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" stroke-width="10" 
+                                            stroke-dasharray="314" stroke-dashoffset="125.6" class="progress-ring"/>
+                                </svg>
+                                <div class="absolute text-center">
+                                    <div class="text-3xl font-bold text-green-600">60%</div>
+                                    <div class="text-xs text-gray-600">良好</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6">
+                            <h4 class="text-sm font-semibold text-gray-700 mb-4">反诈知识掌握度</h4>
+                            <div class="flex items-center justify-center">
+                                <svg width="120" height="120" class="transform -rotate-90">
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="10"/>
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#8b5cf6

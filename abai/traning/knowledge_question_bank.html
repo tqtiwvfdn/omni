@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识点题库管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tag {
+            transition: all 0.2s;
+        }
+
+        .tag:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen p-6">
+        <!-- 页面标题 -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">知识点题库管理</h1>
+            <p class="text-gray-500 mt-1">构建结构化的知识点题库,支持多种题型的录入、分类、组卷</p>
+        </div>
+
+        <!-- 操作栏 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div class="flex flex-wrap gap-4 items-center">
+                <!-- 搜索框 -->
+                <div class="flex-1 min-w-[200px]">
+                    <input type="text" placeholder="搜索题目内容、知识点..." 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- 筛选条件 -->
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>全部业务类型</option>
+                    <option>零售业务</option>
+                    <option>对公业务</option>
+                    <option>风险管理</option>
+                    <option>产品知识</option>
+                </select>
+
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>全部题型</option>
+                    <option>单选题</option>
+                    <option>多选题</option>
+                    <option>判断题</option>
+                    <option>填空题</option>
+                    <option>简答题</option>
+                </select>
+
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>全部难度</option>
+                    <option>初级</option>
+                    <option>中级</option>
+                    <option>高级</option>
+                </select>
+
+                <!-- 操作按钮 -->
+                <button onclick="openAddModal()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    + 新增题目
+                </button>
+
+                <button onclick="openImportModal()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                    批量导入
+                </button>
+
+                <button class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                    智能组卷
+                </button>
+
+                <button class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    导出题库
+                </button>
+            </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">题库总量</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">1,248</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">待审核</p>
+                        <p class="text-2xl font-bold text-orange-600 mt-1">23</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">试卷模板</p>
+                        <p class="text-2xl font-bold text-green-600 mt-1">45</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">平均正确率</p>
+                        <p class="text-2xl font-bold text-purple-600 mt-1">87.5%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 题目列表 -->
+        <div class="bg-white rounded-lg shadow-sm">
+            <!-- 列表标题栏 -->
+            <div class="border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-800">题目列表</h2>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-gray-500">共 1,248 道题目</span>
+                        <div class="flex gap-2">
+                            <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">列表视图</button>
+                            <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">卡片视图</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 题目项 -->
+            <div id="questionList" class="divide-y divide-gray-200">
+                <!-- 单选题示例 -->
+                <div class="p-6 hover:bg-gray-50 transition">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0">
+                            <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded">单选题</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between mb-3">
+                                <h3 class="text-gray-800 font-medium text-base leading-relaxed">
+                                    客户办理零售活期取现业务时,单笔取现金额超过多少需要客户提供有效身份证件?
+                                </h3>
+                                <div class="flex gap-2 ml-4">
+                                    <button onclick="editQuestion()" class="text-blue-600 hover:text-blue-700 text-sm">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-700 text-sm">删除</button>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-2 mb-4 text-gray-700">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-500">A.</span>
+                                    <span>1万元</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-500">B.</span>
+                                    <span>2万元</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-500">C.</span>
+                                    <span class="text-green-600 font-medium">✓ 5万元(正确答案)</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-500">D.</span>
+                                    <span>10万元</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4 flex-wrap">
+                                <span class="tag inline-flex items-center px-3 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">零售业务</span>
+                                <span class="tag inline-flex items-center px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">操作规程</span>
+                                <span class="tag inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">中级</span>
+                                <span class="text-xs text-gray-500">使用次数: 145</span>
+                                <span class="text-xs text-gray-500">正确率: 92.3%</span>
+                                <span class="text-xs text-gray-500">更新时间: 2024-11-15</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 多选题示例 -->
+                <div class="p-6 hover:bg-gray-50 transition">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0">
+                            <span class="inline-block px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded">多选题</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between mb-3">
+                                <h3 class="text-gray-800 font-medium text-base leading-relaxed">
+                                    以下哪些情况属于可疑交易,需要上报反洗钱?(多选)
+                                </h3>
+                                <div class="flex gap-2 ml-4">
+                                    <button onclick="editQuestion()" class="text-blue-600 hover:text-blue-700 text-sm">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-700 text-sm">删除</button>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-2 mb-4 text-gray-700">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-500">A.</span>
+                                    <span class="text-green-600 font-medium">✓ 短期内资金分散转入、集中转出</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-500">B.</span>
+                                    <span>客户正常工资收入</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-500">C.</span>
+                                    <span class="text-green-600 font-medium">✓ 频繁开销户且交易对手分散</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-500">D.</span>
+                                    <span class="text-green-600 font-medium">✓ 长期闲置账户突然启用且有大额资金进出</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4 flex-wrap">
+                                <span class="tag inline-flex items-center px-3 py-1 bg-red-100 text-red-700 text-xs rounded-full">风控规则</span>
+                                <span class="tag inline-flex items-center px-3 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">监管要求</span>
+                                <span class="tag inline-flex items-center px-3 py-1 bg-red-100 text-red-700 text-xs rounded-full">高级</span>
+                                <span class="text-xs text-gray-500">使用次数: 89</span>
+                                <span class="text-xs text-gray-500">正确率: 76.4%</span>
+                                <span class="text-xs text-gray-500">更新时间: 2024-11-10</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 判断题示例 -->
+                <div class="p-6 hover:bg-gray-50 transition">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0">
+                            <span class="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-sm font-medium rounded">判断题</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between mb-3">
+                                <h3 class="text-gray-800 font-medium text-base leading-relaxed">
+                                    柜员在办理业务时可以离开柜台而不需要锁屏。
+                                </h3>
+                                <div class="flex gap-2 ml-4">
+                                    <button onclick="editQuestion()" class="text-blue-600 hover:text-blue-700 text-sm">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-700 text-sm">删除</button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <span class="text-red-600 font-medium">✗ 错误</span>
+                                <p class="text-gray-600 text-sm mt-2">解析:根据操作安全规定,柜员离开柜台时必须立即锁屏,防止他人非法操作系统。</p>
+                            </div>
+
+                            <div class="flex items-center gap-4 flex-wrap">
+                                <span class="tag inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">安全规范</span>
+                                <span class="tag inline-flex items-center px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">操作规程</span>
+                                <span class="tag inline-flex items-center px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">初级</span>
+                                <span class="text-xs text-gray-500">使用次数: 234</span>
+                                <span class="text-xs text-gray-500">正确率: 95.8%</span>
+                                <span class="text-xs text-gray-500">更新时间: 2024-11-12</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 简答题示例 -->
+                <div class="p-6 hover:bg-gray-50 transition">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0">
+                            <span class="inline-block px-3 py-1 bg-orange-100 text-orange-700 text-sm font-medium rounded">简答题</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between mb-3">
+                                <h3 class="text-gray-800 font-medium text-base leading-relaxed">
+                                    请简述办理对公账户开户时的主要审核要点。
+                                </h3>
+                                <div class="flex gap-2 ml-4">
+                                    <button onclick="editQuestion()" class="text-blue-600 hover:text-blue-700 text-sm">编辑</button>
+                                    <button class="text-gray-600 hover:text-gray-700 text-sm">删除</button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4 bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-700 font-medium mb-2">参考答案:</p>
+                                <p class="text-sm text-gray-600 leading-relaxed">
+                                    1. 审核营业执照、组织机构代码证等证照的真实性和有效性<br>
+                                    2. 核实法定代表人或负责人身份<br>
+                                    3. 审查开户申请书填写的完整性和准确性<br>
+                                    4. 确认开户用途的合法性<br>
+                                    5. 进行反洗钱客户身份识别<br>
+                                    6. 核查企业信用信息和征信情况
+                                </p>
+                            </div>
+
+                            <div class="flex items-center gap-4 flex-wrap">
+                                <span class="tag inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full">对公业务</span>
+                                <span class="tag inline-flex items-center px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">操作规程</span>
+                                <span class="tag inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">中级</span>
+                                <span class="text-xs text-gray-500">使用次数: 67</span>
+                                <span class="text-xs text-gray-500">平均分: 8.2/10</span>
+                                <span class="text-xs text-gray-500">更新时间: 2024-11-08</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分页 -->
+            <div class="border-t border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-500">
+                        显示 1-10 条,共 1,248 条
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50" disabled>上一页</button>
+                        <button class="px-3 py-1 bg-blue-600 text-white rounded">1</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">2</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">3</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">...</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">125</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增题目弹窗 -->
+    <div id="addModal" class="modal">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto fade-in">
+            <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-800">新增题目</h2>
+                <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-6">
+                <!-- 基本信息 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">题型选择</label>
+                    <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option>单选题</option>
+                        <option>多选题</option>
+                        <option>判断题</option>
+                        <option>填空题</option>
+                        <option>简答题</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">题目内容 <span class="text-red-500">*</span></label>
+                    <textarea rows="4" placeholder="请输入题目内容..." 
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+
+                <!-- 选项设置 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">答案选项</label>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" class="w-4 h-4 text-blue-600">
+                            <span class="text-gray-600 font-medium">A.</span>
+                            <input type="text" placeholder="选项内容" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button class="text-red-600 hover:text-red-700">删除</button>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" class="w-4 h-4 text-blue-600">
+                            <span class="text-gray-600 font-medium">B.</span>
+                            <input type="text" placeholder="选项内容" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button class="text-red-600 hover:text-red-700">删除</button>
+                        </div>
+                        <button class="text-blue-600 hover:text-blue-700 text-sm">+ 添加选项</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">答案解析</label>
+                    <textarea rows="3" placeholder="请输入答案解析..." 
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+
+                <!-- 分类标签 -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">业务类型</label>
+                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>零售业务</option>
+                            <option>对公业务</option>
+                            <option>风险管理</option>
+                            <option>产品知识</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">知识点类型</label>
+                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>操作规程</option>
+                            <option>风控规则</option>
+                            <option>监管要求</option>
+                            <option>产品知识</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">难度等级</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2">
+                            <input type="radio" name="difficulty" class="w-4 h-4 text-blue-600">
+                            <span>初级</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="radio" name="difficulty" class="w-4 h-4 text-blue-

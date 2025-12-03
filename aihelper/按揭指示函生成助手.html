@@ -1,0 +1,2004 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>按揭指示函生成助手 - 貸款處理中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            /* background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%); */
+        }
+        
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.92); */
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+        
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+        
+        .question-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+        }
+        
+        .question-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .message-bubble {
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            margin-left: auto;
+            border-radius: 18px 18px 4px 18px;
+        }
+        
+        .assistant-message {
+            background: rgba(255, 255, 255, 0.95);
+            color: #374151;
+            margin-right: auto;
+            border-radius: 18px 18px 18px 4px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px 18px 18px 4px;
+            margin-right: auto;
+            max-width: 85%;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
+        .source-reference {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .source-reference:hover {
+            background: rgba(16, 185, 129, 0.15);
+            transform: translateY(-1px);
+        }
+        
+        .floating-button {
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .floating-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .chat-input {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 12px 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-input:focus {
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        /* 彈窗樣式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            max-width: 700px;
+            max-height: 85vh;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .reference-tag {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.1);
+            color: #047857;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin: 2px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .message-actions {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+            color: #6b7280;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #374151;
+        }
+        
+        .action-btn.active {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #047857;
+        }
+        
+        .action-btn.like.active {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #059669;
+        }
+        
+        .action-btn.dislike.active {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #dc2626;
+        }
+        
+        /* Toast 提示樣式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            min-width: 300px;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success {
+            border-left: 4px solid #10b981;
+        }
+        
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .toast.info {
+            border-left: 4px solid #3b82f6;
+        }
+        
+        /* 編輯模態框樣式 */
+        .edit-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .edit-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .edit-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .edit-modal.show .edit-content {
+            transform: scale(1);
+        }
+        
+        .edit-textarea {
+            width: 100%;
+            min-height: 200px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            resize: vertical;
+            outline: none;
+            font-family: inherit;
+            line-height: 1.6;
+        }
+        
+        .edit-textarea:focus {
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        /* 文檔上傳區域樣式 */
+        .upload-zone {
+            border: 2px dashed rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+            padding: 48px 24px;
+            text-align: center;
+            background: rgba(16, 185, 129, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .upload-zone:hover {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .upload-zone.dragover {
+            border-color: rgba(16, 185, 129, 0.6);
+            background: rgba(16, 185, 129, 0.15);
+            transform: scale(1.02);
+        }
+        
+        .upload-zone.has-file {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .file-preview {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        
+        .scenario-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .scenario-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .scenario-card.selected {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .step.active {
+            color: #059669;
+            font-weight: 600;
+        }
+        
+        .step.completed {
+            color: #10b981;
+        }
+        
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .step.active .step-circle {
+            background: #059669;
+            color: white;
+        }
+        
+        .step.completed .step-circle {
+            background: #10b981;
+            color: white;
+        }
+        
+        .step-divider {
+            width: 50px;
+            height: 2px;
+            background: #e5e7eb;
+            margin: 0 16px;
+        }
+        
+        .step.completed + .step-divider {
+            background: #10b981;
+        }
+        
+        /* 預覽信函樣式 */
+        .letter-preview {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 32px;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.8;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .letter-header {
+            text-align: center;
+            border-bottom: 2px solid #059669;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .letter-content {
+            text-align: justify;
+        }
+        
+        .field-highlight {
+            background: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+        
+        /* 進度條樣式 */
+        .progress-bar {
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        /* 檢查項目樣式 */
+        .check-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .check-item.checking {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        
+        .check-item.passed {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .check-item.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .check-item.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- 聊天界面 -->
+    <div class="flex-1 flex flex-col w-full overflow-hidden">
+        <!-- 聊天頭部 -->
+        <div class="liquid-glass-strong p-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full mr-4 bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                    📋
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">按揭指示函生成助手</h3>
+                    <p class="text-sm text-gray-500">貸款處理中心 (LPC) · UC4 · 為您自動生成律師指示函</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="showHistory()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    歷史記錄
+                </button>
+                <button onclick="resetWizard()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    新建任務
+                </button>
+            </div>
+        </div>
+        
+        <!-- 消息區域 -->
+        <div id="messages-container" class="flex-1 liquid-glass-strong p-6 overflow-y-auto">
+            <!-- 嚮導界面 -->
+            <div id="wizard-interface">
+                <!-- 步驟指示器 -->
+                <div class="step-indicator">
+                    <div class="step active" id="step-1">
+                        <div class="step-circle">1</div>
+                        <span>上傳文檔</span>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-2">
+                        <div class="step-circle">2</div>
+                        <span>選擇任務類型</span>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-3">
+                        <div class="step-circle">3</div>
+                        <span>AI分析處理</span>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-4">
+                        <div class="step-circle">4</div>
+                        <span>生成指示函</span>
+                    </div>
+                </div>
+                
+                <!-- 助手介紹 -->
+                <div class="message-bubble assistant-message p-6 mb-6">
+                    <div class="prose prose-sm max-w-none text-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">歡迎使用按揭指示函生成助手</h3>
+                        <p class="mb-3">我能夠自動處理按揭相關文檔，提取關鍵資訊，並根據業務邏輯為您生成規範的律師指示函，大幅提升貸款處理效率。</p>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-emerald-600 text-lg">📄</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm">智能提取</div>
+                                    <div class="text-xs text-gray-500">OCR識別關鍵信息</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-blue-600 text-lg">🔍</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm">交叉核驗</div>
+                                    <div class="text-xs text-gray-500">多系統數據校對</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-purple-600 text-lg">⚖️</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm">合規檢查</div>
+                                    <div class="text-xs text-gray-500">自動限額驗證</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-amber-600 text-lg">✉️</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm">自動生成</div>
+                                    <div class="text-xs text-gray-500">標準化指示函</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 步驟1: 文檔上傳 -->
+                <div id="upload-step" class="step-content">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">第一步：上傳按揭相關文檔</h3>
+                    <p class="text-gray-600 mb-4">請上傳需要處理的文檔，系統將自動識別文檔類型並提取關鍵資訊</p>
+                    
+                    <div class="upload-zone" onclick="triggerFileInput()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                        <div id="upload-content">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <h4 class="text-xl font-semibold text-gray-700 mb-2">拖拽文檔到這裡</h4>
+                            <p class="text-gray-500 mb-4">或點擊選擇文件上傳</p>
+                            <div class="flex flex-wrap justify-center gap-2 text-xs text-gray-400 mb-4">
+                                <span class="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full">按揭指示表格</span>
+                                <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full">收據信</span>
+                                <span class="bg-purple-50 text-purple-700 px-3 py-1 rounded-full">賠償信</span>
+                                <span class="bg-amber-50 text-amber-700 px-3 py-1 rounded-full">貸款批核文件</span>
+                            </div>
+                            <div class="flex flex-wrap justify-center gap-2 text-xs text-gray-400">
+                                <span class="bg-gray-100 px-2 py-1 rounded">PDF</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">Word</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">Excel</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">圖片</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">最大50MB</span>
+                            </div>
+                        </div>
+                        <input type="file" id="file-input" style="display: none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" onchange="handleFileUpload(this)" multiple>
+                    </div>
+                    
+                    <!-- 文件預覽區域 -->
+                    <div id="file-preview-area" class="mt-4"></div>
+                </div>
+                
+                <!-- 步驟2: 任務類型選擇 -->
+                <div id="scenario-step" class="step-content" style="display: none;">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">第二步：選擇任務類型</h3>
+                    <p class="text-gray-600 mb-6">根據您上傳的文檔，請選擇需要執行的任務：</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('generate-letter')">
+                            <div class="w-14 h-14 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-emerald-600 text-2xl">✉️</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">按揭指示函生成</h4>
+                            <p class="text-sm text-gray-600">自動生成給律師的標準指示函，包含所有必要資訊</p>
+                        </div>
+                        
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('extract-info')">
+                            <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-blue-600 text-2xl">📋</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">文檔資料提取</h4>
+                            <p class="text-sm text-gray-600">從收據信、賠償信等文檔中提取關鍵業務資訊</p>
+                        </div>
+                        
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('limit-check')">
+                            <div class="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-amber-600 text-2xl">💰</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">交易限額檢查</h4>
+                            <p class="text-sm text-gray-600">驗證交易金額是否符合銀行限額規定和授權要求</p>
+                        </div>
+                        
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('property-verify')">
+                            <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-purple-600 text-2xl">🏠</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">物業資料核對</h4>
+                            <p class="text-sm text-gray-600">核對物業地址、業權資料與系統記錄的一致性</p>
+                        </div>
+                        
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('solicitor-verify')">
+                            <div class="w-14 h-14 bg-rose-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-rose-600 text-2xl">👨‍⚖️</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">律師資料驗證</h4>
+                            <p class="text-sm text-gray-600">驗證律師行信息是否在銀行認可名單中</p>
+                        </div>
+                        
+                        <div class="scenario-card specular-highlight" onclick="selectScenario('custom-analysis')">
+                            <div class="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <span class="text-gray-600 text-2xl">🎯</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 mb-2">自定義分析</h4>
+                            <p class="text-sm text-gray-600">告訴我您的具體需求，進行定制化處理</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-center">
+                        <button onclick="goToStep(1)" class="liquid-glass floating-button rounded-lg px-6 py-2 text-sm font-medium text-gray-700 specular-highlight mr-4">
+                            上一步
+                        </button>
+                        <button id="next-to-analysis" onclick="startAnalysis()" class="bg-emerald-500 text-white rounded-lg px-6 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            開始處理
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 聊天對話區域（分析開始後顯示） -->
+            <div id="chat-area" style="display: none;">
+                <!-- 這裡將顯示分析結果和後續對話 -->
+            </div>
+        </div>
+        
+        <!-- 輸入區域 -->
+        <div id="input-area" class="liquid-glass-strong p-4" style="display: none;">
+            <div class="flex items-end space-x-3">
+                <button onclick="showQuickActions()" class="liquid-glass floating-button rounded-lg p-3 specular-highlight text-gray-600 hover:text-emerald-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                </button>
+                <div class="flex-1">
+                    <input type="text" 
+                           id="message-input"
+                           placeholder="請輸入您的問題或需求..."
+                           class="w-full chat-input"
+                           onkeypress="if(event.key==='Enter') sendMessage()">
+                </div>
+                <button onclick="sendMessage()" 
+                        class="liquid-glass floating-button rounded-lg p-3 specular-highlight bg-emerald-500 text-white hover:bg-emerald-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 快捷操作面板 -->
+            <div id="quick-actions" class="hidden mt-3 p-3 bg-white/80 rounded-xl border border-gray-100">
+                <div class="text-xs text-gray-500 mb-2">快捷操作</div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="askFollowUp('請修改收款律師行資訊')" class="text-xs px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full hover:bg-emerald-100">修改律師行</button>
+                    <button onclick="askFollowUp('請重新檢查交易限額')" class="text-xs px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100">重檢限額</button>
+                    <button onclick="askFollowUp('請更新物業地址資訊')" class="text-xs px-3 py-1.5 bg-purple-50 text-purple-700 rounded-full hover:bg-purple-100">更新地址</button>
+                    <button onclick="askFollowUp('重新生成指示函')" class="text-xs px-3 py-1.5 bg-amber-50 text-amber-700 rounded-full hover:bg-amber-100">重新生成</button>
+                    <button onclick="exportLetter()" class="text-xs px-3 py-1.5 bg-rose-50 text-rose-700 rounded-full hover:bg-rose-100">匯出文檔</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 知識溯源彈窗 -->
+    <div id="source-modal" class="modal-overlay">
+        <div class="modal-content">
+            <!-- 彈窗頭部 -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800">資料來源詳情</h3>
+                <button onclick="closeSourceModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 彈窗內容 -->
+            <div class="p-6 overflow-y-auto max-h-96">
+                <!-- 文檔信息 -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-2">📄 文檔信息</h4>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600 mb-2">
+                            <span class="font-medium">文檔標題：</span>
+                            <span id="doc-title">-</span>
+                        </p>
+                        <p class="text-sm text-gray-600 mb-2">
+                            <span class="font-medium">章節位置：</span>
+                            <span id="doc-section">-</span>
+                        </p>
+                        <p class="text-sm text-gray-600">
+                            <span class="font-medium">引用地址：</span>
+                            <span id="doc-url" class="text-emerald-600">-</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 切片內容 -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-2">📝 提取內容</h4>
+                    <div class="bg-emerald-50 rounded-lg p-4">
+                        <div id="slice-content" class="text-sm text-gray-700 leading-relaxed">
+                            -
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 相關標籤 -->
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-2">🏷️ 相關標籤</h4>
+                    <div id="reference-tags" class="flex flex-wrap gap-2">
+                        <!-- 標籤將動態生成 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 彈窗底部 -->
+            <div class="flex items-center justify-between p-6 border-t border-gray-200/50">
+                <div class="text-sm text-gray-500">
+                    準確率：<span class="font-semibold text-emerald-600" id="accuracy-rate">-</span>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="optimizeAnswer()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
+                        優化結果
+                    </button>
+                    <button onclick="closeSourceModal()" class="bg-emerald-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors">
+                        確定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 編輯模態框 -->
+    <div id="edit-modal" class="edit-modal">
+        <div class="edit-content">
+            <!-- 編輯框頭部 -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800">編輯指示函內容</h3>
+                <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 編輯框內容 -->
+            <div class="p-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">編輯內容</label>
+                    <textarea id="edit-textarea" class="edit-textarea" placeholder="請輸入內容..."></textarea>
+                </div>
+                <div class="text-sm text-gray-500 mb-4">
+                    💡 修改後的內容將同步更新到指示函中
+                </div>
+            </div>
+            
+            <!-- 編輯框底部 -->
+            <div class="flex items-center justify-between p-6 border-t border-gray-200/50">
+                <button onclick="closeEditModal()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
+                    取消
+                </button>
+                <button onclick="saveEdit()" class="bg-emerald-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors">
+                    保存修改
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 指示函預覽彈窗 -->
+    <div id="letter-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200/50">
+                <h3 class="text-lg font-semibold text-gray-800">📋 按揭指示函預覽</h3>
+                <div class="flex items-center gap-3">
+                    <button onclick="downloadLetter('pdf')" class="liquid-glass floating-button rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 specular-highlight flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        PDF
+                    </button>
+                    <button onclick="downloadLetter('docx')" class="liquid-glass floating-button rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 specular-highlight flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Word
+                    </button>
+                    <button onclick="closeLetterModal()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-[70vh]">
+                <div id="letter-preview-content" class="letter-preview">
+                    <!-- 指示函內容將動態生成 -->
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between p-6 border-t border-gray-200/50">
+                <div class="text-sm text-gray-500">
+                    生成時間：<span id="letter-timestamp">-</span>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="editLetter()" class="liquid-glass floating-button rounded-lg px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
+                        編輯內容
+                    </button>
+                    <button onclick="sendToSolicitor()" class="bg-emerald-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors">
+                        發送至律師行
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversationHistory = [];
+        let isTyping = false;
+        let currentContext = [];
+        let currentEditingMessageId = null;
+        let uploadedFiles = [];
+        let selectedScenario = null;
+        let currentStep = 1;
+        let extractedData = {};
+
+        // 簡單的Markdown渲染器
+        function renderMarkdown(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold text-gray-800 mt-4 mb-3">$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-800 mt-4 mb-3">$1</h1>')
+                .replace(/^- (.*$)/gim, '<li class="ml-4">$1</li>')
+                .replace(/^(\d+)\. (.*$)/gim, '<li class="ml-4 list-decimal">$2</li>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Toast提示函數
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <div class="mr-3">
+                        ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-800">${message}</div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-gray-500 hover:text-gray-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 更新步驟狀態
+        function updateStepStatus(step) {
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById(`step-${i}`);
+                stepEl.classList.remove('active', 'completed');
+                if (i < step) {
+                    stepEl.classList.add('completed');
+                } else if (i === step) {
+                    stepEl.classList.add('active');
+                }
+            }
+            currentStep = step;
+        }
+
+        // 跳轉到指定步驟
+        function goToStep(step) {
+            updateStepStatus(step);
+            
+            if (step === 1) {
+                document.getElementById('upload-step').style.display = 'block';
+                document.getElementById('scenario-step').style.display = 'none';
+            } else if (step === 2) {
+                document.getElementById('upload-step').style.display = 'none';
+                document.getElementById('scenario-step').style.display = 'block';
+            }
+        }
+
+        // 觸發文件選擇
+        function triggerFileInput() {
+            document.getElementById('file-input').click();
+        }
+
+        // 處理拖拽
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.querySelector('.upload-zone').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.querySelector('.upload-zone').classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.querySelector('.upload-zone').classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFiles(files);
+            }
+        }
+
+        // 處理文件上傳
+        function handleFileUpload(input) {
+            if (input.files.length > 0) {
+                processFiles(input.files);
+            }
+        }
+
+        // 處理多個文件
+        function processFiles(files) {
+            for (let file of files) {
+                if (!uploadedFiles.find(f => f.name === file.name)) {
+                    uploadedFiles.push(file);
+                }
+            }
+            updateFilePreview();
+            
+            if (uploadedFiles.length > 0) {
+                document.querySelector('.upload-zone').classList.add('has-file');
+            }
+        }
+
+        // 更新文件預覽
+        function updateFilePreview() {
+            const previewArea = document.getElementById('file-preview-area');
+            
+            if (uploadedFiles.length === 0) {
+                previewArea.innerHTML = '';
+                return;
+            }
+            
+            let html = '<div class="space-y-2">';
+            uploadedFiles.forEach((file, index) => {
+                const fileIcon = getFileIcon(file.name);
+                const fileType = getFileType(file.name);
+                html += `
+                    <div class="file-preview">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">${fileIcon}</span>
+                            <div>
+                                <div class="font-medium text-gray-800">${file.name}</div>
+                                <div class="text-xs text-gray-500">${fileType} · ${formatFileSize(file.size)}</div>
+                            </div>
+                        </div>
+                        <button onclick="removeFile(${index})" class="text-gray-400 hover:text-red-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            html += `
+                <div class="mt-4 flex justify-center">
+                    <button onclick="goToStep(2)" class="bg-emerald-500 text-white rounded-lg px-6 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors">
+                        下一步：選擇任務類型
+                    </button>
+                </div>
+            `;
+            
+            previewArea.innerHTML = html;
+        }
+
+        // 移除文件
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            updateFilePreview();
+            
+            if (uploadedFiles.length === 0) {
+                document.querySelector('.upload-zone').classList.remove('has-file');
+            }
+        }
+
+        // 獲取文件圖標
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'pdf': '📕',
+                'doc': '📘',
+                'docx': '📘',
+                'xls': '📗',
+                'xlsx': '📗',
+                'jpg': '🖼️',
+                'jpeg': '🖼️',
+                'png': '🖼️'
+            };
+            return icons[ext] || '📄';
+        }
+
+        // 獲取文件類型
+        function getFileType(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const types = {
+                'pdf': 'PDF文檔',
+                'doc': 'Word文檔',
+                'docx': 'Word文檔',
+                'xls': 'Excel表格',
+                'xlsx': 'Excel表格',
+                'jpg': 'JPEG圖片',
+                'jpeg': 'JPEG圖片',
+                'png': 'PNG圖片'
+            };
+            return types[ext] || '未知格式';
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // 選擇場景
+        function selectScenario(scenario) {
+            document.querySelectorAll('.scenario-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            event.currentTarget.classList.add('selected');
+            selectedScenario = scenario;
+            
+            document.getElementById('next-to-analysis').disabled = false;
+        }
+
+        // 開始分析
+        function startAnalysis() {
+            if (!selectedScenario) {
+                showToast('請先選擇一個任務類型', 'error');
+                return;
+            }
+            
+            document.getElementById('wizard-interface').style.display = 'none';
+            document.getElementById('chat-area').style.display = 'block';
+            document.getElementById('input-area').style.display = 'block';
+            
+            updateStepStatus(3);
+            
+            // 顯示處理中消息
+            showProcessingMessage();
+        }
+
+        // 顯示處理消息
+        function showProcessingMessage() {
+            const chatArea = document.getElementById('chat-area');
+            const messageId = 'msg-' + Date.now();
+            
+            // 根據場景獲取處理步驟
+            const steps = getProcessingSteps(selectedScenario);
+            
+            chatArea.innerHTML = `
+                <div id="${messageId}" class="message-bubble assistant-message p-6 mb-4">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                            <span class="text-emerald-600">🔄</span>
+                        </div>
+                        <div class="font-semibold text-gray-800">正在處理您的文檔...</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-600">整體進度</span>
+                            <span id="progress-text" class="text-emerald-600 font-medium">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="check-items" class="space-y-2">
+                        ${steps.map((step, i) => `
+                            <div id="check-${i}" class="check-item">
+                                <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                                    <span class="text-gray-500 text-sm">${i + 1}</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-700">${step.title}</div>
+                                    <div class="text-xs text-gray-500">${step.desc}</div>
+                                </div>
+                                <div id="check-status-${i}" class="text-gray-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                    </svg>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // 模擬處理進度
+            simulateProcessing(steps, messageId);
+        }
+
+        // 獲取處理步驟
+        function getProcessingSteps(scenario) {
+            const baseSteps = [
+                { title: 'OCR文檔識別', desc: '識別並提取文檔中的文字內容' },
+                { title: '關鍵信息提取', desc: '提取客戶資料、貸款金額、物業信息等' }
+            ];
+            
+            const scenarioSteps = {
+                'generate-letter': [
+                    ...baseSteps,
+                    { title: '交易限額驗證', desc: '核對交易金額是否符合銀行規定' },
+                    { title: '物業資料核對', desc: '與系統記錄進行交叉驗證' },
+                    { title: '律師行資格驗證', desc: '確認律師行在認可名單中' },
+                    { title: '生成指示函', desc: '根據模板自動生成律師指示函' }
+                ],
+                'extract-info': [
+                    ...baseSteps,
+                    { title: '數據結構化', desc: '將提取的信息整理為結構化數據' },
+                    { title: '完整性檢查', desc: '檢查必要欄位是否完整' }
+                ],
+                'limit-check': [
+                    ...baseSteps,
+                    { title: '獲取限額規則', desc: '從系統獲取當前適用的限額規定' },
+                    { title: '金額比對分析', desc: '對比交易金額與各級限額' },
+                    { title: '審批權限判定', desc: '判定所需的審批層級' }
+                ],
+                'property-verify': [
+                    ...baseSteps,
+                    { title: '地址標準化', desc: '將地址轉換為標準格式' },
+                    { title: '產權記錄查詢', desc: '查詢物業登記系統' },
+                    { title: '信息一致性核對', desc: '比對文檔與系統記錄' }
+                ],
+                'solicitor-verify': [
+                    ...baseSteps,
+                    { title: '律師行名冊查詢', desc: '在銀行認可律師行名單中查詢' },
+                    { title: '資格有效性驗證', desc: '確認律師行執業資格' },
+                    { title: '聯絡資料核對', desc: '驗證聯絡地址和電話' }
+                ],
+                'custom-analysis': [
+                    ...baseSteps,
+                    { title: '自定義分析', desc: '根據您的需求進行處理' }
+                ]
+            };
+            
+            return scenarioSteps[scenario] || baseSteps;
+        }
+
+        // 模擬處理進度
+        function simulateProcessing(steps, messageId) {
+            let currentIndex = 0;
+            const totalSteps = steps.length;
+            
+            function processStep() {
+                if (currentIndex < totalSteps) {
+                    // 更新當前步驟狀態為處理中
+                    const checkItem = document.getElementById(`check-${currentIndex}`);
+                    const statusIcon = document.getElementById(`check-status-${currentIndex}`);
+                    
+                    checkItem.classList.add('checking');
+                    statusIcon.innerHTML = `
+                        <svg class="w-5 h-5 animate-spin text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                    `;
+                    
+                    // 更新進度條
+                    const progress = Math.round(((currentIndex + 0.5) / totalSteps) * 100);
+                    document.getElementById('progress-fill').style.width = progress + '%';
+                    document.getElementById('progress-text').textContent = progress + '%';
+                    
+                    setTimeout(() => {
+                        // 完成當前步驟
+                        checkItem.classList.remove('checking');
+                        checkItem.classList.add('passed');
+                        statusIcon.innerHTML = `
+                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        `;
+                        
+                        // 更新進度
+                        const finalProgress = Math.round(((currentIndex + 1) / totalSteps) * 100);
+                        document.getElementById('progress-fill').style.width = finalProgress + '%';
+                        document.getElementById('progress-text').textContent = finalProgress + '%';
+                        
+                        currentIndex++;
+                        setTimeout(processStep, 300);
+                    }, 800 + Math.random() * 500);
+                } else {
+                    // 所有步驟完成
+                    updateStepStatus(4);
+                    setTimeout(() => showAnalysisResult(messageId), 500);
+                }
+            }
+            
+            processStep();
+        }
+
+        // 顯示分析結果
+        function showAnalysisResult(messageId) {
+            const chatArea = document.getElementById('chat-area');
+            const resultId = 'result-' + Date.now();
+            
+            // 模擬提取的數據
+            extractedData = {
+                loanNumber: 'ML-2025-00892',
+                customerName: '陳大文',
+                customerId: 'A123456(7)',
+                propertyAddress: '香港新界沙田火炭禾盛街1號駿景園第3座18樓A室',
+                loanAmount: 'HKD 5,800,000.00',
+                loanType: '按揭貸款',
+                solicitorFirm: '李張律師行',
+                solicitorName: '李志明律師',
+                solicitorAddress: '香港中環德輔道中68號萬宜大廈12樓1201室',
+                solicitorPhone: '2523 8888',
+                solicitorFax: '2523 8899',
+                completionDate: '2025年1月15日',
+                specialInstructions: '請於完成交易後3個工作天內將所有正本文件送交本行'
+            };
+            
+            const resultHtml = `
+                <div id="${resultId}" class="message-bubble assistant-message p-6 mb-4" 
+                     data-source='${JSON.stringify({
+                         title: "按揭指示表格",
+                         section: "客戶及貸款資料",
+                         url: "internal://mortgage-form/ML-2025-00892",
+                         slice: "貸款編號: ML-2025-00892\\n客戶姓名: 陳大文\\n貸款金額: HKD 5,800,000.00",
+                         accuracy: 98,
+                         tags: ["按揭貸款", "客戶資料", "物業信息", "律師指示"]
+                     })}'>
+                    <div class="prose prose-sm max-w-none text-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                                <span class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center mr-3">✅</span>
+                                文檔處理完成
+                            </h3>
+                            <span class="text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">準確率 98%</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                    <span class="mr-2">👤</span> 客戶資料
+                                </h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">貸款編號</span>
+                                        <span class="font-medium">${extractedData.loanNumber}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">客戶姓名</span>
+                                        <span class="font-medium">${extractedData.customerName}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">身份證號</span>
+                                        <span class="font-medium">${extractedData.customerId}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                    <span class="mr-2">💰</span> 貸款資料
+                                </h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">貸款類型</span>
+                                        <span class="font-medium">${extractedData.loanType}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">貸款金額</span>
+                                        <span class="font-medium text-emerald-600">${extractedData.loanAmount}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">預計完成日</span>
+                                        <span class="font-medium">${extractedData.completionDate}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                    <span class="mr-2">🏠</span> 物業資料
+                                </h4>
+                                <div class="text-sm">
+                                    <span class="text-gray-500">物業地址</span>
+                                    <p class="font-medium mt-1">${extractedData.propertyAddress}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                    <span class="mr-2">👨‍⚖️</span> 律師行資料
+                                </h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">律師行</span>
+                                        <span class="font-medium">${extractedData.solicitorFirm}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">負責律師</span>
+                                        <span class="font-medium">${extractedData.solicitorName}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">電話</span>
+                                        <span class="font-medium">${extractedData.solicitorPhone}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-emerald-50 rounded-lg p-4 mb-4">
+                            <h4 class="font-semibold text-emerald-800 mb-2 flex items-center">
+                                <span class="mr-2">📋</span> 驗證結果
+                            </h4>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                <div class="flex items-center text-emerald-700">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    交易限額通過
+                                </div>
+                                <div class="flex items-center text-emerald-700">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    物業資料一致
+                                </div>
+                                <div class="flex items-center text-emerald-700">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    律師行已認可
+                                </div>
+                                <div class="flex items-center text-emerald-700">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    文檔完整
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="source-reference" onclick="showSourceDetail('${resultId}')">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-4 h-4 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="text-sm text-emerald-700">點擊查看資料來源詳情</span>
+                                </div>
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="message-actions">
+                        <button onclick="likeMessage('${resultId}')" class="action-btn like">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
+                            </svg>
+                            正確
+                        </button>
+                        <button onclick="dislikeMessage('${resultId}')" class="action-btn dislike">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"></path>
+                            </svg>
+                            需修正
+                        </button>
+                        <button onclick="editAnswer('${resultId}')" class="action-btn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            編輯
+                        </button>
+                        <button onclick="previewLetter()" class="action-btn bg-emerald-50 border-emerald-200 text-emerald-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            預覽指示函
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 保留處理完成的消息，添加結果
+            const existingContent = chatArea.innerHTML;
+            chatArea.innerHTML = existingContent + resultHtml;
+            
+            // 滾動到底部
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // 預覽指示函
+        function previewLetter() {
+            const letterContent = generateLetterContent();
+            document.getElementById('letter-preview-content').innerHTML = letterContent;
+            document.getElementById('letter-timestamp').textContent = new Date().toLocaleString('zh-TW');
+            document.getElementById('letter-modal').classList.add('show');
+        }
+
+        // 生成指示函內容
+        function generateLetterContent() {
+            return `
+                <div class="letter-header">
+                    <h1 class="text-xl font-bold text-gray-800">上海商業銀行有限公司</h1>
+                    <p class="text-sm text-gray-600">SHANGHAI COMMERCIAL BANK LIMITED</p>
+                    <p class="text-xs text-gray-500 mt-2">香港中環德輔道中12號</p>
+                </div>
+                
+                <div class="letter-content">
+                    <div class="mb-6">
+                        <p class="font-bold">致：${extractedData.solicitorFirm}</p>
+                        <p class="text-sm text-gray-600 ml-8">${extractedData.solicitorAddress}</p>
+                        <p class="text-sm text-gray-600 ml-8">電話：${extractedData.solicitorPhone} / 傳真：${extractedData.solicitorFax}</p>
+                        <p class="mt-2">負責律師：${extractedData.solicitorName}</p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <p><strong>日期：</strong>${new Date().toLocaleDateString('zh-TW')}</p>
+                        <p><strong>我方參考編號：</strong>${extractedData.loanNumber}</p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <p class="font-bold underline mb-4">關於：按揭貸款指示</p>
+                        <p class="mb-2"><strong>借款人：</strong><span class="field-highlight">${extractedData.customerName}</span>（身份證號碼：${extractedData.customerId}）</p>
+                        <p class="mb-2"><strong>物業地址：</strong><span class="field-highlight">${extractedData.propertyAddress}</span></p>
+                        <p class="mb-4"><strong>貸款金額：</strong><span class="field-highlight">${extractedData.loanAmount}</span></p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <p class="mb-4">茲就上述按揭貸款事宜，現指示 貴行代表本行辦理下列事項：</p>
+                        
+                        <ol class="list-decimal ml-6 space-y-3">
+                            <li>代表本行完成上述物業之按揭登記手續；</li>
+                            <li>確保按揭契據已妥善簽署並加蓋適當印花；</li>
+                            <li>於土地註冊處完成按揭登記；</li>
+                            <li>取得物業業權證明文件正本並妥善保管；</li>
+                            <li>於交易完成後，將以下文件送交本行：
+                                <ul class="list-disc ml-6 mt-2 space-y-1">
+                                    <li>已登記之按揭契據正本</li>
+                                    <li>物業契據正本</li>
+                                    <li>土地查冊紀錄</li>
+                                    <li>印花稅收據</li>
+                                    <li>律師證明書</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                    
+                    <div class="mb-6 bg-amber-50 p-4 rounded-lg border border-amber-200">
+                        <p class="font-bold text-amber-800 mb-2">⚠️ 特別指示：</p>
+                        <p class="text-amber-900">${extractedData.specialInstructions}</p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <p><strong>預計完成日期：</strong>${extractedData.completionDate}</p>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <p>如有任何疑問，請與本行貸款處理中心聯絡。</p>
+                        <p class="mt-6">此致</p>
+                        <p class="mt-4 font-bold">上海商業銀行有限公司</p>
+                        <p class="mt-8">___________________________</p>
+                        <p>授權簽署人</p>
+                        <p class="text-sm text-gray-500 mt-1">貸款處理中心</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 關閉指示函預覽
+        function closeLetterModal() {
+            document.getElementById('letter-modal').classList.remove('show');
+        }
+
+        // 下載指示函
+        function downloadLetter(format) {
+            showToast(`正在生成${format.toUpperCase()}格式文檔...`, 'info');
+            setTimeout(() => {
+                showToast(`指示函已下載為${format.toUpperCase()}格式`, 'success');
+            }, 1500);
+        }
+
+        // 編輯指示函
+        function editLetter() {
+            closeLetterModal();
+            showToast('請在對話中告訴我需要修改的內容', 'info');
+        }
+
+        // 發送至律師行
+        function sendToSolicitor() {
+            showToast('指示函已通過電郵發送至 ' + extractedData.solicitorFirm, 'success');
+            closeLetterModal();
+        }
+
+        // 發送消息
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || isTyping) return;
+            
+            addUserMessage(message);
+            input.value = '';
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                generateAssistantResponse(message);
+            }, 1000 + Math.random() * 1000);
+        }
+
+        // 添加用戶消息
+        function addUserMessage(text) {
+            const chatArea = document.getElementById('chat-area');
+            const messageId = 'user-' + Date.now();
+            
+            chatArea.innerHTML += `
+                <div id="${messageId}" class="message-bubble user-message p-4 mb-4">
+                    <p>${text}</p>
+                </div>
+            `;
+            
+            chatArea.scrollTop = chatArea.scrollHeight;
+            conversationHistory.push({ role: 'user', content: text });
+        }
+
+        // 顯示輸入指示器
+        function showTypingIndicator() {
+            isTyping = true;
+            const chatArea = document.getElementById('chat-area');
+            chatArea.innerHTML += `
+                <div id="typing-indicator" class="typing-indicator mb-4">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // 隱藏輸入指示器
+        function hideTypingIndicator() {
+            isTyping = false;
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        // 生成助手回覆
+        function generateAssistantResponse(userMessage) {
+            const chatArea = document.getElementById('chat-area');
+            const messageId = 'assistant-' + Date.now();
+            
+            let response = '';
+            
+            if (userMessage.includes('律師') || userMessage.includes('律师')) {
+                response = `
+                    <h4 class="font-semibold text-gray-800 mb-3">📝 律師行資料更新</h4>
+                    <p class="mb-3">已收到您的修改請求。請提供以下資訊以更新律師行資料：</p>
+                    <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-500">1.</span>
+                            <span>新律師行名稱</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-500">2.</span>
+                            <span>負責律師姓名</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-500">3.</span>
+                            <span>聯絡地址及電話</span>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-sm text-gray-500">系統將自動驗證新律師行是否在銀行認可名單中。</p>
+                `;
+            } else if (userMessage.includes('限額') || userMessage.includes('限额')) {
+                response = `
+                    <h4 class="font-semibold text-gray-800 mb-3">💰 交易限額檢查結果</h4>
+                    <div class="bg-emerald-50 rounded-lg p-4 mb-3">
+                        <div class="flex items-center text-emerald-700 mb-2">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="font-medium">交易金額在授權限額範圍內</span>
+                        </div>
+                        <div class="text-sm space-y-1 ml-7">
+                            <p>交易金額：${extractedData.loanAmount}</p>
+                            <p>分行授權限額：HKD 10,000,000.00</p>
+                            <p>審批狀態：分行經理級別可批核</p>
+                        </div>
+                    </div>
+                `;
+            } else if (userMessage.includes('地址') || userMessage.includes('物業') || userMessage.includes('物业')) {
+                response = `
+                    <h4 class="font-semibold text-gray-800 mb-3">🏠 物業地址更新</h4>
+                    <p class="mb-3">請提供需要更新的物業地址資訊：</p>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600 mb-2">當前地址：</p>
+                        <p class="font-medium">${extractedData.propertyAddress}</p>
+                    </div>
+                    <p class="mt-3 text-sm text-gray-500">更新後系統將重新進行物業資料核對。</p>
+                `;
+            } else if (userMessage.includes('重新生成') || userMessage.includes('regenerate')) {
+                response = `
+                    <h4 class="font-semibold text-gray-800 mb-3">🔄 重新生成指示函</h4>
+                    <p class="mb-3">已根據最新資料重新生成按揭指示函。主要更新內容：</p>
+                    <ul class="list-disc ml-6 space-y-1 text-sm">
+                        <li>更新了生成日期</li>
+                        <li>確認所有資料為最新版本</li>
+                        <li>重新驗證了律師行資格</li>
+                    </ul>
+                    <button onclick="previewLetter()" class="mt-4 bg-emerald-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-emerald-600 transition-colors">
+                        預覽新指示函
+                    </button>
+                `;
+            } else {
+                response = `
+                    <p class="mb-3">收到您的問題。我可以幫您：</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="askFollowUp('修改律師行資料')" class="text-left text-sm p-3 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors">
+                            👨‍⚖️ 修改律師行資料
+                        </button>
+                        <button onclick="askFollowUp('重新檢查交易限額')" class="text-left text-sm p-3 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors">
+                            💰 檢查交易限額
+                        </button>
+                        <button onclick="askFollowUp('更新物業地址')" class="text-left text-sm p-3 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors">
+                            🏠 更新物業地址
+                        </button>
+                        <button onclick="previewLetter()" class="text-left text-sm p-3 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors">
+                            📋 預覽指示函
+                        </button>
+                    </div>
+                `;
+            }
+            
+            chatArea.innerHTML += `
+                <div id="${messageId}" class="message-bubble assistant-message p-6 mb-4">
+                    <div class="prose prose-sm max-w-none text-gray-700">
+                        ${response}
+                    </div>
+                </div>
+            `;
+            
+            chatArea.scrollTop = chatArea.scrollHeight;
+            conversationHistory.push({ role: 'assistant', content: response });
+        }
+
+        // 快捷問題
+        function askFollowUp(question) {
+            document.getElementById('message-input').value = question;
+            sendMessage();
+        }
+
+        // 顯示快捷操作
+        function showQuickActions() {
+            const panel = document.getElementById('quick-actions');
+            panel.classList.toggle('hidden');
+        }
+
+        // 匯出指示函
+        function exportLetter() {
+            showToast('正在準備匯出文檔...', 'info');
+            setTimeout(() => {
+                previewLetter();
+            }, 500);
+        }
+
+        // 重置嚮導
+        function resetWizard() {
+            uploadedFiles = [];
+            selectedScenario = null;
+            currentStep = 1;
+            extractedData = {};
+            conversationHistory = [];
+            
+            document.getElementById('wizard-interface').style.display = 'block';
+            document.getElementById('chat-area').style.display = 'none';
+            document.getElementById('chat-area').innerHTML = '';
+            document.getElementById('input-area').style.display = 'none';
+            document.getElementById('file-preview-area').innerHTML = '';
+            document.getElementById('upload-step').style.display = 'block';
+            document.getElementById('scenario-step').style.display = 'none';
+            
+            document.querySelector('.upload-zone').classList.remove('has-file');
+            document.querySelectorAll('.scenario-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById('next-to-analysis').disabled = true;
+            
+            updateStepStatus(1);
+            showToast('已創建新任務', 'success');
+        }
+
+        // 顯示歷史記錄
+        function showHistory() {
+            showToast('歷史記錄功能開發中...', 'info');
+        }
+
+        // 顯示來源詳情
+        function showSourceDetail(messageId) {
+            const messageElement = document.getElementById(messageId);
+            if (!messageElement) return;
+            
+            const sourceDataStr = messageElement.getAttribute('data-source');
+            if (!sourceDataStr) return;
+            
+            try {
+                const sourceData = JSON.parse(sourceDataStr);
+                
+                document.getElementById('doc-title').textContent = sourceData.title;
+                document.getElementById('doc-section').textContent = sourceData.section;
+                document.getElementById('doc-url').textContent = sourceData.url;
+                document.getElementById('slice-content').innerHTML = sourceData.slice.replace(/\\n/g, '<br>');
+                document.getElementById('accuracy-rate').textContent = sourceData.accuracy + '%';
+                
+                const tagsContainer = document.getElementById('reference-tags');
+                tagsContainer.innerHTML = '';
+                sourceData.tags.forEach(tag => {
+                    const tagElement = document.createElement('span');
+                    tagElement.className = 'reference-tag';
+                    tagElement.textContent = tag;
+                    tagsContainer.appendChild(tagElement);
+                });
+                
+                document.getElementById('source-modal').classList.add('show');
+            } catch (error) {
+                console.error('解析來源數據失敗:', error);
+            }
+        }
+
+        function closeSourceModal() {
+            document.getElementById('source-modal').classList.remove('show');
+        }
+
+        function optimizeAnswer() {
+            showToast('優化請求已記錄，將用於提升文檔分析的準確性', 'info');
+            closeSourceModal();
+        }
+
+        function likeMessage(messageId) {
+            const btn = document.querySelector(`#${messageId} .action-btn.like`);
+            const dislikeBtn = document.querySelector(`#${messageId} .action-btn.dislike`);
+            
+            btn.classList.toggle('active');
+            dislikeBtn.classList.remove('active');
+            
+            if (btn.classList.contains('active')) {
+                showToast('感謝您的反饋！這將幫助我們改進文檔分析質量', 'success');
+            }
+        }
+
+        function dislikeMessage(messageId) {
+            const btn = document.querySelector(`#${messageId} .action-btn.dislike`);
+            const likeBtn = document.querySelector(`#${messageId} .action-btn.like`);
+            
+            btn.classList.toggle('active');
+            likeBtn.classList.remove('active');
+            
+            if (btn.classList.contains('active')) {
+                showToast('請告訴我需要修正的內容', 'info');
+            }
+        }
+
+        function editAnswer(messageId) {
+            const messageElement = document.getElementById(messageId);
+            const contentDiv = messageElement.querySelector('.prose');
+            const currentContent = contentDiv.textContent;
+            
+            currentEditingMessageId = messageId;
+            document.getElementById('edit-textarea').value = currentContent;
+            document.getElementById('edit-modal').classList.add('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.remove('show');
+            currentEditingMessageId = null;
+        }
+
+        function saveEdit() {
+            if (!currentEditingMessageId) return;
+            
+            const newContent = document.getElementById('edit-textarea').value.trim();
+            if (!newContent) {
+                showToast('內容不能為空', 'error');
+                return;
+            }
+            
+            closeEditModal();
+            showToast('內容已更新保存', 'success');
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('按揭指示函生成助手已加載完成');
+            updateStepStatus(1);
+            
+            document.getElementById('source-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeSourceModal();
+            });
+            
+            document.getElementById('edit-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeEditModal();
+            });
+            
+            document.getElementById('letter-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeLetterModal();
+            });
+        });
+    </script>
+</body>
+</html>

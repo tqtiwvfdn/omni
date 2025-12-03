@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>信用證單據審核助手 - 赞同科技数字员工</title>
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@300;400;500;600;700&display=swap" rel="stylesheet"> -->
+    <style>
+        * {
+            font-family: 'Noto Sans HK', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            /* background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%); */
+            min-height: 100vh;
+        }
+        
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.85);
+            /* backdrop-filter: blur(20px); */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .liquid-glass-strong {
+            /* background: rgba(255, 255, 255, 0.92); */
+            /* backdrop-filter: blur(25px); */
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .specular-highlight {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .specular-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+        
+        .specular-highlight:hover::before {
+            left: 100%;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+        }
+        
+        .message-bubble {
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            margin-left: auto;
+            border-radius: 18px 18px 4px 18px;
+        }
+        
+        .assistant-message {
+            background: rgba(255, 255, 255, 0.95);
+            color: #374151;
+            margin-right: auto;
+            border-radius: 18px 18px 18px 4px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px 18px 18px 4px;
+            margin-right: auto;
+            max-width: 85%;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+        
+        .upload-zone {
+            border: 2px dashed rgba(30, 64, 175, 0.3);
+            border-radius: 16px;
+            padding: 32px 24px;
+            text-align: center;
+            background: rgba(30, 64, 175, 0.03);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-zone:hover {
+            border-color: rgba(30, 64, 175, 0.5);
+            background: rgba(30, 64, 175, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        .upload-zone.dragover {
+            border-color: rgba(16, 185, 129, 0.6);
+            background: rgba(16, 185, 129, 0.1);
+            transform: scale(1.01);
+        }
+        
+        .upload-zone.has-file {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.08);
+        }
+        
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: #6b7280;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active { color: #1e40af; font-weight: 600; }
+        .step.completed { color: #059669; }
+        
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active .step-circle { background: #1e40af; color: white; }
+        .step.completed .step-circle { background: #059669; color: white; }
+        
+        .step-divider {
+            width: 32px;
+            height: 2px;
+            background: #e5e7eb;
+            margin: 0 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .step.completed + .step-divider { background: #059669; }
+        
+        .standard-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(226, 232, 240, 0.8);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .standard-card:hover {
+            border-color: rgba(30, 64, 175, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-2px);
+        }
+        
+        .standard-card.selected {
+            border-color: #1e40af;
+            background: rgba(30, 64, 175, 0.05);
+        }
+        
+        .standard-card.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            background: #1e40af;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .doc-item {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .doc-item:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        
+        .discrepancy-item {
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid;
+        }
+        
+        .discrepancy-high {
+            background: rgba(239, 68, 68, 0.08);
+            border-left-color: #ef4444;
+        }
+        
+        .discrepancy-medium {
+            background: rgba(245, 158, 11, 0.08);
+            border-left-color: #f59e0b;
+        }
+        
+        .discrepancy-low {
+            background: rgba(16, 185, 129, 0.08);
+            border-left-color: #10b981;
+        }
+        
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.9);
+            color: #4b5563;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            border-color: rgba(30, 64, 175, 0.3);
+            color: #1e40af;
+        }
+        
+        .action-btn.active {
+            background: rgba(30, 64, 175, 0.1);
+            border-color: rgba(30, 64, 175, 0.3);
+            color: #1e40af;
+        }
+        
+        .action-btn.primary {
+            background: #1e40af;
+            color: white;
+            border-color: #1e40af;
+        }
+        
+        .action-btn.primary:hover {
+            background: #1e3a8a;
+        }
+        
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            margin: 20px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            min-width: 280px;
+        }
+        
+        .toast.show { transform: translateX(0); }
+        .toast.success { border-left: 4px solid #10b981; }
+        .toast.error { border-left: 4px solid #ef4444; }
+        .toast.info { border-left: 4px solid #1e40af; }
+        .toast.warning { border-left: 4px solid #f59e0b; }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-success { background: rgba(16, 185, 129, 0.1); color: #059669; }
+        .badge-warning { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+        .badge-error { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+        .badge-info { background: rgba(30, 64, 175, 0.1); color: #1e40af; }
+        
+        .chat-input {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 12px;
+            padding: 12px 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-input:focus {
+            border-color: rgba(30, 64, 175, 0.5);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+        
+        .floating-button {
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .floating-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(226, 232, 240, 0.6);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- 主容器 -->
+    <div class="flex-1 flex flex-col w-full  overflow-hidden">
+        <!-- 頭部 -->
+        <div class=" p-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center mr-4 shadow-lg">
+                    <span class="text-white text-xl">📋</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">信用證單據審核助手</h3>
+                    <p class="text-sm text-gray-500">LC Document Checker · 基於 UCP600 & ISBP 標準</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <!-- <span class="badge badge-success">
+                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                    AI 就緒
+                </span> -->
+                <button onclick="resetWizard()" class="liquid-glass floating-button rounded-xl px-4 py-2 text-sm font-medium text-gray-700 specular-highlight">
+                    新建審核
+                </button>
+            </div>
+        </div>
+        
+        <!-- 主內容區域 -->
+        <div id="messages-container" class="flex-1 liquid-glass-strong p-6 overflow-y-auto">
+            <!-- 嚮導界面 -->
+            <div id="wizard-interface">
+                <!-- 步驟指示器 -->
+                <div class="step-indicator">
+                    <div class="step active" id="step-1">
+                        <div class="step-circle">1</div>
+                        <span>上載信用證</span>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-2">
+                        <div class="step-circle">2</div>
+                        <span>上載相關單據</span>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-3">
+                        <div class="step-circle">3</div>
+                        <span>選擇審核標準</span>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-4">
+                        <div class="step-circle">4</div>
+                        <span>AI 審核</span>
+                    </div>
+                </div>
+                
+                <!-- 助手介紹 -->
+                <div class="message-bubble assistant-message p-6 mb-6">
+                    <div class="prose prose-sm max-w-none text-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">歡迎使用信用證單據審核助手</h3>
+                        <p class="mb-4 text-gray-600">我能夠根據國際標準 UCP600、ISBP 指引及本地法規，智能審核信用證相關單據，快速識別不符點並提供專業建議。</p>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                            <div class="flex items-center p-3 bg-blue-50 rounded-xl">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-blue-600">🔍</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm text-gray-800">智能比對</div>
+                                    <div class="text-xs text-gray-500">多維度交叉驗證</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 bg-amber-50 rounded-xl">
+                                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-amber-600">⚠️</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm text-gray-800">不符點識別</div>
+                                    <div class="text-xs text-gray-500">自動標記風險</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 bg-green-50 rounded-xl">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-green-600">📊</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm text-gray-800">合規報告</div>
+                                    <div class="text-xs text-gray-500">一鍵生成報告</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 bg-purple-50 rounded-xl">
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-purple-600">📚</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm text-gray-800">案例學習</div>
+                                    <div class="text-xs text-gray-500">持續優化準確率</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 步驟1: 上載信用證 -->
+                <div id="step1-content" class="step-content">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">第一步：上載信用證 (Letter of Credit)</h3>
+                    <p class="text-gray-500 text-sm mb-4">請上載需要審核的信用證文件，支援 PDF、圖片格式</p>
+                    
+                    <div class="upload-zone" id="lc-upload-zone" onclick="triggerLCUpload()" ondrop="handleLCDrop(event)" ondragover="handleDragOver(event, 'lc-upload-zone')" ondragleave="handleDragLeave(event, 'lc-upload-zone')">
+                        <div id="lc-upload-content">
+                            <svg class="w-14 h-14 mx-auto mb-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <h4 class="text-lg font-semibold text-gray-700 mb-1">拖放信用證文件到此處</h4>
+                            <p class="text-gray-500 text-sm mb-3">或點擊選擇文件</p>
+                            <div class="flex flex-wrap justify-center gap-2 text-xs text-gray-400">
+                                <span class="bg-gray-100 px-2 py-1 rounded">PDF</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">JPG/PNG</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">TIFF</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">最大 20MB</span>
+                            </div>
+                        </div>
+                        <input type="file" id="lc-file-input" style="display: none;" accept=".pdf,.jpg,.jpeg,.png,.tiff" onchange="handleLCUpload(this)">
+                    </div>
+                    
+                    <div id="lc-preview-area" class="mt-4" style="display: none;"></div>
+                </div>
+                
+                <!-- 步驟2: 上載相關單據 -->
+                <div id="step2-content" class="step-content" style="display: none;">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">第二步：上載相關單據</h3>
+                    <p class="text-gray-500 text-sm mb-4">請上載需要審核的貿易單據，AI 將對照信用證條款進行審核</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="standard-card card-hover" onclick="selectDocType('invoice')">
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-blue-600">🧾</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-800">商業發票</div>
+                                    <div class="text-xs text-gray-500 mt-1">Commercial Invoice</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="standard-card card-hover" onclick="selectDocType('bl')">
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-indigo-600">🚢</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-800">提單</div>
+                                    <div class="text-xs text-gray-500 mt-1">Bill of Lading</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="standard-card card-hover" onclick="selectDocType('insurance')">
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-green-600">🛡️</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-800">保險單據</div>
+                                    <div class="text-xs text-gray-500 mt-1">Insurance Certificate</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="standard-card card-hover" onclick="selectDocType('origin')">
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-amber-600">🌍</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-800">產地證明</div>
+                                    <div class="text-xs text-gray-500 mt-1">Certificate of Origin</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="standard-card card-hover" onclick="selectDocType('packing')">
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-purple-600">📦</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-800">裝箱單</div>
+                                    <div class="text-xs text-gray-500 mt-1">Packing List</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="standard-card card-hover" onclick="selectDocType('draft')">
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <span class="text-rose-600">💵</span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-800">匯票</div>
+                                    <div class="text-xs text-gray-500 mt-1">Draft / Bill of Exchange</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-zone" id="docs-upload-zone" onclick="triggerDocsUpload()" ondrop="handleDocsDrop(event)" ondragover="handleDragOver(event, 'docs-upload-zone')" ondragleave="handleDragLeave(event, 'docs-upload-zone')">
+                        <div id="docs-upload-content">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <h4 class="text-base font-semibold text-gray-700 mb-1">拖放單據文件到此處</h4>
+                            <p class="text-gray-500 text-sm">支援批量上載多個文件</p>
+                        </div>
+                        <input type="file" id="docs-file-input" style="display: none;" accept=".pdf,.jpg,.jpeg,.png,.tiff" multiple onchange="handleDocsUpload(this)">
+                    </div>
+                    
+                    <div id="uploaded-docs-list" class="mt-4"></div>
+                    
+                    <div class="mt-6 flex justify-between">
+                        <button onclick="goToStep(1)" class="action-btn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                            上一步
+                        </button>
+                        <button id="next-to-step3" onclick="goToStep(3)" class="action-btn primary" disabled>
+                            下一步：選擇審核標準
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 步驟3: 選擇審核標準 -->
+                <div id="step3-content" class="step-content" style="display: none;">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">第三步：選擇審核標準</h3>
+                    <p class="text-gray-500 text-sm mb-4">請選擇適用的審核標準和規則，AI 將據此進行單據審核</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="standard-card card-hover selected" id="standard-ucp600" onclick="toggleStandard('ucp600')">
+                            <div class="flex items-start">
+                                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                                    <span class="text-blue-600 text-lg">📜</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-800">UCP 600</div>
+                                    <div class="text-xs text-gray-500 mt-1">跟單信用證統一慣例</div>
+                                    <div class="text-xs text-blue-600 mt-2">ICC 國際商會標準</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="standard-card card-hover selected" id="standard-isbp" onclick="toggleStandard('isbp')">
+                            <div class="flex items-start">
+                                <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                                    <span class="text-indigo-600 text-lg">📋</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-800">ISBP 745</div>
+                                    <div class="text-xs text-gray-500 mt-1">國際標準銀行實務</div>
+                                    <div class="text-xs text-indigo-600 mt-2">單據審核指引</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="standard-card card-hover" id="standard-hkma" onclick="toggleStandard('hkma')">
+                            <div class="flex items-start">
+                                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                                    <span class="text-red-600 text-lg">🏛️</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-800">香港金管局指引</div>
+                                    <div class="text-xs text-gray-500 mt-1">HKMA Regulatory Guidelines</div>
+                                    <div class="text-xs text-red-600 mt-2">本地監管要求</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="standard-card card-hover" id="standard-internal" onclick="toggleStandard('internal')">
+                            <div class="flex items-start">
+                                <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                                    <span class="text-emerald-600 text-lg">🏦</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-800">銀行內部政策</div>
+                                    <div class="text-xs text-gray-500 mt-1">Shacom Internal Policy</div>
+                                    <div class="text-xs text-emerald-600 mt-2">內部合規要求</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                        <h4 class="font-medium text-gray-800 mb-3">審核選項</h4>
+                        <div class="space-y-3">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-gray-300 mr-3" checked>
+                                <span class="text-sm text-gray-700">檢查單據日期一致性</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-gray-300 mr-3" checked>
+                                <span class="text-sm text-gray-700">驗證金額與數量</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-gray-300 mr-3" checked>
+                                <span class="text-sm text-gray-700">核對貨物描述</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-gray-300 mr-3" checked>
+                                <span class="text-sm text-gray-700">檢查運輸條款合規</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-gray-300 mr-3">
+                                <span class="text-sm text-gray-700">執行 AML 信息提取</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <button onclick="goToStep(2)" class="action-btn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                            上一步
+                        </button>
+                        <button onclick="startReview()" class="action-btn primary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                            開始 AI 審核
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="chat-area" style="display: none;"></div>
+        </div>
+        
+        <div id="input-area" class="liquid-glass-strong rounded-b-2xl p-4" style="display: none;">
+            <div class="flex items-end space-x-3">
+                <div class="flex-1">
+                    <input type="text" 
+                           id="message-input"
+                           placeholder="輸入您的問題，例如：請詳細說明第3項不符點..."
+                           class="w-full chat-input"
+                           onkeypress="if(event.key==='Enter') sendMessage()">
+                </div>
+                <button onclick="sendMessage()" class="action-btn primary px-4 py-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 知識溯源彈窗 -->
+    <div id="source-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex items-center justify-between p-6 border-b border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-800">審核依據詳情</h3>
+                <button onclick="closeSourceModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-96">
+                <div class="mb-5">
+                    <h4 class="font-semibold text-gray-800 mb-2 flex items-center">
+                        <span class="mr-2">📜</span> 引用標準
+                    </h4>
+                    <div class="bg-blue-50 rounded-xl p-4">
+                        <p class="text-sm text-gray-700 mb-1">
+                            <span class="font-medium">標準名稱：</span>
+                            <span id="source-standard">UCP 600</span>
+                        </p>
+                        <p class="text-sm text-gray-700 mb-1">
+                            <span class="font-medium">條款編號：</span>
+                            <span id="source-article">Article 14</span>
+                        </p>
+                        <p class="text-sm text-gray-700">
+                            <span class="font-medium">章節：</span>
+                            <span id="source-section">Standard for Examination of Documents</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-5">
+                    <h4 class="font-semibold text-gray-800 mb-2 flex items-center">
+                        <span class="mr-2">📝</span> 條款原文
+                    </h4>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <p id="source-content" class="text-sm text-gray-700 leading-relaxed">
+                            A nominated bank acting on its nomination, a confirming bank, if any, and the issuing bank must examine a presentation to determine, on the basis of the documents alone, whether or not the documents appear on their face to constitute a complying presentation.
+                        </p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-2 flex items-center">
+                        <span class="mr-2">🏷️</span> 相關標籤
+                    </h4>
+                    <div id="source-tags" class="flex flex-wrap gap-2">
+                        <span class="badge badge-info">單據審核</span>
+                        <span class="badge badge-info">表面相符</span>
+                        <span class="badge badge-info">UCP600</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between p-6 border-t border-gray-100">
+                <div class="text-sm text-gray-500">
+                    適用性：<span class="font-semibold text-green-600">高度相關</span>
+                </div>
+                <button onclick="closeSourceModal()" class="action-btn primary">
+                    確定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let lcFile = null;
+        let uploadedDocs = [];
+        let selectedStandards = ['ucp600', 'isbp'];
+        let isTyping = false;
+
+        const docTypeNames = {
+            'invoice': '商業發票',
+            'bl': '提單',
+            'insurance': '保險單據',
+            'origin': '產地證明',
+            'packing': '裝箱單',
+            'draft': '匯票'
+        };
+
+        const docTypeIcons = {
+            'invoice': '🧾',
+            'bl': '🚢',
+            'insurance': '🛡️',
+            'origin': '🌍',
+            'packing': '📦',
+            'draft': '💵'
+        };
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <div class="mr-3">${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</div>
+                    <div class="flex-1"><div class="font-medium text-gray-800">${message}</div></div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-gray-400 hover:text-gray-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        function updateStepStatus(step) {
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById(`step-${i}`);
+                stepEl.classList.remove('active', 'completed');
+                if (i < step) stepEl.classList.add('completed');
+                else if (i === step) stepEl.classList.add('active');
+            }
+            currentStep = step;
+        }
+
+        function goToStep(step) {
+            updateStepStatus(step);
+            document.getElementById('step1-content').style.display = step === 1 ? 'block' : 'none';
+            document.getElementById('step2-content').style.display = step === 2 ? 'block' : 'none';
+            document.getElementById('step3-content').style.display = step === 3 ? 'block' : 'none';
+        }
+
+        function handleDragOver(e, zoneId) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById(zoneId).classList.add('dragover');
+        }
+
+        function handleDragLeave(e, zoneId) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById(zoneId).classList.remove('dragover');
+        }
+
+        function triggerLCUpload() { document.getElementById('lc-file-input').click(); }
+
+        function handleLCDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('lc-upload-zone').classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) processLCFile(e.dataTransfer.files[0]);
+        }
+
+        function handleLCUpload(input) { if (input.files.length > 0) processLCFile(input.files[0]); }
+
+        function processLCFile(file) {
+            if (file.size > 20 * 1024 * 1024) { showToast('文件大小不能超過 20MB', 'error'); return; }
+            lcFile = file;
+            document.getElementById('lc-upload-zone').classList.add('has-file');
+            document.getElementById('lc-upload-content').innerHTML = `
+                <svg class="w-12 h-12 mx-auto mb-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h4 class="text-lg font-semibold text-green-600 mb-1">信用證已上載</h4>
+                <p class="text-sm text-gray-500">點擊可重新選擇文件</p>
+            `;
+            const previewArea = document.getElementById('lc-preview-area');
+            previewArea.style.display = 'block';
+            previewArea.innerHTML = `
+                <div class="doc-item">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3"><span class="text-blue-600">📋</span></div>
+                        <div>
+                            <div class="font-medium text-gray-800">${file.name}</div>
+                            <div class="text-xs text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB · 信用證</div>
+                        </div>
+                    </div>
+                    <button onclick="removeLCFile()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+                <div class="mt-4 text-center">
+                    <button onclick="goToStep(2)" class="action-btn primary">
+                        下一步：上載相關單據
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            `;
+            showToast(`信用證「${file.name}」已上載`, 'success');
+        }
+
+        function removeLCFile() {
+            lcFile = null;
+            document.getElementById('lc-upload-zone').classList.remove('has-file');
+            document.getElementById('lc-upload-content').innerHTML = `
+                <svg class="w-14 h-14 mx-auto mb-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <h4 class="text-lg font-semibold text-gray-700 mb-1">拖放信用證文件到此處</h4>
+                <p class="text-gray-500 text-sm mb-3">或點擊選擇文件</p>
+                <div class="flex flex-wrap justify-center gap-2 text-xs text-gray-400">
+                    <span class="bg-gray-100 px-2 py-1 rounded">PDF</span>
+                    <span class="bg-gray-100 px-2 py-1 rounded">JPG/PNG</span>
+                    <span class="bg-gray-100 px-2 py-1 rounded">TIFF</span>
+                    <span class="bg-gray-100 px-2 py-1 rounded">最大 20MB</span>
+                </div>
+            `;
+            document.getElementById('lc-preview-area').style.display = 'none';
+            showToast('信用證已移除', 'info');
+        }
+
+        let selectedDocType = 'invoice';
+        function selectDocType(type) {
+            selectedDocType = type;
+            document.querySelectorAll('#step2-content .standard-card').forEach(card => card.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        function triggerDocsUpload() { document.getElementById('docs-file-input').click(); }
+
+        function handleDocsDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('docs-upload-zone').classList.remove('dragover');
+            for (let file of e.dataTransfer.files) processDocFile(file);
+        }
+
+        function handleDocsUpload(input) {
+            for (let file of input.files) processDocFile(file);
+            input.value = '';
+        }
+
+        function processDocFile(file) {
+            if (file.size > 20 * 1024 * 1024) { showToast(`文件 ${file.name} 超過 20MB 限制`, 'error'); return; }
+            uploadedDocs.push({ id: Date.now() + Math.random(), file: file, type: selectedDocType, name: file.name });
+            updateDocsListUI();
+            document.getElementById('next-to-step3').disabled = false;
+            showToast(`${docTypeNames[selectedDocType]}「${file.name}」已上載`, 'success');
+        }
+
+        function updateDocsListUI() {
+            const listEl = document.getElementById('uploaded-docs-list');
+            if (uploadedDocs.length === 0) { listEl.innerHTML = ''; return; }
+            listEl.innerHTML = `
+                <h4 class="font-medium text-gray-700 mb-3">已上載單據 (${uploadedDocs.length})</h4>
+                ${uploadedDocs.map(doc => `
+                    <div class="doc-item">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3"><span>${docTypeIcons[doc.type]}</span></div>
+                            <div>
+                                <div class="font-medium text-gray-800">${doc.name}</div>
+                                <div class="text-xs text-gray-500">${(doc.file.size / 1024 / 1024).toFixed(2)} MB · ${docTypeNames[doc.type]}</div>
+                            </div>
+                        </div>
+                        <button onclick="removeDoc('${doc.id}')" class="text-gray-400 hover:text-red-500 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function removeDoc(id) {
+            uploadedDocs = uploadedDocs.filter(d => d.id != id);
+            updateDocsListUI();
+            if (uploadedDocs.length === 0) document.getElementById('next-to-step3').disabled = true;
+            showToast('單據已移除', 'info');
+        }
+
+        function toggleStandard(standard) {
+            const card = document.getElementById(`standard-${standard}`);
+            if (selectedStandards.includes(standard)) {
+                selectedStandards = selectedStandards.filter(s => s !== standard);
+                card.classList.remove('selected');
+            } else {
+                selectedStandards.push(standard);
+                card.classList.add('selected');
+            }
+        }
+
+        function startReview() {
+            if (!lcFile) { showToast('請先上載信用證', 'error'); return; }
+            if (uploadedDocs.length === 0) { showToast('請上載至少一份相關單據', 'error'); return; }
+            updateStepStatus(4);
+            document.getElementById('wizard-interface').style.display = 'none';
+            document.getElementById('chat-area').style.display = 'block';
+            document.getElementById('input-area').style.display = 'block';
+            const docList = uploadedDocs.map(d => docTypeNames[d.type]).join('、');
+            addMessage('user', `請審核信用證「${lcFile.name}」及相關單據：${docList}`);
+            performAnalysis();
+        }
+
+        function performAnalysis() {
+            showTypingIndicator();
+            setTimeout(() => {
+                hideTypingIndicator();
+                const summaryHtml = `
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 審核結果摘要</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div class="stat-card text-center"><div class="text-3xl font-bold text-blue-600 mb-1">${uploadedDocs.length + 1}</div><div class="text-sm text-gray-500">審核單據</div></div>
+                            <div class="stat-card text-center"><div class="text-3xl font-bold text-red-500 mb-1">3</div><div class="text-sm text-gray-500">不符點</div></div>
+                            <div class="stat-card text-center"><div class="text-3xl font-bold text-amber-500 mb-1">2</div><div class="text-sm text-gray-500">需關注</div></div>
+                            <div class="stat-card text-center"><div class="text-3xl font-bold text-green-500 mb-1">87%</div><div class="text-sm text-gray-500">符合率</div></div>
+                        </div>
+                        <div class="bg-red-50 border border-red-100 rounded-xl p-4 mb-4">
+                            <div class="flex items-center mb-2"><span class="badge badge-error mr-2">需處理</span><span class="font-medium text-gray-800">發現 3 項不符點需要審核人員確認</span></div>
+                            <p class="text-sm text-gray-600">建議：根據 UCP600 第 16 條，開證行有權拒絕接受存在不符點的單據。請審核以下問題並決定是否聯繫申請人。</p>
+                        </div>
+                    </div>
+                `;
+                const discrepanciesHtml = `
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-800 mb-3">⚠️ 不符點詳情</h4>
+                        <div class="discrepancy-item discrepancy-high">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-center"><span class="badge badge-error mr-2">高</span><span class="font-medium text-gray-800">D01: 單據金額不一致</span></div>
+                                <button onclick="showSource('ucp600', 'Article 18', 'Commercial Invoice')" class="text-blue-600 text-sm hover:underline">查看依據</button>
+                            </div>
+                            <p class="text-sm text-gray-700 mb-2">商業發票金額 USD 125,500.00 與信用證金額 USD 125,000.00 不符，超出容差範圍。</p>
+                            <div class="flex items-center gap-2 text-xs text-gray-500"><span class="bg-white px-2 py-1 rounded">📋 商業發票 第2頁</span><span class="bg-white px-2 py-1 rounded">📜 L/C 第3條</span></div>
+                        </div>
+                        <div class="discrepancy-item discrepancy-high">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-center"><span class="badge badge-error mr-2">高</span><span class="font-medium text-gray-800">D02: 裝運日期逾期</span></div>
+                                <button onclick="showSource('ucp600', 'Article 14', 'Late Shipment')" class="text-blue-600 text-sm hover:underline">查看依據</button>
+                            </div>
+                            <p class="text-sm text-gray-700 mb-2">提單顯示裝運日期為 2025年11月28日，信用證規定最遲裝運日期為 2025年11月25日，逾期 3 天。</p>
+                            <div class="flex items-center gap-2 text-xs text-gray-500"><span class="bg-white px-2 py-1 rounded">🚢 提單 第1頁</span><span class="bg-white px-2 py-1 rounded">📜 L/C 第44C條</span></div>
+                        </div>
+                        <div class="discrepancy-item discrepancy-medium">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-center"><span class="badge badge-warning mr-2">中</span><span class="font-medium text-gray-800">D03: 保險金額不足</span></div>
+                                <button onclick="showSource('ucp600', 'Article 28', 'Insurance Document')" class="text-blue-600 text-sm hover:underline">查看依據</button>
+                            </div>
+                            <p class="text-sm text-gray-700 mb-2">保險單據投保金額為 USD 125,000.00，信用證要求投保金額不低於發票金額 110%，即 USD 137,500.00。</p>
+                            <div class="flex items-center gap-2 text-xs text-gray-500"><span class="bg-white px-2 py-1 rounded">🛡️ 保險單據 第1頁</span><span class="bg-white px-2 py-1 rounded">📜 L/C 第46A條</span></div>
+                        </div>
+                    </div>
+                `;
+                const warningsHtml = `
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-800 mb-3">👁️ 需關注項目</h4>
+                        <div class="discrepancy-item discrepancy-low">
+                            <div class="flex items-start justify-between mb-2"><div class="flex items-center"><span class="badge badge-success mr-2">低</span><span class="font-medium text-gray-800">W01: 貨物描述略有差異</span></div></div>
+                            <p class="text-sm text-gray-700">商業發票中貨物描述使用 "Electronic Components" 而信用證使用 "Electronic Parts"，按 ISBP 745 第A19條可接受。</p>
+                        </div>
+                        <div class="discrepancy-item discrepancy-low">
+                            <div class="flex items-start justify-between mb-2"><div class="flex items-center"><span class="badge badge-success mr-2">低</span><span class="font-medium text-gray-800">W02: 交單期限接近</span></div></div>
+                            <p class="text-sm text-gray-700">距信用證到期日僅餘 5 個工作天，建議儘快完成審核流程。</p>
+                        </div>
+                    </div>
+                `;
+                const complianceHtml = `
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-800 mb-3">✅ 合規項目</h4>
+                        <div class="bg-green-50 rounded-xl p-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div class="flex items-center text-sm text-gray-700"><span class="text-green-500 mr-2">✓</span> 受益人名稱與地址正確</div>
+                                <div class="flex items-center text-sm text-gray-700"><span class="text-green-500 mr-2">✓</span> 申請人名稱與地址正確</div>
+                                <div class="flex items-center text-sm text-gray-700"><span class="text-green-500 mr-2">✓</span> 裝運港/卸貨港一致</div>
+                                <div class="flex items-center text-sm text-gray-700"><span class="text-green-500 mr-2">✓</span> 貿易術語符合規定</div>
+                                <div class="flex items-center text-sm text-gray-700"><span class="text-green-500 mr-2">✓</span> 提單已正確背書</div>
+                                <div class="flex items-center text-sm text-gray-700"><span class="text-green-500 mr-2">✓</span> 產地證明有效</div>
+                                <div class="flex items-center text-sm text-gray-700"><span class="text-green-500 mr-2">✓</span> 裝箱單數量一致</div>
+                                <div class="flex items-center text-sm text-gray-700"><span class="text-green-500 mr-2">✓</span> 匯票格式正確</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                addMessage('assistant', summaryHtml + discrepanciesHtml + warningsHtml + complianceHtml, true);
+                setTimeout(() => {
+                    const actionsHtml = `
+                        <div class="mb-4">
+                            <p class="text-gray-700 mb-4">您可以選擇以下操作：</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <button onclick="askFollowUp('請詳細解釋裝運日期逾期的影響')" class="action-btn justify-start"><span>💬</span> 詳細解釋不符點</button>
+                                <button onclick="askFollowUp('請生成不符點通知書')" class="action-btn justify-start"><span>📄</span> 生成不符點通知書</button>
+                                <button onclick="askFollowUp('請提供可能的解決方案')" class="action-btn justify-start"><span>💡</span> 建議解決方案</button>
+                                <button onclick="askFollowUp('匯出審核報告')" class="action-btn justify-start"><span>📊</span> 匯出審核報告</button>
+                            </div>
+                        </div>
+                    `;
+                    addMessage('assistant', actionsHtml, false);
+                }, 500);
+            }, 3000);
+        }
+
+        function addMessage(sender, content, hasActions = false) {
+            const chatArea = document.getElementById('chat-area');
+            const messageDiv = document.createElement('div');
+            const messageId = 'msg_' + Date.now();
+            messageDiv.className = `message-bubble ${sender}-message p-4 mb-4`;
+            messageDiv.id = messageId;
+            if (sender === 'assistant') {
+                messageDiv.innerHTML = `<div class="prose prose-sm max-w-none">${content}</div>`;
+                if (hasActions) {
+                    messageDiv.innerHTML += `
+                        <div class="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
+                            <button class="action-btn text-xs" onclick="likeMessage('${messageId}')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 8.5m7 1.5v10"></path></svg>
+                                有用
+                            </button>
+                            <button class="action-btn text-xs" onclick="dislikeMessage('${messageId}')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018c.163 0 .326.02.485.06L17 4m-7 10v2a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 15.5m-7-1.5V4"></path></svg>
+                                需改進
+                            </button>
+                        </div>
+                    `;
+                }
+            } else {
+                messageDiv.textContent = content;
+            }
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            isTyping = true;
+            const chatArea = document.getElementById('chat-area');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'typing-indicator mb-4';
+            typingDiv.innerHTML = `<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div><span class="ml-2 text-sm text-gray-500">AI 正在審核單據...</span>`;
+            chatArea.appendChild(typingDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            isTyping = false;
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        function askFollowUp(question) {
+            addMessage('user', question);
+            showTypingIndicator();
+            setTimeout(() => {
+                hideTypingIndicator();
+                let response = '';
+                if (question.includes('裝運日期')) {
+                    response = `<h4 class="font-semibold text-gray-800 mb-3">📋 裝運日期逾期詳細分析</h4>
+                        <div class="bg-blue-50 rounded-xl p-4 mb-4">
+                            <p class="text-sm text-gray-700 mb-3"><strong>UCP600 第 14 條 (c) 款規定：</strong></p>
+                            <p class="text-sm text-gray-600 italic">"A presentation including one or more original transport documents subject to articles 19, 20, 21, 22, 23, 24 or 25 must be made by or on behalf of the beneficiary not later than 21 calendar days after the date of shipment..."</p>
+                        </div>
+                        <p class="text-gray-700 mb-3">本案中信用證明確規定最遲裝運日期為 <strong>2025年11月25日</strong>，但提單顯示實際裝運日期為 <strong>2025年11月28日</strong>，逾期 3 天。</p>
+                        <h5 class="font-medium text-gray-800 mb-2">可能的影響：</h5>
+                        <ul class="list-disc list-inside text-sm text-gray-700 mb-4 space-y-1">
+                            <li>開證行有權拒絕接受單據</li>
+                            <li>受益人可能面臨付款延遲或拒付風險</li>
+                            <li>申請人需決定是否接受不符點</li>
+                        </ul>
+                        <h5 class="font-medium text-gray-800 mb-2">建議處理方式：</h5>
+                        <ol class="list-decimal list-inside text-sm text-gray-700 space-y-1">
+                            <li>立即聯繫申請人確認是否接受該不符點</li>
+                            <li>如申請人同意，獲取書面授權</li>
+                            <li>在付款前確保所有相關方同意</li>
+                        </ol>`;
+                } else if (question.includes('不符點通知書')) {
+                    response = `<h4 class="font-semibold text-gray-800 mb-3">📄 不符點通知書已生成</h4>
+                        <div class="bg-gray-50 rounded-xl p-4 mb-4 font-mono text-sm">
+                            <p class="mb-2"><strong>致：</strong>[受益人名稱]</p>
+                            <p class="mb-2"><strong>信用證號碼：</strong>LC2025112500001</p>
+                            <p class="mb-2"><strong>日期：</strong>${new Date().toLocaleDateString('zh-HK')}</p>
+                            <hr class="my-3 border-gray-200">
+                            <p class="mb-3">經審核貴方於 ${new Date().toLocaleDateString('zh-HK')} 提交之單據，本行發現以下不符點：</p>
+                            <ol class="list-decimal list-inside space-y-2 mb-3">
+                                <li>商業發票金額 USD 125,500.00 與信用證金額 USD 125,000.00 不符</li>
+                                <li>提單裝運日期 2025年11月28日 遲於信用證規定之最遲裝運日期 2025年11月25日</li>
+                                <li>保險金額 USD 125,000.00 未達信用證要求之 CIF 金額 110%</li>
+                            </ol>
+                            <p>請於 5 個銀行工作天內回覆處理意見。</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="action-btn primary text-sm" onclick="showToast('PDF 下載中...', 'info')"><span>📥</span> 下載 PDF</button>
+                            <button class="action-btn text-sm" onclick="showToast('郵件功能準備中', 'info')"><span>✉️</span> 發送郵件</button>
+                        </div>`;
+                } else if (question.includes('解決方案')) {
+                    response = `<h4 class="font-semibold text-gray-800 mb-3">💡 建議解決方案</h4>
+                        <div class="space-y-4">
+                            <div class="bg-blue-50 rounded-xl p-4">
+                                <h5 class="font-medium text-gray-800 mb-2">方案一：申請人接受不符點</h5>
+                                <p class="text-sm text-gray-700">聯繫申請人，說明不符點詳情，如申請人書面同意接受，可繼續處理付款。</p>
+                                <p class="text-xs text-gray-500 mt-2">預計處理時間：1-2 個工作天</p>
+                            </div>
+                            <div class="bg-amber-50 rounded-xl p-4">
+                                <h5 class="font-medium text-gray-800 mb-2">方案二：修改信用證</h5>
+                                <p class="text-sm text-gray-700">如申請人同意，可修改信用證以符合實際情況（延長裝運日期、調整金額）。</p>
+                                <p class="text-xs text-gray-500 mt-2">預計處理時間：3-5 個工作天</p>
+                            </div>
+                            <div class="bg-green-50 rounded-xl p-4">
+                                <h5 class="font-medium text-gray-800 mb-2">方案三：退單重做</h5>
+                                <p class="text-sm text-gray-700">如情況允許，受益人可更正單據後重新提交（如調整發票金額、補充保險）。</p>
+                                <p class="text-xs text-gray-500 mt-2">注意：裝運日期已過，此項無法更正</p>
+                            </div>
+                        </div>`;
+                } else if (question.includes('匯出') || question.includes('報告')) {
+                    response = `<h4 class="font-semibold text-gray-800 mb-3">📊 審核報告已準備就緒</h4>
+                        <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3"><span class="text-red-600">📑</span></div>
+                                    <div>
+                                        <div class="font-medium text-gray-800">LC_審核報告_${new Date().toISOString().slice(0,10)}.pdf</div>
+                                        <div class="text-xs text-gray-500">包含完整審核結果、不符點分析及建議</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-3">
+                                <p>報告內容包括：</p>
+                                <ul class="list-disc list-inside mt-2 space-y-1">
+                                    <li>信用證及單據基本信息</li>
+                                    <li>審核結果摘要</li>
+                                    <li>不符點詳細分析</li>
+                                    <li>合規檢查清單</li>
+                                    <li>處理建議</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="action-btn primary text-sm" onclick="showToast('報告下載中...', 'info')"><span>📥</span> 下載 PDF 報告</button>
+                            <button class="action-btn text-sm" onclick="showToast('報告下載中...', 'info')"><span>📊</span> 下載 Excel 數據</button>
+                        </div>`;
+                } else {
+                    response = `<p class="text-gray-700">感謝您的查詢。根據已審核的單據和信用證條款，我已記錄您的問題。</p>
+                        <p class="text-gray-700 mt-2">如需進一步協助，您可以：</p>
+                        <ul class="list-disc list-inside text-sm text-gray-600 mt-2">
+                            <li>詢問特定不符點的詳細信息</li>
+                            <li>請求生成相關文件</li>
+                            <li>查詢適用的國際規則條款</li>
+                        </ul>`;
+                }
+                addMessage('assistant', response, true);
+            }, 1500);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            if (!message || isTyping) return;
+            addMessage('user', message);
+            input.value = '';
+            askFollowUp(message);
+        }
+
+        function showSource(standard, article, topic) {
+            const standardNames = { 'ucp600': 'UCP 600 - 跟單信用證統一慣例', 'isbp': 'ISBP 745 - 國際標準銀行實務' };
+            const contents = {
+                'Article 18': 'The description of the goods, services or performance in a commercial invoice must correspond with that appearing in the credit.',
+                'Article 14': 'A nominated bank acting on its nomination, a confirming bank, if any, and the issuing bank must examine a presentation to determine, on the basis of the documents alone, whether or not the documents appear on their face to constitute a complying presentation.',
+                'Article 28': 'An insurance document must appear to be issued and signed by an insurance company, an underwriter or their agents or their proxies. The amount of insurance coverage must be at least 110% of the CIF or CIP value of the goods.'
+            };
+            document.getElementById('source-standard').textContent = standardNames[standard] || standard;
+            document.getElementById('source-article').textContent = article;
+            document.getElementById('source-section').textContent = topic;
+            document.getElementById('source-content').textContent = contents[article] || '條款內容載入中...';
+            document.getElementById('source-modal').classList.add('show');
+        }
+
+        function closeSourceModal() { document.getElementById('source-modal').classList.remove('show'); }
+
+        function likeMessage(id) { showToast('感謝您的反饋！這將幫助我們改進審核準確度', 'success'); }
+        function dislikeMessage(id) { showToast('已記錄您的反饋，我們會持續優化審核邏輯', 'info'); }
+
+        function resetWizard() {
+            lcFile = null;
+            uploadedDocs = [];
+            selectedStandards = ['ucp600', 'isbp'];
+            currentStep = 1;
+            document.getElementById('wizard-interface').style.display = 'block';
+            document.getElementById('chat-area').style.display = 'none';
+            document.getElementById('chat-area').innerHTML = '';
+            document.getElementById('input-area').style.display = 'none';
+            updateStepStatus(1);
+            goToStep(1);
+            removeLCFile();
+            document.getElementById('uploaded-docs-list').innerHTML = '';
+            document.getElementById('next-to-step3').disabled = true;
+            document.querySelectorAll('#step3-content .standard-card').forEach(card => card.classList.remove('selected'));
+            document.getElementById('standard-ucp600').classList.add('selected');
+            document.getElementById('standard-isbp').classList.add('selected');
+            showToast('已重置，可開始新的審核', 'info');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStepStatus(1);
+            document.getElementById('source-modal').addEventListener('click', function(e) { if (e.target === this) closeSourceModal(); });
+        });
+    </script>
+</body>
+</html>

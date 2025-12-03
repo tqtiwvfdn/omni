@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>业务规程管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        }
+        .status-draft { background: #FEF3C7; color: #92400E; }
+        .status-review { background: #DBEAFE; color: #1E40AF; }
+        .status-approved { background: #D1FAE5; color: #065F46; }
+        .status-active { background: #D1FAE5; color: #065F46; }
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
+        .difficulty-low { color: #10B981; }
+        .difficulty-medium { color: #F59E0B; }
+        .difficulty-high { color: #EF4444; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- 页面头部 -->
+        <div class="bg-white border-b border-gray-200">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">业务规程管理</h1>
+                        <p class="mt-1 text-sm text-gray-500">维护标准化操作规程文档,为培训模式提供知识支撑</p>
+                    </div>
+                    <button onclick="openAddModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        新建规程
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 筛选区域 -->
+        <div class="px-6 py-4 bg-white border-b border-gray-200">
+            <div class="flex items-center gap-4 flex-wrap">
+                <div class="flex-1 min-w-64">
+                    <input type="text" placeholder="搜索规程名称、业务类型..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option>全部业务类型</option>
+                    <option>零售活期取现</option>
+                    <option>对公转账</option>
+                    <option>账户查询</option>
+                    <option>理财销售</option>
+                </select>
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option>全部状态</option>
+                    <option>草稿</option>
+                    <option>审批中</option>
+                    <option>已发布</option>
+                    <option>已归档</option>
+                </select>
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option>全部适用范围</option>
+                    <option>全行</option>
+                    <option>指定分行</option>
+                    <option>指定网点</option>
+                </select>
+                <button class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">重置</button>
+            </div>
+        </div>
+
+        <!-- 数据统计卡片 -->
+        <div class="px-6 py-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-lg p-5 border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">规程总数</p>
+                            <p class="text-2xl font-bold text-gray-900 mt-1">128</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-5 border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">已发布</p>
+                            <p class="text-2xl font-bold text-green-600 mt-1">96</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-5 border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">审批中</p>
+                            <p class="text-2xl font-bold text-blue-600 mt-1">18</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-5 border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">本月更新</p>
+                            <p class="text-2xl font-bold text-orange-600 mt-1">14</p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 规程列表 -->
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">规程名称</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">业务类型</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">关联页签</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">版本</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">引用次数</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">更新时间</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="processList">
+                            <!-- 动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分页 -->
+                <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        显示 <span class="font-medium">1</span> 到 <span class="font-medium">10</span> 条，共 <span class="font-medium">128</span> 条
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50" disabled>上一页</button>
+                        <button class="px-3 py-1 bg-blue-600 text-white rounded">1</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">2</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">3</button>
+                        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建/编辑规程弹窗 -->
+    <div id="addModal" class="hidden fixed inset-0 z-50 modal-backdrop">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">新建业务规程</h3>
+                    <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="p-6">
+                    <!-- 基本信息 -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-4">基本信息</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">规程名称 <span class="text-red-500">*</span></label>
+                                <input type="text" placeholder="请输入规程名称" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">业务类型 <span class="text-red-500">*</span></label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option>请选择业务类型</option>
+                                    <option>零售活期取现</option>
+                                    <option>对公转账</option>
+                                    <option>账户查询</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">关联页签 <span class="text-red-500">*</span></label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option>请选择关联页签</option>
+                                    <option>零售业务-活期取现</option>
+                                    <option>对公业务-转账汇款</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">适用范围</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option>全行</option>
+                                    <option>指定分行</option>
+                                    <option>指定网点</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作步骤 -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-sm font-semibold text-gray-900">操作步骤 <span class="text-red-500">*</span></h4>
+                            <button onclick="addStep()" class="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                添加步骤
+                            </button>
+                        </div>
+                        <div id="stepsList" class="space-y-4">
+                            <!-- 步骤项 -->
+                            <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                <div class="flex items-start gap-4">
+                                    <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold">1</div>
+                                    <div class="flex-1">
+                                        <div class="grid grid-cols-2 gap-3 mb-3">
+                                            <input type="text" placeholder="步骤名称" value="验证客户身份" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                            <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                                <option>对应页面元素</option>
+                                                <option>身份证读卡器</option>
+                                                <option>指纹识别</option>
+                                            </select>
+                                        </div>
+                                        <textarea placeholder="操作说明" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none" rows="2">请客户提供有效身份证件,使用读卡器读取客户身份信息,核对姓名、证件号码等关键信息</textarea>
+                                        <div class="mt-3 flex items-center gap-2">
+                                            <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded">关键点</span>
+                                            <span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded">易错点</span>
+                                            <input type="text" placeholder="添加标注说明..." class="flex-1 px-2 py-1 text-xs border border-gray-300 rounded">
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-red-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 注意事项 -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">注意事项与风险提示</label>
+                        <textarea placeholder="请输入注意事项、风险提示、监管要求等内容..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none" rows="4"></textarea>
+                    </div>
+
+                    <!-- 生效配置 -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-4">生效配置</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">生效日期</label>
+                                <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">失效日期</label>
+                                <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
+                    <button onclick="closeAddModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">取消</button>
+                    <button class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">保存草稿</button>
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">提交审批</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看详情弹窗 -->
+    <div id="detailModal" class="hidden fixed inset-0 z-50 modal-backdrop">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">零售活期取现业务规程</h3>
+                            <p class="text-sm text-gray-500 mt-1">版本 V2.1 | 更新于 2024-11-15</p>
+                        </div>
+                        <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-500">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <!-- 基本信息 -->
+                    <div class="mb-6 bg-blue-50 rounded-lg p-4">
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">业务类型</p>
+                                <p class="text-sm font-medium text-gray-900">零售活期取现</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">关联页签</p>
+                                <p class="text-sm font-medium text-gray-900">零售业务-活期取现</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">适用范围</p>
+                                <p class="text-sm font-medium text-gray-900">全行</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">生效日期</p>
+                                <p class="text-sm font-medium text-gray-900">2024-01-01</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">引用次数</p>
+                                <p class="text-sm font-medium text-gray-900">2,345次</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">状态</p>
+                                <span class="text-xs px-2 py-1 rounded status-active inline-block">已发布</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作步骤 -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-4">操作步骤</h4>
+                        <div class="space-y-4">
+                            <div class="flex gap-4">
+                                <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">1</div>
+                                <div class="flex-1">
+                                    <h5 class="font-medium text-gray-900 mb-2">验证客户身份</h5>
+                                    <p class="text-sm text-gray-600 mb-2">请客户提供有效身份证件,使用读卡器读取客户身份信息,核对姓名、证件号码等关键信息</p>
+                                    <div class="flex gap-2">
+                                        <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded">关键点: 必须核对证件有效期</span>
+                                        <span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded">易错: 忘记核对照片</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">2</div>
+                                <div class="flex-1">
+                                    <h5 class="font-medium text-gray-900 mb-2">查询账户信息</h5>
+                                    <p class="text-sm text-gray-600 mb-2">在系统中输入客户账号或卡号,查询账户余额、账户状态等信息,确认账户可用</p>
+                                    <div class="flex gap-2">
+                                        <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">提示: 检查账户是否冻结</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">3</div>
+                                <div class="flex-1">
+                                    <h5 class="font-medium text-gray-900 mb-2">办理取现业务</h5>
+                                    <p class="text-sm text-gray-600 mb-2">输入取现金额,核对客户密码,打印取现凭证,交付现金并请客户当面清点</p>
+                                    <div class="flex gap-2">
+                                        <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded">风险: 大额取现需上报</span>
+                                        <span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded">易错: 忘记打印凭证</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 注意事项 -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3">注意事项与风险提示</h4>
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <ul class="text-sm text-gray-700 space-y-2 list-disc list-inside">
+                                <li>单笔取现超过5万元需上报反洗钱系统</li>
+                                <li>必须验证客户本人办理,代理人需提供授权委托书</li>
+                                <li>取现金额较大时需提前预约,确保网点现金充足</li>
+                                <li>严格遵守反洗钱法规,发现可疑交易及时上报</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 版本历史 -->
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3">版本历史</h4>
+                        <div class="border border-gray-200 rounded-lg divide-y divide-gray-200">
+                            <div class="p-3 flex items-center justify-between hover:bg-gray-50">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-sm font-medium text-gray-900">V2.1</span>
+                                        <span class="text-xs text-gray-500">2024-11-15 14:30</span>
+                                        <span class="text-xs text-gray-500">李明</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">更新了反洗钱报送金额标准</p>
+                                </div>
+                                <button class="text-sm text-blue-600 hover:text-blue-700">查看</button>
+                            </div>
+                            <div class="p-3 flex items-center justify-between hover:bg-gray-50">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-sm font-medium text-gray-900">V2.0</span>
+                                        <span class="text-xs text-gray-500">2024-08-20 10:15</span>
+                                        <span class="text-xs text-gray-500">王芳</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">调整了身份验证流程</p>
+                                </div>
+                                <button class="text-sm text-blue-600 hover:text-blue-700">查看</button>
+                            </div>
+                            <div class="p-3 flex items-center justify-between hover:bg-gray-50">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-sm font-medium text-gray-900">V1.5</span>
+                                        <span class="text-xs text-gray-500">2024-03-10 16:45</span>
+                                        <span class="text-xs text-gray-500">张伟</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">初始版本发布</p>
+                                </div>
+                                <button class="text-sm text-blue-600 hover:text-blue-700">查看</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <div class="flex gap-2">
+                        <button class="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50">导出PDF</button>
+                        <button class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">版本对比</button>
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">编辑规程</button>
+                        <button onclick="closeDetailModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟数据
+        const processes = [
+            {
+                id: 1,
+                name: '零售活期取现业务规程',
+                type: '零售活期取现',
+                tab: '零售业务-活期取现',
+                status: 'active',
+                version: 'V2.1',
+                references: 2345,
+                updateTime: '2024-11-15 14:30',
+                updater: '李明'
+            },
+            {
+                id: 2,
+                name: '对公转账业务规程',
+                type: '对公转账',
+                tab: '对公业务-转账汇款',
+                status: 'active',
+                version: 'V3.0',
+                references: 1876,
+                updateTime: '2024-11-10 09:15',
+                updater: '王芳'
+            },
+            {
+                id: 3,
+                name: '账户查询业务规程',
+                type: '账户查询',
+                tab: '账户管理-查询',
+                status: 'review',
+                version: 'V1.2',
+                references: 3421,
+                updateTime: '2024-11-08 16:20',
+                updater: '张伟'
+            },
+            {
+                id: 4,
+                name: '理财产品销售规程',
+                type: '理财销售',
+                tab: '理财业务-产品销售',
+                status: 'active',
+                version: 'V2.5',
+                references: 1523,
+                updateTime: '2024-11-05 11:30',
+                updater: '刘洋'
+            },
+            {
+                id: 5,
+                name: '信用卡开卡业务规程',
+                type: '信用卡业务',
+                tab: '信用卡-开卡',
+                status: 'draft',
+                version: 'V1.0',
+                references: 0,
+                updateTime: '2024-11-18 10:00',
+                updater: '陈静'
+            },
+            {
+                id: 6,
+                name: '贷款审批业务规程',
+                type: '贷款业务',
+                tab: '贷款管理-审批',
+                status: 'active',
+                version: 'V4.1',
+                references: 2987,
+                updateTime: '2024-10-28 13:45',
+                updater: '赵敏'
+            },
+            {
+                id: 7,
+                name: '外汇兑换业务规程',
+                type: '外汇业务',
+                tab: '外汇业务-兑换',
+                status: 'review',
+                version: 'V2.0',
+                references: 876,
+                updateTime: '2024-11-12 15:20',
+                updater: '孙强'
+            },
+            {
+                id: 8,
+                name: '大额现金存取规程',
+                type: '现金业务',
+                tab: '现金管理-大额存取',
+                status: 'active',
+                version: 'V1.8',
+                references: 1654,
+                updateTime: '2024-11-01 09:30',
+                updater: '周涛'
+            }
+        ];
+
+        const statusMap = {
+            draft: { text: '草稿', class: 'status-draft' },
+            review: { text: '审批中', class: 'status-review' },
+            active: { text: '已发布', class: 'status-active' },
+            approved: { text: '已通过', class: 'status-approved' }
+        };
+
+        // 渲染列表
+        function renderProcessList() {
+            const tbody = document.getElementById('processList');
+            tbody.innerHTML = processes.map(p => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <div class="text-sm font-medium text-gray-900">${p.name}</div>
+                                <div class="text-xs text-gray-500">ID: ${p.id}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm text-gray-900">${p.type}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm text-gray-600">${p.tab}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs px-2 py-1 rounded ${statusMap[p.status].class}">${statusMap[p.status].text}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-medium text-gray-900">${p.version}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm text-gray-900">${p.references.toLocaleString()}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">${p.updateTime}</div>
+                        <div class="text-xs text-gray-500">${p.updater}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <button onclick="openDetailModal()" class="text-blue-600 hover:text-blue-700" title="查看">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                            <button class="text-gray-600 hover:text-gray-700" title="编辑">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button class="text-gray-600 hover:text-gray-700" title="版本">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </button>
+                            <button class="text-red-600 hover:text-red-700" title="删除">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 弹窗控制
+        function openAddModal() {
+            document.getElementById('addModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function openDetailModal() {
+            document.getElementById('detailModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // 添加步骤
+        let stepCount = 1;
+        function addStep() {
+            stepCount++;
+            const stepsList = document.getElementById('stepsList');
+            const newStep = document.createElement('div');
+            newStep.className = 'border border-gray-200 rounded-lg p-4 bg-gray-50';
+            newStep.innerHTML = `
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold">${stepCount}</div>
+                    <div class="flex-1">
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <input type="text" placeholder="步骤名称" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option>对应页面元素</option>
+                                <option>按钮</option>
+                                <option>输入框</option>
+                                <option>下拉框</option>
+                            </select>
+                        </div>
+                        <textarea placeholder="操作说明" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none" rows="2"></textarea>
+                        <div class="mt-3 flex items-center gap-2">
+                            <button class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200">+ 关键点</button>
+                            <button class="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200">+ 易错点</button>
+                            <button class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200">+ 提示</button>
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-red-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            stepsList.appendChild(newStep);
+        }
+
+        // 初始化
+        renderProcessList();
+    </script>
+</body>
+</html>

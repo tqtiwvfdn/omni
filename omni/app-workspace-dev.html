@@ -380,6 +380,9 @@
                             <small class="text-white/60 text-sm" id="app-id">
                                 App ID: dev-workspace-001
                             </small>
+                            <button id="compile-app-btn" class="omni-btn px-4 py-1 bg-green-600/80 text-white text-sm hover:bg-green-600 ml-4" title="编译应用">
+                                编译应用
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1336,6 +1339,123 @@
             // Use tab system to open or activate tab
             tabSystem.openTab(url, title);
         }
+        
+        // 编译应用相关功能
+        async function compileApp(appId) {
+            try {
+                // 显示加载状态
+                showToast('编译中...', 'info');
+                
+                // 调用编译API
+                const response = await fetch(`/api/compile/${appId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tenantId: 'lAseKW' })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('编译成功！', 'success');
+                    
+                    // 创建下载链接并触发下载
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = result.downloadUrl;
+                    downloadLink.download = `${appId}-helper.js`;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    
+                    console.log('编译文件已下载:', result.downloadUrl);
+                } else {
+                    showToast(`编译失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('编译过程中发生错误:', error);
+                showToast('编译失败，请稍后重试', 'error');
+            }
+        }
+        
+        // 获取已编译应用列表
+        async function getCompiledApps() {
+            try {
+                const response = await fetch('/api/compiled');
+                const result = await response.json();
+                
+                if (result.success) {
+                    return result.data;
+                } else {
+                    console.error('获取编译列表失败:', result.error);
+                    return [];
+                }
+            } catch (error) {
+                console.error('获取编译列表过程中发生错误:', error);
+                return [];
+            }
+        }
+        
+        // 下载已编译的应用文件
+        function downloadCompiledApp(appId) {
+            const downloadUrl = `/compiled/${appId}-helper.js`;
+            const downloadLink = document.createElement('a');
+            downloadLink.href = downloadUrl;
+            downloadLink.download = `${appId}-helper.js`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+        
+        // 显示提示消息
+        function showToast(message, type = 'info') {
+            // 检查是否已存在toast元素，如果存在则移除
+            const existingToast = document.getElementById('toast-message');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            // 创建新的toast元素
+            const toast = document.createElement('div');
+            toast.id = 'toast-message';
+            toast.className = `fixed bottom-8 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg z-50 transition-all duration-300 opacity-0 translate-y-4`;
+            
+            // 设置不同类型的样式
+            switch(type) {
+                case 'success':
+                    toast.classList.add('bg-green-600', 'text-white');
+                    break;
+                case 'error':
+                    toast.classList.add('bg-red-600', 'text-white');
+                    break;
+                case 'info':
+                default:
+                    toast.classList.add('bg-blue-600', 'text-white');
+                    break;
+            }
+            
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // 显示toast
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-4');
+            }, 10);
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+        
+        // 在window对象上暴露编译相关函数，方便其他页面调用
+        window.compileApp = compileApp;
+        window.getCompiledApps = getCompiledApps;
+        window.downloadCompiledApp = downloadCompiledApp;
+        window.showToast = showToast;
 
         // Environment access functions
         function toggleEnvDropdown() {
@@ -1415,6 +1535,12 @@
             
             // 然后加载默认页面
             tabSystem.openTab('/development/data-process/knowledge.html', '知识库管理');
+            
+            // 设置编译按钮事件监听器
+            document.getElementById('compile-app-btn')?.addEventListener('click', () => {
+                const { appId } = getAppInfoFromURL();
+                compileApp(appId);
+            });
         });
     </script>
 </body>

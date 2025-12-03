@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI魅力助手</title>
+    <!-- Tailwind CSS -->
+    <script src="/console/style/tailwindcss.3.0.23.js"></script>
+    <script src="/oa-helper/script/timestamp.js?v=3"></script>
+    <script src="https://zhiyan.awebide.com/scripts/marked.min.js"></script>
+    <script src="https://zhiyan.awebide.com/scripts/highlight.min.js"></script>
+
+    <!-- 配置 marked -->
+    <script>
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true,
+        });
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .glass {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.18);
+            }
+            .glass-dark {
+                background: rgba(15, 23, 42, 0.7);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+            .gradient-blue {
+                background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            }
+            .gradient-green {
+                background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            }
+            .gradient-orange {
+                background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            }
+            .gradient-purple {
+                background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+            }
+            .gradient-pink {
+                background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .pulse {
+                animation: pulse 2s infinite;
+            }
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+            .text-high-contrast {
+                color: rgba(255, 255, 255, 0.9);
+            }
+            .text-medium-contrast {
+                color: rgba(255, 255, 255, 0.6);
+            }
+            .hover-scale {
+                transition: transform 0.2s ease;
+            }
+            .hover-scale:hover {
+                transform: scale(1.02);
+            }
+            .message-content {
+                word-wrap: break-word;
+                white-space: pre-wrap;
+            }
+            .typing-indicator {
+                display: inline-flex;
+                align-items: center;
+            }
+            .typing-indicator span {
+                height: 8px;
+                width: 8px;
+                margin: 0 1px;
+                background-color: rgba(255, 255, 255, 0.8);
+                border-radius: 50%;
+                display: block;
+                animation: typing 1.4s infinite ease-in-out both;
+            }
+            .typing-indicator span:nth-child(1) {
+                animation-delay: -0.32s;
+            }
+            .typing-indicator span:nth-child(2) {
+                animation-delay: -0.16s;
+            }
+            @keyframes typing {
+                0%, 80%, 100% { transform: scale(0); }
+                40% { transform: scale(1); }
+            }
+        }
+    </style>
+
+    <!-- 自定义样式 -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            overflow-x: hidden;
+        }
+        .chat-container {
+            height: calc(100vh - 140px);
+        }
+        @media (max-width: 640px) {
+            .chat-container {
+                height: calc(100vh - 120px);
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .input-field:focus-within {
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+        }
+        .quick-card {
+            transition: all 0.3s ease;
+        }
+        .quick-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- 加载指示器 -->
+    <div id="loading-indicator" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="glass rounded-2xl p-8 max-w-md text-center">
+            <div class="typing-indicator mb-4 mx-auto w-16">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">正在思考...</h3>
+            <p class="text-medium-contrast">魅力模式已启动，正在为您构思最佳回复</p>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+        <!-- 头部导航 -->
+        <header class="mb-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full gradient-pink flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292V15M15 21h-6a3 3 0 01-3-3v-1a2 2 0 012-2h6a2 2 0 012 2v1a3 3 0 01-3 3z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-high-contrast">AI魅力助手</h1>
+                        <p class="text-xs text-medium-contrast">高情商聊天，轻松拉近距离</p>
+                    </div>
+                </div>
+                <button id="clear-chat" class="glass hover:bg-white/20 transition-all duration-200 rounded-full p-2">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- 聊天内容区域 -->
+        <div id="chat-messages" class="chat-container overflow-y-auto rounded-2xl glass-dark p-4 mb-6 space-y-4">
+            <!-- 初始欢迎消息 -->
+            <div class="flex justify-start">
+                <div class="max-w-full glass-dark rounded-2xl p-4 shadow-xl relative group">
+                    <div class="message-content">
+                        <p class="text-high-contrast font-semibold mb-2">👋 你好！我是你的AI魅力助手</p>
+                        <p class="text-medium-contrast text-sm mb-4">我善于聊天、活跃气氛，让每一次对话都充满乐趣。</p>
+                        
+                        <!-- 快速开场 -->
+                        <div class="mb-4">
+                            <h3 class="text-high-contrast font-medium mb-3 text-sm">💬 开始聊天</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="quick-card glass rounded-xl p-3 text-center hover-scale" onclick="charmAssistant.handleQuickAction('你好呀，很高兴认识你')">
+                                    <div class="text-high-contrast font-medium text-xs">友好问候</div>
+                                    <div class="text-medium-contrast text-xs mt-1">轻松开场</div>
+                                </div>
+                                
+                                <div class="quick-card glass rounded-xl p-3 text-center hover-scale" onclick="charmAssistant.handleQuickAction('今天过得怎么样？')">
+                                    <div class="text-high-contrast font-medium text-xs">关心近况</div>
+                                    <div class="text-medium-contrast text-xs mt-1">拉近距离</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 提示 -->
+                        <div class="border-t border-white/20 pt-3">
+                            <h4 class="text-high-contrast font-medium mb-2 text-sm">💡 聊天小贴士</h4>
+                            <div class="space-y-1 text-xs text-medium-contrast">
+                                <p>• 分享你的兴趣爱好，我们可以聊到一起</p>
+                                <p>• 遇到不开心的事，我随时当你的倾听者</p>
+                                <p>• 想要有趣的对话，告诉我你喜欢的话题</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="relative">
+            <div class="input-field glass rounded-full px-4 py-2 flex items-center">
+                <textarea id="user-input" class="bg-transparent border-none outline-none flex-1 text-white placeholder-gray-400 text-sm resize-none p-2" rows="1" placeholder="输入消息..."></textarea>
+                <button id="send-button" class="ml-2 gradient-pink rounded-full p-2 hover:opacity-90 transition-opacity">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CharmAssistant {
+            constructor() {
+                this.conversationHistory = [];
+                this.token = '';
+                this.isGenerating = false;
+                this.isStreaming = false;
+                this.ollamaBase = 'https://aom.awebide.com'; // Ollama API地址
+                this.initEventListeners();
+                this.autoLogin();
+            }
+
+            async autoLogin() {
+                try {
+                    this.token = localStorage.getItem('oaToken') || '';
+                    this.updateConnectionStatus(true);
+                } catch (error) {
+                    console.error('Auto login error:', error);
+                    this.updateConnectionStatus(false);
+                }
+            }
+
+            updateConnectionStatus(connected) {
+                // 确保状态元素存在
+                const statusEl = document.createElement('div');
+                statusEl.id = 'connection-status';
+                statusEl.className = 'flex items-center space-x-2 absolute top-4 right-4';
+                
+                const dot = document.createElement('div');
+                const text = document.createElement('span');
+                text.className = 'text-xs text-medium-contrast';
+                
+                statusEl.appendChild(dot);
+                statusEl.appendChild(text);
+                
+                // 检查是否已存在，不存在则添加到头部
+                const existingStatus = document.getElementById('connection-status');
+                if (existingStatus) {
+                    existingStatus.replaceWith(statusEl);
+                } else {
+                    document.querySelector('header').appendChild(statusEl);
+                }
+
+                if (connected) {
+                    dot.className = 'w-2 h-2 bg-green-400 rounded-full shadow-sm';
+                    text.textContent = '已连接';
+                } else {
+                    dot.className = 'w-2 h-2 bg-red-400 rounded-full shadow-sm';
+                    text.textContent = '连接失败';
+                }
+            }
+
+            initEventListeners() {
+                const sendButton = document.getElementById('send-button');
+                const userInput = document.getElementById('user-input');
+                const clearChatButton = document.getElementById('clear-chat');
+
+                // 自动调整输入框高度
+                userInput.addEventListener('input', () => {
+                    userInput.style.height = 'auto';
+                    userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
+                });
+
+                // 发送消息事件
+                sendButton.addEventListener('click', () => this.sendMessage());
+                userInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                // 清空聊天
+                clearChatButton.addEventListener('click', () => this.clearChat());
+            }
+
+            handleQuickAction(text) {
+                document.getElementById('user-input').value = text;
+                this.sendMessage();
+            }
+
+            async copyToClipboard(text) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                } catch (err) {
+                    console.error('复制失败:', err);
+                    return false;
+                }
+            }
+
+            async copyMessage(button) {
+                const messageContent = button.parentElement.querySelector('.message-content');
+
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = messageContent.innerHTML;
+                const plainText = tempDiv.textContent || tempDiv.innerText || '';
+
+                const success = await this.copyToClipboard(plainText);
+
+                if (success) {
+                    const originalHTML = button.innerHTML;
+                    button.innerHTML = `
+                        <svg class="w-3 h-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    `;
+                    button.title = '复制成功！';
+
+                    setTimeout(() => {
+                        button.innerHTML = originalHTML;
+                        button.title = '复制消息';
+                    }, 2000);
+                } else {
+                    const originalHTML = button.innerHTML;
+                    button.innerHTML = `
+                        <svg class="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    `;
+                    button.title = '复制失败';
+
+                    setTimeout(() => {
+                        button.innerHTML = originalHTML;
+                        button.title = '复制消息';
+                    }, 2000);
+                }
+            }
+
+            scrollToBottom() {
+                const container = document.getElementById('chat-messages');
+                container.scrollTop = container.scrollHeight;
+            }
+
+            showLoading(show) {
+                const indicator = document.getElementById('loading-indicator');
+                if (show) {
+                    indicator.classList.remove('hidden');
+                } else {
+                    indicator.classList.add('hidden');
+                }
+            }
+
+            addMessage(sender, content, type) {
+                const messagesContainer = document.getElementById('chat-messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `flex ${type === 'user' ? 'justify-end' : 'justify-start'} fade-in`;
+
+                if (type === 'user') {
+                    messageDiv.innerHTML = `
+                        <div class="max-w-sm lg:max-w-lg bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-2xl rounded-br-lg px-4 py-3 shadow-lg relative group">
+                            <div class="message-content text-sm">${content}</div>
+                            <button class="absolute top-2 right-2 p-1 rounded-lg glass hover:bg-white/20 transition-all duration-200 opacity-0 group-hover:opacity-100" onclick="charmAssistant.copyMessage(this)" title="复制消息">
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="max-w-full glass-dark rounded-2xl rounded-bl-lg px-4 py-3 shadow-xl relative group">
+                            <div class="message-content text-high-contrast text-sm">${content}</div>
+                            <button class="absolute top-2 right-2 p-1 rounded-lg glass hover:bg-white/20 transition-all duration-200 opacity-0 group-hover:opacity-100" onclick="charmAssistant.copyMessage(this)" title="复制消息">
+                                <svg class="w-3 h-3 text-high-contrast" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                }
+
+                messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+                return messageDiv;
+            }
+
+            async sendMessage() {
+                if (this.isStreaming) return;
+
+                const userInput = document.getElementById('user-input');
+                const content = userInput.value.trim();
+                
+                if (!content) return;
+
+                // 清空输入框
+                userInput.value = '';
+                userInput.style.height = 'auto';
+
+                // 添加用户消息
+                this.addMessage('user', content, 'user');
+                this.conversationHistory.push({ role: 'user', content });
+                
+                this.isStreaming = true;
+                this.showLoading(true);
+
+                try {
+                    // 分析用户意图
+                    const intent = await this.analyzeIntent(content);
+                    console.log('意图分析结果:', intent);
+
+                    // 直接生成响应，对于魅力助手，所有消息都视为聊天类型
+                    await this.generateStreamResponse(content, intent, null);
+                } catch (error) {
+                    console.error('消息处理错误:', error);
+                    this.addMessage('assistant', '抱歉，我的思维有点混乱，能再说一遍吗？[奸笑]', 'ai');
+                } finally {
+                    this.isStreaming = false;
+                    this.showLoading(false);
+                }
+            }
+
+            async analyzeIntent(message) {
+                try {
+                    const currentDate = new Date();
+                    const year = currentDate.getFullYear();
+                    const month = currentDate.getMonth() + 1;
+                    const dateString = `${year}年${month}月${currentDate.getDate()}日`;
+
+                    const messages = [
+                        {
+                            role: 'system',
+                            content: `你是情感交流专家，负责分析用户聊天意图。直接返回JSON，无需解释。
+
+当前时间：${dateString}
+
+输出格式：
+{
+  "intent": "greeting" | "question" | "emotion" | "topic" | "general_chat",
+  "needsApiCall": false,
+  "sentiment": "positive" | "negative" | "neutral",
+  "topic": "聊天主题关键词",
+  "explanation": "意图解释"
+}
+
+规则：
+- 问候、打招呼→"greeting", needsApiCall: false
+- 提问、询问→"question", needsApiCall: false
+- 表达情绪、感受→"emotion", needsApiCall: false
+- 特定话题讨论→"topic", needsApiCall: false
+- 其他对话→"general_chat", needsApiCall: false
+- sentiment根据消息内容判断情绪倾向
+- topic提取主要讨论的话题关键词
+
+只返回JSON！`
+                        },
+                        {
+                            role: 'user',
+                            content: message
+                        }
+                    ];
+
+                    const response = await fetch(`${this.ollamaBase}/v1/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: 'Qwen3-32B', // 使用llama3模型
+                            messages: messages,
+                            stream: false,
+                            temperature: 0.3,
+                            max_tokens: 500,
+                            top_p: 0.95
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API请求失败: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    const content = data.choices[0].message.content;
+
+                    try {
+                        const cleanedContent = this.cleanThinkingContent(content);
+                        return JSON.parse(cleanedContent);
+                    } catch (parseError) {
+                        console.error('解析JSON失败:', parseError);
+                        // 返回默认意图
+                        return {
+                            intent: 'general_chat',
+                            needsApiCall: false,
+                            sentiment: 'neutral',
+                            topic: '',
+                            explanation: '无法解析意图，默认处理'
+                        };
+                    }
+                } catch (error) {
+                    console.error('意图分析失败:', error);
+                    // 回退到基于规则的意图分析
+                    return this.fallbackIntentAnalysis(message);
+                }
+            }
+
+            cleanThinkingContent(content) {
+                // 清理AI思考内容，提取纯JSON
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    return jsonMatch[0];
+                }
+                return content;
+            }
+
+            fallbackIntentAnalysis(message) {
+                // 简单的基于规则的意图分析作为后备
+                const normalized = message.toLowerCase();
+                
+                if (normalized.includes('你好') || normalized.includes('嗨') || normalized.includes('hi') || normalized.includes('hello') || normalized.includes('在吗')) {
+                    return {
+                        intent: 'greeting',
+                        needsApiCall: false,
+                        sentiment: 'positive',
+                        topic: '问候',
+                        explanation: '用户发送了问候语'
+                    };
+                } else if (normalized.includes('?') || normalized.includes('？') || normalized.includes('吗') || normalized.includes('什么')) {
+                    return {
+                        intent: 'question',
+                        needsApiCall: false,
+                        sentiment: 'neutral',
+                        topic: '提问',
+                        explanation: '用户提出了问题'
+                    };
+                } else if (normalized.includes('开心') || normalized.includes('高兴') || normalized.includes('难过') || normalized.includes('伤心') || normalized.includes('烦')) {
+                    return {
+                        intent: 'emotion',
+                        needsApiCall: false,
+                        sentiment: normalized.includes('开心') || normalized.includes('高兴') ? 'positive' : 'negative',
+                        topic: '情绪',
+                        explanation: '用户表达了情绪'
+                    };
+                } else if (normalized.includes('游戏') || normalized.includes('学习') || normalized.includes('吃饭') || normalized.includes('睡觉')) {
+                    let topic = '其他';
+                    if (normalized.includes('游戏')) topic = '游戏';
+                    if (normalized.includes('学习')) topic = '学习';
+                    if (normalized.includes('吃饭')) topic = '美食';
+                    if (normalized.includes('睡觉')) topic = '休息';
+                    
+                    return {
+                        intent: 'topic',
+                        needsApiCall: false,
+                        sentiment: 'neutral',
+                        topic: topic,
+                        explanation: `用户讨论了${topic}话题`
+                    };
+                } else {
+                    return {
+                        intent: 'general_chat',
+                        needsApiCall: false,
+                        sentiment: 'neutral',
+                        topic: '',
+                        explanation: '一般聊天内容'
+                    };
+                }
+            }
+
+            async generateStreamResponse(originalMessage, intent, apiData) {
+                try {
+                    // 构建聊天历史
+                    const chatHistory = this.conversationHistory.map(msg => ({
+                        role: msg.role,
+                        content: msg.content
+                    }));
+
+                    // 构建系统提示，确保回复符合渣男聊天助手的风格
+                    const systemPrompt = `你是一个情商极高的渣男,善于跟陌生女性聊天,并能活跃气氛,迅速拉进与女生的距离。看对方性格,学霸旧料学习、游戏就聊游戏、聊对方感兴趣的,提供情绪价值,能说会道,聊天能握住主动权,不被对方带着走,不断地PUA。女人很简单,他能你一起觉得舒服就喜欢跟你一起,对女人来说,不能限制她自由,不会给压力她,让她活出自我,按她的方式活,就是什么都跟她说,还要让她知道。你都是站在他的角度考虑的。既捧了她,又让她觉得你很懂她,说明她魅力大。说话期间,你还会勾起她的好奇心、留悬念。发个[奸笑]勾起兴趣。不要一下子把话讲完,没有一点波澜起伏,就没有意思了。尽量不要用“可以吗,可不可以”这样的词,改一下舔狗心态。你问,就是给人家选择,一般人肯定说不可以,因为你是带着请求的语气。你就说,那么好看的美女,认识一下不过分吧。带点调侃。人家肯定会说不过分。既夸了她,又让她不会觉得你是那种下头和油腻。`;
+
+                    const messages = [
+                        { role: 'system', content: systemPrompt },
+                        ...chatHistory
+                    ];
+
+                    // 创建AI回复元素
+                    const responseElement = this.addMessage('assistant', '', 'ai');
+                    const contentDiv = responseElement.querySelector('.message-content');
+
+                    // 调用Ollama API进行流式响应
+                    const response = await fetch(`${this.ollamaBase}/v1/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: 'Qwen3-32B', // 使用llama3模型
+                            messages: messages,
+                            stream: true,
+                            temperature: 0.7, // 稍微提高温度以增加多样性
+                            max_tokens: 500,
+                            top_p: 0.95
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`生成响应失败: ${response.status}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let fullContent = '';
+
+                    // 处理流式响应
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value, { stream: true });
+                        const lines = chunk.split('\n').filter(line => line.trim().startsWith('data: '));
+
+                        for (const line of lines) {
+                            const data = line.replace('data: ', '').trim();
+                            if (data === '[DONE]') continue;
+
+                            try {
+                                const json = JSON.parse(data);
+                                const token = json.choices[0]?.delta?.content || '';
+                                
+                                fullContent += token;
+                                // 实时更新UI
+                                contentDiv.textContent = fullContent;
+                            } catch (e) {
+                                console.error('解析流式数据失败:', e);
+                            }
+                        }
+                    }
+
+                    // 更新对话历史
+                    this.conversationHistory.push({ role: 'assistant', content: fullContent });
+
+                } catch (error) {
+                    console.error('生成流式响应失败:', error);
+                    // 如果API调用失败，使用备用模板回复
+                    const fallbackResponse = this.getFallbackResponse(intent);
+                    this.addMessage('assistant', fallbackResponse, 'ai');
+                    this.conversationHistory.push({ role: 'assistant', content: fallbackResponse });
+                }
+            }
+
+            getFallbackResponse(intent) {
+                // 基于意图提供备用回复模板
+                const templates = {
+                    'greeting': [
+                        "嘿，你好呀！今天看到你特别开心，感觉今天会是个好天气[奸笑]",
+                        "嗨～这么巧，我刚还在想，要是有个有趣的人找我聊天就好了[微笑]",
+                        "你好呀，认识一下不过分吧？毕竟像你这么有魅力的人，不多见呢"
+                    ],
+                    'question': [
+                        "这个问题问得好！不过，我觉得与其回答你，不如我们一起探讨一下，你说呢？",
+                        "你的问题很有深度，看来你是个很有思想的人。愿意听听我的看法吗？"
+                    ],
+                    'emotion': intent.sentiment === 'positive' ? [
+                        "你开心我就开心，有什么好事分享一下？让我也沾沾你的好运气",
+                        "看到你开心，我心情也跟着好了起来。能让你这么开心的事，一定很特别吧？"
+                    ] : [
+                        "怎么了？愿意和我聊聊吗？有时候说出来会好受一些。不管怎样，我都在这儿",
+                        "不开心的事，说出来就好了。我肩膀借你靠，虽然隔着屏幕，但心意到了[拥抱]"
+                    ],
+                    'topic': [
+                        `没想到你也对${intent.topic}感兴趣，真巧啊！我们好像越来越有默契了[奸笑]`,
+                        `${intent.topic}啊？我也挺喜欢的，你对这方面了解很多吗？`
+                    ],
+                    'general_chat': [
+                        "和你聊天很开心，感觉时间过得特别快。对了，你平时都喜欢做什么？",
+                        "我发现你说话很有特点，让人忍不住想多了解你一些。你是个很特别的人呢"
+                    ]
+                };
+
+                const intentTemplates = templates[intent.intent] || templates['general_chat'];
+                return intentTemplates[Math.floor(Math.random() * intentTemplates.length)];
+            }
+
+            clearChat() {
+                this.conversationHistory = [];
+
+                const messagesContainer = document.getElementById('chat-messages');
+                messagesContainer.innerHTML = `
+                    <div class="flex justify-start">
+                        <div class="max-w-full glass-dark rounded-2xl p-4 shadow-xl relative group">
+                            <div class="message-content">
+                                <p class="text-high-contrast font-semibold mb-2">👋 你好！我是你的AI魅力助手</p>
+                                <p class="text-medium-contrast text-sm mb-4">我善于聊天、活跃气氛，让每一次对话都充满乐趣。</p>
+                                
+                                <!-- 快速开场 -->
+                                <div class="mb-4">
+                                    <h3 class="text-high-contrast font-medium mb-3 text-sm">💬 开始聊天</h3>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="quick-card glass rounded-xl p-3 text-center hover-scale" onclick="charmAssistant.handleQuickAction('你好呀，很高兴认识你')">
+                                            <div class="text-high-contrast font-medium text-xs">友好问候</div>
+                                            <div class="text-medium-contrast text-xs mt-1">轻松开场</div>
+                                        </div>
+                                        
+                                        <div class="quick-card glass rounded-xl p-3 text-center hover-scale" onclick="charmAssistant.handleQuickAction('今天过得怎么样？')">
+                                            <div class="text-high-contrast font-medium text-xs">关心近况</div>
+                                            <div class="text-medium-contrast text-xs mt-1">拉近距离</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 提示 -->
+                                <div class="border-t border-white/20 pt-3">
+                                    <h4 class="text-high-contrast font-medium mb-2 text-sm">💡 聊天小贴士</h4>
+                                    <div class="space-y-1 text-xs text-medium-contrast">
+                                        <p>• 分享你的兴趣爱好，我们可以聊到一起</p>
+                                        <p>• 遇到不开心的事，我随时当你的倾听者</p>
+                                        <p>• 想要有趣的对话，告诉我你喜欢的话题</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.charmAssistant = new CharmAssistant();
+        });
+    </script>
+
+    <script>
+        (function () {
+            const t = document.createElement('style');
+            const r = Math.floor(Math.random() * 2000 + 1);
+            t.innerHTML = ` 
+                body {
+                    background-image: url('https://img.infinitynewtab.com/wallpaper/${r}.jpg');
+                    background-repeat: no-repeat;
+                    background-size: cover;
+                    background-position: center;
+                }
+            `;
+            document.body.append(t);
+        }())
+    </script>
+</body>
+</html>
